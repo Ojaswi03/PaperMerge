@@ -1,0 +1,11 @@
+# Not consumed by code (no argparse), just a documented preset.
+dataset: mnist
+n_nodes: 10
+S: 2
+rounds: 30
+local_epochs: 1
+lr: 0.05
+batch_size: 32
+iid: true
+mode: ebm
+sigma: 0.10
