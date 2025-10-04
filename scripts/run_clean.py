@@ -7,8 +7,14 @@ from basil_core.data.cifar import load_cifar10, make_loaders as make_cifar_loade
 from basil_core.models import MNISTModel, CIFARModel
 from basil_core.basil import BasilNode, basil_ring_training_with_attack
 from basil_core.trainer import evaluate_all
-from scripts.common import ensure_dirs, save_curve
-
+import os, sys
+# robust import: works for "python3 -m scripts.run_clean" and "python3 scripts/run_clean.py"
+if __package__ in (None, ''):
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # .../scripts
+    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))  # repo root
+    from scripts.common import ensure_dirs, save_curve
+else:
+    from .common import ensure_dirs, save_curve
 def run(config):
     # data
     if config["dataset"] == "mnist":

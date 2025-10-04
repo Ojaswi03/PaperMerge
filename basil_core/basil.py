@@ -1,8 +1,8 @@
 import numpy as np
 from copy import deepcopy
 
-from attacks import apply_attack
-from trainer import local_update, evaluate_batch_loss, evaluate, add_channel_noise_to_params
+from .attacks import apply_attack
+from .trainer import local_update, evaluate_batch_loss, evaluate, add_channel_noise_to_params
 
 class BasilNode:
     """

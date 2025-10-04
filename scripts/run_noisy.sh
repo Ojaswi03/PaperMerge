@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
 set -e
-python -m scripts.run_noisy
+python3 -m scripts.run_noisy

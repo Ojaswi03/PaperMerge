@@ -1,8 +1,8 @@
 import numpy as np
 from copy import deepcopy
 
-from basil import basil_ring_training_with_attack
-from trainer import evaluate, evaluate_batch_loss
+from .basil import basil_ring_training_with_attack
+from .trainer import evaluate, evaluate_batch_loss
 
 def _split_into_groups(nodes, num_groups):
     groups = [[] for _ in range(num_groups)]
