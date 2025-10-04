@@ -1,26 +1,9 @@
+# basil_core/trainer.py
 import numpy as np
 import tensorflow as tf
 
 # Cross-entropy on logits (as in Basil)
 loss_fn = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
-
-# ===== EBM helpers (Expectation-Based Model) =====
-def _grad_norm_sq(loss_tensor, variables):
-    # ||∇ loss||^2 over trainable variables
-    with tf.GradientTape() as tape2:
-        # re-create a zero op to keep shape; we just need grads of loss wrt vars
-        pass
-    # We can compute gradients outside the dummy tape using tf.gradients-like API:
-    grads = tf.gradients(ys=loss_tensor, xs=variables)
-    total = None
-    for g in grads:
-        if g is None:
-            continue
-        term = tf.reduce_sum(tf.square(g))
-        total = term if total is None else (total + term)
-    if total is None:
-        return tf.constant(0.0, dtype=tf.float32)
-    return tf.cast(total, tf.float32)
 
 def add_channel_noise_to_params(params, sigma):
     """Sender-side noisy channel: add N(0, sigma^2) to each layer (numpy arrays)."""
@@ -35,7 +18,8 @@ def add_channel_noise_to_params(params, sigma):
 # ===== Local training / eval =====
 def local_update(model, data_loader, epochs, lr, noise_model="none", sigma=0.0):
     """
-    Local SGD update, optionally with EBM regularizer (loss + sigma^2 * ||∇loss||^2).
+    Local SGD update, optionally with EBM regularizer (loss + sigma^2 * ||∇loss||^2),
+    implemented with a persistent GradientTape (no manual tape.watch needed).
     """
     optimizer = tf.keras.optimizers.SGD(learning_rate=lr)
 
@@ -44,17 +28,30 @@ def local_update(model, data_loader, epochs, lr, noise_model="none", sigma=0.0):
             Xb = tf.convert_to_tensor(X_batch, dtype=tf.float32)
             yb = tf.convert_to_tensor(y_batch, dtype=tf.int32)
 
-            with tf.GradientTape() as tape:
+            # Use a persistent tape so we can:
+            #  1) get grads of base loss (for grad-norm regularizer)
+            #  2) get grads of final loss (base + reg) for the update
+            with tf.GradientTape(persistent=True) as tape:
                 logits = model(Xb, training=True)
                 base = loss_fn(yb, logits)
-                loss = base
+
                 if noise_model == "ebm" and sigma > 0.0:
-                    # σ²‖∇F‖²
-                    gns = _grad_norm_sq(base, model.trainable_variables)
-                    loss = base + (sigma ** 2) * gns
+                    # ||∇ base||^2 using the same tape
+                    grads_base = tape.gradient(base, model.trainable_variables)
+                    terms = []
+                    for g in grads_base:
+                        if g is not None:
+                            terms.append(tf.reduce_sum(tf.square(g)))
+                    grad_norm_sq = tf.add_n(terms) if terms else tf.constant(0.0, dtype=tf.float32)
+                    loss = base + (sigma ** 2) * tf.cast(grad_norm_sq, tf.float32)
+                else:
+                    loss = base
 
             grads = tape.gradient(loss, model.trainable_variables)
+            del tape  # free the persistent tape ASAP
+
             optimizer.apply_gradients(zip(grads, model.trainable_variables))
+
 
 def evaluate(model, data_loader):
     """Accuracy on loader."""
