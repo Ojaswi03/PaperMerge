@@ -1,54 +1,136 @@
 """
-Run Basil with noisy channel (Gaussian on exchanged weights), no EBM regularizer.
+Run Basil with a noisy channel (Gaussian noise on exchanged weights), no EBM regularizer.
+For each attack in `attacks`, run a separate N-round experiment and save ONLY
+the average accuracy history to experiments/results/<exp_name>__<attack>_avg.npy
 """
+
+import os
+import sys
+
+# Ensure repo-root imports work when invoked as a module
+if __package__ in (None, ''):
+    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from basil_core.data.mnist import load_mnist, make_loaders as make_mnist_loaders
 from basil_core.data.cifar import load_cifar10, make_loaders as make_cifar_loaders
 from basil_core.models import MNISTModel, CIFARModel
 from basil_core.basil import BasilNode, basil_ring_training_with_attack
-from basil_core.trainer import evaluate_all
-import os, sys
-if __package__ in (None, ''):
-    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    from scripts.common import ensure_dirs, save_curve
-else:
-    from .common import ensure_dirs, save_curve
+from scripts.common import ensure_dirs, save_curve
+
+
+def _sanitize_attack_name(name: str) -> str:
+    return (name or "none").lower().replace(" ", "_").replace("-", "_")
+
+
 def run(config):
-    # data
-    if config["dataset"] == "mnist":
+    """
+    config keys used:
+      exp_name, dataset, batch_size, iid, n_nodes, S, sigma, lr0, lr_alpha,
+      local_epochs, rounds_per_attack (int, default 30),
+      attacks (list[str]),
+      attacker_ids (list[int]),
+      hidden_start_round (int),
+      steps_per_epoch (int, default 100)
+    """
+    dataset = config.get("dataset", "mnist").lower()
+    rounds_per_attack = int(config.get("rounds_per_attack", 30))
+    steps_per_epoch = int(config.get("steps_per_epoch", 100))
+
+    # Load data + pick model
+    if dataset == "mnist":
         train, test = load_mnist()
         train_loaders, test_loader = make_mnist_loaders(
-            train, test, batch_size=config["batch_size"], iid=config["iid"], n_clients=config["n_nodes"]
+            train,
+            test,
+            batch_size=config["batch_size"],
+            iid=config["iid"],
+            n_clients=config["n_nodes"],
         )
+        Model = MNISTModel
     else:
         train, test = load_cifar10()
         train_loaders, test_loader = make_cifar_loaders(
-            train, test, batch_size=config["batch_size"], iid=config["iid"], n_clients=config["n_nodes"]
+            train,
+            test,
+            batch_size=config["batch_size"],
+            iid=config["iid"],
+            n_clients=config["n_nodes"],
         )
-    # nodes
-    nodes = []
-    for i in range(config["n_nodes"]):
-        model = MNISTModel() if config["dataset"] == "mnist" else CIFARModel()
-        nodes.append(BasilNode(
-            node_id=i, model=model, data_loader=train_loaders[i],
-            S=config["S"], noise_model="noisy", sigma=config["sigma"],
-            lr=config["lr"], local_epochs=config["local_epochs"]
-        ))
-    # train
-    _, accs = basil_ring_training_with_attack(
-        nodes, rounds=config["rounds"], test_loader=test_loader,
-        attack_type="none", attacker_ids=[], hidden_start_round=999999
-    )
-    avg, worst, _ = evaluate_all(nodes, test_loader)
-    return accs, avg, worst
+        Model = CIFARModel
+
+    # Ensure output dir
+    ensure_dirs()
+
+    results = {}
+    attacks = config.get("attacks", ["none"])
+    if isinstance(attacks, str):
+        attacks = [attacks]
+
+    for attack in attacks:
+        atk_name = _sanitize_attack_name(attack)
+
+        # Fresh nodes per attack so runs are independent
+        nodes = []
+        for i in range(config["n_nodes"]):
+            model = Model()
+            nodes.append(BasilNode(
+                node_id=i,
+                model=model,
+                data_loader=train_loaders[i],
+                S=config["S"],
+                noise_model="noisy",          # noisy-channel (no EBM term)
+                sigma=config["sigma"],
+                lr0=config["lr0"],
+                local_epochs=config["local_epochs"],
+            ))
+
+        print(f"\n=== Running NOISY-CHANNEL with attack: {attack} for {rounds_per_attack} rounds ===", flush=True)
+        avg_hist, _ = basil_ring_training_with_attack(
+            nodes=nodes,
+            rounds=rounds_per_attack,
+            test_loader=test_loader,
+            attack_types=[attack],  # single attack for this whole run
+            attacker_ids=config.get("attacker_ids", []),
+            hidden_start_round=config.get("hidden_start_round", 10),
+            sigma=config["sigma"],
+            noise_model="noisy",
+            lr0=config["lr0"],
+            lr_alpha=config.get("lr_alpha", 0.6),
+            steps_per_epoch=steps_per_epoch,
+        )
+
+        # Save ONLY average accuracy
+        out_path = f"experiments/results/{config['exp_name']}__{atk_name}_avg.npy"
+        save_curve(avg_hist, out_path)
+        print(f"[saved] {out_path}", flush=True)
+
+        results[attack] = avg_hist
+
+    # Summary
+    print("\n=== Summary (avg acc last point) ===", flush=True)
+    for attack, hist in results.items():
+        last = hist[-1] if hist else float("nan")
+        print(f"{attack:>12}: {last:.4f}", flush=True)
+
+    return results
+
 
 if __name__ == "__main__":
-    ensure_dirs()
-    CONFIG = {
-        "dataset": "mnist", "n_nodes": 10, "S": 2, "rounds": 30,
-        "local_epochs": 1, "lr": 0.05, "batch_size": 32, "iid": True,
-        "sigma": 0.10
-    }
-    accs, avg, worst = run(CONFIG)
-    out = save_curve(accs, "experiments/results/acc_mnist_noisy.npy")
-    print(f"[NOISY] Final AVG={avg:.4f} WORST={worst:.4f} | saved: {out}")
+    cfg = dict(
+        exp_name="mnist_noisy_looped",
+        dataset="mnist",      # "mnist" or "cifar10"
+        batch_size=128,
+        iid=True,
+        n_nodes=10,
+        S=2,
+        sigma=0.05,
+        lr0=0.05,
+        lr_alpha=0.6,
+        local_epochs=1,
+        rounds_per_attack=30,                 # <-- 30 rounds per attack
+        attacks=["gaussian", "sign-flip", "hidden"],  # loop over these
+        attacker_ids=[0, 3],
+        hidden_start_round=10,
+        steps_per_epoch=100,                  # safety bound for infinite datasets
+    )
+    run(cfg)

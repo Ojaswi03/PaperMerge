@@ -22,7 +22,7 @@ def sign_flip_attack(weights):
 def hidden_attack(weights, malicious_weights=None, blend_ratio=0.5):
     """
     Blend in a malicious vector (same shapes) with ratio.
-    If none provided, just small random bias.
+    If none provided, small random Gaussian bias.
     """
     out = []
     for idx, w in enumerate(weights):
@@ -34,13 +34,14 @@ def hidden_attack(weights, malicious_weights=None, blend_ratio=0.5):
     return out
 
 def apply_attack(weights, attack_type, malicious_weights=None, blend_ratio=0.5):
-    """Dispatch."""
-    if attack_type == 'gaussian':
+    """Dispatch with aliases: 'sign-flip' == 'sign_flip'."""
+    atk = (attack_type or "none").lower().replace("-", "_")
+    if atk == "gaussian":
         return gaussian_attack(weights)
-    if attack_type == 'sign_flip':
+    if atk == "sign_flip":
         return sign_flip_attack(weights)
-    if attack_type == 'hidden':
+    if atk == "hidden":
         return hidden_attack(weights, malicious_weights, blend_ratio)
-    if attack_type == 'none':
+    if atk == "none":
         return weights
     raise ValueError(f"Unknown attack type: {attack_type}")

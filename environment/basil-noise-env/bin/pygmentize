@@ -1,4 +1,4 @@
-#!/home/ojaswi/PaperMerge/environment/basil-noise-env/bin/python3
+#!/home/ojaswi/testing/PaperMerge/environment/basil-noise-env/bin/python3
 import sys
 from pygments.cmdline import main
 if __name__ == '__main__':
