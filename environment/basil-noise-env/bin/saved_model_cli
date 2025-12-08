@@ -1,4 +1,4 @@
-#!/home/ojaswi/testing/PaperMerge/environment/basil-noise-env/bin/python3
+#!/home/ojaswi/PaperMerge/environment/basil-noise-env/bin/python
 import sys
 from tensorflow.python.tools.saved_model_cli import main
 if __name__ == '__main__':

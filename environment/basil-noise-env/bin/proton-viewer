@@ -1,6 +1,6 @@
 #!/home/ojaswi/PaperMerge/environment/basil-noise-env/bin/python
 import sys
-from fontTools.__main__ import main
+from triton.profiler.viewer import main
 if __name__ == '__main__':
     if sys.argv[0].endswith('.exe'):
         sys.argv[0] = sys.argv[0][:-4]
