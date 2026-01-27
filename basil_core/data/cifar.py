@@ -1,42 +1,43 @@
 import numpy as np
 import tensorflow as tf
 
-def load_cifar10():
-    (x_train, y_train), (x_test, y_test) = tf.keras.datasets.cifar10.load_data()
+def loadCifar10():
+    (xTrain, yTrain), (xTest, yTest) = tf.keras.datasets.cifar10.load_data()
     # y comes shape (N,1); flatten to (N,)
-    y_train = y_train.reshape((-1,)).astype("int32")
-    y_test  = y_test.reshape((-1,)).astype("int32")
-    x_train = (x_train.astype("float32") / 255.0)
-    x_test  = (x_test.astype("float32") / 255.0)
-    return (list(zip(x_train, y_train)), list(zip(x_test, y_test)))
+    yTrain = yTrain.reshape((-1,)).astype("int32")
+    yTest  = yTest.reshape((-1,)).astype("int32")
+    xTrain = (xTrain.astype("float32") / 255.0)
+    xTest  = (xTest.astype("float32") / 255.0)
+    return (list(zip(xTrain, yTrain)), list(zip(xTest, yTest)))
 
-def make_loaders(train, test, batch_size=32, iid=True, n_clients=10):
+def makeLoaders(train, test, batchSize=32, iid=True, nClients=10):
     idx = np.arange(len(train))
     np.random.shuffle(idx)
-    chunks = np.array_split(idx, n_clients)
+    chunks = np.array_split(idx, nClients)
 
-    def to_batches(indices):
+    def toBatches(indices):
         data = [train[i] for i in indices]
         X, y, out = [], [], []
         for xi, yi in data:
             X.append(xi)
             y.append(yi)
-            if len(X) == batch_size:
+            if len(X) == batchSize:
                 out.append((np.stack(X), np.array(y)))
                 X, y = [], []
         if X:
             out.append((np.stack(X), np.array(y)))
         return out
 
-    train_loaders = [to_batches(c) for c in chunks]
+    trainLoaders = [toBatches(c) for c in chunks]
 
-    Xt, yt, tloader = [], [], []
+    Xt, yt, tLoader = [], [], []
     for xi, yi in test:
-        Xt.append(xi); yt.append(yi)
-        if len(Xt) == batch_size:
-            tloader.append((np.stack(Xt), np.array(yt)))
+        Xt.append(xi)
+        yt.append(yi)
+        if len(Xt) == batchSize:
+            tLoader.append((np.stack(Xt), np.array(yt)))
             Xt, yt = [], []
     if Xt:
-        tloader.append((np.stack(Xt), np.array(yt)))
+        tLoader.append((np.stack(Xt), np.array(yt)))
 
-    return train_loaders, tloader
+    return trainLoaders, tLoader

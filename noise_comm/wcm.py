@@ -13,18 +13,18 @@ import numpy as np
 import tensorflow as tf
 
 # ----- noise sampling on the L2 boundary -----
-def _sample_boundary_noise_like(weight, sigma):
+def _sampleBoundaryNoiseLike(weight, sigma):
     """
     Sample Δ of same shape as weight such that ||Δ||_2 = sigma (approximately).
     Uses normalized Gaussian direction scaled to sigma.
     """
     g = tf.random.normal(shape=tf.shape(weight), dtype=weight.dtype)
-    g_norm = tf.norm(g)
+    gNorm = tf.norm(g)
     # handle rare zero norm by fallback to unit vector-like
-    scale = tf.where(g_norm > 0, sigma / g_norm, tf.constant(0.0, dtype=weight.dtype))
+    scale = tf.where(gNorm > 0, sigma / gNorm, tf.constant(0.0, dtype=weight.dtype))
     return g * scale
 
-def sample_boundary_payload(params, sigma):
+def sampleBoundaryPayload(params, sigma):
     """
     Return a NEW list of numpy arrays Δ with ||Δ|| layer-wise scaled so that
     the concatenated vector approximates global norm sigma. For simplicity,
@@ -35,11 +35,11 @@ def sample_boundary_payload(params, sigma):
     deltas = []
     for p in params:
         w = tf.convert_to_tensor(p, dtype=tf.float32)
-        d = _sample_boundary_noise_like(w, tf.constant(float(sigma), tf.float32))
+        d = _sampleBoundaryNoiseLike(w, tf.constant(float(sigma), tf.float32))
         deltas.append(d.numpy().astype(np.float32))
     return deltas
 
-def apply_delta(params, deltas, alpha=1.0):
+def applyDelta(params, deltas, alpha=1.0):
     """
     Return params + alpha * deltas (both lists of numpy arrays).
     """
@@ -49,7 +49,7 @@ def apply_delta(params, deltas, alpha=1.0):
     return out
 
 # ----- SAA + SCA surrogate -----
-def sca_surrogate_loss(loss_fn, model, x, y, delta_list, rho, lam):
+def scaSurrogateLoss(lossFn, model, x, y, deltaList, rho, lam):
     """
     One SCA-like surrogate:
       F_w(w) = rho * F(w + Δ) + (1 - rho) * < w - w_prev, G_prev > + lam * ||w - w_prev||^2
@@ -62,28 +62,28 @@ def sca_surrogate_loss(loss_fn, model, x, y, delta_list, rho, lam):
     and expose hooks for caller to add the linearization term when available.
 
     Args:
-      loss_fn: callable(y_true, logits) -> scalar
+      lossFn: callable(y_true, logits) -> scalar
       model: tf.keras.Model
       x, y: batch tensors/arrays
-      delta_list: list of numpy arrays (same shapes as model weights) to offset weights
+      deltaList: list of numpy arrays (same shapes as model weights) to offset weights
       rho: in (0,1]
       lam: >= 0
 
     Returns: (loss_scalar_tensor, w_current_list) where w_current_list is current weights (numpy).
     """
-    x_t = tf.convert_to_tensor(x, dtype=tf.float32)
-    y_t = tf.convert_to_tensor(y, dtype=tf.int32)
+    xT = tf.convert_to_tensor(x, dtype=tf.float32)
+    yT = tf.convert_to_tensor(y, dtype=tf.int32)
 
     # snapshot original weights
     w0 = [w.numpy().copy() for w in model.trainable_variables]
 
     # apply offsets (w + Δ)
-    for var, delta in zip(model.trainable_variables, delta_list):
+    for var, delta in zip(model.trainable_variables, deltaList):
         var.assign_add(tf.convert_to_tensor(delta, dtype=var.dtype))
 
     with tf.GradientTape() as tape:
-        logits = model(x_t, training=True)
-        base = loss_fn(y_t, logits)
+        logits = model(xT, training=True)
+        base = lossFn(yT, logits)
 
     # remove offsets (restore)
     for var, old in zip(model.trainable_variables, w0):
@@ -91,70 +91,70 @@ def sca_surrogate_loss(loss_fn, model, x, y, delta_list, rho, lam):
 
     # surrogate: rho * F(w + Δ) + lam * ||w - w_prev||^2
     # caller should add (1 - rho) * <w - w_prev, G_prev> externally if they maintain G_prev and w_prev
-    loss_term = rho * base
+    lossTerm = rho * base
     # regularizer term must be added by caller when w_prev is known:
     # e.g., loss_total = loss_term + lam * ||w - w_prev||^2 + (1 - rho) * <w - w_prev, G_prev>
 
-    return loss_term, w0
+    return lossTerm, w0
 
-def wcm_step(model, optimizer, loss_fn, x, y, sigma, S, rho, lam,
-             w_prev=None, G_prev=None, beta_for_G=0.9):
+def wcmStep(model, optimizer, lossFn, x, y, sigma, S, rho, lam,
+            wPrev=None, gPrev=None, betaForG=0.9):
     """
     A single WCM-flavored local step:
       - Sample S boundary deltas, average their surrogate losses (SAA)
-      - Add stabilization term lam * ||w - w_prev||^2 when w_prev is provided
-      - Maintain moving-average gradient G_t if G_prev provided
+      - Add stabilization term lam * ||w - w_prev||^2 when wPrev is provided
+      - Maintain moving-average gradient G_t if gPrev provided
       - Perform one gradient step on the surrogate
 
-    Returns: dict with updated (optionally) w_prev, G_prev and scalar loss.
+    Returns: dict with updated (optionally) wPrev, gPrev and scalar loss.
     """
     # prepare delta samples
-    current_params = [w.numpy().copy() for w in model.trainable_variables]
-    sa_losses = []
-    with tf.GradientTape() as tape_outer:
-        total_surrogate = 0.0
+    currentParams = [w.numpy().copy() for w in model.trainable_variables]
+    saLosses = []
+    with tf.GradientTape() as tapeOuter:
+        totalSurrogate = 0.0
         for _ in range(int(S)):
-            deltas = sample_boundary_payload(current_params, sigma)
-            loss_delta, _ = sca_surrogate_loss(loss_fn, model, x, y, deltas, rho, lam)
-            total_surrogate = total_surrogate + loss_delta
-        total_surrogate = total_surrogate / float(max(1, int(S)))
+            deltas = sampleBoundaryPayload(currentParams, sigma)
+            lossDelta, _ = scaSurrogateLoss(lossFn, model, x, y, deltas, rho, lam)
+            totalSurrogate = totalSurrogate + lossDelta
+        totalSurrogate = totalSurrogate / float(max(1, int(S)))
 
-        # add quadratic proximity if w_prev is given
-        if w_prev is not None and lam > 0.0:
+        # add quadratic proximity if wPrev is given
+        if wPrev is not None and lam > 0.0:
             prox = 0.0
-            for var, prev in zip(model.trainable_variables, w_prev):
+            for var, prev in zip(model.trainable_variables, wPrev):
                 diff = var - tf.convert_to_tensor(prev, dtype=var.dtype)
                 prox = prox + tf.reduce_sum(tf.square(diff))
-            total_surrogate = total_surrogate + lam * prox
+            totalSurrogate = totalSurrogate + lam * prox
 
-        # (optional) linearization term (1 - rho) * <w - w_prev, G_prev>
-        if w_prev is not None and G_prev is not None and rho < 1.0:
+        # (optional) linearization term (1 - rho) * <w - wPrev, gPrev>
+        if wPrev is not None and gPrev is not None and rho < 1.0:
             lin = 0.0
-            for var, prev, g in zip(model.trainable_variables, w_prev, G_prev):
+            for var, prev, g in zip(model.trainable_variables, wPrev, gPrev):
                 diff = var - tf.convert_to_tensor(prev, dtype=var.dtype)
                 lin = lin + tf.reduce_sum(diff * tf.convert_to_tensor(g, dtype=var.dtype))
-            total_surrogate = total_surrogate + (1.0 - rho) * lin
+            totalSurrogate = totalSurrogate + (1.0 - rho) * lin
 
-    grads = tape_outer.gradient(total_surrogate, model.trainable_variables)
+    grads = tapeOuter.gradient(totalSurrogate, model.trainable_variables)
     optimizer.apply_gradients(zip(grads, model.trainable_variables))
 
     # update moving-average gradient G_t
-    new_G = None
-    if G_prev is not None:
+    newG = None
+    if gPrev is not None:
         # recompute gradient at current point for update of G
-        with tf.GradientTape() as tape_G:
+        with tf.GradientTape() as tapeG:
             logits = model(tf.convert_to_tensor(x, dtype=tf.float32), training=True)
-            base = loss_fn(tf.convert_to_tensor(y, dtype=tf.int32), logits)
-        g_now = tape_G.gradient(base, model.trainable_variables)
-        new_G = []
-        for g_prev, g_cur in zip(G_prev, g_now):
-            g_prev_t = tf.convert_to_tensor(g_prev, dtype=g_cur.dtype)
-            g_cur_t  = tf.convert_to_tensor(0.0, dtype=g_cur.dtype) if g_cur is None else g_cur
-            new_G.append(beta_for_G * g_prev_t + (1.0 - beta_for_G) * g_cur_t)
+            base = lossFn(tf.convert_to_tensor(y, dtype=tf.int32), logits)
+        gNow = tapeG.gradient(base, model.trainable_variables)
+        newG = []
+        for gPrevItem, gCur in zip(gPrev, gNow):
+            gPrevT = tf.convert_to_tensor(gPrevItem, dtype=gCur.dtype)
+            gCurT  = tf.convert_to_tensor(0.0, dtype=gCur.dtype) if gCur is None else gCur
+            newG.append(betaForG * gPrevT + (1.0 - betaForG) * gCurT)
 
     result = {
-        "loss": float(total_surrogate.numpy()),
-        "w_prev": [w.numpy().copy() for w in model.trainable_variables],
-        "G_prev": new_G if new_G is not None else G_prev
+        "loss": float(totalSurrogate.numpy()),
+        "wPrev": [w.numpy().copy() for w in model.trainable_variables],
+        "gPrev": newG if newG is not None else gPrev
     }
     return result

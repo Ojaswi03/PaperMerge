@@ -81,3 +81,45 @@ class CIFARModel:
 
     def __call__(self, x, training=False):
         return self.model(x, training=training)
+
+
+class NMNISTModel:
+    """
+    Neuromorphic MNIST model (same architecture as regular MNIST):
+    3 fully connected layers: 784->100->100->10 (logits)
+    Since N-MNIST has same spatial dimensions (28x28), we use the same architecture.
+    """
+    def __init__(self, input_shape=(34, 34), num_classes=10):
+        # N-MNIST sensor size is 34x34 (different from regular MNIST 28x28)
+        self.model = models.Sequential([
+            layers.Input(shape=input_shape),
+            layers.Flatten(),
+            layers.Dense(100, activation='relu'),
+            layers.Dense(100, activation='relu'),
+            layers.Dense(num_classes)  # logits
+        ])
+
+    # ----- Basil convenience API -----
+    def get_params(self):
+        return [w.numpy() for w in self.model.trainable_weights]
+
+    def set_params(self, params):
+        for var, val in zip(self.model.trainable_weights, params):
+            var.assign(val)
+
+    @property
+    def trainable_weights(self):
+        return self.model.trainable_weights
+
+    @property
+    def trainable_variables(self):
+        return self.model.trainable_variables
+
+    def get_weights(self):
+        return self.model.get_weights()
+
+    def set_weights(self, weights):
+        self.model.set_weights(weights)
+
+    def __call__(self, x, training=False):
+        return self.model(x, training=training)
