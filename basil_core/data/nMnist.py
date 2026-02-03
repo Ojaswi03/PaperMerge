@@ -2,6 +2,18 @@ import numpy as np
 import tensorflow as tf
 import os
 
+# Optional tonic library for real N-MNIST data
+try:
+    import tonic
+    import torch
+    from torch.utils.data import DataLoader
+    TONIC_AVAILABLE = True
+except ImportError:
+    TONIC_AVAILABLE = False
+    tonic = None
+    torch = None
+
+
 def loadNMnist():
     """
     Load Neuromorphic MNIST (N-MNIST) dataset.
@@ -10,68 +22,67 @@ def loadNMnist():
     Returns:
         (trainList, testList): tuple of lists of (x, y) tuples
     """
+    xTrain, yTrain, xTest, yTest = None, None, None, None
+
     # Try to use tonic library for N-MNIST
-    try:
-        import tonic
-        import torch
-        from torch.utils.data import DataLoader
+    if TONIC_AVAILABLE:
+        try:
+            # Convert events to frames with time binning
+            frameTransform = tonic.transforms.ToFrame(
+                sensor_size=tonic.datasets.NMNIST.sensor_size,
+                time_window=10000  # 10ms time bins
+            )
 
-        # Load N-MNIST dataset
-        # Convert events to frames with time binning
-        frameTransform = tonic.transforms.ToFrame(
-            sensor_size=tonic.datasets.NMNIST.sensor_size,
-            time_window=10000  # 10ms time bins
-        )
+            # Download and load training data
+            trainDataset = tonic.datasets.NMNIST(
+                save_to='./data/nmnist',
+                train=True,
+                transform=frameTransform
+            )
 
-        # Download and load training data
-        trainDataset = tonic.datasets.NMNIST(
-            save_to='./data/nmnist',
-            train=True,
-            transform=frameTransform
-        )
+            # Download and load test data
+            testDataset = tonic.datasets.NMNIST(
+                save_to='./data/nmnist',
+                train=False,
+                transform=frameTransform
+            )
 
-        # Download and load test data
-        testDataset = tonic.datasets.NMNIST(
-            save_to='./data/nmnist',
-            train=False,
-            transform=frameTransform
-        )
+            # Convert to numpy arrays
+            xTrainList, yTrainList = [], []
+            for frames, label in trainDataset:
+                # frames shape: (T, 2, H, W) where T=time_bins, 2=polarities
+                # Sum across time and polarities, resulting in (H, W)
+                frameSum = np.sum(frames, axis=(0, 1))  # Sum over time and polarity
+                # Normalize to [0, 1]
+                if frameSum.max() > 0:
+                    frameSum = frameSum / frameSum.max()
+                xTrainList.append(frameSum.astype("float32"))
+                yTrainList.append(int(label))
 
-        # Convert to numpy arrays
-        xTrain, yTrain = [], []
-        for frames, label in trainDataset:
-            # frames shape: (T, 2, H, W) where T=time_bins, 2=polarities
-            # Sum across time and polarities, resulting in (H, W)
-            frameSum = np.sum(frames, axis=(0, 1))  # Sum over time and polarity
-            # Normalize to [0, 1]
-            if frameSum.max() > 0:
-                frameSum = frameSum / frameSum.max()
-            xTrain.append(frameSum.astype("float32"))
-            yTrain.append(int(label))
+            xTestList, yTestList = [], []
+            for frames, label in testDataset:
+                frameSum = np.sum(frames, axis=(0, 1))
+                if frameSum.max() > 0:
+                    frameSum = frameSum / frameSum.max()
+                xTestList.append(frameSum.astype("float32"))
+                yTestList.append(int(label))
 
-        xTest, yTest = [], []
-        for frames, label in testDataset:
-            frameSum = np.sum(frames, axis=(0, 1))
-            if frameSum.max() > 0:
-                frameSum = frameSum / frameSum.max()
-            xTest.append(frameSum.astype("float32"))
-            yTest.append(int(label))
+            xTrain = np.array(xTrainList)
+            yTrain = np.array(yTrainList, dtype="int32")
+            xTest = np.array(xTestList)
+            yTest = np.array(yTestList, dtype="int32")
 
-        xTrain = np.array(xTrain)
-        yTrain = np.array(yTrain, dtype="int32")
-        xTest = np.array(xTest)
-        yTest = np.array(yTest, dtype="int32")
+            print("Successfully loaded real N-MNIST data from tonic library.")
 
-        print("Successfully loaded real N-MNIST data from tonic library.")
+        except ImportError as e:
+            print(f"Warning: tonic library not found ({e}). Using simulated N-MNIST data based on regular MNIST.")
+            print("Install tonic with: pip install tonic")
+        except Exception as e:
+            print(f"Warning: Error loading N-MNIST from tonic ({e}). Using simulated N-MNIST data.")
+            print("Falling back to MNIST-based simulation.")
 
-    except ImportError as e:
-        print(f"Warning: tonic library not found ({e}). Using simulated N-MNIST data based on regular MNIST.")
-        print("Install tonic with: pip install tonic")
-    except Exception as e:
-        print(f"Warning: Error loading N-MNIST from tonic ({e}). Using simulated N-MNIST data.")
-        print("Falling back to MNIST-based simulation.")
-
-        # Fallback: Use regular MNIST with added event-like noise as placeholder
+    # Fallback: Use regular MNIST with added event-like noise as placeholder
+    if xTrain is None:
         (xTrain, yTrain), (xTest, yTest) = tf.keras.datasets.mnist.load_data()
 
         # Add Poisson noise to simulate event-based sensor

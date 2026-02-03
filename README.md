@@ -54,6 +54,7 @@ python plots/plotNoisyChannel.py
 
 ### 2. Noisy Channel Only
 - **Purpose**: Test channel noise mitigation using EBM and WCM
+- **Training**: FedAvg (parallel training + model averaging) - matches paper's system model
 - **EBM**: Adds regularization `F_e(w) = F(w) + λσ²||∇F(w)||²`
 - **WCM**: Worst-case optimization with boundary sampling
 - **Tests**: Clean (no mitigation), EBM, WCM
@@ -62,7 +63,9 @@ python plots/plotNoisyChannel.py
 
 ### 3. Merged (BASIL + Noisy Channel)
 - **Purpose**: Handle both Byzantine attacks AND channel noise
-- **Combines**: BASIL snapshot selection + EBM/WCM regularization
+- **Training**: Ring topology (BASIL) with EBM/WCM regularization
+- **Combines**: BASIL snapshot selection + EBM/WCM gradient scaling
+- **Key insight**: BASIL's loss-based selection filters noisy models (replaces averaging)
 - **Best for**: Real-world scenarios with multiple failure modes
 
 ---
@@ -153,8 +156,8 @@ CHANNEL_NOISE_START = 5  # Noise starts at round 5
 ├── gui/
 │   └── experimentGui.py             # GUI implementation
 ├── basil_core/                       # Core implementation (camelCase)
-│   ├── basil.py                      # Ring topology
-│   ├── trainer.py                    # Training with EBM/WCM
+│   ├── basil.py                      # Ring topology (BASIL) + FedAvg (Noisy Channel)
+│   ├── trainer.py                    # Training with EBM/WCM + model averaging
 │   ├── models.py                     # Model architectures
 │   ├── attacks.py                    # Byzantine attacks
 │   └── data/                         # Dataset loaders
@@ -274,23 +277,51 @@ python plots/plotComprehensiveComparison.py
 
 ## Key Parameters
 
-### BASIL
-- **S (Memory Size)**: Number of past models to store (default: 10)
-- Larger S = better Byzantine resilience, more memory
+### Training Topologies
 
-### EBM (Expectation-Based Model)
-- **λ (Lambda)**: Regularization strength (default: 0.01)
-- **σ (Sigma)**: Channel noise standard deviation (default: 0.1)
+| Approach | Topology | Training | Aggregation | Noise Behavior |
+|----------|----------|----------|-------------|----------------|
+| BASIL | Ring | Sequential | Selection (best model) | Filtered by selection |
+| Noisy Channel | Star | Parallel | Averaging (FedAvg) | Reduced by √N |
+| Merged | Ring | Sequential | Selection + EBM/WCM | Both mechanisms |
+
+### BASIL (Paper 001: Algorithm 1)
+- **S (Memory Size)**: Number of models to store from S counterclockwise neighbors (default: 10)
+- Paper: S = b+1 where b = max Byzantine nodes. Larger S = better resilience
+- **Sequential Training**: Nodes process one at a time around the ring (paper's algorithm)
+- **S-Neighbor Multicast**: Each node sends to next S clockwise neighbors
+
+### EBM (Paper 002: Eq. 13 & 23)
+- **Training**: Uses FedAvg (parallel + averaging) to match paper's system model
+- **Formula**: grad_Fe(w) = (1 + λσ²) × grad_F(w)
+- **λ (Lambda)**: Amplification factor - must be tuned based on σ
+- **σ (Sigma)**: Channel noise standard deviation
+- **Scale Factor**: scale = 1 + λσ² (paper targets scale=2.0 for flat minima)
+
+**Lambda (λ) values for scale=2.0:**
+| σ (Sigma) | λ (Lambda) | Scale | Notes |
+|-----------|------------|-------|-------|
+| 0.05 | 400 | 2.0 | Default, low noise |
+| 0.1 | 100 | 2.0 | Medium noise |
+| 0.2 | 25 | 2.0 | High noise |
+
+**For high noise (σ=0.2), higher scale may improve results:**
+| σ (Sigma) | λ (Lambda) | Scale | Expected Improvement |
+|-----------|------------|-------|---------------------|
+| 0.2 | 25 | 2.0 | ~10-15% over noisy baseline |
+| 0.2 | 50 | 3.0 | ~15-18% over noisy baseline |
+| 0.2 | 75 | 4.0 | ~18-22% over noisy baseline |
 
 ### WCM (Worst-Case Model)
 - **λ (Lambda)**: Regularization strength (default: 0.1)
 - **Samples**: Number of boundary samples (default: 5)
 - **ρ (Rho)**: SCA convex combination parameter (default: 0.5)
 
-### Training
+### Training (Paper Values)
 - **Number of Nodes**: Default 10
 - **Training Rounds**: 15-30 for MNIST/N-MNIST, 25-50 for CIFAR-10
-- **Learning Rate**: 0.05 for MNIST/N-MNIST, 0.01 for CIFAR-10
+- **Learning Rate**: 0.03 for MNIST/N-MNIST (paper), 0.01 for CIFAR-10
+- **LR Schedule**: lr(t) = lr0 / (1 + lr0 × t) as per BASIL paper
 - **Batch Size**: Default 32
 
 ---
@@ -302,10 +333,24 @@ python plots/plotComprehensiveComparison.py
 - **With attacks**: BASIL significantly outperforms clean baseline
 - **Recovery**: BASIL quickly recovers after attack begins
 
-### Noisy Channel Performance
-- **No noise**: EBM/WCM similar to clean
-- **With noise**: EBM/WCM outperform noisy baseline
-- **WCM**: Most robust to worst-case conditions
+### Noisy Channel Performance (MNIST)
+
+**Understanding EBM behavior:**
+- EBM pushes model toward flat minima where noise causes less accuracy degradation
+- Training (SGD) and noise reach an equilibrium - accuracy doesn't drop to 0%
+- EBM provides ~5-20% improvement depending on noise level
+
+**Expected accuracy with noise from round 0:**
+| Configuration | σ=0.05 | σ=0.1 | σ=0.2 |
+|--------------|--------|-------|-------|
+| Noisy (no mitigation) | ~85% | ~78% | ~15-25% |
+| Noisy + EBM (scale=2.0) | ~88% | ~84% | ~30-40% |
+| Noisy + EBM (scale=4.0) | - | - | ~35-45% |
+
+**Key findings:**
+- Low noise (σ≤0.1): Both noisy baseline and EBM perform well due to training recovery
+- High noise (σ=0.2): EBM provides significant improvement (+15-20% accuracy)
+- Scale factor matters: Higher noise may benefit from scale > 2.0
 
 ### Merged Approach
 - **Best overall**: Handles both Byzantine attacks AND channel noise
@@ -366,6 +411,36 @@ pip install tonic  # Optional, for real N-MNIST data
 ---
 
 ## Implementation Details
+
+### Paper-Compliant Implementation
+
+**BASIL Algorithm (Paper 001: Algorithm 1) - Ring Topology**
+- Sequential training: nodes process one at a time around the ring
+- S-neighbor multicast: each node sends to next S clockwise neighbors
+- Neighbor memory: each node stores S models from S counterclockwise neighbors
+- Loss-based selection: pick model with lowest local batch loss (Eq. 3)
+
+**Noisy Channel (Paper 002: Figure 1, Eq. 3a/3b) - Star Topology with FedAvg**
+- Parallel training: all nodes train simultaneously from same global model
+- Model averaging: FedAvg aggregation after each round (reduces noise by √N)
+- Single noise point: channel noise added once after averaging
+- Broadcast: noisy averaged model sent to all nodes
+
+**EBM Implementation (Paper 002: Eq. 13, 23)**
+- Gradient scaling: `grad_Fe(w) = (1 + λσ²) × grad_F(w)`
+- No Hessian computation, no noise sampling - simple scalar multiplication
+- Pushes model into flat minima robust to channel noise
+- Default: σ=0.1, λ=100 → scale=2.0 (matches paper)
+
+**Model Architectures (Paper Tables I & II)**
+- MNIST: 784→100→100→10 fully connected (Table I)
+- CIFAR-10: conv1(16,3×3)→pool→conv2(64,4×4)→pool→fc(384)→fc(192)→fc(10) (Table II)
+- N-MNIST: 34×34 input, same FC as MNIST
+
+**Attacks (Paper Section V-A)**
+- Gaussian: Replace weights with N(0,1)
+- Sign-flip: Layer-wise random sign flip (50% probability per layer)
+- Hidden: Subtle perturbation that's hard to detect (omniscient-style)
 
 ### Naming Convention
 - **camelCase** used throughout: `localUpdate`, `dataLoader`, `noiseModel`

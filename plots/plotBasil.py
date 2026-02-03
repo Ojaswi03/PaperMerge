@@ -342,13 +342,13 @@ def generateAllBasilPlots():
 
 if __name__ == "__main__":
     print("""
-╔════════════════════════════════════════════════════════════════════════════╗
-║                     BASIL PLOTTING SCRIPT                                  ║
-║                                                                            ║
-║  Generates plots comparing Clean vs BASIL approach                        ║
-║                                                                            ║
-║  To customize: Edit the CONFIGURATION section at the top of this file    ║
-╚════════════════════════════════════════════════════════════════════════════╝
+==================================================================================
+                     BASIL PLOTTING SCRIPT                                  
+                                                                            
+  Generates plots comparing Clean vs BASIL approach                        
+                                                                            
+  To customize: Edit the CONFIGURATION section at the top of this file    
+==================================================================================
     """)
 
     metrics = ['avg', 'worst'] if METRIC == 'both' else [METRIC]

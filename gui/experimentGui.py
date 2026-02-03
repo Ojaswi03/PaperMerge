@@ -9,25 +9,34 @@ This GUI allows you to:
 - Set all training parameters
 - Run experiments and view results
 """
+# Set matplotlib backend BEFORE any other imports to avoid tkinter conflicts
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+
 import os
 import sys
+import re
+import traceback
 import tkinter as tk
-from tkinter import ttk, messagebox, scrolledtext
+from tkinter import ttk, messagebox, scrolledtext, simpledialog, filedialog
 import threading
 import json
 from datetime import datetime
+import numpy as np
 
 # Add project root to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'plots'))
 
 from basil_core.data.mnist import loadMnist, makeLoaders as makeMnistLoaders
 from basil_core.data.cifar import loadCifar10, makeLoaders as makeCifarLoaders
 from basil_core.data.nMnist import loadNMnist, makeLoaders as makeNMnistLoaders
 from basil_core.models import MNISTModel, CIFARModel, NMNISTModel
-from basil_core.basil import BasilNode, basilRingTrainingWithAttack
+from basil_core.basil import BasilNode, basilRingTrainingWithAttack, fedAvgTrainingWithNoise
 from basil_core.trainer import evaluateAll
 from scripts.common import setupGpu
-import numpy as np
+from plotGui import discoverDatasets, discoverExperiments, COLORS_LIST, MARKERS_LIST
 
 
 class ExperimentGUI:
@@ -51,6 +60,9 @@ class ExperimentGUI:
 
     def setupVariables(self):
         """Initialize all tkinter variables"""
+        # Experiment label
+        self.experimentNameVar = tk.StringVar(value="")
+
         # Dataset selection
         self.datasetVar = tk.StringVar(value="mnist")
 
@@ -64,9 +76,9 @@ class ExperimentGUI:
         # Noisy Channel parameters
         self.useChannelNoiseVar = tk.BooleanVar(value=False)
         self.channelNoiseStartVar = tk.IntVar(value=0)
-        self.channelNoiseSigmaVar = tk.DoubleVar(value=0.1)
+        self.channelNoiseSigmaVar = tk.DoubleVar(value=0.05)  # Balanced for visible EBM effect
         self.noiseMitigationVar = tk.StringVar(value="none")
-        self.ebmLambdaVar = tk.DoubleVar(value=0.01)
+        self.ebmLambdaVar = tk.DoubleVar(value=400.0)  # With sigma=0.05: scale = 1 + 400*0.0025 = 2.0
         self.wcmLambdaVar = tk.DoubleVar(value=0.1)
         self.wcmSamplesVar = tk.IntVar(value=5)
         self.wcmRhoVar = tk.DoubleVar(value=0.5)
@@ -84,7 +96,7 @@ class ExperimentGUI:
         self.nNodesVar = tk.IntVar(value=10)
         self.nRoundsVar = tk.IntVar(value=30)
         self.localEpochsVar = tk.IntVar(value=1)
-        self.learningRateVar = tk.DoubleVar(value=0.05)
+        self.learningRateVar = tk.DoubleVar(value=0.03)  # Paper uses 0.03
         self.batchSizeVar = tk.IntVar(value=32)
 
     def createUI(self):
@@ -122,6 +134,16 @@ class ExperimentGUI:
         frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
 
         row = 0
+
+        # Experiment name
+        ttk.Label(frame, text="Experiment Name:", font=('Arial', 10, 'bold')).grid(row=row, column=0, sticky=tk.W, pady=5)
+        ttk.Entry(frame, textvariable=self.experimentNameVar, width=50).grid(row=row, column=1, columnspan=3, sticky=tk.W, padx=10)
+        row += 1
+        ttk.Label(frame, text="  e.g. Ring Topology (Noisy + With EBM + No Byzantine Nodes)", font=('Arial', 8)).grid(row=row, column=0, columnspan=4, sticky=tk.W, padx=20)
+        row += 1
+
+        ttk.Separator(frame, orient='horizontal').grid(row=row, column=0, columnspan=4, sticky='ew', pady=10)
+        row += 1
 
         # Dataset selection
         ttk.Label(frame, text="Dataset:", font=('Arial', 10, 'bold')).grid(row=row, column=0, sticky=tk.W, pady=5)
@@ -290,6 +312,8 @@ class ExperimentGUI:
 
         ttk.Button(buttonFrame, text="Clear Output", command=self.clearOutput).pack(side=tk.LEFT, padx=5)
 
+        ttk.Button(buttonFrame, text="Plot Results", command=self.plotResults).pack(side=tk.LEFT, padx=5)
+
         ttk.Button(buttonFrame, text="Save Configuration", command=self.saveConfig).pack(side=tk.LEFT, padx=5)
 
         ttk.Button(buttonFrame, text="Load Configuration", command=self.loadConfig).pack(side=tk.LEFT, padx=5)
@@ -383,9 +407,14 @@ class ExperimentGUI:
 
             # Get configuration
             config = self.getConfig()
+            approachLabels = {
+                'basil': 'BASIL Only (Ring Topology - Paper 001)',
+                'noisy': 'Noisy Channel Only (FedAvg - Paper 002)',
+                'merged': 'Merged (Ring + EBM/WCM)'
+            }
             self.logMessage("Configuration:")
             self.logMessage(f"  Dataset: {config['dataset']}")
-            self.logMessage(f"  Approach: {config['approach']}")
+            self.logMessage(f"  Approach: {approachLabels.get(config['approach'], config['approach'])}")
             self.logMessage(f"  Nodes: {config['nNodes']}, Rounds: {config['nRounds']}")
             self.logMessage(f"  Use BASIL: {config['useBasil']}")
             self.logMessage(f"  Use Channel Noise: {config['useChannelNoise']}")
@@ -417,24 +446,49 @@ class ExperimentGUI:
             self.logMessage("")
 
             # Run training
-            self.logMessage(f"Starting training for {config['nRounds']} rounds...")
-            self.logMessage("-"*80)
+            # Choose training function based on approach:
+            # - "noisy" (Noisy Channel Only): Use FedAvg (paper 002's system model)
+            # - "basil" or "merged": Use Ring topology (paper 001's algorithm)
+            if config['approach'] == 'noisy':
+                self.logMessage(f"Starting FedAvg training for {config['nRounds']} rounds...")
+                self.logMessage("Training Mode: FedAvg (Parallel + Averaging) - Paper 002")
+                self.logMessage("-"*80)
 
-            avgAccHist, worstAccHist = basilRingTrainingWithAttack(
-                nodes=nodes,
-                rounds=config['nRounds'],
-                testLoader=testLoader,
-                attackTypes=attackTypes,
-                attackerIds=attackerIds,
-                hiddenStartRound=config['attackHiddenStart'] if config['attackHidden'] else 999,
-                sigma=config['channelNoiseSigma'] if config['useChannelNoise'] else 0.0,
-                noiseModel=self.getNoiseModel(config),
-                lr0=config['learningRate'],
-                lrAlpha=0.6,
-                stepsPerEpoch=100,
-                useSnapshots=config['useBasil'],
-                stopCallback=lambda: not self.isRunning,  # Check if stop was requested
-            )
+                avgAccHist, worstAccHist = fedAvgTrainingWithNoise(
+                    nodes=nodes,
+                    rounds=config['nRounds'],
+                    testLoader=testLoader,
+                    attackTypes=attackTypes,
+                    attackerIds=attackerIds,
+                    hiddenStartRound=config['attackHiddenStart'] if config['attackHidden'] else 999,
+                    sigma=config['channelNoiseSigma'] if config['useChannelNoise'] else 0.0,
+                    noiseModel=self.getNoiseModel(config),
+                    channelNoiseStart=config['channelNoiseStart'] if config['useChannelNoise'] else 0,
+                    lr0=config['learningRate'],
+                    stepsPerEpoch=100,
+                    stopCallback=lambda: not self.isRunning,
+                )
+            else:
+                self.logMessage(f"Starting Ring training for {config['nRounds']} rounds...")
+                self.logMessage("Training Mode: Ring Topology (Sequential) - Paper 001")
+                self.logMessage("-"*80)
+
+                avgAccHist, worstAccHist = basilRingTrainingWithAttack(
+                    nodes=nodes,
+                    rounds=config['nRounds'],
+                    testLoader=testLoader,
+                    attackTypes=attackTypes,
+                    attackerIds=attackerIds,
+                    hiddenStartRound=config['attackHiddenStart'] if config['attackHidden'] else 999,
+                    sigma=config['channelNoiseSigma'] if config['useChannelNoise'] else 0.0,
+                    noiseModel=self.getNoiseModel(config),
+                    channelNoiseStart=config['channelNoiseStart'] if config['useChannelNoise'] else 0,
+                    lr0=config['learningRate'],
+                    stepsPerEpoch=100,
+                    useSnapshots=config['useBasil'],
+                    useSequential=True,  # Paper's Algorithm 1: sequential node processing
+                    stopCallback=lambda: not self.isRunning,
+                )
 
             # Check if stopped early
             if not self.isRunning:
@@ -463,7 +517,6 @@ class ExperimentGUI:
 
         except Exception as e:
             self.logMessage(f"\nERROR: {str(e)}")
-            import traceback
             self.logMessage(traceback.format_exc())
 
         finally:
@@ -492,6 +545,7 @@ class ExperimentGUI:
     def getConfig(self):
         """Get current configuration as dictionary"""
         return {
+            'experimentName': self.experimentNameVar.get(),
             'dataset': self.datasetVar.get(),
             'approach': self.approachVar.get(),
             'useBasil': self.useBasilVar.get(),
@@ -566,7 +620,6 @@ class ExperimentGUI:
                 nodeConfig['wcmSamples'] = config['wcmSamples']
                 nodeConfig['wcmRho'] = config['wcmRho']
 
-            from basil_core.basil import BasilNode
             nodes.append(BasilNode(**nodeConfig))
 
         return nodes
@@ -653,10 +706,18 @@ class ExperimentGUI:
     def saveConfig(self):
         """Save configuration to file with editable name"""
         config = self.getConfig()
-        defaultName = f"config_{config['dataset']}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+
+        # Use experiment name as default filename, fallback to timestamp
+        expName = config.get('experimentName', '').strip()
+        if expName:
+            # Sanitize experiment name for filename (replace spaces and special chars)
+            sanitized = re.sub(r'[^\w\s-]', '', expName)  # Remove special chars except - and space
+            sanitized = re.sub(r'\s+', '_', sanitized)    # Replace spaces with underscores
+            defaultName = sanitized
+        else:
+            defaultName = f"config_{config['dataset']}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
 
         # Ask user for filename
-        from tkinter import simpledialog
         userInput = simpledialog.askstring(
             "Save Configuration",
             "Enter a name for this configuration:",
@@ -681,7 +742,6 @@ class ExperimentGUI:
 
     def loadConfig(self):
         """Load configuration from file"""
-        from tkinter import filedialog
         filepath = filedialog.askopenfilename(
             title="Load Configuration",
             initialdir="gui/configs",
@@ -696,6 +756,7 @@ class ExperimentGUI:
                 config = json.load(f)
 
             # Set all variables
+            self.experimentNameVar.set(config.get('experimentName', ''))
             self.datasetVar.set(config.get('dataset', 'mnist'))
             self.approachVar.set(config.get('approach', 'basil'))
             self.useBasilVar.set(config.get('useBasil', True))
@@ -725,6 +786,142 @@ class ExperimentGUI:
 
         except Exception as e:
             messagebox.showerror("Error", f"Failed to load configuration:\n{str(e)}")
+
+    def plotResults(self):
+        """Generate and save plots for all GUI experiments."""
+        try:
+            self.logMessage("\n" + "="*60)
+            self.logMessage("GENERATING PLOTS")
+            self.logMessage("="*60)
+
+            datasets = discoverDatasets()
+            if not datasets:
+                self.logMessage("No experiment results found. Run some experiments first!")
+                messagebox.showinfo("No Results", "No experiment results found.\nRun some experiments first!")
+                return
+
+            self.logMessage(f"Found datasets: {datasets}")
+
+            for dataset in datasets:
+                experiments = discoverExperiments(dataset)
+                if not experiments:
+                    continue
+
+                self.logMessage(f"\nDataset: {dataset.upper()} ({len(experiments)} experiments)")
+
+                # Generate plots for this dataset
+                for metric in ['avg', 'worst']:
+                    metricLabel = "Average Accuracy" if metric == 'avg' else "Worst-Node Accuracy"
+
+                    # 1. Overlay plot (all experiments on one chart)
+                    fig, ax = plt.subplots(figsize=(14, 7))
+                    for idx, exp in enumerate(experiments):
+                        accPath = exp['avgPath'] if metric == 'avg' else exp['worstPath']
+                        if os.path.exists(accPath):
+                            acc = np.load(accPath)
+                            rounds = np.arange(len(acc))
+                            color = COLORS_LIST[idx % len(COLORS_LIST)]
+                            ax.plot(rounds, acc, label=exp['label'],
+                                   color=color, linewidth=2.5)
+
+                    ax.set_xlabel('Training Round', fontsize=12)
+                    ax.set_ylabel(metricLabel, fontsize=12)
+                    ax.set_title(f'{dataset.upper()} - {metricLabel}', fontsize=14, fontweight='bold')
+                    ax.legend(fontsize=8, loc='lower right', bbox_to_anchor=(1.0, 0.0))
+                    ax.grid(True, alpha=0.3)
+                    ax.set_ylim([0, 1])
+                    plt.tight_layout()
+
+                    savePath = f"plots/images/gui/{dataset}_experiments_{metric}.png"
+                    os.makedirs(os.path.dirname(savePath), exist_ok=True)
+                    fig.savefig(savePath, dpi=300, bbox_inches='tight')
+                    plt.close(fig)
+                    self.logMessage(f"  Saved: {savePath}")
+
+                    # 2. Grid plot (each experiment in its own subplot)
+                    nExps = len(experiments)
+                    nCols = min(nExps, 3) if nExps > 0 else 1
+                    nRows = (nExps + nCols - 1) // nCols if nExps > 0 else 1
+
+                    fig, axes = plt.subplots(nRows, nCols, figsize=(6 * nCols, 5 * nRows))
+                    if nRows == 1 and nCols == 1:
+                        axes = np.array([axes])
+                    axes = axes.flatten()
+
+                    fig.suptitle(f'{dataset.upper()} - {metricLabel} (Individual Runs)',
+                                fontsize=16, fontweight='bold')
+
+                    for idx, exp in enumerate(experiments):
+                        ax = axes[idx]
+                        accPath = exp['avgPath'] if metric == 'avg' else exp['worstPath']
+                        if os.path.exists(accPath):
+                            acc = np.load(accPath)
+                            rounds = np.arange(len(acc))
+                            color = COLORS_LIST[idx % len(COLORS_LIST)]
+                            ax.plot(rounds, acc, color=color, linewidth=2.5)
+                            ax.set_xlabel('Round', fontsize=10)
+                            ax.set_ylabel(metricLabel, fontsize=10)
+                            # Wrap long titles
+                            title = exp['label']
+                            if len(title) > 40:
+                                title = title[:40] + '\n' + title[40:]
+                            ax.set_title(title, fontsize=9, fontweight='bold')
+                            ax.grid(True, alpha=0.3)
+                            ax.set_ylim([0, 1])
+                            # Annotate final accuracy
+                            if len(acc) > 0:
+                                ax.annotate(f'{acc[-1]:.3f}', xy=(len(acc) - 1, acc[-1]),
+                                           fontsize=10, fontweight='bold',
+                                           xytext=(-40, 10), textcoords='offset points')
+
+                    # Hide unused subplots
+                    for idx in range(nExps, len(axes)):
+                        axes[idx].set_visible(False)
+
+                    plt.tight_layout()
+                    savePath = f"plots/images/gui/{dataset}_grid_{metric}.png"
+                    fig.savefig(savePath, dpi=300, bbox_inches='tight')
+                    plt.close(fig)
+                    self.logMessage(f"  Saved: {savePath}")
+
+                    # 3. Bar chart (final accuracy comparison)
+                    fig, ax = plt.subplots(figsize=(max(10, len(experiments) * 2.5), 7))
+                    labels = []
+                    finalAccs = []
+                    for exp in experiments:
+                        accPath = exp['avgPath'] if metric == 'avg' else exp['worstPath']
+                        if os.path.exists(accPath):
+                            acc = np.load(accPath)
+                            labels.append(exp['label'])
+                            finalAccs.append(acc[-1] if len(acc) > 0 else 0)
+
+                    if labels:
+                        colors = [COLORS_LIST[i % len(COLORS_LIST)] for i in range(len(labels))]
+                        bars = ax.bar(range(len(labels)), finalAccs, color=colors, width=0.6)
+                        for bar, acc in zip(bars, finalAccs):
+                            ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.01,
+                                   f'{acc:.3f}', ha='center', va='bottom', fontsize=10, fontweight='bold')
+                        ax.set_ylabel(metricLabel, fontsize=12)
+                        ax.set_title(f'Final {metricLabel} - {dataset.upper()}', fontsize=14, fontweight='bold')
+                        ax.set_xticks(range(len(labels)))
+                        ax.set_xticklabels(labels, rotation=45, ha='right', fontsize=9)
+                        ax.set_ylim([0, 1.1])
+                        ax.grid(True, alpha=0.3, axis='y')
+                        plt.tight_layout()
+
+                        savePath = f"plots/images/gui/{dataset}_final_accuracy_{metric}.png"
+                        fig.savefig(savePath, dpi=300, bbox_inches='tight')
+                        plt.close(fig)
+                        self.logMessage(f"  Saved: {savePath}")
+
+            self.logMessage("\nAll plots saved to: plots/images/gui/")
+            self.logMessage("="*60)
+            messagebox.showinfo("Success", "Plots saved to plots/images/gui/")
+
+        except Exception as e:
+            self.logMessage(f"\nERROR generating plots: {str(e)}")
+            self.logMessage(traceback.format_exc())
+            messagebox.showerror("Error", f"Failed to generate plots:\n{str(e)}")
 
 
 def main():

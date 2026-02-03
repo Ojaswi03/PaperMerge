@@ -57,7 +57,7 @@ DATASETS = {
         "nNodes": 10,
         "rounds": 15 if QUICK_TEST else 30,
         "localEpochs": 1,
-        "lr": 0.05,
+        "lr": 0.03,  # Paper uses 0.03
         "batchSize": 32,
     },
     "cifar10": {
@@ -77,7 +77,7 @@ DATASETS = {
         "nNodes": 10,
         "rounds": 15 if QUICK_TEST else 30,
         "localEpochs": 1,
-        "lr": 0.05,
+        "lr": 0.03,  # Paper uses 0.03
         "batchSize": 32,
     },
 }
@@ -173,9 +173,9 @@ def runBasilExperiment(dataset, attack, useBasil=True, verbose=True):
         sigma=0.0,
         noiseModel="none",
         lr0=dsConfig["lr"],
-        lrAlpha=0.6,
         stepsPerEpoch=100,
         useSnapshots=useBasil,  # Key parameter: enable/disable BASIL
+        useSequential=True,  # Paper's Algorithm 1: sequential node processing
     )
 
     # Final evaluation
@@ -332,13 +332,13 @@ def runBasilTests(datasets=None, attacks=None, testClean=True, testBasil=True):
 
 if __name__ == "__main__":
     print("""
-╔════════════════════════════════════════════════════════════════════════════╗
-║                       BASIL TESTING SCRIPT                                 ║
-║                                                                            ║
-║  Tests: Clean (no BASIL) vs BASIL approach                               ║
-║                                                                            ║
-║  To customize: Edit the CONFIGURATION section at the top of this file    ║
-╚════════════════════════════════════════════════════════════════════════════╝
+===================================================================================
+                       BASIL TESTING SCRIPT                                 
+                                                                            
+  Tests: Clean (no BASIL) vs BASIL approach                               
+                                                                            
+  To customize: Edit the CONFIGURATION section at the top of this file    
+===================================================================================
     """)
 
     # Determine what to test based on configuration

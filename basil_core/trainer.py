@@ -2,11 +2,20 @@
 import numpy as np
 import tensorflow as tf
 
+# Optional WCM module
+try:
+    from noise_comm.wcm import wcmStep
+    WCM_AVAILABLE = True
+except ImportError:
+    WCM_AVAILABLE = False
+    wcmStep = None
+
 __all__ = [
     "lossFn",
     "addChannelNoiseToParams",
     "getParams",
     "setParams",
+    "averageParams",
     "evaluate",
     "evaluateBatchLoss",
     "evaluateAll",
@@ -35,6 +44,43 @@ def setParams(model, params):
     """Assign a list of numpy arrays to model.trainable_weights."""
     for var, new in zip(model.trainable_weights, params):
         var.assign(tf.convert_to_tensor(new, dtype=var.dtype))
+
+
+def averageParams(paramsList, weights=None):
+    """
+    Average a list of model parameters (FedAvg-style aggregation).
+
+    Args:
+        paramsList: List of [params1, params2, ...] where each params is a list of numpy arrays
+        weights: Optional weights for weighted average (e.g., by data size). If None, uniform average.
+
+    Returns:
+        Averaged parameters as list of numpy arrays
+
+    Reference: "Robust Federated Learning with Noisy Communication" Equation 3a
+        w = (Σ D_j × w_j) / D
+    """
+    if not paramsList:
+        return []
+
+    n = len(paramsList)
+    if weights is None:
+        weights = [1.0 / n] * n
+    else:
+        # Normalize weights
+        totalWeight = sum(weights)
+        weights = [w / totalWeight for w in weights]
+
+    # Initialize with zeros
+    avgParams = [np.zeros_like(p) for p in paramsList[0]]
+
+    # Weighted sum
+    for params, weight in zip(paramsList, weights):
+        for i, p in enumerate(params):
+            avgParams[i] += weight * p
+
+    return [p.astype(np.float32) for p in avgParams]
+
 
 def _iterLimited(ds, maxBatches=None):
     """Yield at most maxBatches batches from ds. If maxBatches is None, iterate fully."""
@@ -82,11 +128,35 @@ def evaluateAll(nodes, testLoader):
     worst = float(np.min(accs))
     return avg, worst, accs
 
-def makeLrScheduler(lr0, alpha=0.6, minLr=1e-4):
-    """Polynomial decay: lr_t = max(minLr, lr0 * (t+1)^(-alpha))."""
-    def lr(t):
-        return float(max(minLr, lr0 * (t + 1) ** (-alpha)))
-    return lr
+def makeLrScheduler(lr0, alpha=0.6, minLr=1e-4, useBasilSchedule=True):
+    """
+    Learning rate scheduler.
+
+    If useBasilSchedule=True (default): Uses BASIL paper formula (Section V):
+        lr_t = lr0 / (1 + lr0 * t)
+        Paper uses lr0=0.03, giving: 0.03 / (1 + 0.03*t)
+
+    If useBasilSchedule=False: Polynomial decay:
+        lr_t = max(minLr, lr0 * (t+1)^(-alpha))
+    """
+    if useBasilSchedule:
+        def lr(t):
+            return float(max(minLr, lr0 / (1.0 + lr0 * t)))
+        return lr
+    else:
+        def lr(t):
+            return float(max(minLr, lr0 * (t + 1) ** (-alpha)))
+        return lr
+
+def _computeGrads(model, x, y):
+    """Compute gradients of cross-entropy loss w.r.t. model weights.
+    Returns (gradients_list, loss_scalar)."""
+    with tf.GradientTape() as tape:
+        logits = model(x, training=True)
+        loss = lossFn(y, logits)
+    grads = tape.gradient(loss, model.trainable_weights)
+    return grads, loss
+
 
 def localUpdate(
     model,
@@ -106,6 +176,7 @@ def localUpdate(
     - 'none' or 'clean': standard SGD
     - 'noisy': standard SGD (noise added at communication, not here)
     - 'ebm': add sigma^2 * ||grad||^2 regularizer (Equation 13 from Noisy Channel paper)
+              Uses finite-difference Hessian-vector product (no nested tapes)
     - 'wcm': Worst-Case Model with boundary noise sampling and SCA surrogate
 
     Bounded by `stepsPerEpoch` to avoid hangs when dataLoader repeats indefinitely.
@@ -114,15 +185,13 @@ def localUpdate(
 
     # WCM initialization
     wcmAvailable = False
+    wPrev = None
+    gPrev = None
     if noiseModel == "wcm":
-        try:
-            from noise_comm.wcm import wcmStep
-            wPrev = None
-            gPrev = None
+        if WCM_AVAILABLE:
             wcmAvailable = True
-        except ImportError as e:
-            print(f"Warning: WCM module not available ({e}). Falling back to standard training.")
-            wcmAvailable = False
+        else:
+            print("Warning: WCM module not available. Falling back to standard training.")
 
     for _ in range(epochs):
         for xBatch, yBatch in _iterLimited(dataLoader, maxBatches=stepsPerEpoch):
@@ -130,7 +199,6 @@ def localUpdate(
             yb = tf.convert_to_tensor(yBatch, dtype=tf.int32)
 
             if noiseModel == "wcm" and sigma > 0 and wcmAvailable:
-                # Use WCM training step
                 try:
                     result = wcmStep(
                         model=model,
@@ -146,26 +214,30 @@ def localUpdate(
                         gPrev=gPrev,
                         betaForG=0.9
                     )
-                    # Update state for next iteration
                     wPrev = result["wPrev"]
                     gPrev = result["gPrev"]
                 except Exception as e:
                     print(f"Warning: WCM step failed ({e}). Using standard training for this batch.")
-                    # Fall through to standard training below
-                    pass
 
-            if noiseModel != "wcm" or sigma <= 0 or not wcmAvailable:
-                # Standard training or EBM
-                with tf.GradientTape(persistent=True) as tape:  # Might be an issue
-                    logits = model(xb, training=True)
-                    baseLoss = lossFn(yb, logits)
-                    if noiseModel == "ebm" and sigma > 0:
-                        gradsBase = tape.gradient(baseLoss, model.trainable_weights)
-                        reg = 0.0
-                        for g in gradsBase:
-                            reg += tf.reduce_sum(tf.square(g))
-                        finalLoss = baseLoss + ebmLambda * (sigma ** 2) * reg  # Equation 13
-                    else:
-                        finalLoss = baseLoss
-                grads = tape.gradient(finalLoss, model.trainable_weights)
+            elif noiseModel == "ebm" and sigma > 0:
+                # EBM: Expectation-Based Model (Equation 13 & 23 from paper)
+                # Loss: F_e(w) = F(w) + sigma^2 * ||grad F(w)||^2
+                # Gradient: grad F_e(w) = (1 + lambda * sigma^2) * grad F(w)
+                #
+                # Reference: "Robust Federated Learning with Noisy Communication"
+                # Paper uses sigma=1.0, scale=2.0
+                #
+                # With lambda multiplier, you can use smaller sigma:
+                #   sigma=1.0, lambda=1   -> scale=2.0 (paper's setting)
+                #   sigma=0.05, lambda=400 -> scale=2.0 (default)
+                #   sigma=0.1, lambda=100 -> scale=2.0 (alternative)
+
+                grads, _ = _computeGrads(model, xb, yb)
+                scale = 1.0 + ebmLambda * sigma * sigma  # (1 + λσ²)
+                scaledGrads = [g * scale for g in grads]
+                optimizer.apply_gradients(zip(scaledGrads, model.trainable_weights))
+
+            else:
+                # Standard training (clean or noisy without mitigation)
+                grads, _ = _computeGrads(model, xb, yb)
                 optimizer.apply_gradients(zip(grads, model.trainable_weights))

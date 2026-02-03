@@ -382,13 +382,13 @@ def generateAllPlots():
 
 if __name__ == "__main__":
     print("""
-╔════════════════════════════════════════════════════════════════════════════╗
-║                  NOISY CHANNEL PLOTTING SCRIPT                             ║
-║                                                                            ║
-║  Generates plots comparing Clean (no mitigation), EBM, and WCM            ║
-║                                                                            ║
-║  To customize: Edit the CONFIGURATION section at the top of this file    ║
-╚════════════════════════════════════════════════════════════════════════════╝
+===================================================================================
+                  NOISY CHANNEL PLOTTING SCRIPT                             
+                                                                            
+  Generates plots comparing Clean (no mitigation), EBM, and WCM            
+                                                                            
+  To customize: Edit the CONFIGURATION section at the top of this file    
+===================================================================================
     """)
 
     generateAllPlots()

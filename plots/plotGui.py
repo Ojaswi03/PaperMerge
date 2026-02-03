@@ -113,33 +113,61 @@ def discoverExperiments(dataset):
 
 
 def buildLabel(config):
-    """Build a human-readable label from a config dict."""
-    parts = []
+    """
+    Build a human-readable label from a config dict.
+    Uses experimentName if set by user, otherwise auto-generates a descriptive label.
+    Example auto labels:
+      - Ring Topology (Clean)
+      - Ring Topology (Noisy + No EBM + No Byzantine Nodes)
+      - Ring Topology (Noisy + With EBM + No Byzantine Nodes)
+      - Ring Topology (Noisy + With WCM + Gaussian@5)
+    """
+    # If user provided a custom name, use it
+    customName = config.get('experimentName', '').strip()
+    if customName:
+        return customName
 
-    # Approach
-    approachLabels = {'basil': 'BASIL', 'noisy': 'Noisy Channel', 'merged': 'Merged'}
-    parts.append(approachLabels.get(config.get('approach', ''), config.get('approach', '')))
+    # Auto-generate descriptive label
+    useNoise = config.get('useChannelNoise', False)
+    mitigation = config.get('noiseMitigation', 'none')
+    useBasil = config.get('useBasil', False)
 
-    # Attacks
+    # Noise description
+    if not useNoise:
+        noisePart = "Clean"
+    else:
+        noiseStart = config.get('channelNoiseStart', 0)
+        noisePart = f"Noisy@Round {noiseStart}" if noiseStart > 0 else "Noisy"
+
+        # Mitigation
+        if mitigation == 'ebm':
+            noisePart += " + With EBM"
+        elif mitigation == 'wcm':
+            noisePart += " + With WCM"
+        else:
+            noisePart += " + No EBM"
+
+    # Attack description
     attacks = []
     if config.get('attackGaussian'):
-        attacks.append(f"Gauss@{config.get('attackGaussianStart', 0)}")
+        attacks.append(f"Gaussian@{config.get('attackGaussianStart', 0)}")
     if config.get('attackSignFlip'):
         attacks.append(f"SignFlip@{config.get('attackSignFlipStart', 0)}")
     if config.get('attackHidden'):
         attacks.append(f"Hidden@{config.get('attackHiddenStart', 0)}")
 
     if attacks:
-        parts.append("+".join(attacks))
+        attackPart = " + ".join(attacks)
     else:
-        parts.append("No Attack")
+        attackPart = "No Byzantine Nodes"
 
-    # Mitigation
-    mitigation = config.get('noiseMitigation', 'none')
-    if mitigation != 'none':
-        parts.append(mitigation.upper())
+    # Topology
+    if useBasil:
+        topo = "BASIL Ring"
+    else:
+        topo = "Ring Topology"
 
-    return " | ".join(parts)
+    return f"{topo} ({noisePart} + {attackPart})"
 
 
 def plotDatasetExperiments(dataset, experiments, metric='avg'):

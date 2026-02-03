@@ -43,18 +43,29 @@ class MNISTModel:
 
 class CIFARModel:
     """
-    A light CNN for CIFAR-10 (kept simple to match Basil experiments).
+    CIFAR-10 model matching BASIL paper Table II:
+    - conv1: 3->16 filters, 3x3 kernel, ReLU, MaxPool(2x2)
+    - conv2: 16->64 filters, 4x4 kernel, ReLU, MaxPool(2x2)
+    - fc1: flattened -> 384, ReLU
+    - fc2: 384 -> 192, ReLU
+    - fc3: 192 -> 10 (logits)
     """
     def __init__(self, input_shape=(32, 32, 3), num_classes=10):
         self.model = models.Sequential([
             layers.Input(shape=input_shape),
-            layers.Conv2D(32, 3, padding="same", activation="relu"),
-            layers.MaxPool2D(),
-            layers.Conv2D(64, 3, padding="same", activation="relu"),
-            layers.MaxPool2D(),
+            # conv1: 3->16 filters, 3x3 kernel (paper Table II)
+            layers.Conv2D(16, 3, padding="same", activation="relu"),
+            layers.MaxPool2D(pool_size=(2, 2)),
+            # conv2: 16->64 filters, 4x4 kernel (paper Table II)
+            layers.Conv2D(64, 4, padding="same", activation="relu"),
+            layers.MaxPool2D(pool_size=(2, 2)),
             layers.Flatten(),
-            layers.Dense(128, activation="relu"),
-            layers.Dense(num_classes)  # logits
+            # fc1: -> 384 (paper Table II)
+            layers.Dense(384, activation="relu"),
+            # fc2: 384 -> 192 (paper Table II)
+            layers.Dense(192, activation="relu"),
+            # fc3: 192 -> 10 logits (paper Table II)
+            layers.Dense(num_classes)
         ])
 
     # ----- Basil convenience API -----
