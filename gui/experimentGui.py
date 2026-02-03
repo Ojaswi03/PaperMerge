@@ -82,6 +82,8 @@ class ExperimentGUI:
         self.wcmLambdaVar = tk.DoubleVar(value=0.1)
         self.wcmSamplesVar = tk.IntVar(value=5)
         self.wcmRhoVar = tk.DoubleVar(value=0.5)
+        self.momentumVar = tk.DoubleVar(value=0.0)  # Use 0.9 for EBM with high noise
+        self.useLrDecayVar = tk.BooleanVar(value=True)  # Set False for EBM with high noise
 
         # Attack parameters
         self.attackGaussianVar = tk.BooleanVar(value=False)
@@ -240,6 +242,12 @@ class ExperimentGUI:
         ttk.Label(noiseFrame, text="WCM Rho:").grid(row=7, column=0, sticky=tk.W, pady=2)
         ttk.Entry(noiseFrame, textvariable=self.wcmRhoVar, width=10).grid(row=7, column=1, sticky=tk.W, padx=10)
         ttk.Label(noiseFrame, text="SCA convex combination parameter").grid(row=7, column=2, sticky=tk.W, padx=10)
+
+        ttk.Separator(noiseFrame, orient='horizontal').grid(row=8, column=0, columnspan=3, sticky='ew', pady=5)
+
+        ttk.Label(noiseFrame, text="Momentum:").grid(row=9, column=0, sticky=tk.W, pady=2)
+        ttk.Entry(noiseFrame, textvariable=self.momentumVar, width=10).grid(row=9, column=1, sticky=tk.W, padx=10)
+        ttk.Label(noiseFrame, text="Use 0.9 for EBM with high noise (σ=0.2)").grid(row=9, column=2, sticky=tk.W, padx=10)
 
     def createAttackTab(self, parent):
         """Create attack configuration tab"""
@@ -416,8 +424,15 @@ class ExperimentGUI:
             self.logMessage(f"  Dataset: {config['dataset']}")
             self.logMessage(f"  Approach: {approachLabels.get(config['approach'], config['approach'])}")
             self.logMessage(f"  Nodes: {config['nNodes']}, Rounds: {config['nRounds']}")
+            lrDecayStr = "decay" if config.get('useLrDecay', True) else "fixed"
+            self.logMessage(f"  Learning Rate: {config['learningRate']} ({lrDecayStr}), Momentum: {config.get('momentum', 0.0)}")
             self.logMessage(f"  Use BASIL: {config['useBasil']}")
             self.logMessage(f"  Use Channel Noise: {config['useChannelNoise']}")
+            if config['useChannelNoise']:
+                self.logMessage(f"  Noise Sigma: {config['channelNoiseSigma']}, Mitigation: {config['noiseMitigation']}")
+                if config['noiseMitigation'] == 'ebm':
+                    scale = 1.0 + config['ebmLambda'] * config['channelNoiseSigma'] ** 2
+                    self.logMessage(f"  EBM Lambda: {config['ebmLambda']} (scale={scale:.2f})")
             self.logMessage("")
 
             # Setup GPU
@@ -467,12 +482,14 @@ class ExperimentGUI:
                     lr0=config['learningRate'],
                     stepsPerEpoch=100,
                     stopCallback=lambda: not self.isRunning,
+                    useLrDecay=True,  # Always use LR decay as per papers
                 )
             else:
                 self.logMessage(f"Starting Ring training for {config['nRounds']} rounds...")
                 self.logMessage("Training Mode: Ring Topology (Sequential) - Paper 001")
                 self.logMessage("-"*80)
 
+                # BASIL paper requires LR decay - always use it for ring topology
                 avgAccHist, worstAccHist = basilRingTrainingWithAttack(
                     nodes=nodes,
                     rounds=config['nRounds'],
@@ -488,6 +505,7 @@ class ExperimentGUI:
                     useSnapshots=config['useBasil'],
                     useSequential=True,  # Paper's Algorithm 1: sequential node processing
                     stopCallback=lambda: not self.isRunning,
+                    useLrDecay=True,  # BASIL paper requires LR decay
                 )
 
             # Check if stopped early
@@ -558,6 +576,7 @@ class ExperimentGUI:
             'wcmLambda': self.wcmLambdaVar.get(),
             'wcmSamples': self.wcmSamplesVar.get(),
             'wcmRho': self.wcmRhoVar.get(),
+            'momentum': self.momentumVar.get(),
             'attackGaussian': self.attackGaussianVar.get(),
             'attackGaussianStart': self.attackGaussianStartVar.get(),
             'attackSignFlip': self.attackSignFlipVar.get(),
@@ -570,6 +589,7 @@ class ExperimentGUI:
             'localEpochs': self.localEpochsVar.get(),
             'learningRate': self.learningRateVar.get(),
             'batchSize': self.batchSizeVar.get(),
+            'useLrDecay': self.useLrDecayVar.get(),
         }
 
     def loadDataset(self, dataset):
@@ -610,6 +630,7 @@ class ExperimentGUI:
                 "sigma": config['channelNoiseSigma'] if config['useChannelNoise'] else 0.0,
                 "lr0": config['learningRate'],
                 "localEpochs": config['localEpochs'],
+                "momentum": config.get('momentum', 0.0),
             }
 
             # Add mitigation-specific parameters
@@ -769,6 +790,7 @@ class ExperimentGUI:
             self.wcmLambdaVar.set(config.get('wcmLambda', 0.1))
             self.wcmSamplesVar.set(config.get('wcmSamples', 5))
             self.wcmRhoVar.set(config.get('wcmRho', 0.5))
+            self.momentumVar.set(config.get('momentum', 0.0))
             self.attackGaussianVar.set(config.get('attackGaussian', False))
             self.attackGaussianStartVar.set(config.get('attackGaussianStart', 0))
             self.attackSignFlipVar.set(config.get('attackSignFlip', False))
@@ -781,6 +803,7 @@ class ExperimentGUI:
             self.localEpochsVar.set(config.get('localEpochs', 1))
             self.learningRateVar.set(config.get('learningRate', 0.05))
             self.batchSizeVar.set(config.get('batchSize', 32))
+            self.useLrDecayVar.set(config.get('useLrDecay', True))
 
             messagebox.showinfo("Success", "Configuration loaded successfully!")
 

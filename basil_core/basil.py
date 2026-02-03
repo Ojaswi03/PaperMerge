@@ -52,6 +52,7 @@ class BasilNode:
         wcmLambda=0.1,
         wcmSamples=5,
         wcmRho=0.5,
+        momentum=0.0,  # Use 0.9 with EBM for high noise (σ=0.2)
         **kwargs,
     ):
         if "lr" in kwargs and kwargs["lr"] is not None:
@@ -69,6 +70,7 @@ class BasilNode:
         self.wcmLambda = float(wcmLambda)
         self.wcmSamples = int(wcmSamples)
         self.wcmRho = float(wcmRho)
+        self.momentum = float(momentum)
 
         # Memory stores models from S counterclockwise neighbors
         # Key: sender node ID, Value: model params (list of numpy arrays)
@@ -90,7 +92,7 @@ class BasilNode:
             oldest = next(iter(self.neighborMemory))
             del self.neighborMemory[oldest]
 
-    def selectBestModel(self):
+    def selectBestModel(self, verbose=False):
         """
         Choose the best model from {current} ∪ {received neighbor models}.
         Selection criterion: minimum local batch loss (Definition 1, Eq 3).
@@ -102,17 +104,25 @@ class BasilNode:
 
         bestParams = currentParams
         bestLoss = currentLoss
+        bestSource = "self"
+
+        allLosses = {"self": currentLoss}
 
         for senderId, params in self.neighborMemory.items():
             # Temporarily set params to evaluate
             setParams(self.model, params)
             loss = evaluateBatchLoss(self.model, self.dataLoader)
+            allLosses[f"node_{senderId}"] = loss
             if loss < bestLoss:
                 bestLoss = loss
                 bestParams = [p.copy() for p in params]
+                bestSource = f"node_{senderId}"
 
         # Restore to best params
         setParams(self.model, bestParams)
+
+        if verbose:
+            print(f"    [Node {self.nodeId}] Losses: {', '.join(f'{k}={v:.4f}' for k,v in allLosses.items())} → selected {bestSource}")
 
     def localTrain(self, lr, stepsPerEpoch=100):
         """Run local SGD update."""
@@ -128,6 +138,7 @@ class BasilNode:
             wcmSamples=self.wcmSamples,
             wcmRho=self.wcmRho,
             stepsPerEpoch=stepsPerEpoch,
+            momentum=self.momentum,
         )
 
 
@@ -147,6 +158,7 @@ def basilRingTrainingWithAttack(
     useSnapshots=True,
     useSequential=True,  # True = paper's sequential, False = parallel (faster but less accurate)
     stopCallback=None,
+    useLrDecay=True,  # Set False for EBM with high noise + momentum
     **kwargs,
 ):
     """
@@ -221,7 +233,8 @@ def basilRingTrainingWithAttack(
         nd.lr0 = float(lr0)
 
     # Learning rate: paper uses lr0 / (1 + lr0 * t) with lr0=0.03
-    lrSched = makeLrScheduler(lr0, alpha=lrAlpha, useBasilSchedule=True)
+    # For EBM with high noise + momentum, use useLrDecay=False for best results
+    lrSched = makeLrScheduler(lr0, alpha=lrAlpha, useBasilSchedule=True, useLrDecay=useLrDecay)
 
     avgAccHist, worstAccHist = [], []
 
@@ -390,6 +403,7 @@ def fedAvgTrainingWithNoise(
     localEpochs=1,
     stepsPerEpoch=100,
     stopCallback=None,
+    useLrDecay=True,  # Set False for EBM with high noise + momentum
     **kwargs,
 ):
     """
@@ -458,7 +472,8 @@ def fedAvgTrainingWithNoise(
         nd.localEpochs = int(localEpochs)
 
     # Learning rate scheduler (paper uses lr0 / (1 + lr0 * t))
-    lrSched = makeLrScheduler(lr0, alpha=lrAlpha, useBasilSchedule=True)
+    # For EBM with high noise + momentum, use useLrDecay=False for best results
+    lrSched = makeLrScheduler(lr0, alpha=lrAlpha, useBasilSchedule=True, useLrDecay=useLrDecay)
 
     avgAccHist, worstAccHist = [], []
 

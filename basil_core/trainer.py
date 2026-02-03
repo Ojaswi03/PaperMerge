@@ -128,9 +128,11 @@ def evaluateAll(nodes, testLoader):
     worst = float(np.min(accs))
     return avg, worst, accs
 
-def makeLrScheduler(lr0, alpha=0.6, minLr=1e-4, useBasilSchedule=True):
+def makeLrScheduler(lr0, alpha=0.6, minLr=1e-4, useBasilSchedule=True, useLrDecay=True):
     """
     Learning rate scheduler.
+
+    If useLrDecay=False: Returns constant lr0 (best for EBM with high noise + momentum)
 
     If useBasilSchedule=True (default): Uses BASIL paper formula (Section V):
         lr_t = lr0 / (1 + lr0 * t)
@@ -139,7 +141,12 @@ def makeLrScheduler(lr0, alpha=0.6, minLr=1e-4, useBasilSchedule=True):
     If useBasilSchedule=False: Polynomial decay:
         lr_t = max(minLr, lr0 * (t+1)^(-alpha))
     """
-    if useBasilSchedule:
+    if not useLrDecay:
+        # Fixed learning rate (no decay)
+        def lr(t):
+            return float(lr0)
+        return lr
+    elif useBasilSchedule:
         def lr(t):
             return float(max(minLr, lr0 / (1.0 + lr0 * t)))
         return lr
@@ -170,6 +177,7 @@ def localUpdate(
     wcmSamples=5,
     wcmRho=0.5,
     stepsPerEpoch=100,
+    momentum=0.0,
 ):
     """
     Local SGD step with support for different noise models:
@@ -180,8 +188,10 @@ def localUpdate(
     - 'wcm': Worst-Case Model with boundary noise sampling and SCA surrogate
 
     Bounded by `stepsPerEpoch` to avoid hangs when dataLoader repeats indefinitely.
+
+    For EBM with high noise (σ=0.2), use momentum=0.9 and lr=0.01 for best results (~70% accuracy).
     """
-    optimizer = tf.keras.optimizers.SGD(learning_rate=lr, momentum=0.0)
+    optimizer = tf.keras.optimizers.SGD(learning_rate=lr, momentum=momentum)
 
     # WCM initialization
     wcmAvailable = False
