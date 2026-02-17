@@ -71,7 +71,7 @@ class ExperimentGUI:
 
         # BASIL parameters
         self.useBasilVar = tk.BooleanVar(value=True)
-        self.basilMemorySizeVar = tk.IntVar(value=10)
+        self.basilMemorySizeVar = tk.IntVar(value=5)  # S = b+1 = 5 for 4 attackers (paper compliant)
 
         # Noisy Channel parameters
         self.useChannelNoiseVar = tk.BooleanVar(value=False)
@@ -92,7 +92,7 @@ class ExperimentGUI:
         self.attackSignFlipStartVar = tk.IntVar(value=0)
         self.attackHiddenVar = tk.BooleanVar(value=False)
         self.attackHiddenStartVar = tk.IntVar(value=10)
-        self.attackerIdsVar = tk.StringVar(value="0,5")
+        self.attackerIdsVar = tk.StringVar(value="0,1,2,3")  # 40% consecutive attackers - breaks BASIL guarantee (S=b not S>b)
 
         # Training parameters
         self.nNodesVar = tk.IntVar(value=10)

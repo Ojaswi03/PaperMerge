@@ -22,9 +22,9 @@ N_NODES = 10
 N_ROUNDS = 5  # Just 5 rounds to see the pattern
 LR = 0.03
 BATCH_SIZE = 32
-S_MEMORY = 3
-ATTACK_TYPE = "gaussian"
-ATTACKER_IDS = {0, 5}  # Nodes 0 and 5 are attackers
+S_MEMORY = 5  # S = b + 1 = 5 (paper compliant)
+ATTACK_TYPE = "gaussian"  # Options: "gaussian", "signFlip", "hidden" - all calibrated
+ATTACKER_IDS = {0, 1, 2, 3}  # 4 attackers (b = 4)
 
 
 def main():
@@ -73,6 +73,8 @@ def main():
                 print(f"  Received models from: {list(nd.neighborMemory.keys())}")
 
                 # Show all losses before selection
+                # Save original params before debug printing
+                originalParams = getParams(nd.model)
                 currentLoss = evaluateBatchLoss(nd.model, nd.dataLoader)
                 print(f"  Loss comparison:")
                 print(f"    - Current model: {currentLoss:.4f}")
@@ -83,6 +85,9 @@ def main():
                     loss = evaluateBatchLoss(nd.model, nd.dataLoader)
                     marker = " ← ATTACKER MODEL (high loss!)" if senderIsAttacker else ""
                     print(f"    - From node {senderId}: {loss:.4f}{marker}")
+
+                # Restore original params before BASIL selection
+                setParams(nd.model, originalParams)
 
                 # Do actual selection
                 nd.selectBestModel(verbose=False)

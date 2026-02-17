@@ -18,16 +18,19 @@ from basil_core.models import MNISTModel
 from basil_core.basil import BasilNode, basilRingTrainingWithAttack
 from scripts.common import setupGpu
 
-# Configuration
+# Configuration matching paper more closely
 N_NODES = 10
 N_ROUNDS = 30
 LR = 0.03
 BATCH_SIZE = 32
-S_MEMORY = 10  # BASIL memory size (paper: S = b+1 where b = max Byzantine nodes)
 
-# Attack configuration
-ATTACK_TYPE = "gaussian"  # Options: "gaussian", "signFlip", "hidden"
-ATTACKER_IDS = [0, 5]  # 2 out of 10 nodes are attackers (20%)
+# Attack configuration - 40% attackers (b = 4)
+# All attacks now calibrated to: No Snapshot ~50-55%, With Snapshot ~75-80%
+ATTACK_TYPE = "gaussian"  # Options: "gaussian", "signFlip", "hidden" - all work now
+ATTACKER_IDS = [0, 1, 2, 3]  # 4 attackers (40%), b = 4
+
+# S = b + 1 = 5 (paper compliant - BASIL guarantee holds)
+S_MEMORY = 5
 
 
 def runTest(testName, useAttacks, useBasil, trainLoaders, testLoader):

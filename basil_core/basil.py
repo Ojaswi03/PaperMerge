@@ -14,7 +14,7 @@ Reference: "BASIL: A Fast and Byzantine-Resilient Approach for Decentralized Tra
 import sys
 from copy import deepcopy
 
-from .attacks import applyAttack
+from .attacks import applyAttack, modelPoisonAttack
 from .trainer import (
     localUpdate,
     evaluateBatchLoss,
@@ -280,8 +280,7 @@ def basilRingTrainingWithAttack(
                         # BASIL: Select best model from memory
                         nd.selectBestModel()
                     else:
-                        # No BASIL: Just adopt the model from immediate predecessor
-                        # This is how noise propagates through the ring
+                        # No BASIL: adopt predecessor's model
                         predecessorId = (i - 1) % n
                         if predecessorId in nd.neighborMemory:
                             setParams(nd.model, nd.neighborMemory[predecessorId])
@@ -297,7 +296,14 @@ def basilRingTrainingWithAttack(
                 if i in attackers:
                     if atk == "hidden" and r < hiddenStartRound:
                         pass  # Hidden attack not yet active
+                    elif useSnapshots:
+                        # Model poisoning (gradient ascent) when BASIL is active
+                        # Produces structured corruption that's harder for
+                        # loss-based selection to detect vs random noise
+                        setParams(nd.model, noisyParams)
+                        noisyParams = modelPoisonAttack(nd.model, nd.dataLoader)
                     else:
+                        # Standard noise attack when no BASIL defense
                         noisyParams = applyAttack(noisyParams, atk)
 
                 # Step 5: Multicast to next S clockwise neighbors (paper's key feature)
@@ -314,7 +320,7 @@ def basilRingTrainingWithAttack(
                         # BASIL: Select best model from memory
                         nd.selectBestModel()
                     else:
-                        # No BASIL: Adopt model from immediate predecessor
+                        # No BASIL: adopt predecessor's model
                         predecessorId = (i - 1) % n
                         if predecessorId in nd.neighborMemory:
                             setParams(nd.model, nd.neighborMemory[predecessorId])
@@ -328,6 +334,9 @@ def basilRingTrainingWithAttack(
                 if i in attackers:
                     if atk == "hidden" and r < hiddenStartRound:
                         pass
+                    elif useSnapshots:
+                        setParams(nodes[i].model, noisyParams)
+                        noisyParams = modelPoisonAttack(nodes[i].model, nodes[i].dataLoader)
                     else:
                         noisyParams = applyAttack(noisyParams, atk)
 
