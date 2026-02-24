@@ -11,8 +11,10 @@ import os
 import sys
 import json
 import glob
+import itertools
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.cm as cm
 
 # ============================================================================
 # CONFIGURATION - EDIT THESE TO CUSTOMIZE YOUR PLOTS
@@ -36,12 +38,27 @@ if __package__ in (None, ''):
 
 # Style configuration
 plt.style.use('seaborn-v0_8-darkgrid')
-COLORS_LIST = [
-    '#2E86AB', '#A23B72', '#E63946', '#457B9D',
-    '#6A994E', '#F18F01', '#C73E1D', '#A8DADC',
-]
 
-MARKERS_LIST = ['o', 's', '^', 'D', 'v', 'P', 'X', '*']
+# All distinct matplotlib markers
+_ALL_MARKERS = ['o', 's', '^', 'D', 'v', 'P', 'X', '*', 'h', '<', '>', 'p', 'H', '8', '+', 'x', '1', '2', '3', '4']
+
+
+def getColors(n):
+    """Generate n visually distinct colors dynamically using matplotlib colormaps."""
+    if n <= 0:
+        return []
+    if n <= 10:
+        cmap = cm.get_cmap('tab10', n)
+    elif n <= 20:
+        cmap = cm.get_cmap('tab20', n)
+    else:
+        cmap = cm.get_cmap('hsv', n)
+    return [cmap(i) for i in range(n)]
+
+
+def getMarkers(n):
+    """Return n markers, cycling through all available distinct markers."""
+    return [m for _, m in zip(range(n), itertools.cycle(_ALL_MARKERS))]
 
 
 def discoverDatasets():
@@ -185,6 +202,9 @@ def plotDatasetExperiments(dataset, experiments, metric='avg'):
 
     fig, ax = plt.subplots(figsize=(12, 6))
 
+    colors = getColors(len(experiments))
+    markers = getMarkers(len(experiments))
+
     for idx, exp in enumerate(experiments):
         accPath = exp['avgPath'] if metric == 'avg' else exp['worstPath']
         if not os.path.exists(accPath):
@@ -193,13 +213,10 @@ def plotDatasetExperiments(dataset, experiments, metric='avg'):
         acc = np.load(accPath)
         rounds = np.arange(len(acc))
 
-        color = COLORS_LIST[idx % len(COLORS_LIST)]
-        marker = MARKERS_LIST[idx % len(MARKERS_LIST)]
-
         ax.plot(rounds, acc,
                 label=exp['label'],
-                color=color, linewidth=2.5,
-                marker=marker, markersize=5,
+                color=colors[idx], linewidth=2.5,
+                marker=markers[idx], markersize=5,
                 markevery=max(1, len(rounds) // 10))
 
     title = datasetTitles.get(dataset, dataset.upper())
@@ -248,6 +265,9 @@ def plotDatasetGrid(dataset, experiments, metric='avg'):
     fig.suptitle(f'GUI Experiments on {title} - {metricLabel}',
                  fontsize=16, fontweight='bold')
 
+    colors = getColors(len(experiments))
+    markers = getMarkers(len(experiments))
+
     for idx, exp in enumerate(experiments):
         ax = axes[idx]
         accPath = exp['avgPath'] if metric == 'avg' else exp['worstPath']
@@ -257,9 +277,8 @@ def plotDatasetGrid(dataset, experiments, metric='avg'):
         acc = np.load(accPath)
         rounds = np.arange(len(acc))
 
-        color = COLORS_LIST[idx % len(COLORS_LIST)]
-
-        ax.plot(rounds, acc, color=color, linewidth=2.5)
+        ax.plot(rounds, acc, color=colors[idx], linewidth=2.5,
+                marker=markers[idx], markersize=4, markevery=1)
         ax.set_xlabel('Round', fontsize=10)
         ax.set_ylabel(metricLabel, fontsize=10)
         ax.set_title(exp['label'], fontsize=10, fontweight='bold')
@@ -313,7 +332,7 @@ def plotFinalAccuracyBar(dataset, experiments, metric='avg'):
 
     fig, ax = plt.subplots(figsize=(max(8, len(labels) * 2), 6))
 
-    colors = [COLORS_LIST[i % len(COLORS_LIST)] for i in range(len(labels))]
+    colors = getColors(len(labels))
     bars = ax.bar(range(len(labels)), finalAccs, color=colors, width=0.6)
 
     # Add value labels on bars

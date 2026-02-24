@@ -36,7 +36,7 @@ from basil_core.models import MNISTModel, CIFARModel, NMNISTModel
 from basil_core.basil import BasilNode, basilRingTrainingWithAttack, fedAvgTrainingWithNoise
 from basil_core.trainer import evaluateAll
 from scripts.common import setupGpu
-from plotGui import discoverDatasets, discoverExperiments, COLORS_LIST, MARKERS_LIST
+from plotGui import discoverDatasets, discoverExperiments, getColors, getMarkers
 
 
 class ExperimentGUI:
@@ -837,23 +837,27 @@ class ExperimentGUI:
                     metricLabel = "Average Accuracy" if metric == 'avg' else "Worst-Node Accuracy"
 
                     # 1. Overlay plot (all experiments on one chart)
-                    fig, ax = plt.subplots(figsize=(14, 7))
+                    # Figure is wider to give legend 1/4 of total width
+                    fig, ax = plt.subplots(figsize=(22, 10))
+                    colors = getColors(len(experiments))
+                    markers = getMarkers(len(experiments))
                     for idx, exp in enumerate(experiments):
                         accPath = exp['avgPath'] if metric == 'avg' else exp['worstPath']
                         if os.path.exists(accPath):
                             acc = np.load(accPath)
                             rounds = np.arange(len(acc))
-                            color = COLORS_LIST[idx % len(COLORS_LIST)]
                             ax.plot(rounds, acc, label=exp['label'],
-                                   color=color, linewidth=2.5)
+                                   color=colors[idx], linewidth=2.5,
+                                   marker=markers[idx], markersize=4, markevery=1)
 
-                    ax.set_xlabel('Training Round', fontsize=12)
-                    ax.set_ylabel(metricLabel, fontsize=12)
-                    ax.set_title(f'{dataset.upper()} - {metricLabel}', fontsize=14, fontweight='bold')
-                    ax.legend(fontsize=8, loc='lower right', bbox_to_anchor=(1.0, 0.0))
+                    ax.set_xlabel('Training Round', fontsize=13)
+                    ax.set_ylabel(metricLabel, fontsize=13)
+                    ax.set_title(f'{dataset.upper()} - {metricLabel}', fontsize=15, fontweight='bold')
+                    ax.legend(fontsize=12, loc='lower left', bbox_to_anchor=(1.01, 0.0), borderaxespad=0)
                     ax.grid(True, alpha=0.3)
                     ax.set_ylim([0, 1])
-                    plt.tight_layout()
+                    # Plot takes 75% of figure width, legend sits in remaining 25%
+                    fig.subplots_adjust(left=0.06, right=0.75, top=0.92, bottom=0.09)
 
                     savePath = f"plots/images/gui/{dataset}_experiments_{metric}.png"
                     os.makedirs(os.path.dirname(savePath), exist_ok=True)
@@ -874,14 +878,16 @@ class ExperimentGUI:
                     fig.suptitle(f'{dataset.upper()} - {metricLabel} (Individual Runs)',
                                 fontsize=16, fontweight='bold')
 
+                    gridColors = getColors(len(experiments))
+                    gridMarkers = getMarkers(len(experiments))
                     for idx, exp in enumerate(experiments):
                         ax = axes[idx]
                         accPath = exp['avgPath'] if metric == 'avg' else exp['worstPath']
                         if os.path.exists(accPath):
                             acc = np.load(accPath)
                             rounds = np.arange(len(acc))
-                            color = COLORS_LIST[idx % len(COLORS_LIST)]
-                            ax.plot(rounds, acc, color=color, linewidth=2.5)
+                            ax.plot(rounds, acc, color=gridColors[idx], linewidth=2.5,
+                                    marker=gridMarkers[idx], markersize=4, markevery=1)
                             ax.set_xlabel('Round', fontsize=10)
                             ax.set_ylabel(metricLabel, fontsize=10)
                             # Wrap long titles
@@ -919,8 +925,8 @@ class ExperimentGUI:
                             finalAccs.append(acc[-1] if len(acc) > 0 else 0)
 
                     if labels:
-                        colors = [COLORS_LIST[i % len(COLORS_LIST)] for i in range(len(labels))]
-                        bars = ax.bar(range(len(labels)), finalAccs, color=colors, width=0.6)
+                        barColors = getColors(len(labels))
+                        bars = ax.bar(range(len(labels)), finalAccs, color=barColors, width=0.6)
                         for bar, acc in zip(bars, finalAccs):
                             ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.01,
                                    f'{acc:.3f}', ha='center', va='bottom', fontsize=10, fontweight='bold')

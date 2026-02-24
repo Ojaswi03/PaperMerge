@@ -260,7 +260,7 @@ def basilRingTrainingWithAttack(
             noiseStatus = f" channel_noise(sigma={sigma}){' +' + mitigationStr if mitigationStr else ''}"
         else:
             noiseStatus = f"{mitigationStr}" if mitigationStr else " clean"
-        print(f"[round {r}] lr={lr:.6f}{noiseStatus} training...", flush=True)
+        print(f"[round {r}] lr={lr:.6f}{noiseStatus}...", flush=True)
 
         # Determine current attack type (cycle through list)
         atk = attackTypes[r % len(attackTypes)]
