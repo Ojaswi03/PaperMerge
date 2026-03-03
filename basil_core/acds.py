@@ -2,17 +2,20 @@ import numpy as np
 import random
 
 def split_sensitive_non_sensitive(dataset, alpha=0.05, seed=42):
-    """
-    Split dataset indices into (non_sensitive, sensitive) with ratio alpha on sensitive.
-    Returns: non_sensitive_indices, sensitive_indices
-    """
+    """Split dataset into sensitive and non-sensitive parts based on alpha."""
     random.seed(seed)
+    # For simplicity, we assume dataset is indexable and has a length.
     total_len = len(dataset)
+    # Create a list of indices and shuffle it to randomize the split.
     indices = list(range(total_len))
     random.shuffle(indices)
+    # Determine the split point based on alpha.
     split_point = int(alpha * total_len)
+    # The first 'split_point' indices are considered sensitive, the rest non-sensitive.
     sensitive = indices[:split_point]
+    # The remaining indices are non-sensitive.
     non_sensitive = indices[split_point:]
+    # Return the two lists of indices.
     return non_sensitive, sensitive
 
 def partition_batches(non_sensitive_indices, H):
@@ -25,10 +28,15 @@ def partition_batches(non_sensitive_indices, H):
     rem = n - base * H
     batches = []
     start = 0
+    # Distribute the remainder among the first 'rem' batches.
     for i in range(H):
+        # Add one more index to the first 'rem' batches to account for any leftover indices.
         add = 1 if i < rem else 0
+        # Calculate the end index for the current batch.
         end = start + base + add
+        # Append the current batch of indices to the list of batches.
         batches.append(non_sensitive_indices[start:end])
+        # Update the start index for the next batch.
         start = end
     return batches
 

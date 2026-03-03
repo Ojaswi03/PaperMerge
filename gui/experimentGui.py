@@ -315,6 +315,9 @@ class ExperimentGUI:
         self.runButton = ttk.Button(buttonFrame, text="Run Experiment", command=self.runExperiment, style='Accent.TButton')
         self.runButton.pack(side=tk.LEFT, padx=5)
 
+        self.runAllButton = ttk.Button(buttonFrame, text="Run All Configs", command=self.runAll)
+        self.runAllButton.pack(side=tk.LEFT, padx=5)
+
         self.stopButton = ttk.Button(buttonFrame, text="Stop", command=self.stopExperiment, state=tk.DISABLED)
         self.stopButton.pack(side=tk.LEFT, padx=5)
 
@@ -407,141 +410,217 @@ class ExperimentGUI:
     def runExperimentThread(self):
         """The actual experiment execution (runs in separate thread)"""
         try:
-            self.logMessage("="*80)
-            self.logMessage("STARTING EXPERIMENT")
-            self.logMessage("="*80)
-            self.logMessage(f"Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-            self.logMessage("")
-
-            # Get configuration
             config = self.getConfig()
-            approachLabels = {
-                'basil': 'BASIL Only (Ring Topology - Paper 001)',
-                'noisy': 'Noisy Channel Only (FedAvg - Paper 002)',
-                'merged': 'Merged (Ring + EBM/WCM)'
-            }
-            self.logMessage("Configuration:")
-            self.logMessage(f"  Dataset: {config['dataset']}")
-            self.logMessage(f"  Approach: {approachLabels.get(config['approach'], config['approach'])}")
-            self.logMessage(f"  Nodes: {config['nNodes']}, Rounds: {config['nRounds']}")
-            lrDecayStr = "decay" if config.get('useLrDecay', True) else "fixed"
-            self.logMessage(f"  Learning Rate: {config['learningRate']} ({lrDecayStr}), Momentum: {config.get('momentum', 0.0)}")
-            self.logMessage(f"  Use BASIL: {config['useBasil']}")
-            self.logMessage(f"  Use Channel Noise: {config['useChannelNoise']}")
-            if config['useChannelNoise']:
-                self.logMessage(f"  Noise Sigma: {config['channelNoiseSigma']}, Mitigation: {config['noiseMitigation']}")
-                if config['noiseMitigation'] == 'ebm':
-                    scale = 1.0 + config['ebmLambda'] * config['channelNoiseSigma'] ** 2
-                    self.logMessage(f"  EBM Lambda: {config['ebmLambda']} (scale={scale:.2f})")
-            self.logMessage("")
-
-            # Setup GPU
-            self.logMessage("Setting up GPU/CPU...")
-            setupGpu()
-            self.logMessage("")
-
-            # Load data
-            self.logMessage(f"Loading {config['dataset'].upper()} dataset...")
-            train, test = self.loadDataset(config['dataset'])
-            trainLoaders, testLoader = self.makeLoaders(config['dataset'], train, test, config['batchSize'], config['nNodes'])
-            self.logMessage(f"  Training samples: {len(train)}")
-            self.logMessage(f"  Test samples: {len(test)}")
-            self.logMessage("")
-
-            # Create nodes
-            self.logMessage(f"Creating {config['nNodes']} nodes...")
-            nodes = self.createNodes(config, trainLoaders)
-            self.logMessage("")
-
-            # Prepare attacks
-            attackTypes, attackerIds = self.prepareAttacks(config)
-            self.logMessage(f"Attack configuration:")
-            self.logMessage(f"  Attackers: {attackerIds if attackerIds else 'None'}")
-            self.logMessage(f"  Attack types: {attackTypes}")
-            self.logMessage("")
-
-            # Run training
-            # Choose training function based on approach:
-            # - "noisy" (Noisy Channel Only): Use FedAvg (paper 002's system model)
-            # - "basil" or "merged": Use Ring topology (paper 001's algorithm)
-            if config['approach'] == 'noisy':
-                self.logMessage(f"Starting FedAvg training for {config['nRounds']} rounds...")
-                self.logMessage("Training Mode: FedAvg (Parallel + Averaging) - Paper 002")
-                self.logMessage("-"*80)
-
-                avgAccHist, worstAccHist = fedAvgTrainingWithNoise(
-                    nodes=nodes,
-                    rounds=config['nRounds'],
-                    testLoader=testLoader,
-                    attackTypes=attackTypes,
-                    attackerIds=attackerIds,
-                    hiddenStartRound=config['attackHiddenStart'] if config['attackHidden'] else 999,
-                    sigma=config['channelNoiseSigma'] if config['useChannelNoise'] else 0.0,
-                    noiseModel=self.getNoiseModel(config),
-                    channelNoiseStart=config['channelNoiseStart'] if config['useChannelNoise'] else 0,
-                    lr0=config['learningRate'],
-                    stepsPerEpoch=100,
-                    stopCallback=lambda: not self.isRunning,
-                    useLrDecay=True,  # Always use LR decay as per papers
-                )
-            else:
-                self.logMessage(f"Starting Ring training for {config['nRounds']} rounds...")
-                self.logMessage("Training Mode: Ring Topology (Sequential) - Paper 001")
-                self.logMessage("-"*80)
-
-                # BASIL paper requires LR decay - always use it for ring topology
-                avgAccHist, worstAccHist = basilRingTrainingWithAttack(
-                    nodes=nodes,
-                    rounds=config['nRounds'],
-                    testLoader=testLoader,
-                    attackTypes=attackTypes,
-                    attackerIds=attackerIds,
-                    hiddenStartRound=config['attackHiddenStart'] if config['attackHidden'] else 999,
-                    sigma=config['channelNoiseSigma'] if config['useChannelNoise'] else 0.0,
-                    noiseModel=self.getNoiseModel(config),
-                    channelNoiseStart=config['channelNoiseStart'] if config['useChannelNoise'] else 0,
-                    lr0=config['learningRate'],
-                    stepsPerEpoch=100,
-                    useSnapshots=config['useBasil'],
-                    useSequential=True,  # Paper's Algorithm 1: sequential node processing
-                    stopCallback=lambda: not self.isRunning,
-                    useLrDecay=True,  # BASIL paper requires LR decay
-                )
-
-            # Check if stopped early
-            if not self.isRunning:
-                self.logMessage("")
-                self.logMessage("="*80)
-                self.logMessage("EXPERIMENT STOPPED BY USER")
-                self.logMessage("="*80)
-
-            # Final evaluation
-            self.logMessage("")
-            self.logMessage("="*80)
-            finalAvg, finalWorst, allAccs = evaluateAll(nodes, testLoader)
-            self.logMessage(f"FINAL RESULTS:")
-            self.logMessage(f"  Average Accuracy: {finalAvg:.4f}")
-            self.logMessage(f"  Worst Node Accuracy: {finalWorst:.4f}")
-            self.logMessage(f"  Per-node accuracies: {[f'{acc:.4f}' for acc in allAccs]}")
-            self.logMessage("="*80)
-
-            # Save results (even if stopped early)
-            self.saveResults(config, avgAccHist, worstAccHist, finalAvg, finalWorst)
-
-            if not self.isRunning:
-                self.logMessage("\nExperiment stopped early but partial results saved.")
-            else:
-                self.logMessage("\nExperiment completed successfully!")
-
+            self._executeExperiment(config)
         except Exception as e:
             self.logMessage(f"\nERROR: {str(e)}")
             self.logMessage(traceback.format_exc())
-
         finally:
-            # Re-enable run button
             self.runButton.config(state=tk.NORMAL)
+            self.runAllButton.config(state=tk.NORMAL)
             self.stopButton.config(state=tk.DISABLED)
             self.isRunning = False
+
+    def runAll(self):
+        """Run all config files in gui/configs/ sequentially"""
+        if self.isRunning:
+            messagebox.showwarning("Warning", "An experiment is already running!")
+            return
+
+        configDir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "configs")
+        configFiles = sorted([
+            os.path.join(configDir, f)
+            for f in os.listdir(configDir)
+            if f.endswith('.json')
+        ])
+
+        if not configFiles:
+            messagebox.showwarning("No Configs", "No config files found in gui/configs/")
+            return
+
+        fileList = "\n".join(f"  {i+1}. {os.path.basename(f)}" for i, f in enumerate(configFiles))
+        response = messagebox.askyesno(
+            "Run All Configs",
+            f"Found {len(configFiles)} config files. Run all sequentially?\n\n{fileList}"
+        )
+        if not response:
+            return
+
+        self.runButton.config(state=tk.DISABLED)
+        self.runAllButton.config(state=tk.DISABLED)
+        self.stopButton.config(state=tk.NORMAL)
+        self.isRunning = True
+        self.clearOutput()
+
+        self.currentThread = threading.Thread(target=self.runAllThread, args=(configFiles,))
+        self.currentThread.start()
+
+    def runAllThread(self, configFiles):
+        """Run all config files sequentially in a background thread"""
+        total = len(configFiles)
+        completed = 0
+        try:
+            self.logMessage("="*80)
+            self.logMessage(f"RUN ALL: {total} experiments queued")
+            self.logMessage("="*80)
+            self.logMessage("")
+
+            for idx, filepath in enumerate(configFiles, 1):
+                if not self.isRunning:
+                    self.logMessage("\n[STOPPED] Run All cancelled by user.")
+                    break
+
+                self.logMessage("="*80)
+                self.logMessage(f"[{idx}/{total}] {os.path.basename(filepath)}")
+                self.logMessage("="*80)
+
+                with open(filepath, 'r') as f:
+                    config = json.load(f)
+
+                self._executeExperiment(config)
+                completed += 1
+
+                if not self.isRunning:
+                    break
+
+                self.logMessage(f"\n[{idx}/{total}] Done.\n")
+
+            self.logMessage("")
+            self.logMessage("="*80)
+            self.logMessage(f"RUN ALL FINISHED: {completed}/{total} experiments completed.")
+            self.logMessage("="*80)
+
+        except Exception as e:
+            self.logMessage(f"\nRUN ALL ERROR: {str(e)}")
+            self.logMessage(traceback.format_exc())
+        finally:
+            self.runButton.config(state=tk.NORMAL)
+            self.runAllButton.config(state=tk.NORMAL)
+            self.stopButton.config(state=tk.DISABLED)
+            self.isRunning = False
+
+    def _executeExperiment(self, config):
+        """Core experiment logic shared by Run Experiment and Run All"""
+        self.logMessage("="*80)
+        self.logMessage("STARTING EXPERIMENT")
+        self.logMessage("="*80)
+        self.logMessage(f"Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        self.logMessage("")
+
+        approachLabels = {
+            'basil': 'BASIL Only (Ring Topology - Paper 001)',
+            'noisy': 'Noisy Channel Only (FedAvg - Paper 002)',
+            'merged': 'Merged (Ring + EBM/WCM)'
+        }
+        self.logMessage("Configuration:")
+        self.logMessage(f"  Experiment: {config.get('experimentName', '(unnamed)')}")
+        self.logMessage(f"  Dataset: {config['dataset']}")
+        self.logMessage(f"  Approach: {approachLabels.get(config['approach'], config['approach'])}")
+        self.logMessage(f"  Nodes: {config['nNodes']}, Rounds: {config['nRounds']}")
+        lrDecayStr = "decay" if config.get('useLrDecay', True) else "fixed"
+        self.logMessage(f"  Learning Rate: {config['learningRate']} ({lrDecayStr}), Momentum: {config.get('momentum', 0.0)}")
+        self.logMessage(f"  Use BASIL: {config['useBasil']}")
+        self.logMessage(f"  Use Channel Noise: {config['useChannelNoise']}")
+        if config['useChannelNoise']:
+            self.logMessage(f"  Noise Sigma: {config['channelNoiseSigma']}, Mitigation: {config['noiseMitigation']}")
+            if config['noiseMitigation'] == 'ebm':
+                scale = 1.0 + config['ebmLambda'] * config['channelNoiseSigma'] ** 2
+                self.logMessage(f"  EBM Lambda: {config['ebmLambda']} (scale={scale:.2f})")
+        self.logMessage("")
+
+        # Setup GPU
+        self.logMessage("Setting up GPU/CPU...")
+        setupGpu()
+        self.logMessage("")
+
+        # Load data
+        self.logMessage(f"Loading {config['dataset'].upper()} dataset...")
+        train, test = self.loadDataset(config['dataset'])
+        trainLoaders, testLoader = self.makeLoaders(config['dataset'], train, test, config['batchSize'], config['nNodes'])
+        self.logMessage(f"  Training samples: {len(train)}")
+        self.logMessage(f"  Test samples: {len(test)}")
+        self.logMessage("")
+
+        # Create nodes
+        self.logMessage(f"Creating {config['nNodes']} nodes...")
+        nodes = self.createNodes(config, trainLoaders)
+        self.logMessage("")
+
+        # Prepare attacks
+        attackTypes, attackerIds = self.prepareAttacks(config)
+        self.logMessage(f"Attack configuration:")
+        self.logMessage(f"  Attackers: {attackerIds if attackerIds else 'None'}")
+        self.logMessage(f"  Attack types: {attackTypes}")
+        self.logMessage("")
+
+        # Run training
+        if config['approach'] == 'noisy':
+            self.logMessage(f"Starting FedAvg training for {config['nRounds']} rounds...")
+            self.logMessage("Training Mode: FedAvg (Parallel + Averaging) - Paper 002")
+            self.logMessage("-"*80)
+
+            avgAccHist, worstAccHist = fedAvgTrainingWithNoise(
+                nodes=nodes,
+                rounds=config['nRounds'],
+                testLoader=testLoader,
+                attackTypes=attackTypes,
+                attackerIds=attackerIds,
+                hiddenStartRound=config['attackHiddenStart'] if config['attackHidden'] else 999,
+                sigma=config['channelNoiseSigma'] if config['useChannelNoise'] else 0.0,
+                noiseModel=self.getNoiseModel(config),
+                channelNoiseStart=config['channelNoiseStart'] if config['useChannelNoise'] else 0,
+                lr0=config['learningRate'],
+                stepsPerEpoch=100,
+                stopCallback=lambda: not self.isRunning,
+                useLrDecay=True,
+            )
+        else:
+            self.logMessage(f"Starting Ring training for {config['nRounds']} rounds...")
+            self.logMessage("Training Mode: Ring Topology (Sequential) - Paper 001")
+            self.logMessage("-"*80)
+
+            avgAccHist, worstAccHist = basilRingTrainingWithAttack(
+                nodes=nodes,
+                rounds=config['nRounds'],
+                testLoader=testLoader,
+                attackTypes=attackTypes,
+                attackerIds=attackerIds,
+                hiddenStartRound=config['attackHiddenStart'] if config['attackHidden'] else 999,
+                sigma=config['channelNoiseSigma'] if config['useChannelNoise'] else 0.0,
+                noiseModel=self.getNoiseModel(config),
+                channelNoiseStart=config['channelNoiseStart'] if config['useChannelNoise'] else 0,
+                lr0=config['learningRate'],
+                stepsPerEpoch=100,
+                useSnapshots=config['useBasil'],
+                useSequential=True,
+                stopCallback=lambda: not self.isRunning,
+                useLrDecay=True,
+            )
+
+        # Check if stopped early
+        if not self.isRunning:
+            self.logMessage("")
+            self.logMessage("="*80)
+            self.logMessage("EXPERIMENT STOPPED BY USER")
+            self.logMessage("="*80)
+
+        # Final evaluation
+        self.logMessage("")
+        self.logMessage("="*80)
+        finalAvg, finalWorst, allAccs = evaluateAll(nodes, testLoader)
+        self.logMessage(f"FINAL RESULTS:")
+        self.logMessage(f"  Average Accuracy: {finalAvg:.4f}")
+        self.logMessage(f"  Worst Node Accuracy: {finalWorst:.4f}")
+        self.logMessage(f"  Per-node accuracies: {[f'{acc:.4f}' for acc in allAccs]}")
+        self.logMessage("="*80)
+
+        # Save results
+        self.saveResults(config, avgAccHist, worstAccHist, finalAvg, finalWorst)
+
+        if not self.isRunning:
+            self.logMessage("\nExperiment stopped early but partial results saved.")
+        else:
+            self.logMessage("\nExperiment completed successfully!")
 
     def validateConfig(self):
         """Validate configuration before running"""
@@ -731,10 +810,7 @@ class ExperimentGUI:
         # Use experiment name as default filename, fallback to timestamp
         expName = config.get('experimentName', '').strip()
         if expName:
-            # Sanitize experiment name for filename (replace spaces and special chars)
-            sanitized = re.sub(r'[^\w\s-]', '', expName)  # Remove special chars except - and space
-            sanitized = re.sub(r'\s+', '_', sanitized)    # Replace spaces with underscores
-            defaultName = sanitized
+            defaultName = expName
         else:
             defaultName = f"config_{config['dataset']}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
 
