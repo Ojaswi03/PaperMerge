@@ -15,13 +15,7 @@ except ImportError:
 
 
 def loadNMnist():
-    """
-    Load Neuromorphic MNIST (N-MNIST) dataset.
-    Converts event-based data to frame representation for compatibility.
-
-    Returns:
-        (trainList, testList): tuple of lists of (x, y) tuples
-    """
+    # attempt to load real N-MNIST via tonic, fall back to simulated data
     xTrain, yTrain, xTest, yTest = None, None, None, None
 
     # Try to use tonic library for N-MNIST
@@ -88,7 +82,6 @@ def loadNMnist():
         # Add Poisson noise to simulate event-based sensor
         # This is a simplified approximation for testing purposes
         def addEventNoise(images, scale=10.0):
-            """Simulate event-based sensor with Poisson-distributed spike counts"""
             # Scale up intensities
             scaled = images.astype("float32") * scale
             # Add Poisson noise
@@ -107,21 +100,6 @@ def loadNMnist():
 
 
 def makeLoaders(train, test, batchSize=32, iid=True, nClients=10):
-    """
-    Convert list-of-tuples dataset into:
-    - trainLoaders: list of per-client batches
-    - testLoader: one shared test loader list
-
-    Args:
-        train: list of (x, y) tuples for training
-        test: list of (x, y) tuples for testing
-        batchSize: batch size for mini-batches
-        iid: whether to use IID split (currently only IID supported)
-        nClients: number of clients to split data across
-
-    Returns:
-        (trainLoaders, testLoader): tuple of lists
-    """
     # Simple IID split into nClients chunks
     idx = np.arange(len(train))
     np.random.shuffle(idx)

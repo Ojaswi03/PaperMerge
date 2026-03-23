@@ -10,9 +10,7 @@ Attack implementations calibrated for:
 
 
 def gaussianAttack(weights, mean=0.0, std=0.8, blend=0.55):
-    """
-    Gaussian noise attack - blend original weights with scaled noise.
-    """
+    # blend original weights with scaled Gaussian noise per layer
     out = []
     for w in weights:
         weight_std = max(np.std(w), 0.01)
@@ -23,9 +21,7 @@ def gaussianAttack(weights, mean=0.0, std=0.8, blend=0.55):
 
 
 def signFlipAttack(weights, flipProb=0.38):
-    """
-    Sign flip attack - flip signs of individual weights.
-    """
+    # randomly flip the sign of individual weight values
     out = []
     for w in weights:
         mask = np.random.random(w.shape) < flipProb
@@ -35,9 +31,7 @@ def signFlipAttack(weights, flipProb=0.38):
 
 
 def hiddenAttack(weights, maliciousWeights=None, blendRatio=0.55, attackStrength=1.4):
-    """
-    Hidden attack - push weights in wrong direction.
-    """
+    # blend honest weights toward a malicious direction
     out = []
     for idx, w in enumerate(weights):
         if maliciousWeights is not None and idx < len(maliciousWeights):
@@ -52,32 +46,7 @@ def hiddenAttack(weights, maliciousWeights=None, blendRatio=0.55, attackStrength
 
 
 def modelPoisonAttack(model, dataLoader, nSteps=10, poisonLr=0.015, noiseStd=0.01):
-    """
-    Model poisoning via inner maximization (gradient ascent).
-
-    Instead of adding random noise (trivially detected by BASIL's loss check),
-    take gradient ASCENT steps to push the model in the wrong direction while
-    keeping loss close to honest models.
-
-    This produces a model that:
-    - Has loss close to honest models (~0.5-0.8 vs ~0.3) — hard to detect
-    - Pushes optimization in wrong direction — actually damaging
-    - Is structured (not random noise) — realistic attack model
-
-    Parameters:
-    -----------
-    model : tf.keras.Model
-        The attacker's model (already trained honestly)
-    dataLoader : tf.data.Dataset
-        The attacker's local training data
-    nSteps : int
-        Number of gradient ascent steps
-    poisonLr : float
-        Learning rate for gradient ascent (controls damage vs detectability)
-    noiseStd : float
-        Small Gaussian noise added on top (further obfuscates the attack)
-    """
-
+    # run gradient ascent steps to maximize loss (poison the model)
     for step in range(nSteps):
         # Get one batch
         for xBatch, yBatch in dataLoader:
@@ -107,9 +76,7 @@ def modelPoisonAttack(model, dataLoader, nSteps=10, poisonLr=0.015, noiseStd=0.0
 
 
 def applyAttack(weights, attackType, maliciousWeights=None, blendRatio=0.5):
-    """
-    Apply attack to model weights.
-    """
+    # normalize attack type string then dispatch to the right function
     atk = (attackType or "none").lower().replace("-", "_")
 
     if atk == "gaussian":

@@ -49,18 +49,7 @@ MARKERS = {
 
 
 def loadBasilResults(dataset, mode, attack, metric='avg'):
-    """
-    Load BASIL experiment results.
-
-    Args:
-        dataset: 'mnist', 'cifar10', or 'nmnist'
-        mode: 'clean' (no BASIL) or 'basil'
-        attack: 'clean', 'gaussian', 'signFlip', or 'hidden'
-        metric: 'avg' or 'worst'
-
-    Returns:
-        numpy array of accuracy history, or None if file doesn't exist
-    """
+    # build file path and load .npy array, returning None if missing
     resultDir = f"experiments/results/basil/{dataset}"
     filename = f"acc_{mode}_{attack}_{metric}.npy"
     filepath = os.path.join(resultDir, filename)
@@ -75,10 +64,7 @@ def loadBasilResults(dataset, mode, attack, metric='avg'):
 def plotCleanVsBasilByDataset(datasets=['mnist', 'cifar10', 'nmnist'],
                                 attacks=['clean', 'gaussian', 'signFlip', 'hidden'],
                                 metric='avg'):
-    """
-    Plot clean vs BASIL for each dataset.
-    One plot per dataset showing all attacks.
-    """
+    # one 2x2 figure per dataset comparing clean and BASIL under all attacks
     datasetTitles = {
         'mnist': 'MNIST',
         'cifar10': 'CIFAR-10',
@@ -137,10 +123,7 @@ def plotCleanVsBasilByDataset(datasets=['mnist', 'cifar10', 'nmnist'],
 
 def plotBasilComparisonAcrossDatasets(attacks=['clean', 'gaussian', 'signFlip', 'hidden'],
                                        metric='avg'):
-    """
-    Plot BASIL comparison across all datasets.
-    One plot per attack showing all datasets.
-    """
+    # one 2x2 figure across datasets showing BASIL accuracy per attack
     datasets = ['mnist', 'cifar10', 'nmnist']
     datasetLabels = {
         'mnist': 'MNIST',
@@ -191,10 +174,7 @@ def plotBasilComparisonAcrossDatasets(attacks=['clean', 'gaussian', 'signFlip', 
 def plotBasilImpact(datasets=['mnist', 'cifar10', 'nmnist'],
                      attacks=['gaussian', 'signFlip', 'hidden'],
                      metric='avg'):
-    """
-    Plot the impact of BASIL (improvement over clean baseline).
-    Shows percentage improvement for each attack.
-    """
+    # grouped bar chart of BASIL accuracy gain over clean baseline per attack
     datasetLabels = {
         'mnist': 'MNIST',
         'cifar10': 'CIFAR-10',
@@ -252,10 +232,7 @@ def plotBasilImpact(datasets=['mnist', 'cifar10', 'nmnist'],
 
 
 def plotSingleDatasetComparison(dataset='mnist', metric='avg'):
-    """
-    Create a single comprehensive plot for one dataset.
-    Shows clean vs BASIL for all attacks side by side.
-    """
+    # overlay all attacks (clean and BASIL lines) on one figure for one dataset
     attacks = ['clean', 'gaussian', 'signFlip', 'hidden']
     attackLabels = {
         'clean': 'No Attack',
@@ -308,7 +285,7 @@ def plotSingleDatasetComparison(dataset='mnist', metric='avg'):
 
 
 def generateAllBasilPlots():
-    """Generate all BASIL comparison plots."""
+    # run all plot functions for both avg and worst metrics
     print("Generating BASIL comparison plots...")
 
     print("\n1. Clean vs BASIL by dataset (average accuracy)...")

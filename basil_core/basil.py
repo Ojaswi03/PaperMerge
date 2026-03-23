@@ -79,11 +79,7 @@ class BasilNode:
         self.round = 0
 
     def receiveModel(self, senderId, params):
-        """
-        Receive a model from a neighbor and store it.
-        Keep only the S most recent senders (counterclockwise neighbors).
-        Paper: each node stores S latest models from S counterclockwise neighbors.
-        """
+        # store received params under sender ID
         self.neighborMemory[senderId] = [p.copy() for p in params]
         # If we have more than S entries, remove the oldest
         # (oldest = smallest round distance, i.e., farthest counterclockwise)
@@ -93,11 +89,7 @@ class BasilNode:
             del self.neighborMemory[oldest]
 
     def selectBestModel(self, verbose=False):
-        """
-        Choose the best model from {current} ∪ {received neighbor models}.
-        Selection criterion: minimum local batch loss (Definition 1, Eq 3).
-        Sets the model to the best params.
-        """
+        # evaluate own model as the starting candidate
         # Candidates: current model + all received neighbor models
         currentParams = getParams(self.model)
         currentLoss = evaluateBatchLoss(self.model, self.dataLoader)
@@ -125,7 +117,7 @@ class BasilNode:
             print(f"    [Node {self.nodeId}] Losses: {', '.join(f'{k}={v:.4f}' for k,v in allLosses.items())} → selected {bestSource}")
 
     def localTrain(self, lr, stepsPerEpoch=100):
-        """Run local SGD update."""
+        # delegate to trainer.localUpdate with all noise/mitigation settings
         localUpdate(
             self.model,
             self.dataLoader,
@@ -322,11 +314,7 @@ def simpleRingTraining(
     stepsPerEpoch=100,
     stopCallback=None,
 ):
-    """
-    Simple ring training without BASIL features (baseline).
-    Each node trains and sends to single next neighbor.
-    No snapshot selection, no S-neighbor multicast.
-    """
+    # baseline wrapper: no snapshot selection, no S-neighbor multicast
     return basilRingTrainingWithAttack(
         nodes=nodes,
         rounds=rounds,
@@ -367,49 +355,6 @@ def fedAvgTrainingWithNoise(
     useLrDecay=True,  # Set False for EBM with high noise + momentum
     **kwargs,
 ):
-    """
-    FedAvg-style training for Noisy Channel paper (002).
-
-    This implements the paper's system model (Figure 1, Equations 3a/3b):
-    - All nodes train in PARALLEL from the same global model
-    - Models are AVERAGED (Eq 3a: w = Σ D_j × w_j / D)
-    - Channel noise added ONCE after averaging
-    - Averaged noisy model broadcast to all nodes
-
-    This is different from BASIL's ring topology!
-    Use this for testing EBM/WCM in isolation.
-
-    Reference: "Robust Federated Learning with Noisy Communication"
-
-    Parameters:
-    -----------
-    nodes : list of BasilNode
-        All participating nodes (reuses BasilNode for convenience)
-    rounds : int
-        Number of training rounds
-    testLoader : dataset
-        Test dataset for evaluation
-    attackTypes : list of str
-        Attack types for Byzantine nodes
-    attackerIds : set of int
-        Node IDs that are Byzantine attackers
-    sigma : float
-        Channel noise standard deviation
-    noiseModel : str
-        Noise mitigation: "none", "noisy", "ebm", "wcm"
-    channelNoiseStart : int
-        Round at which channel noise begins
-    lr0 : float
-        Initial learning rate
-    localEpochs : int
-        Number of local epochs per round
-    stepsPerEpoch : int
-        Max steps per local epoch
-
-    Returns:
-    --------
-    (avgAccHistory, worstAccHistory)
-    """
     # Backward compatibility
     if isinstance(attackTypes, str):
         attackTypes = [attackTypes]

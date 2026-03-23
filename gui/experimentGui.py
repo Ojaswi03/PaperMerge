@@ -35,7 +35,7 @@ from basil_core.data.nMnist import loadNMnist, makeLoaders as makeNMnistLoaders
 from basil_core.models import MNISTModel, CIFARModel, NMNISTModel
 from basil_core.basil import BasilNode, basilRingTrainingWithAttack, fedAvgTrainingWithNoise
 from basil_core.trainer import evaluateAll
-from scripts.common import setupGpu
+from scripts.common import setupGpu, sendNotification
 from plotGui import discoverDatasets, discoverExperiments, getColors, getMarkers
 
 
@@ -59,7 +59,7 @@ class ExperimentGUI:
         self.root.protocol("WM_DELETE_WINDOW", self.onClosing)
 
     def setupVariables(self):
-        """Initialize all tkinter variables"""
+        # Initialize all tkinter variables
         # Experiment label
         self.experimentNameVar = tk.StringVar(value="")
 
@@ -104,7 +104,7 @@ class ExperimentGUI:
         self.batchSizeVar = tk.IntVar(value=32)
 
     def createUI(self):
-        """Create the user interface"""
+        # build tabbed notebook and bottom button bar
         # Create notebook for tabs
         notebook = ttk.Notebook(self.root)
         notebook.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
@@ -133,7 +133,7 @@ class ExperimentGUI:
         self.createButtons()
 
     def createBasicTab(self, parent):
-        """Create basic configuration tab"""
+        # dataset, approach and core training param widgets
         frame = ttk.LabelFrame(parent, text="Basic Settings", padding=10)
         frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
 
@@ -193,7 +193,7 @@ class ExperimentGUI:
         row += 1
 
     def createAdvancedTab(self, parent):
-        """Create advanced configuration tab"""
+        # BASIL and channel noise config widgets
         frame = ttk.Frame(parent)
         frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
 
@@ -252,7 +252,7 @@ class ExperimentGUI:
         ttk.Label(noiseFrame, text="Use 0.9 for EBM with high noise (σ=0.2)").grid(row=9, column=2, sticky=tk.W, padx=10)
 
     def createAttackTab(self, parent):
-        """Create attack configuration tab"""
+        # per-attack enable/start-round widgets
         frame = ttk.LabelFrame(parent, text="Byzantine Attack Configuration", padding=10)
         frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
 
@@ -311,7 +311,7 @@ class ExperimentGUI:
         row += 1
 
     def createOutputTab(self, parent):
-        """Create output tab with log"""
+        # scrolled text widget for experiment log output
         frame = ttk.Frame(parent)
         frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
 
@@ -321,7 +321,7 @@ class ExperimentGUI:
         self.outputText.pack(fill=tk.BOTH, expand=True)
 
     def createButtons(self):
-        """Create control buttons"""
+        # run/stop/plot/save/load/exit buttons at the bottom of the window
         buttonFrame = ttk.Frame(self.root)
         buttonFrame.pack(fill=tk.X, padx=5, pady=5)
 
@@ -345,7 +345,7 @@ class ExperimentGUI:
         ttk.Button(buttonFrame, text="Exit", command=self.onClosing).pack(side=tk.RIGHT, padx=5)
 
     def onApproachChange(self):
-        """Handle approach selection change"""
+        # sync BASIL/noise checkboxes when the approach radio button changes
         approach = self.approachVar.get()
         if approach == "basil":
             self.useBasilVar.set(True)
@@ -358,17 +358,17 @@ class ExperimentGUI:
             self.useChannelNoiseVar.set(True)
 
     def logMessage(self, message):
-        """Add message to output log"""
+        # append text line to the scrolled output widget
         self.outputText.insert(tk.END, message + "\n")
         self.outputText.see(tk.END)
         self.root.update_idletasks()
 
     def clearOutput(self):
-        """Clear output log"""
+        # delete all text from the output widget
         self.outputText.delete(1.0, tk.END)
 
     def runExperiment(self):
-        """Run the experiment in a separate thread"""
+        # validate config, then launch experiment in a background thread
         if self.isRunning:
             messagebox.showwarning("Warning", "An experiment is already running!")
             return
@@ -390,12 +390,12 @@ class ExperimentGUI:
         self.currentThread.start()
 
     def stopExperiment(self):
-        """Stop the running experiment"""
+        # set flag so training loops can detect and exit
         self.isRunning = False
         self.logMessage("\n[STOP REQUESTED] Stopping experiment...")
 
     def onClosing(self):
-        """Handle window close event"""
+        # prompt before closing if an experiment is active, then destroy window
         if self.isRunning:
             # Ask for confirmation if experiment is running
             response = messagebox.askyesno(
@@ -421,13 +421,16 @@ class ExperimentGUI:
         self.root.destroy()
 
     def runExperimentThread(self):
-        """The actual experiment execution (runs in separate thread)"""
+        # entry point for the background experiment thread
         try:
             config = self.getConfig()
             self._executeExperiment(config)
+            name = config.get("experimentName", "Experiment")
+            sendNotification("Run Complete", f"{name} finished successfully.", priority="high")
         except Exception as e:
             self.logMessage(f"\nERROR: {str(e)}")
             self.logMessage(traceback.format_exc())
+            sendNotification("Run FAILED", str(e), priority="urgent")
         finally:
             self.runButton.config(state=tk.NORMAL)
             self.runAllButton.config(state=tk.NORMAL)
@@ -435,7 +438,7 @@ class ExperimentGUI:
             self.isRunning = False
 
     def runAll(self):
-        """Run all config files in gui/configs/ sequentially"""
+        # scan gui/configs/ for JSON files, confirm, then run each in sequence
         if self.isRunning:
             messagebox.showwarning("Warning", "An experiment is already running!")
             return
@@ -469,7 +472,7 @@ class ExperimentGUI:
         self.currentThread.start()
 
     def runAllThread(self, configFiles):
-        """Run all config files sequentially in a background thread"""
+        # iterate over config files and execute each experiment in order
         total = len(configFiles)
         completed = 0
         try:
@@ -502,10 +505,12 @@ class ExperimentGUI:
             self.logMessage("="*80)
             self.logMessage(f"RUN ALL FINISHED: {completed}/{total} experiments completed.")
             self.logMessage("="*80)
+            sendNotification("Run All Complete", f"{completed}/{total} experiments finished.", priority="high")
 
         except Exception as e:
             self.logMessage(f"\nRUN ALL ERROR: {str(e)}")
             self.logMessage(traceback.format_exc())
+            sendNotification("Run All FAILED", str(e), priority="urgent")
         finally:
             self.runButton.config(state=tk.NORMAL)
             self.runAllButton.config(state=tk.NORMAL)
@@ -513,7 +518,7 @@ class ExperimentGUI:
             self.isRunning = False
 
     def _executeExperiment(self, config):
-        """Core experiment logic shared by Run Experiment and Run All"""
+        # load data, build nodes, run training, evaluate, save results
         self.logMessage("="*80)
         self.logMessage("STARTING EXPERIMENT")
         self.logMessage("="*80)
@@ -542,8 +547,15 @@ class ExperimentGUI:
         self.logMessage("")
 
         # Setup GPU
-        self.logMessage("Setting up GPU/CPU...")
-        setupGpu()
+        deviceInfo = setupGpu()
+        self.logMessage("=" * 40)
+        if deviceInfo["device"] == "CUDA":
+            self.logMessage(f"  DEVICE: CUDA (GPU)")
+            for name in deviceInfo["gpus"]:
+                self.logMessage(f"  GPU: {name}")
+        else:
+            self.logMessage(f"  DEVICE: CPU  (no GPU available)")
+        self.logMessage("=" * 40)
         self.logMessage("")
 
         # Load data
@@ -636,7 +648,7 @@ class ExperimentGUI:
             self.logMessage("\nExperiment completed successfully!")
 
     def validateConfig(self):
-        """Validate configuration before running"""
+        # check required fields have valid values before starting
         try:
             if self.nRoundsVar.get() <= 0:
                 messagebox.showerror("Error", "Number of rounds must be positive")
@@ -653,7 +665,7 @@ class ExperimentGUI:
             return False
 
     def getConfig(self):
-        """Get current configuration as dictionary"""
+        # read all tkinter variables into a plain dict
         return {
             'experimentName': self.experimentNameVar.get(),
             'dataset': self.datasetVar.get(),
@@ -687,7 +699,7 @@ class ExperimentGUI:
         }
 
     def loadDataset(self, dataset):
-        """Load specified dataset"""
+        # delegate to the correct loader function based on dataset name
         if dataset == "mnist":
             return loadMnist()
         elif dataset == "cifar10":
@@ -698,7 +710,7 @@ class ExperimentGUI:
             raise ValueError(f"Unknown dataset: {dataset}")
 
     def makeLoaders(self, dataset, train, test, batchSize, nClients):
-        """Make data loaders for specified dataset"""
+        # route to the matching makeLoaders function for the dataset
         if dataset == "mnist":
             return makeMnistLoaders(train, test, batchSize=batchSize, nClients=nClients)
         elif dataset == "cifar10":
@@ -709,7 +721,7 @@ class ExperimentGUI:
             raise ValueError(f"Unknown dataset: {dataset}")
 
     def createNodes(self, config, trainLoaders):
-        """Create nodes for training"""
+        # instantiate one BasilNode per node ID with config-derived params
         modelClass = self.getModelClass(config['dataset'])
         nodes = []
 
@@ -740,7 +752,7 @@ class ExperimentGUI:
         return nodes
 
     def getModelClass(self, dataset):
-        """Get model class for dataset"""
+        # return the correct model class for the given dataset string
         if dataset == "mnist":
             return MNISTModel
         elif dataset == "cifar10":
@@ -751,7 +763,7 @@ class ExperimentGUI:
             raise ValueError(f"Unknown dataset: {dataset}")
 
     def getNoiseModel(self, config):
-        """Determine noise model based on configuration"""
+        # map noise enable/mitigation flags to the noise model string
         if not config['useChannelNoise']:
             return "none"
         elif config['noiseMitigation'] == 'ebm':
@@ -762,7 +774,7 @@ class ExperimentGUI:
             return "noisy"
 
     def prepareAttacks(self, config):
-        """Prepare attack configuration"""
+        # parse attacker IDs and build ordered list of active attack types
         attackTypes = []
 
         # Parse attacker IDs
@@ -795,7 +807,7 @@ class ExperimentGUI:
         return attackTypes, attackerIds
 
     def saveResults(self, config, avgAccHist, worstAccHist, finalAvg, finalWorst):
-        """Save experiment results"""
+        # write accuracy .npy and config .json under experiments/results/gui/{dataset}/
         dataset = config['dataset']
 
         # Use experiment name as filename, fall back to approach+timestamp
@@ -823,7 +835,7 @@ class ExperimentGUI:
         self.logMessage(f"  {configPath}")
 
     def saveConfig(self):
-        """Save configuration to file with editable name"""
+        # prompt user for filename then write config dict to gui/configs/
         config = self.getConfig()
 
         # Use experiment name as default filename, fallback to timestamp
@@ -857,7 +869,7 @@ class ExperimentGUI:
         messagebox.showinfo("Success", f"Configuration saved to:\n{filepath}")
 
     def loadConfig(self):
-        """Load configuration from file"""
+        # open file dialog then populate all tkinter variables from JSON
         filepath = filedialog.askopenfilename(
             title="Load Configuration",
             initialdir="gui/configs",
@@ -908,7 +920,7 @@ class ExperimentGUI:
             messagebox.showerror("Error", f"Failed to load configuration:\n{str(e)}")
 
     def plotResults(self):
-        """Generate and save plots for all GUI experiments."""
+        # discover result files and generate overlay/grid/bar plots per dataset
         try:
             self.logMessage("\n" + "="*60)
             self.logMessage("GENERATING PLOTS")

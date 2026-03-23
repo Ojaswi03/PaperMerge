@@ -34,7 +34,7 @@ S_MEMORY = 5
 
 
 def runTest(testName, useAttacks, useBasil, trainLoaders, testLoader):
-    """Run a single BASIL test configuration."""
+    # build nodes, run training, return accuracy histories and summary stats
     print(f"\n{'='*60}")
     print(f"TEST: {testName}")
     print(f"  Attacks: {ATTACK_TYPE if useAttacks else 'None'}")

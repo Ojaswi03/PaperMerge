@@ -3,10 +3,7 @@ import torch
 
 @torch.no_grad()
 def add_gaussian_noise_state_dict(state_dict, sigma, device=None):
-    """
-    Return a NEW state_dict with N(0, sigma^2) noise added to floating tensors.
-    Safe to call with sigma <= 0 (returns original).
-    """
+    # return early with original dict if no noise requested
     if not sigma or sigma <= 0:
         return state_dict
     noisy = {k: v.clone() for k, v in state_dict.items()}
@@ -18,10 +15,7 @@ def add_gaussian_noise_state_dict(state_dict, sigma, device=None):
     return noisy
 
 def ebm_grad_norm_sq(loss, model, create_graph=True):
-    """
-    Compute ||∇ loss||^2 over model parameters (trainable).
-    Returns a scalar tensor (0.0 if no grads).
-    """
+    # sum squared gradients over all trainable parameters
     params = [p for p in model.parameters() if p.requires_grad]
     grads = torch.autograd.grad(loss, params,
                                 create_graph=create_graph,

@@ -10,11 +10,6 @@ def loadMnist():
     return (list(zip(xTrain, yTrain)), list(zip(xTest, yTest)))
 
 def makeLoaders(train, test, batchSize=32, iid=True, nClients=10):
-    """
-    Convert list-of-tuples dataset into:
-    - trainLoaders: list of per-client batches
-    - testLoader: one shared test loader list
-    """
     # Simple IID split into nClients chunks
     idx = np.arange(len(train))
     np.random.shuffle(idx)

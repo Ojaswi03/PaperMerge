@@ -54,18 +54,7 @@ MARKERS = {
 
 
 def loadNoisyChannelResults(dataset, mode, attack, metric='avg'):
-    """
-    Load noisy channel experiment results.
-
-    Args:
-        dataset: 'mnist', 'cifar10', or 'nmnist'
-        mode: 'clean' (no mitigation), 'ebm', or 'wcm'
-        attack: 'clean', 'gaussian', 'signFlip', or 'hidden'
-        metric: 'avg' or 'worst'
-
-    Returns:
-        numpy array of accuracy history, or None if file doesn't exist
-    """
+    # build file path and return loaded array, or None if missing
     resultDir = f"experiments/results/noisyChannel/{dataset}"
     filename = f"acc_{mode}_{attack}_{metric}.npy"
     filepath = os.path.join(resultDir, filename)
@@ -78,10 +67,7 @@ def loadNoisyChannelResults(dataset, mode, attack, metric='avg'):
 
 
 def plotByDataset(datasets, attacks, metric='avg'):
-    """
-    Plot clean vs EBM vs WCM for each dataset.
-    One plot per dataset showing all attacks.
-    """
+    # 2x2 subplots per dataset comparing clean/EBM/WCM under all attacks
     datasetTitles = {
         'mnist': 'MNIST',
         'cifar10': 'CIFAR-10',
@@ -138,9 +124,7 @@ def plotByDataset(datasets, attacks, metric='avg'):
 
 
 def plotAcrossDatasets(attacks, metric='avg'):
-    """
-    Plot comparison across all datasets for each approach.
-    """
+    # one figure per mode (ebm/wcm) showing all datasets per attack
     datasets = ['mnist', 'cifar10', 'nmnist']
     datasetLabels = {
         'mnist': 'MNIST',
@@ -196,9 +180,7 @@ def plotAcrossDatasets(attacks, metric='avg'):
 
 
 def plotImpact(datasets, attacks, metric='avg'):
-    """
-    Plot the impact of EBM and WCM (improvement over clean baseline).
-    """
+    # side-by-side bar charts of EBM and WCM improvement over noisy baseline
     datasetLabels = {
         'mnist': 'MNIST',
         'cifar10': 'CIFAR-10',
@@ -288,10 +270,7 @@ def plotImpact(datasets, attacks, metric='avg'):
 
 
 def plotSingleDataset(dataset, attacks, metric='avg'):
-    """
-    Create a single comprehensive plot for one dataset.
-    Shows clean vs EBM vs WCM for all attacks.
-    """
+    # overlay all attack/mode combinations on one axes for one dataset
     attackLabels = {
         'clean': 'No Attack',
         'gaussian': 'Gaussian Attack',
@@ -344,7 +323,7 @@ def plotSingleDataset(dataset, attacks, metric='avg'):
 
 
 def generateAllPlots():
-    """Generate all plots based on configuration."""
+    # dispatch to the enabled plot functions for each metric
     print("\n" + "="*80)
     print("GENERATING NOISY CHANNEL PLOTS")
     print("="*80)

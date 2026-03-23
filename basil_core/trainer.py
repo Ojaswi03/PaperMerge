@@ -27,7 +27,7 @@ __all__ = [
 lossFn = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
 
 def addChannelNoiseToParams(params, sigma):
-    """Sender-side noisy channel: add N(0, sigma^2) to each layer (numpy arrays)."""
+    # skip if no noise requested
     if not sigma or sigma <= 0:
         return params
     noisy = []
@@ -37,29 +37,17 @@ def addChannelNoiseToParams(params, sigma):
     return noisy
 
 def getParams(model):
-    """Return a list of numpy arrays for model.trainable_weights (float32)."""
+    # extract trainable weights as float32 numpy arrays
     return [w.numpy().astype(np.float32) for w in model.trainable_weights]
 
 def setParams(model, params):
-    """Assign a list of numpy arrays to model.trainable_weights."""
+    # assign numpy arrays back into model trainable weights
     for var, new in zip(model.trainable_weights, params):
         var.assign(tf.convert_to_tensor(new, dtype=var.dtype))
 
 
 def averageParams(paramsList, weights=None):
-    """
-    Average a list of model parameters (FedAvg-style aggregation).
-
-    Args:
-        paramsList: List of [params1, params2, ...] where each params is a list of numpy arrays
-        weights: Optional weights for weighted average (e.g., by data size). If None, uniform average.
-
-    Returns:
-        Averaged parameters as list of numpy arrays
-
-    Reference: "Robust Federated Learning with Noisy Communication" Equation 3a
-        w = (Σ D_j × w_j) / D
-    """
+    # return empty list if nothing to average
     if not paramsList:
         return []
 
@@ -83,7 +71,7 @@ def averageParams(paramsList, weights=None):
 
 
 def _iterLimited(ds, maxBatches=None):
-    """Yield at most maxBatches batches from ds. If maxBatches is None, iterate fully."""
+    # yield all batches when no limit is set
     if maxBatches is None:
         for batch in ds:
             yield batch
@@ -94,10 +82,7 @@ def _iterLimited(ds, maxBatches=None):
             yield batch
 
 def evaluate(model, dataLoader, maxBatches=100):
-    """
-    Accuracy in [0,1] over at most `maxBatches` batches.
-    Bounds eval when dataLoader is an infinite .repeat().
-    """
+    # count correct predictions over limited batches
     total = 0
     correct = 0
     for xBatch, yBatch in _iterLimited(dataLoader, maxBatches=maxBatches):
@@ -111,7 +96,7 @@ def evaluate(model, dataLoader, maxBatches=100):
     return float(correct) / float(total) if total else 0.0
 
 def evaluateBatchLoss(model, dataLoader):
-    """Loss on the first batch (used for Basil snapshot selection)."""
+    # compute loss on a single batch for BASIL snapshot selection
     for xBatch, yBatch in _iterLimited(dataLoader, maxBatches=1):
         xb = tf.convert_to_tensor(xBatch, dtype=tf.float32)
         yb = tf.convert_to_tensor(yBatch, dtype=tf.int32)
@@ -120,7 +105,7 @@ def evaluateBatchLoss(model, dataLoader):
     return 0.0
 
 def evaluateAll(nodes, testLoader):
-    """Return (avgAcc, worstAcc, listPerNode)."""
+    # evaluate every node and aggregate into avg/worst
     accs = [evaluate(node.model, testLoader) for node in nodes]
     if not accs:
         return 0.0, 0.0, []
@@ -129,18 +114,7 @@ def evaluateAll(nodes, testLoader):
     return avg, worst, accs
 
 def makeLrScheduler(lr0, alpha=0.6, minLr=1e-4, useBasilSchedule=True, useLrDecay=True):
-    """
-    Learning rate scheduler.
-
-    If useLrDecay=False: Returns constant lr0 (best for EBM with high noise + momentum)
-
-    If useBasilSchedule=True (default): Uses BASIL paper formula (Section V):
-        lr_t = lr0 / (1 + lr0 * t)
-        Paper uses lr0=0.03, giving: 0.03 / (1 + 0.03*t)
-
-    If useBasilSchedule=False: Polynomial decay:
-        lr_t = max(minLr, lr0 * (t+1)^(-alpha))
-    """
+    # return a callable lr(t) based on selected schedule
     if not useLrDecay:
         # Fixed learning rate (no decay)
         def lr(t):
@@ -156,8 +130,7 @@ def makeLrScheduler(lr0, alpha=0.6, minLr=1e-4, useBasilSchedule=True, useLrDeca
         return lr
 
 def _computeGrads(model, x, y):
-    """Compute gradients of cross-entropy loss w.r.t. model weights.
-    Returns (gradients_list, loss_scalar)."""
+    # compute cross-entropy gradients and loss in one tape pass
     with tf.GradientTape() as tape:
         logits = model(x, training=True)
         loss = lossFn(y, logits)
@@ -179,18 +152,7 @@ def localUpdate(
     stepsPerEpoch=100,
     momentum=0.0,
 ):
-    """
-    Local SGD step with support for different noise models:
-    - 'none' or 'clean': standard SGD
-    - 'noisy': standard SGD (noise added at communication, not here)
-    - 'ebm': add sigma^2 * ||grad||^2 regularizer (Equation 13 from Noisy Channel paper)
-              Uses finite-difference Hessian-vector product (no nested tapes)
-    - 'wcm': Worst-Case Model with boundary noise sampling and SCA surrogate
-
-    Bounded by `stepsPerEpoch` to avoid hangs when dataLoader repeats indefinitely.
-
-    For EBM with high noise (σ=0.2), use momentum=0.9 and lr=0.01 for best results (~70% accuracy).
-    """
+    # create optimizer once per local update call
     optimizer = tf.keras.optimizers.SGD(learning_rate=lr, momentum=momentum)
 
     # WCM initialization

@@ -40,7 +40,7 @@ ATTACKER_IDS = [0, 5]
 
 
 def runTest(testName, useAttacks, useNoise, useBasil, useEbm, trainLoaders, testLoader):
-    """Run a single test configuration."""
+    # configure nodes with the given flags, run training, return histories and stats
     print(f"\n{'='*70}")
     print(f"TEST: {testName}")
     print(f"  Attacks: {ATTACK_TYPE if useAttacks else 'None'}, Attackers: {ATTACKER_IDS if useAttacks else 'None'}")

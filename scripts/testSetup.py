@@ -14,7 +14,7 @@ else:
     from .common import setupGpu, ensureDirs
 
 def testTensorflow():
-    """Test TensorFlow installation and basic operations."""
+    # verify TF imports and basic tensor ops work
     print("\n" + "="*80)
     print("TESTING TENSORFLOW")
     print("="*80)
@@ -36,14 +36,14 @@ def testTensorflow():
 
 
 def testGpuSetup():
-    """Test GPU setup and availability."""
+    # call setupGpu and check returned device info
     print("\n" + "="*80)
     print("TESTING GPU SETUP")
     print("="*80)
 
     try:
-        hasGpu = setupGpu()
-        if hasGpu:
+        deviceInfo = setupGpu()
+        if deviceInfo["device"] == "CUDA":
             print("✓ GPU is available and configured")
         else:
             print("✓ No GPU available, using CPU (this is okay)")
@@ -54,7 +54,7 @@ def testGpuSetup():
 
 
 def testDataLoading():
-    """Test data loading functionality."""
+    # load MNIST and build loaders, check sample counts
     print("\n" + "="*80)
     print("TESTING DATA LOADING")
     print("="*80)
@@ -79,7 +79,7 @@ def testDataLoading():
 
 
 def testModelCreation():
-    """Test model creation."""
+    # instantiate each model class and run a forward pass
     print("\n" + "="*80)
     print("TESTING MODEL CREATION")
     print("="*80)
@@ -115,7 +115,7 @@ def testModelCreation():
 
 
 def testTraining():
-    """Test basic training functionality."""
+    # create 2 nodes and run 2 training rounds as a smoke test
     print("\n" + "="*80)
     print("TESTING BASIC TRAINING")
     print("="*80)
@@ -174,7 +174,7 @@ def testTraining():
 
 
 def testWcmAvailability():
-    """Test WCM module availability."""
+    # try importing WCM functions, warn but do not fail if missing
     print("\n" + "="*80)
     print("TESTING WCM MODULE")
     print("="*80)
@@ -191,7 +191,7 @@ def testWcmAvailability():
 
 
 def runAllTests():
-    """Run all tests and report results."""
+    # run each test function in sequence and print a pass/fail summary
     print("\n" + "#"*80)
     print("# SETUP VERIFICATION TEST SUITE")
     print("#"*80)

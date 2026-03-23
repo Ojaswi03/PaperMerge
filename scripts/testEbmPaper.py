@@ -27,7 +27,7 @@ BATCH_SIZE = 32
 
 
 def runTest(testName, useNoise, useEbm, trainLoaders, testLoader):
-    """Run a single test configuration."""
+    # create fresh models, train with given noise/EBM config, return accuracy history
     print(f"\n{'='*60}")
     print(f"TEST: {testName}")
     print(f"  Noise: {'σ='+str(SIGMA) if useNoise else 'None'}")

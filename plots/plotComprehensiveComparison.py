@@ -39,18 +39,7 @@ LINESTYLES = {
 
 
 def loadResults(dataset, mode, attack, metric='avg'):
-    """
-    Load accuracy results for a specific experiment.
-
-    Args:
-        dataset: 'mnist', 'cifar10', or 'nmnist'
-        mode: mode name (e.g., 'clean', 'ebm', 'basilEbm')
-        attack: attack name (e.g., 'clean', 'gaussian')
-        metric: 'avg' or 'worst'
-
-    Returns:
-        numpy array of accuracy history, or None if file doesn't exist
-    """
+    # build file path from dataset/mode/attack/metric and load, returning None if absent
     resultDir = f"experiments/results/{dataset}"
     filename = f"acc_{mode}_{attack}_{metric}.npy"
     filepath = os.path.join(resultDir, filename)
@@ -63,10 +52,7 @@ def loadResults(dataset, mode, attack, metric='avg'):
 
 
 def plotBasilPerformanceAcrossDatasets(savePath="plots/images/basil_performance_comparison.png"):
-    """
-    Plot 1: Standalone BASIL performance across datasets with different attacks.
-    3 subplots (MNIST, CIFAR-10, N-MNIST) showing BASIL under different attack scenarios.
-    """
+    # 3 subplots (one per dataset) showing BASIL accuracy under all attack types
     fig, axes = plt.subplots(1, 3, figsize=(18, 5))
     datasets = ['mnist', 'cifar10', 'nmnist']
     datasetTitles = ['MNIST', 'CIFAR-10', 'Neuromorphic MNIST']
@@ -106,10 +92,7 @@ def plotBasilPerformanceAcrossDatasets(savePath="plots/images/basil_performance_
 
 
 def plotNoiseMitigationComparison(savePath="plots/images/noise_mitigation_comparison.png"):
-    """
-    Plot 2: Noise mitigation comparison (per dataset).
-    3 subplots showing: noisy baseline vs EBM vs WCM under Gaussian attack.
-    """
+    # 3 subplots comparing noisy/EBM/WCM per dataset under Gaussian attack
     fig, axes = plt.subplots(1, 3, figsize=(18, 5))
     datasets = ['mnist', 'cifar10', 'nmnist']
     datasetTitles = ['MNIST', 'CIFAR-10', 'Neuromorphic MNIST']
@@ -147,11 +130,7 @@ def plotNoiseMitigationComparison(savePath="plots/images/noise_mitigation_compar
 
 
 def plotMergedApproachComparison(savePath="plots/images/merged_approach_comparison.png"):
-    """
-    Plot 3: Merged approach performance (per dataset).
-    3 subplots showing: BASIL-only vs BASIL+EBM vs BASIL+WCM vs noisy baseline.
-    All under Gaussian attack.
-    """
+    # 3 subplots comparing noisy/BASIL-only/BASIL+EBM/BASIL+WCM per dataset
     fig, axes = plt.subplots(1, 3, figsize=(18, 5))
     datasets = ['mnist', 'cifar10', 'nmnist']
     datasetTitles = ['MNIST', 'CIFAR-10', 'Neuromorphic MNIST']
@@ -190,13 +169,7 @@ def plotMergedApproachComparison(savePath="plots/images/merged_approach_comparis
 
 
 def plotDetailedComparison(dataset, savePath=None):
-    """
-    Generate a detailed 2x2 comparison for a single dataset:
-    - Top left: All modes under clean (no attack)
-    - Top right: All modes under Gaussian attack
-    - Bottom left: All modes under sign-flip attack
-    - Bottom right: All modes under hidden attack
-    """
+    # 2x2 grid showing all modes under each attack type for one dataset
     if savePath is None:
         savePath = f"plots/images/{dataset}_detailed_comparison.png"
 
@@ -242,10 +215,7 @@ def plotDetailedComparison(dataset, savePath=None):
 
 
 def plotWorstCaseComparison(savePath="plots/images/worst_case_comparison.png"):
-    """
-    Plot comparing worst-node accuracy (Byzantine resilience metric).
-    Shows how different approaches handle the worst-performing node.
-    """
+    # 3 subplots showing worst-node accuracy for BASIL variants under Gaussian attack
     fig, axes = plt.subplots(1, 3, figsize=(18, 5))
     datasets = ['mnist', 'cifar10', 'nmnist']
     datasetTitles = ['MNIST', 'CIFAR-10', 'Neuromorphic MNIST']
@@ -283,7 +253,7 @@ def plotWorstCaseComparison(savePath="plots/images/worst_case_comparison.png"):
 
 
 def generateAllPlots():
-    """Generate all comparison plots."""
+    # run all five plot functions in sequence
     print("Generating comprehensive comparison plots...")
 
     print("\n1. BASIL performance across datasets...")

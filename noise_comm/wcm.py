@@ -14,10 +14,7 @@ import tensorflow as tf
 
 # ----- noise sampling on the L2 boundary -----
 def _sampleBoundaryNoiseLike(weight, sigma):
-    """
-    Sample Δ of same shape as weight such that ||Δ||_2 = sigma (approximately).
-    Uses normalized Gaussian direction scaled to sigma.
-    """
+    # draw random direction then scale to L2 norm = sigma
     g = tf.random.normal(shape=tf.shape(weight), dtype=weight.dtype)
     gNorm = tf.norm(g)
     # handle rare zero norm by fallback to unit vector-like
@@ -25,11 +22,7 @@ def _sampleBoundaryNoiseLike(weight, sigma):
     return g * scale
 
 def sampleBoundaryPayload(params, sigma):
-    """
-    Return a NEW list of numpy arrays Δ with ||Δ|| layer-wise scaled so that
-    the concatenated vector approximates global norm sigma. For simplicity,
-    we enforce per-layer boundary (common approximation).
-    """
+    # return zero deltas when no noise requested
     if not sigma or sigma <= 0:
         return [np.zeros_like(p) for p in params]
     deltas = []
@@ -40,9 +33,7 @@ def sampleBoundaryPayload(params, sigma):
     return deltas
 
 def applyDelta(params, deltas, alpha=1.0):
-    """
-    Return params + alpha * deltas (both lists of numpy arrays).
-    """
+    # add scaled deltas to each layer of params
     out = []
     for p, d in zip(params, deltas):
         out.append((p + alpha * d).astype(np.float32))
@@ -50,27 +41,7 @@ def applyDelta(params, deltas, alpha=1.0):
 
 # ----- SAA + SCA surrogate -----
 def scaSurrogateLoss(lossFn, model, x, y, deltaList, rho, lam):
-    """
-    One SCA-like surrogate:
-      F_w(w) = rho * F(w + Δ) + (1 - rho) * < w - w_prev, G_prev > + lam * ||w - w_prev||^2
-    We implement a practical analog where:
-      - We use the first-order term via a moving average of gradients (Gt) if provided by the caller.
-      - Caller is responsible for maintaining (w_prev, G_prev) across steps; this function returns
-        base terms to update those structures.
-
-    For simplicity here, we compute only rho * F(w + Δ) + lam * ||w - w_prev||^2,
-    and expose hooks for caller to add the linearization term when available.
-
-    Args:
-      lossFn: callable(y_true, logits) -> scalar
-      model: tf.keras.Model
-      x, y: batch tensors/arrays
-      deltaList: list of numpy arrays (same shapes as model weights) to offset weights
-      rho: in (0,1]
-      lam: >= 0
-
-    Returns: (loss_scalar_tensor, w_current_list) where w_current_list is current weights (numpy).
-    """
+    # prepare tensors and snapshot current weights before applying delta
     xT = tf.convert_to_tensor(x, dtype=tf.float32)
     yT = tf.convert_to_tensor(y, dtype=tf.int32)
 
@@ -99,15 +70,6 @@ def scaSurrogateLoss(lossFn, model, x, y, deltaList, rho, lam):
 
 def wcmStep(model, optimizer, lossFn, x, y, sigma, S, rho, lam,
             wPrev=None, gPrev=None, betaForG=0.9):
-    """
-    A single WCM-flavored local step:
-      - Sample S boundary deltas, average their surrogate losses (SAA)
-      - Add stabilization term lam * ||w - w_prev||^2 when wPrev is provided
-      - Maintain moving-average gradient G_t if gPrev provided
-      - Perform one gradient step on the surrogate
-
-    Returns: dict with updated (optionally) wPrev, gPrev and scalar loss.
-    """
     # prepare delta samples
     currentParams = [w.numpy().copy() for w in model.trainable_variables]
     saLosses = []

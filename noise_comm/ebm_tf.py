@@ -2,10 +2,7 @@ import numpy as np
 import tensorflow as tf
 
 def add_gaussian_noise_weights(model, sigma):
-    """
-    In-place: add N(0, sigma^2) to all trainable weights of a TF/Keras model.
-    No-op if sigma <= 0.
-    """
+    # no-op when sigma is zero or negative
     if not sigma or sigma <= 0:
         return
     for w in model.trainable_variables:
@@ -13,10 +10,7 @@ def add_gaussian_noise_weights(model, sigma):
         w.assign_add(noise)
 
 def add_gaussian_noise_numpy(params, sigma):
-    """
-    Return NEW list of numpy arrays with N(0, sigma^2) added.
-    Compatible with Basil param payloads (list of layer arrays).
-    """
+    # return copies without noise when sigma is not positive
     if not sigma or sigma <= 0:
         return [p.copy() for p in params]
     noisy = []
@@ -26,13 +20,7 @@ def add_gaussian_noise_numpy(params, sigma):
     return noisy
 
 def ebm_regularized_loss(loss_fn, model, x, y, sigma):
-    """
-    Compute: base_loss + sigma^2 * ||∇ base_loss||^2
-    - loss_fn: callable(y_true, logits) -> scalar loss
-    - model: tf.keras.Model
-    - x, y: batches (np or tf tensors)
-    Returns scalar tf.Tensor loss.
-    """
+    # compute base loss and add sigma^2 * grad_norm_sq regularizer
     x_t = tf.convert_to_tensor(x, dtype=tf.float32)
     y_t = tf.convert_to_tensor(y, dtype=tf.int32)
 

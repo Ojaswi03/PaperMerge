@@ -44,7 +44,7 @@ _ALL_MARKERS = ['o', 's', '^', 'D', 'v', 'P', 'X', '*', 'h', '<', '>', 'p', 'H',
 
 
 def getColors(n):
-    """Generate n visually distinct colors dynamically using matplotlib colormaps."""
+    # pick colormap based on how many colors are needed
     if n <= 0:
         return []
     if n <= 10:
@@ -57,12 +57,12 @@ def getColors(n):
 
 
 def getMarkers(n):
-    """Return n markers, cycling through all available distinct markers."""
+    # cycle through marker list to get n markers
     return [m for _, m in zip(range(n), itertools.cycle(_ALL_MARKERS))]
 
 
 def discoverDatasets():
-    """Find all datasets that have GUI results."""
+    # scan gui results directory for dataset subdirs that contain .npy files
     guiDir = "experiments/results/gui"
     if not os.path.isdir(guiDir):
         print(f"No GUI results directory found at {guiDir}")
@@ -81,10 +81,7 @@ def discoverDatasets():
 
 
 def discoverExperiments(dataset):
-    """
-    Find all experiments for a given dataset.
-    Returns a list of dicts with keys: name, config, avgPath, label
-    """
+    # find config JSON files and pair each with its .npy accuracy file
     resultDir = f"experiments/results/gui/{dataset}"
     if not os.path.isdir(resultDir):
         return []
@@ -117,15 +114,7 @@ def discoverExperiments(dataset):
 
 
 def buildLabel(config):
-    """
-    Build a human-readable label from a config dict.
-    Uses experimentName if set by user, otherwise auto-generates a descriptive label.
-    Example auto labels:
-      - Ring Topology (Clean)
-      - Ring Topology (Noisy + No EBM + No Byzantine Nodes)
-      - Ring Topology (Noisy + With EBM + No Byzantine Nodes)
-      - Ring Topology (Noisy + With WCM + Gaussian@5)
-    """
+    # use custom experiment name if provided, otherwise auto-generate from config fields
     # If user provided a custom name, use it
     customName = config.get('experimentName', '').strip()
     if customName:
@@ -177,9 +166,7 @@ def buildLabel(config):
 
 
 def plotDatasetExperiments(dataset, experiments):
-    """
-    Plot all experiments for a single dataset on one figure.
-    """
+    # overlay all experiment curves on one axes and save the figure
     datasetTitles = {
         'mnist': 'MNIST',
         'cifar10': 'CIFAR-10',
@@ -222,10 +209,7 @@ def plotDatasetExperiments(dataset, experiments):
 
 
 def plotDatasetGrid(dataset, experiments):
-    """
-    Plot each experiment in its own subplot for a dataset.
-    Useful when there are many experiments.
-    """
+    # one subplot per experiment arranged in a grid layout
     if len(experiments) <= 1:
         return
 
@@ -286,9 +270,7 @@ def plotDatasetGrid(dataset, experiments):
 
 
 def plotFinalAccuracyBar(dataset, experiments):
-    """
-    Bar chart comparing final accuracy across all experiments for a dataset.
-    """
+    # bar chart of each experiment's final accuracy value
     datasetTitles = {
         'mnist': 'MNIST',
         'cifar10': 'CIFAR-10',
@@ -334,7 +316,7 @@ def plotFinalAccuracyBar(dataset, experiments):
 
 
 def generateGuiPlots():
-    """Generate all GUI experiment plots."""
+    # discover datasets and call all three plot types for each
     print("\n" + "=" * 80)
     print("GENERATING GUI EXPERIMENT PLOTS")
     print("=" * 80)
