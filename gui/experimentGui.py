@@ -71,14 +71,14 @@ class ExperimentGUI:
 
         # BASIL parameters
         self.useBasilVar = tk.BooleanVar(value=True)
-        self.basilMemorySizeVar = tk.IntVar(value=5)  # S = b+1 = 5 for 4 attackers (paper compliant)
+        self.basilMemorySizeVar = tk.IntVar(value=4)  # S = b+1 = 5 for 4 attackers (paper compliant)
 
         # Noisy Channel parameters
         self.useChannelNoiseVar = tk.BooleanVar(value=False)
         self.channelNoiseStartVar = tk.IntVar(value=0)
-        self.channelNoiseSigmaVar = tk.DoubleVar(value=0.05)  # Balanced for visible EBM effect
+        self.channelNoiseSigmaVar = tk.DoubleVar(value=0.2)  # Balanced for visible EBM effect
         self.noiseMitigationVar = tk.StringVar(value="none")
-        self.ebmLambdaVar = tk.DoubleVar(value=400.0)  # With sigma=0.05: scale = 1 + 400*0.0025 = 2.0
+        self.ebmLambdaVar = tk.DoubleVar(value=75.0)  # With sigma=0.2: scale = 1 + 75*0.04 = 2.0
         self.wcmLambdaVar = tk.DoubleVar(value=0.1)
         self.wcmSamplesVar = tk.IntVar(value=5)
         self.wcmRhoVar = tk.DoubleVar(value=0.5)
@@ -91,8 +91,10 @@ class ExperimentGUI:
         self.attackSignFlipVar = tk.BooleanVar(value=False)
         self.attackSignFlipStartVar = tk.IntVar(value=0)
         self.attackHiddenVar = tk.BooleanVar(value=False)
-        self.attackHiddenStartVar = tk.IntVar(value=10)
-        self.attackerIdsVar = tk.StringVar(value="0,1,2,3")  # 40% consecutive attackers - breaks BASIL guarantee (S=b not S>b)
+        self.attackHiddenStartVar = tk.IntVar(value=5)
+        self.attackModelPoisonVar = tk.BooleanVar(value=False)
+        self.attackModelPoisonStartVar = tk.IntVar(value=0)
+        self.attackerIdsVar = tk.StringVar(value="0,3,5,7")  # 40% consecutive attackers - breaks BASIL guarantee (S=b not S>b)
 
         # Training parameters
         self.nNodesVar = tk.IntVar(value=10)
@@ -295,6 +297,17 @@ class ExperimentGUI:
         ttk.Entry(frame, textvariable=self.attackHiddenStartVar, width=10).grid(row=row, column=2, sticky=tk.W, padx=10)
         row += 1
         ttk.Label(frame, text="  Attackers behave normally initially, then inject malicious updates").grid(row=row, column=0, columnspan=3, sticky=tk.W, padx=20)
+        row += 1
+
+        ttk.Separator(frame, orient=tk.HORIZONTAL).grid(row=row, column=0, columnspan=3, sticky=tk.EW, pady=5)
+        row += 1
+
+        # Model Poisoning Attack
+        ttk.Checkbutton(frame, text="Model Poisoning Attack", variable=self.attackModelPoisonVar).grid(row=row, column=0, sticky=tk.W, pady=5)
+        ttk.Label(frame, text="Start at round:").grid(row=row, column=1, sticky=tk.W, padx=10)
+        ttk.Entry(frame, textvariable=self.attackModelPoisonStartVar, width=10).grid(row=row, column=2, sticky=tk.W, padx=10)
+        row += 1
+        ttk.Label(frame, text="  Attackers use gradient ascent to corrupt the model (hardest to detect)").grid(row=row, column=0, columnspan=3, sticky=tk.W, padx=20)
         row += 1
 
     def createOutputTab(self, parent):
@@ -662,6 +675,8 @@ class ExperimentGUI:
             'attackSignFlipStart': self.attackSignFlipStartVar.get(),
             'attackHidden': self.attackHiddenVar.get(),
             'attackHiddenStart': self.attackHiddenStartVar.get(),
+            'attackModelPoison': self.attackModelPoisonVar.get(),
+            'attackModelPoisonStart': self.attackModelPoisonStartVar.get(),
             'attackerIds': self.attackerIdsVar.get(),
             'nNodes': self.nNodesVar.get(),
             'nRounds': self.nRoundsVar.get(),
@@ -767,6 +782,8 @@ class ExperimentGUI:
             attacks.append(('signFlip', config['attackSignFlipStart']))
         if config['attackHidden']:
             attacks.append(('hidden', config['attackHiddenStart']))
+        if config.get('attackModelPoison'):
+            attacks.append(('model_poison', config['attackModelPoisonStart']))
 
         if not attacks:
             return ["none"], []
@@ -779,28 +796,30 @@ class ExperimentGUI:
 
     def saveResults(self, config, avgAccHist, worstAccHist, finalAvg, finalWorst):
         """Save experiment results"""
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        approach = config['approach']
         dataset = config['dataset']
+
+        # Use experiment name as filename, fall back to approach+timestamp
+        expName = config.get('experimentName', '').strip()
+        if expName:
+            safeName = "".join(c if c.isalnum() or c in " _-" else "_" for c in expName).strip().replace(" ", "_")
+        else:
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            safeName = f"{config['approach']}_{timestamp}"
 
         resultDir = f"experiments/results/gui/{dataset}"
         os.makedirs(resultDir, exist_ok=True)
 
-        # Save accuracy curves
-        avgPath = f"{resultDir}/acc_{approach}_{timestamp}_avg.npy"
-        worstPath = f"{resultDir}/acc_{approach}_{timestamp}_worst.npy"
-
+        # Save average accuracy curve only
+        avgPath = f"{resultDir}/acc_{safeName}.npy"
         np.save(avgPath, np.array(avgAccHist))
-        np.save(worstPath, np.array(worstAccHist))
 
         # Save configuration
-        configPath = f"{resultDir}/config_{approach}_{timestamp}.json"
+        configPath = f"{resultDir}/config_{safeName}.json"
         with open(configPath, 'w') as f:
             json.dump(config, f, indent=2)
 
         self.logMessage(f"\nResults saved:")
         self.logMessage(f"  {avgPath}")
-        self.logMessage(f"  {worstPath}")
         self.logMessage(f"  {configPath}")
 
     def saveConfig(self):
@@ -873,6 +892,8 @@ class ExperimentGUI:
             self.attackSignFlipStartVar.set(config.get('attackSignFlipStart', 0))
             self.attackHiddenVar.set(config.get('attackHidden', False))
             self.attackHiddenStartVar.set(config.get('attackHiddenStart', 10))
+            self.attackModelPoisonVar.set(config.get('attackModelPoison', False))
+            self.attackModelPoisonStartVar.set(config.get('attackModelPoisonStart', 0))
             self.attackerIdsVar.set(config.get('attackerIds', '0,5'))
             self.nNodesVar.set(config.get('nNodes', 10))
             self.nRoundsVar.set(config.get('nRounds', 30))
@@ -908,116 +929,107 @@ class ExperimentGUI:
 
                 self.logMessage(f"\nDataset: {dataset.upper()} ({len(experiments)} experiments)")
 
-                # Generate plots for this dataset
-                for metric in ['avg', 'worst']:
-                    metricLabel = "Average Accuracy" if metric == 'avg' else "Worst-Node Accuracy"
+                # Generate average accuracy plots only
+                metricLabel = "Average Accuracy"
 
                     # 1. Overlay plot (all experiments on one chart)
-                    # Figure is wider to give legend 1/4 of total width
-                    fig, ax = plt.subplots(figsize=(22, 10))
-                    colors = getColors(len(experiments))
-                    markers = getMarkers(len(experiments))
-                    for idx, exp in enumerate(experiments):
-                        accPath = exp['avgPath'] if metric == 'avg' else exp['worstPath']
-                        if os.path.exists(accPath):
-                            acc = np.load(accPath)
-                            rounds = np.arange(len(acc))
-                            ax.plot(rounds, acc, label=exp['label'],
-                                   color=colors[idx], linewidth=2.5,
-                                   marker=markers[idx], markersize=4, markevery=1)
+                fig, ax = plt.subplots(figsize=(22, 10))
+                colors = getColors(len(experiments))
+                markers = getMarkers(len(experiments))
+                for idx, exp in enumerate(experiments):
+                    if os.path.exists(exp['avgPath']):
+                        acc = np.load(exp['avgPath'])
+                        rounds = np.arange(len(acc))
+                        ax.plot(rounds, acc, label=exp['label'],
+                               color=colors[idx], linewidth=2.5,
+                               marker=markers[idx], markersize=4, markevery=1)
 
-                    ax.set_xlabel('Training Round', fontsize=13)
-                    ax.set_ylabel(metricLabel, fontsize=13)
-                    ax.set_title(f'{dataset.upper()} - {metricLabel}', fontsize=15, fontweight='bold')
-                    ax.legend(fontsize=12, loc='lower left', bbox_to_anchor=(1.01, 0.0), borderaxespad=0)
-                    ax.grid(True, alpha=0.3)
-                    ax.set_ylim([0, 1])
-                    # Plot takes 75% of figure width, legend sits in remaining 25%
-                    fig.subplots_adjust(left=0.06, right=0.75, top=0.92, bottom=0.09)
+                ax.set_xlabel('Training Round', fontsize=13)
+                ax.set_ylabel(metricLabel, fontsize=13)
+                ax.set_title(f'{dataset.upper()} - {metricLabel}', fontsize=15, fontweight='bold')
+                ax.legend(fontsize=12, loc='lower left', bbox_to_anchor=(1.01, 0.0), borderaxespad=0)
+                ax.grid(True, alpha=0.3)
+                ax.set_ylim([0, 1])
+                fig.subplots_adjust(left=0.06, right=0.75, top=0.92, bottom=0.09)
 
-                    savePath = f"plots/images/gui/{dataset}_experiments_{metric}.png"
-                    os.makedirs(os.path.dirname(savePath), exist_ok=True)
-                    fig.savefig(savePath, dpi=300, bbox_inches='tight')
-                    plt.close(fig)
-                    self.logMessage(f"  Saved: {savePath}")
+                savePath = f"plots/images/gui/{dataset}_experiments_avg.png"
+                os.makedirs(os.path.dirname(savePath), exist_ok=True)
+                fig.savefig(savePath, dpi=300, bbox_inches='tight')
+                plt.close(fig)
+                self.logMessage(f"  Saved: {savePath}")
 
                     # 2. Grid plot (each experiment in its own subplot)
-                    nExps = len(experiments)
-                    nCols = min(nExps, 3) if nExps > 0 else 1
-                    nRows = (nExps + nCols - 1) // nCols if nExps > 0 else 1
+                nExps = len(experiments)
+                nCols = min(nExps, 3) if nExps > 0 else 1
+                nRows = (nExps + nCols - 1) // nCols if nExps > 0 else 1
 
-                    fig, axes = plt.subplots(nRows, nCols, figsize=(6 * nCols, 5 * nRows))
-                    if nRows == 1 and nCols == 1:
-                        axes = np.array([axes])
-                    axes = axes.flatten()
+                fig, axes = plt.subplots(nRows, nCols, figsize=(6 * nCols, 5 * nRows))
+                if nRows == 1 and nCols == 1:
+                    axes = np.array([axes])
+                axes = axes.flatten()
 
-                    fig.suptitle(f'{dataset.upper()} - {metricLabel} (Individual Runs)',
-                                fontsize=16, fontweight='bold')
+                fig.suptitle(f'{dataset.upper()} - {metricLabel} (Individual Runs)',
+                            fontsize=16, fontweight='bold')
 
-                    gridColors = getColors(len(experiments))
-                    gridMarkers = getMarkers(len(experiments))
-                    for idx, exp in enumerate(experiments):
-                        ax = axes[idx]
-                        accPath = exp['avgPath'] if metric == 'avg' else exp['worstPath']
-                        if os.path.exists(accPath):
-                            acc = np.load(accPath)
-                            rounds = np.arange(len(acc))
-                            ax.plot(rounds, acc, color=gridColors[idx], linewidth=2.5,
-                                    marker=gridMarkers[idx], markersize=4, markevery=1)
-                            ax.set_xlabel('Round', fontsize=10)
-                            ax.set_ylabel(metricLabel, fontsize=10)
-                            # Wrap long titles
-                            title = exp['label']
-                            if len(title) > 40:
-                                title = title[:40] + '\n' + title[40:]
-                            ax.set_title(title, fontsize=9, fontweight='bold')
-                            ax.grid(True, alpha=0.3)
-                            ax.set_ylim([0, 1])
-                            # Annotate final accuracy
-                            if len(acc) > 0:
-                                ax.annotate(f'{acc[-1]:.3f}', xy=(len(acc) - 1, acc[-1]),
-                                           fontsize=10, fontweight='bold',
-                                           xytext=(-40, 10), textcoords='offset points')
+                gridColors = getColors(len(experiments))
+                gridMarkers = getMarkers(len(experiments))
+                for idx, exp in enumerate(experiments):
+                    ax = axes[idx]
+                    if os.path.exists(exp['avgPath']):
+                        acc = np.load(exp['avgPath'])
+                        rounds = np.arange(len(acc))
+                        ax.plot(rounds, acc, color=gridColors[idx], linewidth=2.5,
+                                marker=gridMarkers[idx], markersize=4, markevery=1)
+                        ax.set_xlabel('Round', fontsize=10)
+                        ax.set_ylabel(metricLabel, fontsize=10)
+                        title = exp['label']
+                        if len(title) > 40:
+                            title = title[:40] + '\n' + title[40:]
+                        ax.set_title(title, fontsize=9, fontweight='bold')
+                        ax.grid(True, alpha=0.3)
+                        ax.set_ylim([0, 1])
+                        if len(acc) > 0:
+                            ax.annotate(f'{acc[-1]:.3f}', xy=(len(acc) - 1, acc[-1]),
+                                       fontsize=10, fontweight='bold',
+                                       xytext=(-40, 10), textcoords='offset points')
 
-                    # Hide unused subplots
-                    for idx in range(nExps, len(axes)):
-                        axes[idx].set_visible(False)
+                for idx in range(nExps, len(axes)):
+                    axes[idx].set_visible(False)
 
+                plt.tight_layout()
+                savePath = f"plots/images/gui/{dataset}_grid_avg.png"
+                fig.savefig(savePath, dpi=300, bbox_inches='tight')
+                plt.close(fig)
+                self.logMessage(f"  Saved: {savePath}")
+
+                    # 3. Bar chart (final accuracy comparison)
+                fig, ax = plt.subplots(figsize=(max(10, len(experiments) * 2.5), 7))
+                labels = []
+                finalAccs = []
+                for exp in experiments:
+                    if os.path.exists(exp['avgPath']):
+                        acc = np.load(exp['avgPath'])
+                        labels.append(exp['label'])
+                        finalAccs.append(acc[-1] if len(acc) > 0 else 0)
+
+                if labels:
+                    barColors = getColors(len(labels))
+                    bars = ax.bar(range(len(labels)), finalAccs, color=barColors, width=0.6)
+                    for bar, acc in zip(bars, finalAccs):
+                        ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.01,
+                               f'{acc:.3f}', ha='center', va='bottom', fontsize=10, fontweight='bold')
+                    ax.set_ylabel(metricLabel, fontsize=12)
+                    ax.set_title(f'Final {metricLabel} - {dataset.upper()}', fontsize=14, fontweight='bold')
+                    ax.set_xticks(range(len(labels)))
+                    ax.set_xticklabels(labels, rotation=45, ha='right', fontsize=9)
+                    ax.set_ylim([0, 1.1])
+                    ax.grid(True, alpha=0.3, axis='y')
                     plt.tight_layout()
-                    savePath = f"plots/images/gui/{dataset}_grid_{metric}.png"
+
+                    savePath = f"plots/images/gui/{dataset}_final_accuracy_avg.png"
                     fig.savefig(savePath, dpi=300, bbox_inches='tight')
                     plt.close(fig)
                     self.logMessage(f"  Saved: {savePath}")
-
-                    # 3. Bar chart (final accuracy comparison)
-                    fig, ax = plt.subplots(figsize=(max(10, len(experiments) * 2.5), 7))
-                    labels = []
-                    finalAccs = []
-                    for exp in experiments:
-                        accPath = exp['avgPath'] if metric == 'avg' else exp['worstPath']
-                        if os.path.exists(accPath):
-                            acc = np.load(accPath)
-                            labels.append(exp['label'])
-                            finalAccs.append(acc[-1] if len(acc) > 0 else 0)
-
-                    if labels:
-                        barColors = getColors(len(labels))
-                        bars = ax.bar(range(len(labels)), finalAccs, color=barColors, width=0.6)
-                        for bar, acc in zip(bars, finalAccs):
-                            ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.01,
-                                   f'{acc:.3f}', ha='center', va='bottom', fontsize=10, fontweight='bold')
-                        ax.set_ylabel(metricLabel, fontsize=12)
-                        ax.set_title(f'Final {metricLabel} - {dataset.upper()}', fontsize=14, fontweight='bold')
-                        ax.set_xticks(range(len(labels)))
-                        ax.set_xticklabels(labels, rotation=45, ha='right', fontsize=9)
-                        ax.set_ylim([0, 1.1])
-                        ax.grid(True, alpha=0.3, axis='y')
-                        plt.tight_layout()
-
-                        savePath = f"plots/images/gui/{dataset}_final_accuracy_{metric}.png"
-                        fig.savefig(savePath, dpi=300, bbox_inches='tight')
-                        plt.close(fig)
-                        self.logMessage(f"  Saved: {savePath}")
 
             self.logMessage("\nAll plots saved to: plots/images/gui/")
             self.logMessage("="*60)

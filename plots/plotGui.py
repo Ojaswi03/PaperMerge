@@ -24,8 +24,8 @@ import matplotlib.cm as cm
 # Set to None to auto-detect all available datasets
 DATASETS_TO_PLOT = None
 
-# Which metric? Options: "avg", "worst", "both"
-METRIC = "both"
+# Which metric? Options: "avg" only (worst is no longer saved)
+METRIC = "avg"
 
 # ============================================================================
 # END CONFIGURATION
@@ -83,7 +83,7 @@ def discoverDatasets():
 def discoverExperiments(dataset):
     """
     Find all experiments for a given dataset.
-    Returns a list of dicts with keys: timestamp, approach, config, avgPath, worstPath
+    Returns a list of dicts with keys: name, config, avgPath, label
     """
     resultDir = f"experiments/results/gui/{dataset}"
     if not os.path.isdir(resultDir):
@@ -95,21 +95,10 @@ def discoverExperiments(dataset):
     experiments = []
     for configPath in configFiles:
         configName = os.path.basename(configPath)
-        # Pattern: config_{approach}_{timestamp}.json
-        parts = configName.replace("config_", "").replace(".json", "")
-        # Split on last underscore-separated timestamp (YYYYMMDD_HHMMSS)
-        # approach might contain underscores, so split from the right
-        tokens = parts.rsplit("_", 2)
-        if len(tokens) >= 3:
-            approach = tokens[0]
-            timestamp = f"{tokens[1]}_{tokens[2]}"
-        else:
-            approach = parts
-            timestamp = ""
+        # Pattern: config_{name}.json  (name is the sanitized experiment title)
+        name = configName.replace("config_", "").replace(".json", "")
 
-        avgPath = os.path.join(resultDir, f"acc_{approach}_{timestamp}_avg.npy")
-        worstPath = os.path.join(resultDir, f"acc_{approach}_{timestamp}_worst.npy")
-
+        avgPath = os.path.join(resultDir, f"acc_{name}.npy")
         if not os.path.exists(avgPath):
             continue
 
@@ -118,11 +107,9 @@ def discoverExperiments(dataset):
             config = json.load(f)
 
         experiments.append({
-            'timestamp': timestamp,
-            'approach': approach,
+            'name': name,
             'config': config,
             'avgPath': avgPath,
-            'worstPath': worstPath,
             'label': buildLabel(config),
         })
 
@@ -172,6 +159,8 @@ def buildLabel(config):
         attacks.append(f"SignFlip@{config.get('attackSignFlipStart', 0)}")
     if config.get('attackHidden'):
         attacks.append(f"Hidden@{config.get('attackHiddenStart', 0)}")
+    if config.get('attackModelPoison'):
+        attacks.append(f"ModelPoison@{config.get('attackModelPoisonStart', 0)}")
 
     if attacks:
         attackPart = " + ".join(attacks)
@@ -187,7 +176,7 @@ def buildLabel(config):
     return f"{topo} ({noisePart} + {attackPart})"
 
 
-def plotDatasetExperiments(dataset, experiments, metric='avg'):
+def plotDatasetExperiments(dataset, experiments):
     """
     Plot all experiments for a single dataset on one figure.
     """
@@ -197,20 +186,16 @@ def plotDatasetExperiments(dataset, experiments, metric='avg'):
         'nmnist': 'Neuromorphic MNIST'
     }
 
-    metricLabel = "Average Accuracy" if metric == 'avg' else "Worst-Node Accuracy"
-    metricSuffix = metric
-
     fig, ax = plt.subplots(figsize=(12, 6))
 
     colors = getColors(len(experiments))
     markers = getMarkers(len(experiments))
 
     for idx, exp in enumerate(experiments):
-        accPath = exp['avgPath'] if metric == 'avg' else exp['worstPath']
-        if not os.path.exists(accPath):
+        if not os.path.exists(exp['avgPath']):
             continue
 
-        acc = np.load(accPath)
+        acc = np.load(exp['avgPath'])
         rounds = np.arange(len(acc))
 
         ax.plot(rounds, acc,
@@ -221,22 +206,22 @@ def plotDatasetExperiments(dataset, experiments, metric='avg'):
 
     title = datasetTitles.get(dataset, dataset.upper())
     ax.set_xlabel('Training Round', fontsize=12)
-    ax.set_ylabel(metricLabel, fontsize=12)
-    ax.set_title(f'GUI Experiments on {title} - {metricLabel}',
+    ax.set_ylabel('Average Accuracy', fontsize=12)
+    ax.set_title(f'GUI Experiments on {title} - Average Accuracy',
                  fontsize=14, fontweight='bold')
     ax.legend(fontsize=9, loc='best')
     ax.grid(True, alpha=0.3)
     ax.set_ylim([0, 1])
 
     plt.tight_layout()
-    savePath = f"plots/images/gui/{dataset}_experiments_{metricSuffix}.png"
+    savePath = f"plots/images/gui/{dataset}_experiments_avg.png"
     os.makedirs(os.path.dirname(savePath), exist_ok=True)
     plt.savefig(savePath, dpi=300, bbox_inches='tight')
     print(f"Saved: {savePath}")
     plt.close()
 
 
-def plotDatasetGrid(dataset, experiments, metric='avg'):
+def plotDatasetGrid(dataset, experiments):
     """
     Plot each experiment in its own subplot for a dataset.
     Useful when there are many experiments.
@@ -250,8 +235,6 @@ def plotDatasetGrid(dataset, experiments, metric='avg'):
         'nmnist': 'Neuromorphic MNIST'
     }
 
-    metricLabel = "Average Accuracy" if metric == 'avg' else "Worst-Node Accuracy"
-
     nExps = len(experiments)
     nCols = min(nExps, 3)
     nRows = (nExps + nCols - 1) // nCols
@@ -262,7 +245,7 @@ def plotDatasetGrid(dataset, experiments, metric='avg'):
     axes = axes.flatten()
 
     title = datasetTitles.get(dataset, dataset.upper())
-    fig.suptitle(f'GUI Experiments on {title} - {metricLabel}',
+    fig.suptitle(f'GUI Experiments on {title} - Average Accuracy',
                  fontsize=16, fontweight='bold')
 
     colors = getColors(len(experiments))
@@ -270,17 +253,16 @@ def plotDatasetGrid(dataset, experiments, metric='avg'):
 
     for idx, exp in enumerate(experiments):
         ax = axes[idx]
-        accPath = exp['avgPath'] if metric == 'avg' else exp['worstPath']
-        if not os.path.exists(accPath):
+        if not os.path.exists(exp['avgPath']):
             continue
 
-        acc = np.load(accPath)
+        acc = np.load(exp['avgPath'])
         rounds = np.arange(len(acc))
 
         ax.plot(rounds, acc, color=colors[idx], linewidth=2.5,
                 marker=markers[idx], markersize=4, markevery=1)
         ax.set_xlabel('Round', fontsize=10)
-        ax.set_ylabel(metricLabel, fontsize=10)
+        ax.set_ylabel('Average Accuracy', fontsize=10)
         ax.set_title(exp['label'], fontsize=10, fontweight='bold')
         ax.grid(True, alpha=0.3)
         ax.set_ylim([0, 1])
@@ -296,14 +278,14 @@ def plotDatasetGrid(dataset, experiments, metric='avg'):
         axes[idx].set_visible(False)
 
     plt.tight_layout()
-    savePath = f"plots/images/gui/{dataset}_grid_{metric}.png"
+    savePath = f"plots/images/gui/{dataset}_grid_avg.png"
     os.makedirs(os.path.dirname(savePath), exist_ok=True)
     plt.savefig(savePath, dpi=300, bbox_inches='tight')
     print(f"Saved: {savePath}")
     plt.close()
 
 
-def plotFinalAccuracyBar(dataset, experiments, metric='avg'):
+def plotFinalAccuracyBar(dataset, experiments):
     """
     Bar chart comparing final accuracy across all experiments for a dataset.
     """
@@ -313,17 +295,13 @@ def plotFinalAccuracyBar(dataset, experiments, metric='avg'):
         'nmnist': 'Neuromorphic MNIST'
     }
 
-    metricLabel = "Average Accuracy" if metric == 'avg' else "Worst-Node Accuracy"
-
     labels = []
     finalAccs = []
 
-    for idx, exp in enumerate(experiments):
-        accPath = exp['avgPath'] if metric == 'avg' else exp['worstPath']
-        if not os.path.exists(accPath):
+    for exp in experiments:
+        if not os.path.exists(exp['avgPath']):
             continue
-
-        acc = np.load(accPath)
+        acc = np.load(exp['avgPath'])
         labels.append(exp['label'])
         finalAccs.append(acc[-1] if len(acc) > 0 else 0)
 
@@ -335,22 +313,20 @@ def plotFinalAccuracyBar(dataset, experiments, metric='avg'):
     colors = getColors(len(labels))
     bars = ax.bar(range(len(labels)), finalAccs, color=colors, width=0.6)
 
-    # Add value labels on bars
     for bar, acc in zip(bars, finalAccs):
         ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.01,
                 f'{acc:.3f}', ha='center', va='bottom', fontsize=10, fontweight='bold')
 
     title = datasetTitles.get(dataset, dataset.upper())
-    ax.set_ylabel(metricLabel, fontsize=12)
-    ax.set_title(f'Final {metricLabel} - {title}',
-                 fontsize=14, fontweight='bold')
+    ax.set_ylabel('Average Accuracy', fontsize=12)
+    ax.set_title(f'Final Average Accuracy - {title}', fontsize=14, fontweight='bold')
     ax.set_xticks(range(len(labels)))
     ax.set_xticklabels(labels, rotation=30, ha='right', fontsize=9)
     ax.set_ylim([0, 1.1])
     ax.grid(True, alpha=0.3, axis='y')
 
     plt.tight_layout()
-    savePath = f"plots/images/gui/{dataset}_final_accuracy_{metric}.png"
+    savePath = f"plots/images/gui/{dataset}_final_accuracy_avg.png"
     os.makedirs(os.path.dirname(savePath), exist_ok=True)
     plt.savefig(savePath, dpi=300, bbox_inches='tight')
     print(f"Saved: {savePath}")
@@ -371,10 +347,7 @@ def generateGuiPlots():
         return
 
     print(f"Datasets found: {datasets}")
-    print(f"Metric: {METRIC}")
     print("=" * 80)
-
-    metrics = ['avg', 'worst'] if METRIC == 'both' else [METRIC]
 
     for dataset in datasets:
         experiments = discoverExperiments(dataset)
@@ -384,23 +357,20 @@ def generateGuiPlots():
 
         print(f"\nDataset: {dataset.upper()} ({len(experiments)} experiment(s))")
         for exp in experiments:
-            print(f"  - {exp['label']} ({exp['timestamp']})")
+            print(f"  - {exp['label']}")
 
-        for metric in metrics:
-            print(f"\n  Generating {metric} plots...")
+        # Overlay plot (all experiments on one chart)
+        print(f"  1. Overlay comparison...")
+        plotDatasetExperiments(dataset, experiments)
 
-            # Overlay plot (all experiments on one chart)
-            print(f"    1. Overlay comparison...")
-            plotDatasetExperiments(dataset, experiments, metric=metric)
+        # Grid plot (one subplot per experiment)
+        if len(experiments) > 1:
+            print(f"  2. Grid view...")
+            plotDatasetGrid(dataset, experiments)
 
-            # Grid plot (one subplot per experiment)
-            if len(experiments) > 1:
-                print(f"    2. Grid view...")
-                plotDatasetGrid(dataset, experiments, metric=metric)
-
-            # Final accuracy bar chart
-            print(f"    3. Final accuracy bar chart...")
-            plotFinalAccuracyBar(dataset, experiments, metric=metric)
+        # Final accuracy bar chart
+        print(f"  3. Final accuracy bar chart...")
+        plotFinalAccuracyBar(dataset, experiments)
 
     print("\nAll GUI plots generated!")
     print("Plots saved to: plots/images/gui/")

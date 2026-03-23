@@ -161,50 +161,7 @@ def basilRingTrainingWithAttack(
     useLrDecay=True,  # Set False for EBM with high noise + momentum
     **kwargs,
 ):
-    """
-    BASIL ring training (Algorithm 1 from paper).
 
-    Key features matching the paper:
-    - Sequential training: nodes process one at a time around the ring
-    - S-neighbor multicast: each node sends to next S clockwise neighbors
-    - Memory from neighbors: each node stores models from S counterclockwise neighbors
-    - Loss-based selection: pick model with lowest local batch loss
-
-    Parameters:
-    -----------
-    nodes : list of BasilNode
-        All nodes in the ring
-    rounds : int
-        Number of training rounds
-    testLoader : tf.data.Dataset
-        Test dataset for evaluation
-    attackTypes : list of str
-        Attack types to cycle through ("gaussian", "signFlip", "hidden", "none")
-    attackerIds : set of int
-        Node IDs that are Byzantine attackers
-    hiddenStartRound : int
-        Round at which hidden attack activates (default: 20)
-    sigma : float
-        Channel noise standard deviation
-    noiseModel : str
-        Noise mitigation: "none", "noisy", "ebm", "wcm"
-    channelNoiseStart : int
-        Round at which channel noise begins
-    lr0 : float
-        Initial learning rate (paper uses 0.03)
-    stepsPerEpoch : int
-        Max steps per local update (bounds infinite datasets)
-    useSnapshots : bool
-        If True, use BASIL snapshot selection; if False, skip it (baseline)
-    useSequential : bool
-        If True, use paper's sequential training; if False, parallel (faster)
-    stopCallback : callable
-        Returns True when training should stop (for GUI)
-
-    Returns:
-    --------
-    (avgAccHistory, worstAccHistory)
-    """
     # Backward compatibility
     if "attack_type" in kwargs and kwargs["attack_type"] is not None:
         attackTypes = [kwargs["attack_type"]]
@@ -238,12 +195,6 @@ def basilRingTrainingWithAttack(
 
     avgAccHist, worstAccHist = [], []
 
-    # Pre-training evaluation
-    if testLoader is not None:
-        avg, worst, _ = evaluateAll(nodes, testLoader)
-        print(f"[round -1] pre-train avg={avg:.4f} worst={worst:.4f}", flush=True)
-        avgAccHist.append(avg)
-        worstAccHist.append(worst)
 
     for r in range(rounds):
         # Check stop callback
@@ -260,10 +211,12 @@ def basilRingTrainingWithAttack(
             noiseStatus = f" channel_noise(sigma={sigma}){' +' + mitigationStr if mitigationStr else ''}"
         else:
             noiseStatus = f"{mitigationStr}" if mitigationStr else " clean"
-        print(f"[round {r}] lr={lr:.6f}{noiseStatus}...", flush=True)
 
         # Determine current attack type (cycle through list)
         atk = attackTypes[r % len(attackTypes)]
+
+        attackStr = f" | attack={atk}({len(attackers)} nodes)" if attackers and atk != "none" else ""
+        print(f"[round {r}] lr={lr:.6f}{noiseStatus}{attackStr}...", flush=True)
 
         # Communication sigma
         commSigma = sigma if channelNoiseActive else 0.0
@@ -296,10 +249,9 @@ def basilRingTrainingWithAttack(
                 if i in attackers:
                     if atk == "hidden" and r < hiddenStartRound:
                         pass  # Hidden attack not yet active
-                    elif useSnapshots:
+                    elif useSnapshots or atk == "model_poison":
                         # Model poisoning (gradient ascent) when BASIL is active
-                        # Produces structured corruption that's harder for
-                        # loss-based selection to detect vs random noise
+                        # or explicitly selected — harder for loss-based selection to detect
                         setParams(nd.model, noisyParams)
                         noisyParams = modelPoisonAttack(nd.model, nd.dataLoader)
                     else:
@@ -334,7 +286,7 @@ def basilRingTrainingWithAttack(
                 if i in attackers:
                     if atk == "hidden" and r < hiddenStartRound:
                         pass
-                    elif useSnapshots:
+                    elif useSnapshots or atk == "model_poison":
                         setParams(nodes[i].model, noisyParams)
                         noisyParams = modelPoisonAttack(nodes[i].model, nodes[i].dataLoader)
                     else:
@@ -348,7 +300,7 @@ def basilRingTrainingWithAttack(
         # Evaluation
         if testLoader is not None:
             avg, worst, _ = evaluateAll(nodes, testLoader)
-            print(f"[round {r}] eval avg={avg:.4f} worst={worst:.4f}", flush=True)
+            print(f"[round {r}] eval avg={avg:.4f}", flush=True)
             avgAccHist.append(avg)
             worstAccHist.append(worst)
 
@@ -493,13 +445,7 @@ def fedAvgTrainingWithNoise(
     for nd in nodes:
         setParams(nd.model, globalParams)
 
-    # Pre-training evaluation
-    if testLoader is not None:
-        acc = evaluate(nodes[0].model, testLoader)
-        print(f"[round -1] pre-train acc={acc:.4f}", flush=True)
-        avgAccHist.append(acc)
-        worstAccHist.append(acc)
-
+ #   # Pre-training evaluation (optional) --- IGNORE ---
     for r in range(rounds):
         # Check stop callback
         if stopCallback is not None and stopCallback():
@@ -511,10 +457,12 @@ def fedAvgTrainingWithNoise(
 
         mitigationStr = f" {mitigation.upper()}" if mitigation != "none" else ""
         noiseStatus = f" channel_noise(σ={sigma})" if channelNoiseActive else ""
-        print(f"[round {r}] lr={lr:.6f}{mitigationStr}{noiseStatus} parallel training...", flush=True)
 
         # Determine current attack type
         atk = attackTypes[r % len(attackTypes)]
+
+        attackStr = f" | attack={atk}({len(attackers)} nodes)" if attackers and atk != "none" else ""
+        print(f"[round {r}] lr={lr:.6f}{noiseStatus}{attackStr} parallel training...", flush=True)
 
         # ===== STEP 1: ALL NODES TRAIN IN PARALLEL =====
         # Each node starts from the same global model
@@ -535,6 +483,9 @@ def fedAvgTrainingWithNoise(
             if i in attackers:
                 if atk == "hidden" and r < hiddenStartRound:
                     pass  # Hidden attack not yet active
+                elif atk == "model_poison":
+                    setParams(nd.model, localParams)
+                    localParams = modelPoisonAttack(nd.model, nd.dataLoader)
                 else:
                     localParams = applyAttack(localParams, atk)
 
