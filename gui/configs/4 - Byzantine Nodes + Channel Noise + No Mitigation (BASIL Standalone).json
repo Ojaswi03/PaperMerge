@@ -24,6 +24,6 @@
   "nRounds": 30,
   "localEpochs": 1,
   "learningRate": 0.03,
-  "batchSize": 32,
+  "batchSize": 256,
   "useLrDecay": true
 }

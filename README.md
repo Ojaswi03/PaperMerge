@@ -29,11 +29,21 @@ The implementation also explores a **merged approach** that combines both defens
 
 ## Installation
 
-### Dependencies
+### Requirements
+
+- Python 3.12
+- NVIDIA GPU with CUDA 12.3+ (CPU fallback is supported but slow)
+- cuDNN 9.x
+
+### Setup
 
 ```bash
-pip install tensorflow numpy matplotlib
-pip install tonic  # Optional: for real N-MNIST neuromorphic data
+# Create and activate the virtual environment
+python3 -m venv environment/basil-noise-env
+source environment/basil-noise-env/bin/activate
+
+# Install all dependencies
+pip install -r environment/requirements.txt
 ```
 
 ### Verify Installation
@@ -42,28 +52,61 @@ pip install tonic  # Optional: for real N-MNIST neuromorphic data
 python scripts/testSetup.py
 ```
 
-The system automatically detects GPU availability and falls back to CPU if necessary.
+The GUI will display whether it is running on CUDA (GPU) or CPU at the start of every run.
 
 ---
 
 ## Quick Start
 
-### Option 1: Graphical Interface (Recommended)
+### Step 1 - Activate the environment
+
+```bash
+source environment/basil-noise-env/bin/activate
+```
+
+### Step 2 - Launch the GUI
 
 ```bash
 python runGui.py
 ```
 
-### Option 2: Command-Line Scripts
+### Step 3 - Run an experiment
+
+1. Select a **Dataset** (MNIST is fastest for testing)
+2. Select an **Approach** (BASIL Only, Noisy Channel, or Merged)
+3. Configure attacks and noise in the tabs
+4. Give your experiment a name in the **Experiment Name** field
+5. Click **Run Experiment**
+
+Results are saved automatically to:
+```
+experiments/results/gui/{dataset}/{attack_type}/
+```
+
+Plots are saved to:
+```
+plots/images/gui/{dataset}/{attack_type}/
+```
+
+### Phone Notifications
+
+Install the **ntfy** app on your phone and subscribe to your topic (default: `papermerge-ojaswi`) to receive push notifications when a run starts, completes, or fails.
+
+To change the topic name edit this line in `scripts/common.py`:
+```python
+NTFY_TOPIC = "papermerge-ojaswi"
+```
+
+### Command-Line Scripts (no GUI)
 
 ```bash
-# BASIL experiments
+# BASIL paper reproduction
 python scripts/testBasilPaper.py
 
-# Noisy Channel experiments
+# Noisy channel paper reproduction
 python scripts/testEbmPaper.py
 
-# Merged approach experiments
+# Merged approach
 python scripts/testMerged.py
 ```
 
@@ -134,20 +177,36 @@ Combines both defense mechanisms:
 
 ```
 PaperMerge/
-├── runGui.py                    # Graphical interface
+├── runGui.py                    # Entry point - launches the GUI
 ├── basil_core/
 │   ├── basil.py                 # BASIL ring topology + FedAvg
 │   ├── trainer.py               # Local training with EBM/WCM
-│   ├── models.py                # Neural network architectures
+│   ├── models.py                # Neural network architectures (MNIST, CIFAR, N-MNIST)
 │   ├── attacks.py               # Byzantine attack implementations
 │   └── data/                    # Dataset loaders (MNIST, CIFAR-10, N-MNIST)
+├── noise_comm/
+│   └── wcm.py                   # WCM noise mitigation
+├── gui/
+│   └── experimentGui.py         # Tkinter GUI (config, run, plot)
 ├── scripts/
-│   ├── testBasilPaper.py        # BASIL standalone experiments
-│   ├── testEbmPaper.py          # EBM standalone experiments
+│   ├── common.py                # GPU setup, phone notifications, shared utils
+│   ├── testSetup.py             # Verify environment and GPU
+│   ├── testBasilPaper.py        # BASIL paper reproduction
+│   ├── testEbmPaper.py          # EBM paper reproduction
 │   ├── testMerged.py            # Merged approach experiments
-│   └── common.py                # Shared utilities
-├── experiments/results/         # Saved experimental results
-└── plots/                       # Visualization scripts
+│   ├── runBasilOnly.py          # Full BASIL test suite
+│   ├── runNoisyChannel.py       # Full noisy channel test suite
+│   └── runComprehensiveTest.py  # All combinations
+├── plots/
+│   └── plotGui.py               # Plot discovery and generation
+├── environment/
+│   ├── requirements.txt         # Pinned dependencies
+│   └── basil-noise-env/         # Python virtual environment
+└── experiments/results/gui/     # Saved results organized by dataset and attack type
+    └── {dataset}/
+        └── {attack_type}/
+            ├── acc_*.npy        # Accuracy curve
+            └── config_*.json    # Experiment configuration
 ```
 
 ### Model Architectures
@@ -169,6 +228,7 @@ Input(32×32×3) → Conv(16,3×3) → Pool → Conv(64,4×4) → Pool → FC(38
 | **Gaussian** | Replace weights with N(0,1) random noise | Easy (high loss) |
 | **Sign-Flip** | Negate gradient signs | Medium |
 | **Hidden** | Behave normally, then attack at specified round | Hard |
+| **Model Poison** | Gradient ascent to push model in wrong direction | Hard |
 
 ---
 
@@ -336,6 +396,7 @@ Shows loss values for each candidate model to verify Byzantine models are being 
 | Gaussian Attack | Random noise attack |
 | Sign-Flip Attack | Gradient negation attack |
 | Hidden Attack | Delayed attack activation |
+| Model Poison Attack | Gradient ascent attack |
 
 ---
 
@@ -364,8 +425,8 @@ sudo apt-get install python3-tk  # Linux
 ```python
 import numpy as np
 
-# Load and inspect results
-acc = np.load('experiments/results/basil_paper/attacks_basil_avg.npy')
+# Load and inspect results - path follows {dataset}/{attack_type}/acc_{name}.npy
+acc = np.load('experiments/results/gui/mnist/gaussian/acc_my_experiment.npy')
 print(f"Final accuracy: {acc[-1]:.4f}")
 print(f"Best accuracy: {max(acc):.4f}")
 ```

@@ -424,6 +424,8 @@ class ExperimentGUI:
         # entry point for the background experiment thread
         try:
             config = self.getConfig()
+            name = config.get("experimentName", "Experiment")
+            sendNotification("Run Started", f"{name} has started.", priority="default")
             self._executeExperiment(config)
             name = config.get("experimentName", "Experiment")
             sendNotification("Run Complete", f"{name} finished successfully.", priority="high")
@@ -493,12 +495,15 @@ class ExperimentGUI:
                 with open(filepath, 'r') as f:
                     config = json.load(f)
 
+                expName = config.get("experimentName", os.path.basename(filepath))
+                sendNotification("Run Started", f"[{idx}/{total}] {expName} has started.", priority="default")
                 self._executeExperiment(config)
                 completed += 1
 
                 if not self.isRunning:
                     break
 
+                sendNotification("Run Complete", f"[{idx}/{total}] {expName} finished.", priority="high")
                 self.logMessage(f"\n[{idx}/{total}] Done.\n")
 
             self.logMessage("")
@@ -622,12 +627,13 @@ class ExperimentGUI:
                 useLrDecay=True,
             )
 
-        # Check if stopped early
+        # check if user stopped the run before it finished
         if not self.isRunning:
             self.logMessage("")
             self.logMessage("="*80)
-            self.logMessage("EXPERIMENT STOPPED BY USER")
+            self.logMessage("EXPERIMENT STOPPED BY USER - no results saved")
             self.logMessage("="*80)
+            return
 
         # Final evaluation
         self.logMessage("")
@@ -639,13 +645,9 @@ class ExperimentGUI:
         self.logMessage(f"  Per-node accuracies: {[f'{acc:.4f}' for acc in allAccs]}")
         self.logMessage("="*80)
 
-        # Save results
+        # save results only if run completed fully
         self.saveResults(config, avgAccHist, worstAccHist, finalAvg, finalWorst)
-
-        if not self.isRunning:
-            self.logMessage("\nExperiment stopped early but partial results saved.")
-        else:
-            self.logMessage("\nExperiment completed successfully!")
+        self.logMessage("\nExperiment completed successfully!")
 
     def validateConfig(self):
         # check required fields have valid values before starting
@@ -807,10 +809,22 @@ class ExperimentGUI:
         return attackTypes, attackerIds
 
     def saveResults(self, config, avgAccHist, worstAccHist, finalAvg, finalWorst):
-        # write accuracy .npy and config .json under experiments/results/gui/{dataset}/
+        # write accuracy .npy and config .json under experiments/results/gui/{dataset}/{attack_type}/
         dataset = config['dataset']
 
-        # Use experiment name as filename, fall back to approach+timestamp
+        # build attack type folder name from active attacks
+        attackParts = []
+        if config.get('attackGaussian'):
+            attackParts.append('gaussian')
+        if config.get('attackSignFlip'):
+            attackParts.append('signflip')
+        if config.get('attackHidden'):
+            attackParts.append('hidden')
+        if config.get('attackModelPoison'):
+            attackParts.append('model_poison')
+        attackKey = "_".join(attackParts) if attackParts else "none"
+
+        # use experiment name as filename, fall back to approach+timestamp
         expName = config.get('experimentName', '').strip()
         if expName:
             safeName = "".join(c if c.isalnum() or c in " _-" else "_" for c in expName).strip().replace(" ", "_")
@@ -818,14 +832,14 @@ class ExperimentGUI:
             timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
             safeName = f"{config['approach']}_{timestamp}"
 
-        resultDir = f"experiments/results/gui/{dataset}"
+        resultDir = f"experiments/results/gui/{dataset}/{attackKey}"
         os.makedirs(resultDir, exist_ok=True)
 
-        # Save average accuracy curve only
+        # save average accuracy curve
         avgPath = f"{resultDir}/acc_{safeName}.npy"
         np.save(avgPath, np.array(avgAccHist))
 
-        # Save configuration
+        # save configuration alongside the curve
         configPath = f"{resultDir}/config_{safeName}.json"
         with open(configPath, 'w') as f:
             json.dump(config, f, indent=2)
@@ -920,8 +934,11 @@ class ExperimentGUI:
             messagebox.showerror("Error", f"Failed to load configuration:\n{str(e)}")
 
     def plotResults(self):
-        # discover result files and generate overlay/grid/bar plots per dataset
+        # generate plots grouped by dataset and attack type
         try:
+            from plotGui import discoverDatasets, discoverAttackTypes, discoverExperiments, \
+                plotDatasetExperiments, plotDatasetGrid, plotFinalAccuracyBar
+
             self.logMessage("\n" + "="*60)
             self.logMessage("GENERATING PLOTS")
             self.logMessage("="*60)
@@ -935,113 +952,31 @@ class ExperimentGUI:
             self.logMessage(f"Found datasets: {datasets}")
 
             for dataset in datasets:
-                experiments = discoverExperiments(dataset)
-                if not experiments:
+                attackTypes = discoverAttackTypes(dataset)
+                if not attackTypes:
                     continue
 
-                self.logMessage(f"\nDataset: {dataset.upper()} ({len(experiments)} experiments)")
+                self.logMessage(f"\nDataset: {dataset.upper()} - Attack types: {attackTypes}")
 
-                # Generate average accuracy plots only
-                metricLabel = "Average Accuracy"
+                for attackKey in attackTypes:
+                    experiments = discoverExperiments(dataset, attackKey)
+                    if not experiments:
+                        continue
 
-                    # 1. Overlay plot (all experiments on one chart)
-                fig, ax = plt.subplots(figsize=(22, 10))
-                colors = getColors(len(experiments))
-                markers = getMarkers(len(experiments))
-                for idx, exp in enumerate(experiments):
-                    if os.path.exists(exp['avgPath']):
-                        acc = np.load(exp['avgPath'])
-                        rounds = np.arange(len(acc))
-                        ax.plot(rounds, acc, label=exp['label'],
-                               color=colors[idx], linewidth=2.5,
-                               marker=markers[idx], markersize=4, markevery=1)
+                    self.logMessage(f"\n  Attack: {attackKey} ({len(experiments)} experiments)")
 
-                ax.set_xlabel('Training Round', fontsize=13)
-                ax.set_ylabel(metricLabel, fontsize=13)
-                ax.set_title(f'{dataset.upper()} - {metricLabel}', fontsize=15, fontweight='bold')
-                ax.legend(fontsize=12, loc='lower left', bbox_to_anchor=(1.01, 0.0), borderaxespad=0)
-                ax.grid(True, alpha=0.3)
-                ax.set_ylim([0, 1])
-                fig.subplots_adjust(left=0.06, right=0.75, top=0.92, bottom=0.09)
+                    # overlay comparison chart
+                    plotDatasetExperiments(dataset, attackKey, experiments)
+                    self.logMessage(f"    Saved: plots/images/gui/{dataset}/{attackKey}_experiments_avg.png")
 
-                savePath = f"plots/images/gui/{dataset}_experiments_avg.png"
-                os.makedirs(os.path.dirname(savePath), exist_ok=True)
-                fig.savefig(savePath, dpi=300, bbox_inches='tight')
-                plt.close(fig)
-                self.logMessage(f"  Saved: {savePath}")
+                    # grid view
+                    if len(experiments) > 1:
+                        plotDatasetGrid(dataset, attackKey, experiments)
+                        self.logMessage(f"    Saved: plots/images/gui/{dataset}/{attackKey}_grid_avg.png")
 
-                    # 2. Grid plot (each experiment in its own subplot)
-                nExps = len(experiments)
-                nCols = min(nExps, 3) if nExps > 0 else 1
-                nRows = (nExps + nCols - 1) // nCols if nExps > 0 else 1
-
-                fig, axes = plt.subplots(nRows, nCols, figsize=(6 * nCols, 5 * nRows))
-                if nRows == 1 and nCols == 1:
-                    axes = np.array([axes])
-                axes = axes.flatten()
-
-                fig.suptitle(f'{dataset.upper()} - {metricLabel} (Individual Runs)',
-                            fontsize=16, fontweight='bold')
-
-                gridColors = getColors(len(experiments))
-                gridMarkers = getMarkers(len(experiments))
-                for idx, exp in enumerate(experiments):
-                    ax = axes[idx]
-                    if os.path.exists(exp['avgPath']):
-                        acc = np.load(exp['avgPath'])
-                        rounds = np.arange(len(acc))
-                        ax.plot(rounds, acc, color=gridColors[idx], linewidth=2.5,
-                                marker=gridMarkers[idx], markersize=4, markevery=1)
-                        ax.set_xlabel('Round', fontsize=10)
-                        ax.set_ylabel(metricLabel, fontsize=10)
-                        title = exp['label']
-                        if len(title) > 40:
-                            title = title[:40] + '\n' + title[40:]
-                        ax.set_title(title, fontsize=9, fontweight='bold')
-                        ax.grid(True, alpha=0.3)
-                        ax.set_ylim([0, 1])
-                        if len(acc) > 0:
-                            ax.annotate(f'{acc[-1]:.3f}', xy=(len(acc) - 1, acc[-1]),
-                                       fontsize=10, fontweight='bold',
-                                       xytext=(-40, 10), textcoords='offset points')
-
-                for idx in range(nExps, len(axes)):
-                    axes[idx].set_visible(False)
-
-                plt.tight_layout()
-                savePath = f"plots/images/gui/{dataset}_grid_avg.png"
-                fig.savefig(savePath, dpi=300, bbox_inches='tight')
-                plt.close(fig)
-                self.logMessage(f"  Saved: {savePath}")
-
-                    # 3. Bar chart (final accuracy comparison)
-                fig, ax = plt.subplots(figsize=(max(10, len(experiments) * 2.5), 7))
-                labels = []
-                finalAccs = []
-                for exp in experiments:
-                    if os.path.exists(exp['avgPath']):
-                        acc = np.load(exp['avgPath'])
-                        labels.append(exp['label'])
-                        finalAccs.append(acc[-1] if len(acc) > 0 else 0)
-
-                if labels:
-                    barColors = getColors(len(labels))
-                    bars = ax.bar(range(len(labels)), finalAccs, color=barColors, width=0.6)
-                    for bar, acc in zip(bars, finalAccs):
-                        ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.01,
-                               f'{acc:.3f}', ha='center', va='bottom', fontsize=10, fontweight='bold')
-                    ax.set_ylabel(metricLabel, fontsize=12)
-                    ax.set_title(f'Final {metricLabel} - {dataset.upper()}', fontsize=14, fontweight='bold')
-                    ax.set_xticks(range(len(labels)))
-                    ax.set_xticklabels(labels, rotation=45, ha='right', fontsize=9)
-                    ax.set_ylim([0, 1.1])
-                    ax.grid(True, alpha=0.3, axis='y')
-                    plt.tight_layout()
-
-                    savePath = f"plots/images/gui/{dataset}_final_accuracy_avg.png"
-                    fig.savefig(savePath, dpi=300, bbox_inches='tight')
-                    plt.close(fig)
-                    self.logMessage(f"  Saved: {savePath}")
+                    # final accuracy bar chart
+                    plotFinalAccuracyBar(dataset, attackKey, experiments)
+                    self.logMessage(f"    Saved: plots/images/gui/{dataset}/{attackKey}_final_accuracy_avg.png")
 
             self.logMessage("\nAll plots saved to: plots/images/gui/")
             self.logMessage("="*60)

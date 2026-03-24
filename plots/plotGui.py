@@ -62,7 +62,7 @@ def getMarkers(n):
 
 
 def discoverDatasets():
-    # scan gui results directory for dataset subdirs that contain .npy files
+    # scan gui results directory for dataset subdirs that have attack subfolders with .npy files
     guiDir = "experiments/results/gui"
     if not os.path.isdir(guiDir):
         print(f"No GUI results directory found at {guiDir}")
@@ -71,35 +71,55 @@ def discoverDatasets():
     datasets = []
     for entry in sorted(os.listdir(guiDir)):
         entryPath = os.path.join(guiDir, entry)
-        if os.path.isdir(entryPath):
-            # Check if it has any .npy files
-            npyFiles = glob.glob(os.path.join(entryPath, "*.npy"))
-            if npyFiles:
-                datasets.append(entry)
+        if not os.path.isdir(entryPath):
+            continue
+        # check for .npy files either directly or inside attack subfolders
+        directNpy = glob.glob(os.path.join(entryPath, "*.npy"))
+        nestedNpy = glob.glob(os.path.join(entryPath, "*", "*.npy"))
+        if directNpy or nestedNpy:
+            datasets.append(entry)
 
     return datasets
 
 
-def discoverExperiments(dataset):
+def discoverAttackTypes(dataset):
+    # return the list of attack type subfolders that have results for this dataset
+    datasetDir = f"experiments/results/gui/{dataset}"
+    if not os.path.isdir(datasetDir):
+        return []
+
+    attackTypes = []
+    for entry in sorted(os.listdir(datasetDir)):
+        entryPath = os.path.join(datasetDir, entry)
+        if os.path.isdir(entryPath):
+            if glob.glob(os.path.join(entryPath, "*.npy")):
+                attackTypes.append(entry)
+
+    return attackTypes
+
+
+def discoverExperiments(dataset, attackKey=None):
     # find config JSON files and pair each with its .npy accuracy file
-    resultDir = f"experiments/results/gui/{dataset}"
+    # if attackKey is given look in {dataset}/{attackKey}/, otherwise look directly in {dataset}/
+    if attackKey:
+        resultDir = f"experiments/results/gui/{dataset}/{attackKey}"
+    else:
+        resultDir = f"experiments/results/gui/{dataset}"
+
     if not os.path.isdir(resultDir):
         return []
 
-    # Find all config files
     configFiles = sorted(glob.glob(os.path.join(resultDir, "config_*.json")))
 
     experiments = []
     for configPath in configFiles:
         configName = os.path.basename(configPath)
-        # Pattern: config_{name}.json  (name is the sanitized experiment title)
         name = configName.replace("config_", "").replace(".json", "")
 
         avgPath = os.path.join(resultDir, f"acc_{name}.npy")
         if not os.path.exists(avgPath):
             continue
 
-        # Load config
         with open(configPath, 'r') as f:
             config = json.load(f)
 
@@ -165,7 +185,7 @@ def buildLabel(config):
     return f"{topo} ({noisePart} + {attackPart})"
 
 
-def plotDatasetExperiments(dataset, experiments):
+def plotDatasetExperiments(dataset, attackKey, experiments):
     # overlay all experiment curves on one axes and save the figure
     datasetTitles = {
         'mnist': 'MNIST',
@@ -192,23 +212,24 @@ def plotDatasetExperiments(dataset, experiments):
                 markevery=max(1, len(rounds) // 10))
 
     title = datasetTitles.get(dataset, dataset.upper())
+    attackTitle = attackKey.replace("_", " + ").title()
     ax.set_xlabel('Training Round', fontsize=12)
     ax.set_ylabel('Average Accuracy', fontsize=12)
-    ax.set_title(f'GUI Experiments on {title} - Average Accuracy',
+    ax.set_title(f'{title} - Attack: {attackTitle} - Average Accuracy',
                  fontsize=14, fontweight='bold')
-    ax.legend(fontsize=9, loc='best')
+    ax.legend(fontsize=9, loc='upper left', bbox_to_anchor=(1.01, 1), borderaxespad=0)
     ax.grid(True, alpha=0.3)
     ax.set_ylim([0, 1])
 
     plt.tight_layout()
-    savePath = f"plots/images/gui/{dataset}_experiments_avg.png"
+    savePath = f"plots/images/gui/{dataset}/{attackKey}_experiments_avg.png"
     os.makedirs(os.path.dirname(savePath), exist_ok=True)
     plt.savefig(savePath, dpi=300, bbox_inches='tight')
     print(f"Saved: {savePath}")
     plt.close()
 
 
-def plotDatasetGrid(dataset, experiments):
+def plotDatasetGrid(dataset, attackKey, experiments):
     # one subplot per experiment arranged in a grid layout
     if len(experiments) <= 1:
         return
@@ -229,7 +250,8 @@ def plotDatasetGrid(dataset, experiments):
     axes = axes.flatten()
 
     title = datasetTitles.get(dataset, dataset.upper())
-    fig.suptitle(f'GUI Experiments on {title} - Average Accuracy',
+    attackTitle = attackKey.replace("_", " + ").title()
+    fig.suptitle(f'{title} - Attack: {attackTitle} - Average Accuracy',
                  fontsize=16, fontweight='bold')
 
     colors = getColors(len(experiments))
@@ -251,25 +273,25 @@ def plotDatasetGrid(dataset, experiments):
         ax.grid(True, alpha=0.3)
         ax.set_ylim([0, 1])
 
-        # Annotate final accuracy
+        # annotate the final accuracy value on the last point
         if len(acc) > 0:
             ax.annotate(f'{acc[-1]:.3f}', xy=(len(acc) - 1, acc[-1]),
                        fontsize=9, fontweight='bold',
                        xytext=(-30, 10), textcoords='offset points')
 
-    # Hide unused subplots
+    # hide unused subplots
     for idx in range(nExps, len(axes)):
         axes[idx].set_visible(False)
 
     plt.tight_layout()
-    savePath = f"plots/images/gui/{dataset}_grid_avg.png"
+    savePath = f"plots/images/gui/{dataset}/{attackKey}_grid_avg.png"
     os.makedirs(os.path.dirname(savePath), exist_ok=True)
     plt.savefig(savePath, dpi=300, bbox_inches='tight')
     print(f"Saved: {savePath}")
     plt.close()
 
 
-def plotFinalAccuracyBar(dataset, experiments):
+def plotFinalAccuracyBar(dataset, attackKey, experiments):
     # bar chart of each experiment's final accuracy value
     datasetTitles = {
         'mnist': 'MNIST',
@@ -300,15 +322,17 @@ def plotFinalAccuracyBar(dataset, experiments):
                 f'{acc:.3f}', ha='center', va='bottom', fontsize=10, fontweight='bold')
 
     title = datasetTitles.get(dataset, dataset.upper())
+    attackTitle = attackKey.replace("_", " + ").title()
     ax.set_ylabel('Average Accuracy', fontsize=12)
-    ax.set_title(f'Final Average Accuracy - {title}', fontsize=14, fontweight='bold')
+    ax.set_title(f'Final Accuracy - {title} - Attack: {attackTitle}',
+                 fontsize=14, fontweight='bold')
     ax.set_xticks(range(len(labels)))
     ax.set_xticklabels(labels, rotation=30, ha='right', fontsize=9)
     ax.set_ylim([0, 1.1])
     ax.grid(True, alpha=0.3, axis='y')
 
     plt.tight_layout()
-    savePath = f"plots/images/gui/{dataset}_final_accuracy_avg.png"
+    savePath = f"plots/images/gui/{dataset}/{attackKey}_final_accuracy_avg.png"
     os.makedirs(os.path.dirname(savePath), exist_ok=True)
     plt.savefig(savePath, dpi=300, bbox_inches='tight')
     print(f"Saved: {savePath}")
@@ -316,7 +340,7 @@ def plotFinalAccuracyBar(dataset, experiments):
 
 
 def generateGuiPlots():
-    # discover datasets and call all three plot types for each
+    # discover datasets and attack types, then generate one set of plots per combination
     print("\n" + "=" * 80)
     print("GENERATING GUI EXPERIMENT PLOTS")
     print("=" * 80)
@@ -332,27 +356,31 @@ def generateGuiPlots():
     print("=" * 80)
 
     for dataset in datasets:
-        experiments = discoverExperiments(dataset)
-        if not experiments:
-            print(f"\nNo experiments found for {dataset}, skipping...")
+        attackTypes = discoverAttackTypes(dataset)
+        if not attackTypes:
+            print(f"\nNo attack type subfolders found for {dataset}, skipping...")
             continue
 
-        print(f"\nDataset: {dataset.upper()} ({len(experiments)} experiment(s))")
-        for exp in experiments:
-            print(f"  - {exp['label']}")
+        print(f"\nDataset: {dataset.upper()} - Attack types: {attackTypes}")
 
-        # Overlay plot (all experiments on one chart)
-        print(f"  1. Overlay comparison...")
-        plotDatasetExperiments(dataset, experiments)
+        for attackKey in attackTypes:
+            experiments = discoverExperiments(dataset, attackKey)
+            if not experiments:
+                continue
 
-        # Grid plot (one subplot per experiment)
-        if len(experiments) > 1:
-            print(f"  2. Grid view...")
-            plotDatasetGrid(dataset, experiments)
+            print(f"\n  Attack: {attackKey} ({len(experiments)} experiment(s))")
+            for exp in experiments:
+                print(f"    - {exp['label']}")
 
-        # Final accuracy bar chart
-        print(f"  3. Final accuracy bar chart...")
-        plotFinalAccuracyBar(dataset, experiments)
+            # overlay all experiments for this dataset + attack type on one chart
+            plotDatasetExperiments(dataset, attackKey, experiments)
+
+            # grid view - one subplot per experiment
+            if len(experiments) > 1:
+                plotDatasetGrid(dataset, attackKey, experiments)
+
+            # final accuracy bar chart
+            plotFinalAccuracyBar(dataset, attackKey, experiments)
 
     print("\nAll GUI plots generated!")
     print("Plots saved to: plots/images/gui/")

@@ -13,7 +13,7 @@ NTFY_TOPIC = "papermerge-ojaswi"   # <-- change this to your own unique topic
 def sendNotification(title, message, priority="default"):
     # send POST to ntfy.sh topic; silently ignore any network errors
     try:
-        url = f"https://ntfy.sh/{NTFY_TOPIC}".encode()
+        url = f"https://ntfy.sh/{NTFY_TOPIC}"
         req = urllib.request.Request(
             url,
             data=message.encode("utf-8"),
