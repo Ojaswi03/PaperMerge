@@ -7,15 +7,18 @@ This GUI allows you to:
 - Configure attacks and when they start
 - Configure channel noise and when it starts
 - Set all training parameters
-- Run experiments and view results
+- Run experiments and view results with a live accuracy chart
 """
 # Set matplotlib backend BEFORE any other imports to avoid tkinter conflicts
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 import os
 import sys
+import time
 import re
 import traceback
 import tkinter as tk
@@ -38,393 +41,813 @@ from basil_core.trainer import evaluateAll
 from scripts.common import setupGpu, sendNotification
 from plotGui import discoverDatasets, discoverExperiments, getColors, getMarkers
 
+# ─── Colour palette ──────────────────────────────────────────────────────────
+BG        = '#f7f8fc'
+PANEL_BG  = '#ffffff'
+ACCENT    = '#2563eb'
+ACCENT_DK = '#1d4ed8'
+DANGER    = '#dc2626'
+DANGER_DK = '#b91c1c'
+SUCCESS   = '#16a34a'
+INFO_CLR  = '#0369a1'
+WARN_CLR  = '#d97706'
+HEADER    = '#1e293b'
+MUTED     = '#64748b'
+BORDER    = '#e2e8f0'
+CHART_BG  = '#f8fafc'
+
+# ─── Quick presets ───────────────────────────────────────────────────────────
+PRESETS = {
+    "Clean Baseline": {
+        'dataset': 'cifar10', 'approach': 'basil', 'useBasil': True,
+        'useChannelNoise': False, 'noiseMitigation': 'none',
+        'attackGaussian': False, 'attackSignFlip': False, 'attackHidden': False,
+        'attackerIds': '', 'nNodes': 10, 'nRounds': 100, 'localEpochs': 5,
+        'learningRate': 0.05, 'batchSize': 512, 'momentum': 0.9, 'useLrDecay': True,
+    },
+    "Noisy + EBM": {
+        'dataset': 'cifar10', 'approach': 'noisy', 'useBasil': False,
+        'useChannelNoise': True, 'channelNoiseSigma': 0.2, 'noiseMitigation': 'ebm',
+        'ebmLambda': 75.0, 'attackerIds': '', 'nNodes': 10, 'nRounds': 100,
+        'localEpochs': 5, 'learningRate': 0.05, 'batchSize': 512,
+        'momentum': 0.9, 'useLrDecay': False,
+    },
+    "BASIL + Gaussian": {
+        'dataset': 'cifar10', 'approach': 'basil', 'useBasil': True,
+        'useChannelNoise': False, 'noiseMitigation': 'none',
+        'attackGaussian': True, 'attackGaussianStart': 0,
+        'attackerIds': '0,3,5,7', 'nNodes': 10, 'nRounds': 100,
+        'localEpochs': 5, 'learningRate': 0.05, 'batchSize': 512,
+        'momentum': 0.9, 'useLrDecay': True,
+    },
+    "Merged (Best)": {
+        'dataset': 'cifar10', 'approach': 'merged', 'useBasil': True,
+        'useChannelNoise': True, 'channelNoiseSigma': 0.2, 'noiseMitigation': 'ebm',
+        'ebmLambda': 75.0, 'attackGaussian': False, 'attackerIds': '',
+        'nNodes': 10, 'nRounds': 100, 'localEpochs': 5, 'learningRate': 0.05,
+        'batchSize': 512, 'momentum': 0.9, 'useLrDecay': False,
+    },
+}
+
 
 class ExperimentGUI:
+    # ── construction ─────────────────────────────────────────────────────────
     def __init__(self, root):
         self.root = root
         self.root.title("BASIL + Noisy Channel Experiment GUI")
-        self.root.geometry("900x800")
-
-        # Variables
-        self.setupVariables()
-
-        # Create UI
-        self.createUI()
+        self.root.geometry("1200x900")
+        self.root.minsize(1000, 720)
+        self.root.configure(bg=BG)
 
         # Running state
         self.isRunning = False
         self.currentThread = None
 
-        # Handle window close event
+        # Live-chart / progress tracking
+        self._liveAccData   = []
+        self._liveWorstData = []
+        self._trainStartTime = None
+        self._totalRounds    = 0
+
+        self._setupStyle()
+        self.setupVariables()
+        self.createUI()
+        self._setupKeyboardShortcuts()
+
         self.root.protocol("WM_DELETE_WINDOW", self.onClosing)
+        self._setStatus("Ready  ·  Ctrl+R = Run   Ctrl+S = Save   Ctrl+L = Load   Esc = Stop")
 
+    # ── style ─────────────────────────────────────────────────────────────────
+    def _setupStyle(self):
+        s = ttk.Style()
+        s.theme_use('clam')
+
+        s.configure('.',               background=BG,     font=('Segoe UI', 9))
+        s.configure('TFrame',          background=BG)
+        s.configure('TLabelframe',     background=BG,     bordercolor=BORDER)
+        s.configure('TLabelframe.Label', font=('Segoe UI', 9, 'bold'), foreground=HEADER, background=BG)
+        s.configure('TLabel',          background=BG,     foreground=HEADER)
+        s.configure('TEntry',          fieldbackground=PANEL_BG, foreground=HEADER)
+        s.configure('TRadiobutton',    background=BG,     foreground=HEADER)
+        s.configure('TCheckbutton',    background=BG,     foreground=HEADER)
+        s.configure('TSeparator',      background=BORDER)
+        s.configure('TNotebook',       background=BG,     tabmargins=[2, 2, 2, 0])
+        s.configure('TNotebook.Tab',   background='#e2e8f0', foreground=MUTED,
+                    padding=[12, 5], font=('Segoe UI', 9))
+        s.map('TNotebook.Tab',
+              background=[('selected', PANEL_BG)],
+              foreground=[('selected', ACCENT)])
+
+        # Buttons
+        s.configure('TButton',         padding=(8, 4),    font=('Segoe UI', 9))
+        s.configure('Run.TButton',     background=ACCENT, foreground='white',
+                    font=('Segoe UI', 10, 'bold'), padding=(14, 6))
+        s.map('Run.TButton',           background=[('active', ACCENT_DK), ('disabled', '#93c5fd')])
+        s.configure('RunAll.TButton',  background='#0891b2', foreground='white',
+                    font=('Segoe UI', 10, 'bold'), padding=(14, 6))
+        s.map('RunAll.TButton',        background=[('active', '#0e7490'), ('disabled', '#67e8f9')])
+        s.configure('Stop.TButton',    background=DANGER, foreground='white',
+                    font=('Segoe UI', 10, 'bold'), padding=(14, 6))
+        s.map('Stop.TButton',          background=[('active', DANGER_DK), ('disabled', '#fca5a5')])
+        s.configure('Preset.TButton',  background='#f1f5f9', foreground=HEADER,
+                    font=('Segoe UI', 8), padding=(6, 3))
+        s.map('Preset.TButton',        background=[('active', '#e2e8f0')])
+        s.configure('Link.TButton',    background=BG, foreground=ACCENT,
+                    font=('Segoe UI', 9), relief='flat', padding=(4, 2))
+        s.map('Link.TButton',          foreground=[('active', ACCENT_DK)])
+
+        # Progress bar
+        s.configure('Blue.Horizontal.TProgressbar',
+                    background=ACCENT, troughcolor=BORDER, thickness=8)
+
+        # Status bar
+        s.configure('Status.TLabel', background='#e8ecf4', foreground=MUTED,
+                    font=('Segoe UI', 8), padding=(6, 3), relief='flat')
+
+    # ── variables ─────────────────────────────────────────────────────────────
     def setupVariables(self):
-        # Initialize all tkinter variables
-        # Experiment label
-        self.experimentNameVar = tk.StringVar(value="")
-
-        # Dataset selection
-        self.datasetVar = tk.StringVar(value="mnist")
-
-        # Approach selection
-        self.approachVar = tk.StringVar(value="basil")
-
-        # BASIL parameters
-        self.useBasilVar = tk.BooleanVar(value=True)
-        self.basilMemorySizeVar = tk.IntVar(value=4)  # S = b+1 = 5 for 4 attackers (paper compliant)
-
-        # Noisy Channel parameters
-        self.useChannelNoiseVar = tk.BooleanVar(value=False)
+        self.experimentNameVar    = tk.StringVar(value="")
+        self.datasetVar           = tk.StringVar(value="cifar10")
+        self.approachVar          = tk.StringVar(value="basil")
+        self.useBasilVar          = tk.BooleanVar(value=True)
+        self.basilMemorySizeVar   = tk.IntVar(value=4)
+        self.useChannelNoiseVar   = tk.BooleanVar(value=False)
         self.channelNoiseStartVar = tk.IntVar(value=0)
-        self.channelNoiseSigmaVar = tk.DoubleVar(value=0.2)  # Balanced for visible EBM effect
-        self.noiseMitigationVar = tk.StringVar(value="none")
-        self.ebmLambdaVar = tk.DoubleVar(value=75.0)  # With sigma=0.2: scale = 1 + 75*0.04 = 2.0
-        self.wcmLambdaVar = tk.DoubleVar(value=0.1)
-        self.wcmSamplesVar = tk.IntVar(value=5)
-        self.wcmRhoVar = tk.DoubleVar(value=0.5)
-        self.momentumVar = tk.DoubleVar(value=0.0)  # Use 0.9 for EBM with high noise
-        self.useLrDecayVar = tk.BooleanVar(value=True)  # Set False for EBM with high noise
-
-        # Attack parameters
-        self.attackGaussianVar = tk.BooleanVar(value=False)
-        self.attackGaussianStartVar = tk.IntVar(value=0)
-        self.attackSignFlipVar = tk.BooleanVar(value=False)
-        self.attackSignFlipStartVar = tk.IntVar(value=0)
-        self.attackHiddenVar = tk.BooleanVar(value=False)
-        self.attackHiddenStartVar = tk.IntVar(value=5)
-        self.attackModelPoisonVar = tk.BooleanVar(value=False)
+        self.channelNoiseSigmaVar = tk.DoubleVar(value=0.2)
+        self.noiseMitigationVar   = tk.StringVar(value="none")
+        self.ebmLambdaVar         = tk.DoubleVar(value=75.0)
+        self.momentumVar          = tk.DoubleVar(value=0.9)
+        self.useLrDecayVar        = tk.BooleanVar(value=True)
+        self.attackGaussianVar         = tk.BooleanVar(value=False)
+        self.attackGaussianStartVar    = tk.IntVar(value=0)
+        self.attackSignFlipVar         = tk.BooleanVar(value=False)
+        self.attackSignFlipStartVar    = tk.IntVar(value=0)
+        self.attackHiddenVar           = tk.BooleanVar(value=False)
+        self.attackHiddenStartVar      = tk.IntVar(value=0)
+        self.attackModelPoisonVar      = tk.BooleanVar(value=False)
         self.attackModelPoisonStartVar = tk.IntVar(value=0)
-        self.attackerIdsVar = tk.StringVar(value="0,3,5,7")  # 40% consecutive attackers - breaks BASIL guarantee (S=b not S>b)
+        self.attackScalingVar          = tk.BooleanVar(value=False)
+        self.attackScalingStartVar     = tk.IntVar(value=0)
+        self.attackAlieVar             = tk.BooleanVar(value=False)
+        self.attackAlieStartVar        = tk.IntVar(value=0)
+        self.attackIpmVar              = tk.BooleanVar(value=False)
+        self.attackIpmStartVar         = tk.IntVar(value=0)
+        self.attackNoiseAmpVar         = tk.BooleanVar(value=False)
+        self.attackNoiseAmpStartVar    = tk.IntVar(value=0)
+        self.attackerIdsVar   = tk.StringVar(value="0,3,5,7")
+        self.nNodesVar        = tk.IntVar(value=10)
+        self.nRoundsVar       = tk.IntVar(value=100)
+        self.localEpochsVar   = tk.IntVar(value=5)
+        self.learningRateVar  = tk.DoubleVar(value=0.05)
+        self.batchSizeVar     = tk.IntVar(value=512)
+        # progress / status (not user-facing inputs)
+        self._progressVar     = tk.DoubleVar(value=0.0)
 
-        # Training parameters
-        self.nNodesVar = tk.IntVar(value=10)
-        self.nRoundsVar = tk.IntVar(value=30)
-        self.localEpochsVar = tk.IntVar(value=1)
-        self.learningRateVar = tk.DoubleVar(value=0.03)  # Paper uses 0.03
-        self.batchSizeVar = tk.IntVar(value=32)
-
+    # ── UI construction ───────────────────────────────────────────────────────
     def createUI(self):
-        # build tabbed notebook and bottom button bar
-        # Create notebook for tabs
-        notebook = ttk.Notebook(self.root)
-        notebook.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+        # ---- notebook (tabs) -----------------------------------------------
+        self.notebook = ttk.Notebook(self.root)
+        self.notebook.pack(fill=tk.BOTH, expand=True, padx=8, pady=(8, 0))
 
-        # Tab 1: Basic Configuration
-        basicTab = ttk.Frame(notebook)
-        notebook.add(basicTab, text="Basic Configuration")
+        basicTab    = ttk.Frame(self.notebook)
+        advancedTab = ttk.Frame(self.notebook)
+        attackTab   = ttk.Frame(self.notebook)
+        outputTab   = ttk.Frame(self.notebook)
+
+        self.notebook.add(basicTab,    text="  Basic  ")
+        self.notebook.add(advancedTab, text="  Advanced  ")
+        self.notebook.add(attackTab,   text="  Attacks  ")
+        self.notebook.add(outputTab,   text="  Output  ")
+
         self.createBasicTab(basicTab)
-
-        # Tab 2: Advanced Configuration
-        advancedTab = ttk.Frame(notebook)
-        notebook.add(advancedTab, text="Advanced Configuration")
         self.createAdvancedTab(advancedTab)
-
-        # Tab 3: Attack Configuration
-        attackTab = ttk.Frame(notebook)
-        notebook.add(attackTab, text="Attack Configuration")
         self.createAttackTab(attackTab)
-
-        # Tab 4: Output
-        outputTab = ttk.Frame(notebook)
-        notebook.add(outputTab, text="Output")
         self.createOutputTab(outputTab)
 
-        # Bottom buttons
+        # ---- progress bar --------------------------------------------------
+        self._createProgressFrame()
+
+        # ---- button bar ----------------------------------------------------
         self.createButtons()
 
+        # ---- status bar ----------------------------------------------------
+        self._statusVar = tk.StringVar(value="")
+        ttk.Label(self.root, textvariable=self._statusVar,
+                  style='Status.TLabel', anchor=tk.W
+                  ).pack(fill=tk.X, side=tk.BOTTOM)
+
+    def _createProgressFrame(self):
+        pf = ttk.Frame(self.root)
+        pf.pack(fill=tk.X, padx=8, pady=(4, 0))
+
+        self._progressBar = ttk.Progressbar(pf, variable=self._progressVar,
+                                            maximum=100, length=400,
+                                            style='Blue.Horizontal.TProgressbar')
+        self._progressBar.pack(side=tk.LEFT, padx=(0, 10), pady=3)
+
+        self._roundLabel = ttk.Label(pf, text="Round –/–",
+                                     font=('Segoe UI', 9, 'bold'), foreground=ACCENT)
+        self._roundLabel.pack(side=tk.LEFT, padx=(0, 16))
+
+        self._etaLabel = ttk.Label(pf, text="", foreground=MUTED, font=('Segoe UI', 8))
+        self._etaLabel.pack(side=tk.LEFT)
+
+        self._accLabel = ttk.Label(pf, text="", foreground=SUCCESS,
+                                   font=('Segoe UI', 9, 'bold'))
+        self._accLabel.pack(side=tk.RIGHT, padx=6)
+
+    # ── Basic tab ─────────────────────────────────────────────────────────────
     def createBasicTab(self, parent):
-        # dataset, approach and core training param widgets
-        frame = ttk.LabelFrame(parent, text="Basic Settings", padding=10)
-        frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        outer = ttk.Frame(parent)
+        outer.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+
+        # ---- Quick presets -------------------------------------------------
+        presetFrame = ttk.LabelFrame(outer, text="Quick Presets", padding=8)
+        presetFrame.pack(fill=tk.X, pady=(0, 8))
+
+        desc = ttk.Label(presetFrame,
+                         text="Click a preset to auto-fill all settings:",
+                         foreground=MUTED, font=('Segoe UI', 8))
+        desc.pack(anchor=tk.W, pady=(0, 4))
+
+        btnRow = ttk.Frame(presetFrame)
+        btnRow.pack(fill=tk.X)
+        for name in PRESETS:
+            ttk.Button(btnRow, text=name, style='Preset.TButton',
+                       command=lambda n=name: self._applyPreset(n)
+                       ).pack(side=tk.LEFT, padx=3)
+
+        # ---- Main settings -------------------------------------------------
+        frame = ttk.LabelFrame(outer, text="Experiment Settings", padding=10)
+        frame.pack(fill=tk.BOTH, expand=True)
 
         row = 0
 
         # Experiment name
-        ttk.Label(frame, text="Experiment Name:", font=('Arial', 10, 'bold')).grid(row=row, column=0, sticky=tk.W, pady=5)
-        ttk.Entry(frame, textvariable=self.experimentNameVar, width=50).grid(row=row, column=1, columnspan=3, sticky=tk.W, padx=10)
+        ttk.Label(frame, text="Name:", font=('Segoe UI', 9, 'bold')).grid(
+            row=row, column=0, sticky=tk.W, pady=5)
+        ttk.Entry(frame, textvariable=self.experimentNameVar, width=55,
+                  font=('Segoe UI', 9)).grid(row=row, column=1, columnspan=3,
+                                              sticky=tk.W+tk.E, padx=8)
         row += 1
-        ttk.Label(frame, text="  e.g. Ring Topology (Noisy + With EBM + No Byzantine Nodes)", font=('Arial', 8)).grid(row=row, column=0, columnspan=4, sticky=tk.W, padx=20)
-        row += 1
-
-        ttk.Separator(frame, orient='horizontal').grid(row=row, column=0, columnspan=4, sticky='ew', pady=10)
-        row += 1
-
-        # Dataset selection
-        ttk.Label(frame, text="Dataset:", font=('Arial', 10, 'bold')).grid(row=row, column=0, sticky=tk.W, pady=5)
-        datasets = [("MNIST", "mnist"), ("CIFAR-10", "cifar10"), ("Neuromorphic MNIST", "nmnist")]
-        for i, (label, value) in enumerate(datasets):
-            ttk.Radiobutton(frame, text=label, variable=self.datasetVar, value=value).grid(row=row, column=i+1, sticky=tk.W, padx=10)
+        ttk.Label(frame, text="e.g.  Ring Topology – Noisy + EBM – No Attacks",
+                  foreground=MUTED, font=('Segoe UI', 8)).grid(
+            row=row, column=1, columnspan=3, sticky=tk.W, padx=8)
         row += 1
 
-        ttk.Separator(frame, orient='horizontal').grid(row=row, column=0, columnspan=4, sticky='ew', pady=10)
+        ttk.Separator(frame, orient='horizontal').grid(
+            row=row, column=0, columnspan=4, sticky='ew', pady=8)
         row += 1
 
-        # Approach selection
-        ttk.Label(frame, text="Approach:", font=('Arial', 10, 'bold')).grid(row=row, column=0, sticky=tk.W, pady=5)
-        ttk.Radiobutton(frame, text="BASIL Only", variable=self.approachVar, value="basil",
-                       command=self.onApproachChange).grid(row=row, column=1, sticky=tk.W, padx=10)
-        ttk.Radiobutton(frame, text="Noisy Channel Only", variable=self.approachVar, value="noisy",
-                       command=self.onApproachChange).grid(row=row, column=2, sticky=tk.W, padx=10)
-        ttk.Radiobutton(frame, text="Merged (BASIL + Noisy)", variable=self.approachVar, value="merged",
-                       command=self.onApproachChange).grid(row=row, column=3, sticky=tk.W, padx=10)
+        # Dataset
+        ttk.Label(frame, text="Dataset:", font=('Segoe UI', 9, 'bold')).grid(
+            row=row, column=0, sticky=tk.W, pady=5)
+        for i, (label, value) in enumerate([("MNIST", "mnist"),
+                                             ("CIFAR-10", "cifar10"),
+                                             ("Neuromorphic MNIST", "nmnist")]):
+            ttk.Radiobutton(frame, text=label, variable=self.datasetVar,
+                            value=value).grid(row=row, column=i+1, sticky=tk.W, padx=8)
         row += 1
 
-        ttk.Separator(frame, orient='horizontal').grid(row=row, column=0, columnspan=4, sticky='ew', pady=10)
+        ttk.Separator(frame, orient='horizontal').grid(
+            row=row, column=0, columnspan=4, sticky='ew', pady=8)
         row += 1
 
-        # Training parameters
-        ttk.Label(frame, text="Training Parameters:", font=('Arial', 10, 'bold')).grid(row=row, column=0, columnspan=4, sticky=tk.W, pady=5)
+        # Approach
+        ttk.Label(frame, text="Approach:", font=('Segoe UI', 9, 'bold')).grid(
+            row=row, column=0, sticky=tk.W, pady=5)
+        ttk.Radiobutton(frame, text="BASIL Only",
+                        variable=self.approachVar, value="basil",
+                        command=self.onApproachChange).grid(row=row, column=1, sticky=tk.W, padx=8)
+        ttk.Radiobutton(frame, text="Noisy Channel Only",
+                        variable=self.approachVar, value="noisy",
+                        command=self.onApproachChange).grid(row=row, column=2, sticky=tk.W, padx=8)
+        ttk.Radiobutton(frame, text="Merged (BASIL + Noisy)",
+                        variable=self.approachVar, value="merged",
+                        command=self.onApproachChange).grid(row=row, column=3, sticky=tk.W, padx=8)
         row += 1
 
-        ttk.Label(frame, text="Number of Nodes:").grid(row=row, column=0, sticky=tk.W, pady=2)
-        ttk.Entry(frame, textvariable=self.nNodesVar, width=10).grid(row=row, column=1, sticky=tk.W, padx=10)
-        ttk.Label(frame, text="Training Rounds:").grid(row=row, column=2, sticky=tk.W, pady=2)
-        ttk.Entry(frame, textvariable=self.nRoundsVar, width=10).grid(row=row, column=3, sticky=tk.W, padx=10)
+        ttk.Separator(frame, orient='horizontal').grid(
+            row=row, column=0, columnspan=4, sticky='ew', pady=8)
         row += 1
 
-        ttk.Label(frame, text="Local Epochs:").grid(row=row, column=0, sticky=tk.W, pady=2)
-        ttk.Entry(frame, textvariable=self.localEpochsVar, width=10).grid(row=row, column=1, sticky=tk.W, padx=10)
-        ttk.Label(frame, text="Learning Rate:").grid(row=row, column=2, sticky=tk.W, pady=2)
-        ttk.Entry(frame, textvariable=self.learningRateVar, width=10).grid(row=row, column=3, sticky=tk.W, padx=10)
+        # Training parameters (2-column grid)
+        ttk.Label(frame, text="Training Parameters:",
+                  font=('Segoe UI', 9, 'bold')).grid(
+            row=row, column=0, columnspan=4, sticky=tk.W, pady=(0, 4))
         row += 1
 
-        ttk.Label(frame, text="Batch Size:").grid(row=row, column=0, sticky=tk.W, pady=2)
-        ttk.Entry(frame, textvariable=self.batchSizeVar, width=10).grid(row=row, column=1, sticky=tk.W, padx=10)
+        params = [
+            ("Nodes:", self.nNodesVar,       "Rounds:", self.nRoundsVar),
+            ("Local Epochs:", self.localEpochsVar, "Learning Rate:", self.learningRateVar),
+            ("Batch Size:", self.batchSizeVar, None, None),
+        ]
+        for lbl1, var1, lbl2, var2 in params:
+            ttk.Label(frame, text=lbl1).grid(row=row, column=0, sticky=tk.W, pady=2)
+            ttk.Entry(frame, textvariable=var1, width=10).grid(
+                row=row, column=1, sticky=tk.W, padx=8)
+            if lbl2:
+                ttk.Label(frame, text=lbl2).grid(row=row, column=2, sticky=tk.W, pady=2)
+                ttk.Entry(frame, textvariable=var2, width=10).grid(
+                    row=row, column=3, sticky=tk.W, padx=8)
+            row += 1
+
+        # Auto-name button
+        ttk.Button(frame, text="Auto-generate Name", style='Link.TButton',
+                   command=self._autoGenerateName).grid(
+            row=row, column=0, columnspan=2, sticky=tk.W, pady=(6, 0))
         row += 1
 
+        frame.columnconfigure(1, weight=1)
+        frame.columnconfigure(3, weight=1)
+
+    # ── Advanced tab ──────────────────────────────────────────────────────────
     def createAdvancedTab(self, parent):
-        # BASIL and channel noise config widgets
         frame = ttk.Frame(parent)
         frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
 
-        # BASIL Configuration
+        # BASIL
         basilFrame = ttk.LabelFrame(frame, text="BASIL Configuration", padding=10)
-        basilFrame.pack(fill=tk.X, pady=5)
+        basilFrame.pack(fill=tk.X, pady=(0, 8))
 
-        ttk.Checkbutton(basilFrame, text="Use BASIL Snapshot Selection", variable=self.useBasilVar).grid(row=0, column=0, columnspan=2, sticky=tk.W, pady=5)
-        ttk.Label(basilFrame, text="Memory Size (S):").grid(row=1, column=0, sticky=tk.W, pady=2)
-        ttk.Entry(basilFrame, textvariable=self.basilMemorySizeVar, width=10).grid(row=1, column=1, sticky=tk.W, padx=10)
-        ttk.Label(basilFrame, text="Number of past models to store").grid(row=1, column=2, sticky=tk.W, padx=10)
+        ttk.Checkbutton(basilFrame, text="Use BASIL Snapshot Selection",
+                        variable=self.useBasilVar).grid(row=0, column=0, columnspan=3,
+                                                         sticky=tk.W, pady=5)
+        ttk.Label(basilFrame, text="Memory Size (S):").grid(row=1, column=0, sticky=tk.W)
+        ttk.Entry(basilFrame, textvariable=self.basilMemorySizeVar, width=10).grid(
+            row=1, column=1, sticky=tk.W, padx=8)
+        ttk.Label(basilFrame, text="Number of neighbour models to store",
+                  foreground=MUTED, font=('Segoe UI', 8)).grid(
+            row=1, column=2, sticky=tk.W)
 
-        # Channel Noise Configuration
+        # Channel Noise
         noiseFrame = ttk.LabelFrame(frame, text="Channel Noise Configuration", padding=10)
-        noiseFrame.pack(fill=tk.X, pady=5)
+        noiseFrame.pack(fill=tk.X, pady=(0, 8))
 
-        ttk.Checkbutton(noiseFrame, text="Enable Channel Noise", variable=self.useChannelNoiseVar).grid(row=0, column=0, columnspan=2, sticky=tk.W, pady=5)
+        ttk.Checkbutton(noiseFrame, text="Enable Channel Noise",
+                        variable=self.useChannelNoiseVar).grid(row=0, column=0,
+                                                                columnspan=3, sticky=tk.W, pady=5)
 
-        ttk.Label(noiseFrame, text="Start Noise at Round:").grid(row=1, column=0, sticky=tk.W, pady=2)
-        ttk.Entry(noiseFrame, textvariable=self.channelNoiseStartVar, width=10).grid(row=1, column=1, sticky=tk.W, padx=10)
-        ttk.Label(noiseFrame, text="(0 = from beginning)").grid(row=1, column=2, sticky=tk.W, padx=10)
+        rows = [
+            ("Start Noise at Round:", self.channelNoiseStartVar, "(0 = from beginning)"),
+            ("Noise Sigma (σ):",      self.channelNoiseSigmaVar, "Standard deviation of Gaussian noise"),
+            ("EBM Lambda:",           self.ebmLambdaVar,         "scale = 1 + λσ²  (default λ=75, σ=0.2 → scale=2.0)"),
+            ("Momentum:",             self.momentumVar,          "0.9 recommended for SGD on CIFAR-10"),
+        ]
+        for i, (lbl, var, hint) in enumerate(rows, start=1):
+            ttk.Label(noiseFrame, text=lbl).grid(row=i, column=0, sticky=tk.W, pady=2)
+            ttk.Entry(noiseFrame, textvariable=var, width=10).grid(
+                row=i, column=1, sticky=tk.W, padx=8)
+            ttk.Label(noiseFrame, text=hint, foreground=MUTED,
+                      font=('Segoe UI', 8)).grid(row=i, column=2, sticky=tk.W)
 
-        ttk.Label(noiseFrame, text="Noise Sigma (σ):").grid(row=2, column=0, sticky=tk.W, pady=2)
-        ttk.Entry(noiseFrame, textvariable=self.channelNoiseSigmaVar, width=10).grid(row=2, column=1, sticky=tk.W, padx=10)
-        ttk.Label(noiseFrame, text="Standard deviation of Gaussian noise").grid(row=2, column=2, sticky=tk.W, padx=10)
+        # Mitigation radio buttons
+        ttk.Label(noiseFrame, text="Mitigation:").grid(row=5, column=0, sticky=tk.W, pady=5)
+        mf = ttk.Frame(noiseFrame)
+        mf.grid(row=5, column=1, columnspan=2, sticky=tk.W, padx=8)
+        ttk.Radiobutton(mf, text="None", variable=self.noiseMitigationVar,
+                        value="none").pack(side=tk.LEFT, padx=(0, 12))
+        ttk.Radiobutton(mf, text="EBM (Expectation-Based Model)",
+                        variable=self.noiseMitigationVar, value="ebm").pack(side=tk.LEFT)
 
-        ttk.Label(noiseFrame, text="Mitigation:").grid(row=3, column=0, sticky=tk.W, pady=5)
-        mitigationFrame = ttk.Frame(noiseFrame)
-        mitigationFrame.grid(row=3, column=1, columnspan=2, sticky=tk.W, padx=10)
-        ttk.Radiobutton(mitigationFrame, text="None", variable=self.noiseMitigationVar, value="none").pack(side=tk.LEFT, padx=5)
-        ttk.Radiobutton(mitigationFrame, text="EBM", variable=self.noiseMitigationVar, value="ebm").pack(side=tk.LEFT, padx=5)
-        ttk.Radiobutton(mitigationFrame, text="WCM", variable=self.noiseMitigationVar, value="wcm").pack(side=tk.LEFT, padx=5)
+        # LR decay
+        lrFrame = ttk.LabelFrame(frame, text="Learning Rate Schedule", padding=10)
+        lrFrame.pack(fill=tk.X)
+        ttk.Checkbutton(lrFrame,
+                        text="Use LR Decay  (disable for EBM with high noise + momentum)",
+                        variable=self.useLrDecayVar).pack(anchor=tk.W)
+        ttk.Label(lrFrame, text="lr(t) = lr₀ / (1 + lr₀ · t)   when enabled",
+                  foreground=MUTED, font=('Segoe UI', 8)).pack(anchor=tk.W, pady=(2, 0))
 
-        # EBM parameters
-        ttk.Label(noiseFrame, text="EBM Lambda:").grid(row=4, column=0, sticky=tk.W, pady=2)
-        ttk.Entry(noiseFrame, textvariable=self.ebmLambdaVar, width=10).grid(row=4, column=1, sticky=tk.W, padx=10)
-        ttk.Label(noiseFrame, text="Regularization strength for EBM").grid(row=4, column=2, sticky=tk.W, padx=10)
-
-        # WCM parameters
-        ttk.Label(noiseFrame, text="WCM Lambda:").grid(row=5, column=0, sticky=tk.W, pady=2)
-        ttk.Entry(noiseFrame, textvariable=self.wcmLambdaVar, width=10).grid(row=5, column=1, sticky=tk.W, padx=10)
-        ttk.Label(noiseFrame, text="Regularization strength for WCM").grid(row=5, column=2, sticky=tk.W, padx=10)
-
-        ttk.Label(noiseFrame, text="WCM Samples:").grid(row=6, column=0, sticky=tk.W, pady=2)
-        ttk.Entry(noiseFrame, textvariable=self.wcmSamplesVar, width=10).grid(row=6, column=1, sticky=tk.W, padx=10)
-        ttk.Label(noiseFrame, text="Number of boundary samples").grid(row=6, column=2, sticky=tk.W, padx=10)
-
-        ttk.Label(noiseFrame, text="WCM Rho:").grid(row=7, column=0, sticky=tk.W, pady=2)
-        ttk.Entry(noiseFrame, textvariable=self.wcmRhoVar, width=10).grid(row=7, column=1, sticky=tk.W, padx=10)
-        ttk.Label(noiseFrame, text="SCA convex combination parameter").grid(row=7, column=2, sticky=tk.W, padx=10)
-
-        ttk.Separator(noiseFrame, orient='horizontal').grid(row=8, column=0, columnspan=3, sticky='ew', pady=5)
-
-        ttk.Label(noiseFrame, text="Momentum:").grid(row=9, column=0, sticky=tk.W, pady=2)
-        ttk.Entry(noiseFrame, textvariable=self.momentumVar, width=10).grid(row=9, column=1, sticky=tk.W, padx=10)
-        ttk.Label(noiseFrame, text="Use 0.9 for EBM with high noise (σ=0.2)").grid(row=9, column=2, sticky=tk.W, padx=10)
-
+    # ── Attack tab ────────────────────────────────────────────────────────────
     def createAttackTab(self, parent):
-        # per-attack enable/start-round widgets
-        frame = ttk.LabelFrame(parent, text="Byzantine Attack Configuration", padding=10)
+        canvas = tk.Canvas(parent, bg=BG, highlightthickness=0)
+        scrollbar = ttk.Scrollbar(parent, orient='vertical', command=canvas.yview)
+        canvas.configure(yscrollcommand=scrollbar.set)
+
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
+        inner = ttk.Frame(canvas)
+        inner_id = canvas.create_window((0, 0), window=inner, anchor='nw')
+
+        def _resize(event):
+            canvas.configure(scrollregion=canvas.bbox('all'))
+            canvas.itemconfig(inner_id, width=event.width)
+
+        inner.bind('<Configure>', lambda e: canvas.configure(scrollregion=canvas.bbox('all')))
+        canvas.bind('<Configure>', _resize)
+
+        frame = ttk.LabelFrame(inner, text="Byzantine Attack Configuration", padding=10)
         frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
 
-        ttk.Label(frame, text="Select attacks and when they should start:", font=('Arial', 10, 'bold')).grid(row=0, column=0, columnspan=3, sticky=tk.W, pady=10)
+        ttk.Label(frame, text="Attacker Node IDs:").grid(row=0, column=0, sticky=tk.W, pady=5)
+        ttk.Entry(frame, textvariable=self.attackerIdsVar, width=25).grid(
+            row=0, column=1, sticky=tk.W, padx=8)
+        ttk.Label(frame, text="comma-separated, e.g. 0,3,5,7",
+                  foreground=MUTED, font=('Segoe UI', 8)).grid(row=0, column=2, sticky=tk.W)
 
-        row = 1
+        ttk.Separator(frame, orient='horizontal').grid(
+            row=1, column=0, columnspan=3, sticky='ew', pady=8)
 
-        # Attacker node IDs
-        ttk.Label(frame, text="Attacker Node IDs:").grid(row=row, column=0, sticky=tk.W, pady=5)
-        ttk.Entry(frame, textvariable=self.attackerIdsVar, width=20).grid(row=row, column=1, sticky=tk.W, padx=10)
-        ttk.Label(frame, text="(comma-separated, e.g., 0,5)").grid(row=row, column=2, sticky=tk.W, padx=10)
-        row += 1
+        attacks = [
+            ("Gaussian Noise",             self.attackGaussianVar,    self.attackGaussianStartVar,
+             "Attackers send random Gaussian noise instead of gradients"),
+            ("Sign-Flip",                  self.attackSignFlipVar,    self.attackSignFlipStartVar,
+             "Attackers flip the sign of all gradient values"),
+            ("Hidden / Backdoor",          self.attackHiddenVar,      self.attackHiddenStartVar,
+             "Behaves normally initially, then injects malicious updates at start round"),
+            ("Model Poisoning",            self.attackModelPoisonVar,  self.attackModelPoisonStartVar,
+             "Gradient ascent to corrupt the model — hardest to detect"),
+            ("Scaling (Model Replacement)", self.attackScalingVar,    self.attackScalingStartVar,
+             "Multiplies weights by a large negative factor to dominate aggregation"),
+            ("ALIE (A Little Is Enough)",  self.attackAlieVar,        self.attackAlieStartVar,
+             "Stealthy update within z_max std of honest distribution"),
+            ("IPM (Inner Product Manip.)", self.attackIpmVar,         self.attackIpmStartVar,
+             "Negates and scales weights to maximise negative inner product (Fall of Empires)"),
+            ("Noise Amplification",        self.attackNoiseAmpVar,    self.attackNoiseAmpStartVar,
+             "Amplified Gaussian noise proportional to layer std to evade norm-based defences"),
+        ]
 
-        ttk.Separator(frame, orient='horizontal').grid(row=row, column=0, columnspan=3, sticky='ew', pady=10)
-        row += 1
+        r = 2
+        for name, enableVar, startVar, desc in attacks:
+            ttk.Checkbutton(frame, text=name, variable=enableVar).grid(
+                row=r, column=0, sticky=tk.W, pady=4)
+            ttk.Label(frame, text="Start round:").grid(row=r, column=1, sticky=tk.W, padx=8)
+            ttk.Entry(frame, textvariable=startVar, width=8).grid(
+                row=r, column=2, sticky=tk.W)
+            r += 1
+            ttk.Label(frame, text=f"  {desc}", foreground=MUTED,
+                      font=('Segoe UI', 8)).grid(row=r, column=0, columnspan=3,
+                                                  sticky=tk.W, padx=20)
+            r += 1
+            ttk.Separator(frame, orient='horizontal').grid(
+                row=r, column=0, columnspan=3, sticky='ew', pady=6)
+            r += 1
 
-        # Gaussian Attack
-        ttk.Checkbutton(frame, text="Gaussian Noise Attack", variable=self.attackGaussianVar).grid(row=row, column=0, sticky=tk.W, pady=5)
-        ttk.Label(frame, text="Start at round:").grid(row=row, column=1, sticky=tk.W, padx=10)
-        ttk.Entry(frame, textvariable=self.attackGaussianStartVar, width=10).grid(row=row, column=2, sticky=tk.W, padx=10)
-        row += 1
-        ttk.Label(frame, text="  Attackers send random Gaussian noise instead of gradients").grid(row=row, column=0, columnspan=3, sticky=tk.W, padx=20)
-        row += 1
-
-        ttk.Separator(frame, orient='horizontal').grid(row=row, column=0, columnspan=3, sticky='ew', pady=10)
-        row += 1
-
-        # Sign Flip Attack
-        ttk.Checkbutton(frame, text="Sign-Flip Attack", variable=self.attackSignFlipVar).grid(row=row, column=0, sticky=tk.W, pady=5)
-        ttk.Label(frame, text="Start at round:").grid(row=row, column=1, sticky=tk.W, padx=10)
-        ttk.Entry(frame, textvariable=self.attackSignFlipStartVar, width=10).grid(row=row, column=2, sticky=tk.W, padx=10)
-        row += 1
-        ttk.Label(frame, text="  Attackers flip the sign of their gradients").grid(row=row, column=0, columnspan=3, sticky=tk.W, padx=20)
-        row += 1
-
-        ttk.Separator(frame, orient='horizontal').grid(row=row, column=0, columnspan=3, sticky='ew', pady=10)
-        row += 1
-
-        # Hidden/Backdoor Attack
-        ttk.Checkbutton(frame, text="Hidden/Backdoor Attack", variable=self.attackHiddenVar).grid(row=row, column=0, sticky=tk.W, pady=5)
-        ttk.Label(frame, text="Start at round:").grid(row=row, column=1, sticky=tk.W, padx=10)
-        ttk.Entry(frame, textvariable=self.attackHiddenStartVar, width=10).grid(row=row, column=2, sticky=tk.W, padx=10)
-        row += 1
-        ttk.Label(frame, text="  Attackers behave normally initially, then inject malicious updates").grid(row=row, column=0, columnspan=3, sticky=tk.W, padx=20)
-        row += 1
-
-        ttk.Separator(frame, orient=tk.HORIZONTAL).grid(row=row, column=0, columnspan=3, sticky=tk.EW, pady=5)
-        row += 1
-
-        # Model Poisoning Attack
-        ttk.Checkbutton(frame, text="Model Poisoning Attack", variable=self.attackModelPoisonVar).grid(row=row, column=0, sticky=tk.W, pady=5)
-        ttk.Label(frame, text="Start at round:").grid(row=row, column=1, sticky=tk.W, padx=10)
-        ttk.Entry(frame, textvariable=self.attackModelPoisonStartVar, width=10).grid(row=row, column=2, sticky=tk.W, padx=10)
-        row += 1
-        ttk.Label(frame, text="  Attackers use gradient ascent to corrupt the model (hardest to detect)").grid(row=row, column=0, columnspan=3, sticky=tk.W, padx=20)
-        row += 1
-
+    # ── Output tab ────────────────────────────────────────────────────────────
     def createOutputTab(self, parent):
-        # scrolled text widget for experiment log output
-        frame = ttk.Frame(parent)
-        frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        # Split: log on left, live chart on right
+        paned = ttk.PanedWindow(parent, orient=tk.HORIZONTAL)
+        paned.pack(fill=tk.BOTH, expand=True, padx=8, pady=8)
 
-        ttk.Label(frame, text="Experiment Output:", font=('Arial', 10, 'bold')).pack(anchor=tk.W, pady=5)
+        # ---- Left: log text ------------------------------------------------
+        leftFrame = ttk.Frame(paned)
+        paned.add(leftFrame, weight=3)
 
-        self.outputText = scrolledtext.ScrolledText(frame, wrap=tk.WORD, width=80, height=30, font=('Courier', 9))
-        self.outputText.pack(fill=tk.BOTH, expand=True)
+        logHeader = ttk.Frame(leftFrame)
+        logHeader.pack(fill=tk.X)
+        ttk.Label(logHeader, text="Experiment Log",
+                  font=('Segoe UI', 9, 'bold'), foreground=HEADER).pack(side=tk.LEFT)
+        ttk.Button(logHeader, text="Save Errors", style='Link.TButton',
+                   command=self._saveErrorsFromLog).pack(side=tk.RIGHT)
+        ttk.Button(logHeader, text="Copy All", style='Link.TButton',
+                   command=self._copyAllLog).pack(side=tk.RIGHT)
 
+        self.outputText = scrolledtext.ScrolledText(
+            leftFrame, wrap=tk.WORD, width=60, height=30,
+            font=('Consolas', 9), bg='#0f172a', fg='#e2e8f0',
+            insertbackground='white', selectbackground='#4a5568',
+            selectforeground='white', state='normal')
+        self.outputText.pack(fill=tk.BOTH, expand=True, pady=(4, 0))
+
+        # Right-click context menu for copying
+        self._logMenu = tk.Menu(self.outputText, tearoff=0)
+        self._logMenu.add_command(label="Copy",        command=self._copySelection)
+        self._logMenu.add_command(label="Select All",  command=self._selectAllLog)
+        self._logMenu.add_separator()
+        self._logMenu.add_command(label="Copy All",     command=self._copyAllLog)
+        self._logMenu.add_command(label="Save Errors", command=self._saveErrorsFromLog)
+        self._logMenu.add_command(label="Clear",       command=self.clearOutput)
+        self.outputText.bind('<Button-3>', self._showLogMenu)
+        self.outputText.bind('<Control-a>', lambda e: self._selectAllLog())
+        self.outputText.bind('<Control-A>', lambda e: self._selectAllLog())
+
+        # Configure log colour tags
+        self.outputText.tag_configure('header',  foreground='#93c5fd', font=('Consolas', 9, 'bold'))
+        self.outputText.tag_configure('success', foreground='#4ade80')
+        self.outputText.tag_configure('error',   foreground='#f87171')
+        self.outputText.tag_configure('warn',    foreground='#fbbf24')
+        self.outputText.tag_configure('info',    foreground='#67e8f9')
+        self.outputText.tag_configure('muted',   foreground='#94a3b8')
+        self.outputText.tag_configure('normal',  foreground='#e2e8f0')
+
+        # ---- Right: live chart ---------------------------------------------
+        rightFrame = ttk.Frame(paned)
+        paned.add(rightFrame, weight=2)
+
+        chartHeader = ttk.Frame(rightFrame)
+        chartHeader.pack(fill=tk.X)
+        ttk.Label(chartHeader, text="Live Accuracy",
+                  font=('Segoe UI', 9, 'bold'), foreground=HEADER).pack(side=tk.LEFT)
+        ttk.Button(chartHeader, text="Clear Chart", style='Link.TButton',
+                   command=self._clearLiveChart).pack(side=tk.RIGHT)
+
+        self.liveFig = Figure(figsize=(4, 3), dpi=96, facecolor=CHART_BG)
+        self.liveAx  = self.liveFig.add_subplot(111)
+        self._styleChartAxes()
+
+        self.liveCanvas = FigureCanvasTkAgg(self.liveFig, master=rightFrame)
+        self.liveCanvas.get_tk_widget().pack(fill=tk.BOTH, expand=True, pady=(4, 0))
+
+    def _styleChartAxes(self):
+        ax = self.liveAx
+        ax.set_facecolor(CHART_BG)
+        ax.set_xlabel('Round', fontsize=7, color=MUTED)
+        ax.set_ylabel('Accuracy', fontsize=7, color=MUTED)
+        ax.set_title('Waiting for training data…', fontsize=8, color=MUTED)
+        ax.set_ylim(0, 1)
+        ax.grid(True, alpha=0.3, color=BORDER)
+        ax.tick_params(labelsize=6, colors=MUTED)
+        for spine in ax.spines.values():
+            spine.set_edgecolor(BORDER)
+        self.liveFig.tight_layout(pad=1.2)
+
+    # ── Buttons ───────────────────────────────────────────────────────────────
     def createButtons(self):
-        # run/stop/plot/save/load/exit buttons at the bottom of the window
-        buttonFrame = ttk.Frame(self.root)
-        buttonFrame.pack(fill=tk.X, padx=5, pady=5)
+        bf = ttk.Frame(self.root)
+        bf.pack(fill=tk.X, padx=8, pady=6)
 
-        self.runButton = ttk.Button(buttonFrame, text="Run Experiment", command=self.runExperiment, style='Accent.TButton')
-        self.runButton.pack(side=tk.LEFT, padx=5)
+        self.runButton = ttk.Button(
+            bf, text="▶  Run Experiment", style='Run.TButton',
+            command=self.runExperiment)
+        self.runButton.pack(side=tk.LEFT, padx=(0, 4))
 
-        self.runAllButton = ttk.Button(buttonFrame, text="Run All Configs", command=self.runAll)
-        self.runAllButton.pack(side=tk.LEFT, padx=5)
+        self.runAllButton = ttk.Button(
+            bf, text="▶▶  Run All Configs", style='RunAll.TButton',
+            command=self.runAll)
+        self.runAllButton.pack(side=tk.LEFT, padx=4)
 
-        self.stopButton = ttk.Button(buttonFrame, text="Stop", command=self.stopExperiment, state=tk.DISABLED)
-        self.stopButton.pack(side=tk.LEFT, padx=5)
+        self.stopButton = ttk.Button(
+            bf, text="■  Stop", style='Stop.TButton',
+            command=self.stopExperiment, state=tk.DISABLED)
+        self.stopButton.pack(side=tk.LEFT, padx=4)
 
-        ttk.Button(buttonFrame, text="Clear Output", command=self.clearOutput).pack(side=tk.LEFT, padx=5)
+        ttk.Separator(bf, orient='vertical').pack(side=tk.LEFT, fill=tk.Y,
+                                                   padx=6, pady=2)
 
-        ttk.Button(buttonFrame, text="Plot Results", command=self.plotResults).pack(side=tk.LEFT, padx=5)
+        ttk.Button(bf, text="Clear Log",       command=self.clearOutput).pack(side=tk.LEFT, padx=2)
+        ttk.Button(bf, text="Plot Results",    command=self.plotResults).pack(side=tk.LEFT, padx=2)
+        ttk.Button(bf, text="Save Config",     command=self.saveConfig).pack(side=tk.LEFT, padx=2)
+        ttk.Button(bf, text="Load Config",     command=self.loadConfig).pack(side=tk.LEFT, padx=2)
 
-        ttk.Button(buttonFrame, text="Save Configuration", command=self.saveConfig).pack(side=tk.LEFT, padx=5)
+        ttk.Button(bf, text="Exit",            command=self.onClosing).pack(side=tk.RIGHT, padx=2)
 
-        ttk.Button(buttonFrame, text="Load Configuration", command=self.loadConfig).pack(side=tk.LEFT, padx=5)
+        # Keyboard hint labels
+        hints = [("Ctrl+R", "Run"), ("Ctrl+S", "Save"), ("Ctrl+L", "Load"), ("Esc", "Stop")]
+        for key, label in reversed(hints):
+            ttk.Label(bf, text=f"{key}={label}",
+                      foreground=MUTED, font=('Segoe UI', 7)).pack(side=tk.RIGHT, padx=2)
 
-        ttk.Button(buttonFrame, text="Exit", command=self.onClosing).pack(side=tk.RIGHT, padx=5)
+    # ── Keyboard shortcuts ────────────────────────────────────────────────────
+    def _setupKeyboardShortcuts(self):
+        self.root.bind('<Control-r>', lambda e: self.runExperiment())
+        self.root.bind('<Control-s>', lambda e: self.saveConfig())
+        self.root.bind('<Control-l>', lambda e: self.loadConfig())
+        self.root.bind('<Escape>',    lambda e: self.stopExperiment() if self.isRunning else None)
 
-    def onApproachChange(self):
-        # sync BASIL/noise checkboxes when the approach radio button changes
-        approach = self.approachVar.get()
-        if approach == "basil":
-            self.useBasilVar.set(True)
-            self.useChannelNoiseVar.set(False)
-        elif approach == "noisy":
-            self.useBasilVar.set(False)
-            self.useChannelNoiseVar.set(True)
-        elif approach == "merged":
-            self.useBasilVar.set(True)
-            self.useChannelNoiseVar.set(True)
+    # ── Status / progress helpers ─────────────────────────────────────────────
+    def _setStatus(self, msg):
+        self._statusVar.set(f"  {msg}")
+
+    def _onRoundComplete(self, roundNum, avgAcc, worstAcc, totalRounds):
+        """Called from training thread — schedules UI update on main thread."""
+        self.root.after(0, self._updateUIAfterRound, roundNum, avgAcc, worstAcc, totalRounds)
+
+    def _updateUIAfterRound(self, roundNum, avgAcc, worstAcc, totalRounds):
+        """UI updates after each round — runs on main thread via root.after()."""
+        self._liveAccData.append(avgAcc)
+        self._liveWorstData.append(worstAcc)
+
+        # Progress bar
+        if totalRounds > 0:
+            pct = roundNum / totalRounds * 100
+            self._progressVar.set(pct)
+            self._roundLabel.config(text=f"Round {roundNum}/{totalRounds}")
+
+        # ETA
+        if self._trainStartTime and roundNum > 0:
+            elapsed = time.time() - self._trainStartTime
+            rate = elapsed / roundNum
+            remaining = (totalRounds - roundNum) * rate
+            m, s = int(remaining // 60), int(remaining % 60)
+            self._etaLabel.config(text=f"ETA  {m}m {s:02d}s")
+
+        # Latest accuracy
+        self._accLabel.config(text=f"Acc  {avgAcc:.1%}")
+
+        # Live chart
+        self._refreshLiveChart()
+
+        # Status bar
+        self._setStatus(f"Training…  round {roundNum}/{totalRounds}  avg acc = {avgAcc:.4f}")
+
+    def _refreshLiveChart(self):
+        ax = self.liveAx
+        ax.clear()
+        ax.set_facecolor(CHART_BG)
+        ax.grid(True, alpha=0.3, color=BORDER)
+        ax.tick_params(labelsize=6, colors=MUTED)
+        for spine in ax.spines.values():
+            spine.set_edgecolor(BORDER)
+        ax.set_xlabel('Round', fontsize=7, color=MUTED)
+        ax.set_ylabel('Accuracy', fontsize=7, color=MUTED)
+        ax.set_ylim(0, 1)
+
+        if self._liveAccData:
+            rounds = list(range(len(self._liveAccData)))
+            ax.plot(rounds, self._liveAccData, color=ACCENT, linewidth=1.5,
+                    marker='o', markersize=2, label='Avg')
+            if any(w != a for w, a in zip(self._liveWorstData, self._liveAccData)):
+                ax.plot(rounds, self._liveWorstData, color=DANGER, linewidth=1,
+                        linestyle='--', markersize=2, label='Worst')
+                ax.legend(fontsize=7, framealpha=0.5)
+            ax.set_title(f"Live Accuracy  (latest {self._liveAccData[-1]:.1%})",
+                         fontsize=8, color=HEADER)
+        else:
+            ax.set_title("Waiting for training data…", fontsize=8, color=MUTED)
+
+        self.liveFig.tight_layout(pad=1.2)
+        self.liveCanvas.draw_idle()
+
+    def _clearLiveChart(self):
+        self._liveAccData.clear()
+        self._liveWorstData.clear()
+        self._refreshLiveChart()
+
+    # ── Preset & auto-name helpers ─────────────────────────────────────────────
+    def _applyPreset(self, name):
+        cfg = PRESETS[name]
+        mapping = {
+            'dataset':           self.datasetVar,
+            'approach':          self.approachVar,
+            'useBasil':          self.useBasilVar,
+            'useChannelNoise':   self.useChannelNoiseVar,
+            'channelNoiseSigma': self.channelNoiseSigmaVar,
+            'noiseMitigation':   self.noiseMitigationVar,
+            'ebmLambda':         self.ebmLambdaVar,
+            'attackGaussian':    self.attackGaussianVar,
+            'attackSignFlip':    self.attackSignFlipVar,
+            'attackHidden':      self.attackHiddenVar,
+            'attackerIds':       self.attackerIdsVar,
+            'nNodes':            self.nNodesVar,
+            'nRounds':           self.nRoundsVar,
+            'localEpochs':       self.localEpochsVar,
+            'learningRate':      self.learningRateVar,
+            'batchSize':         self.batchSizeVar,
+            'momentum':          self.momentumVar,
+            'useLrDecay':        self.useLrDecayVar,
+        }
+        for key, var in mapping.items():
+            if key in cfg:
+                var.set(cfg[key])
+        self.experimentNameVar.set(name)
+        self._setStatus(f"Preset applied: {name}")
+
+    def _autoGenerateName(self):
+        dataset  = self.datasetVar.get().upper()
+        approach = {'basil': 'BASIL', 'noisy': 'FedAvg', 'merged': 'Merged'}.get(
+            self.approachVar.get(), self.approachVar.get())
+        noisy  = " + Noise" if self.useChannelNoiseVar.get() else ""
+        mitig  = f" + {self.noiseMitigationVar.get().upper()}" if self.useChannelNoiseVar.get() and self.noiseMitigationVar.get() != 'none' else ""
+        atks   = []
+        if self.attackGaussianVar.get():  atks.append("Gaussian")
+        if self.attackSignFlipVar.get():  atks.append("SignFlip")
+        if self.attackHiddenVar.get():    atks.append("Hidden")
+        if self.attackModelPoisonVar.get(): atks.append("Poison")
+        atkStr = f" [{'+'.join(atks)}]" if atks else " [Clean]"
+        name = f"{dataset} {approach}{noisy}{mitig}{atkStr}"
+        self.experimentNameVar.set(name)
+
+    # ── Log helpers ───────────────────────────────────────────────────────────
+    _ERROR_FILE = "error.txt"
 
     def logMessage(self, message):
-        # append text line to the scrolled output widget
-        self.outputText.insert(tk.END, message + "\n")
+        tag = self._pickLogTag(message)
+        self.outputText.insert(tk.END, message + "\n", tag)
         self.outputText.see(tk.END)
         self.root.update_idletasks()
+        if tag == 'error':
+            self._appendToErrorFile(message)
+
+    def _appendToErrorFile(self, message):
+        try:
+            with open(self._ERROR_FILE, 'a') as f:
+                f.write(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] {message}\n")
+        except Exception:
+            pass
+
+    def _pickLogTag(self, msg):
+        m = msg.strip()
+        if m.startswith('=') or m.startswith('-'):  return 'header'
+        if m.startswith('ERROR') or 'Traceback' in m or 'Exception' in m: return 'error'
+        if 'FINAL RESULTS' in m or 'completed successfully' in m: return 'success'
+        if m.startswith('[STOP') or m.startswith('[SKIP') or 'STOPPED' in m: return 'warn'
+        if m.startswith('[pre-training]') or m.startswith('[round'): return 'info'
+        if m.startswith('  ') or m.startswith('Loading') or m.startswith('Creating'): return 'muted'
+        return 'normal'
 
     def clearOutput(self):
-        # delete all text from the output widget
         self.outputText.delete(1.0, tk.END)
 
+    def _showLogMenu(self, event):
+        try:
+            self._logMenu.tk_popup(event.x_root, event.y_root)
+        finally:
+            self._logMenu.grab_release()
+
+    def _copySelection(self):
+        try:
+            text = self.outputText.get(tk.SEL_FIRST, tk.SEL_LAST)
+            self.root.clipboard_clear()
+            self.root.clipboard_append(text)
+        except tk.TclError:
+            pass  # nothing selected
+
+    def _selectAllLog(self):
+        self.outputText.tag_add(tk.SEL, '1.0', tk.END)
+        self.outputText.mark_set(tk.INSERT, '1.0')
+        self.outputText.see(tk.INSERT)
+
+    def _copyAllLog(self):
+        text = self.outputText.get('1.0', tk.END)
+        self.root.clipboard_clear()
+        self.root.clipboard_append(text)
+        self._setStatus("Log copied to clipboard.")
+
+    def _saveErrorsFromLog(self):
+        """Extract every error/traceback line visible in the log and write to error.txt."""
+        all_lines = self.outputText.get('1.0', tk.END).splitlines()
+        error_lines = [l for l in all_lines if self._pickLogTag(l) == 'error']
+        if not error_lines:
+            self._setStatus("No errors found in current log.")
+            return
+        try:
+            with open(self._ERROR_FILE, 'a') as f:
+                f.write(f"\n=== Saved from log at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} ===\n")
+                f.write('\n'.join(error_lines) + '\n')
+            self._setStatus(f"Errors saved to {self._ERROR_FILE}  ({len(error_lines)} lines)")
+        except Exception as e:
+            self._setStatus(f"Could not save errors: {e}")
+
+    # ── Approach change ───────────────────────────────────────────────────────
+    def onApproachChange(self):
+        approach = self.approachVar.get()
+        if approach == "basil":
+            self.useBasilVar.set(True);  self.useChannelNoiseVar.set(False)
+        elif approach == "noisy":
+            self.useBasilVar.set(False); self.useChannelNoiseVar.set(True)
+        elif approach == "merged":
+            self.useBasilVar.set(True);  self.useChannelNoiseVar.set(True)
+
+    # ── Run / Stop ────────────────────────────────────────────────────────────
     def runExperiment(self):
-        # validate config, then launch experiment in a background thread
         if self.isRunning:
             messagebox.showwarning("Warning", "An experiment is already running!")
             return
-
-        # Validate configuration
         if not self.validateConfig():
             return
 
-        # Disable run button, enable stop button
         self.runButton.config(state=tk.DISABLED)
+        self.runAllButton.config(state=tk.DISABLED)
         self.stopButton.config(state=tk.NORMAL)
         self.isRunning = True
-
-        # Clear output
+        self._progressVar.set(0)
+        self._roundLabel.config(text="Round 0/–")
+        self._etaLabel.config(text="")
+        self._accLabel.config(text="")
         self.clearOutput()
+        self._liveAccData.clear()
+        self._liveWorstData.clear()
+        self._refreshLiveChart()
 
-        # Run in separate thread
+        self.notebook.select(3)  # switch to Output tab
+        self._setStatus("Preparing experiment…")
+
         self.currentThread = threading.Thread(target=self.runExperimentThread)
         self.currentThread.start()
 
     def stopExperiment(self):
-        # set flag so training loops can detect and exit
         self.isRunning = False
-        self.logMessage("\n[STOP REQUESTED] Stopping experiment...")
+        self.logMessage("\n[STOP REQUESTED] Stopping experiment…")
+        self._setStatus("Stop requested — waiting for current round to finish…")
 
     def onClosing(self):
-        # prompt before closing if an experiment is active, then destroy window
         if self.isRunning:
-            # Ask for confirmation if experiment is running
-            response = messagebox.askyesno(
-                "Experiment Running",
-                "An experiment is currently running. Do you want to stop it and exit?"
-            )
-            if not response:
-                return  # User cancelled, don't close
-
-            # Stop the experiment
+            if not messagebox.askyesno("Experiment Running",
+                                       "An experiment is running. Stop it and exit?"):
+                return
             self.isRunning = False
-            self.logMessage("\n[WINDOW CLOSING] Stopping experiment...")
-
-            # Wait for thread to finish (with timeout)
-            if self.currentThread is not None and self.currentThread.is_alive():
-                self.logMessage("Waiting for experiment to terminate...")
-                self.currentThread.join(timeout=5.0)  # Wait up to 5 seconds
-
-                if self.currentThread.is_alive():
-                    self.logMessage("Warning: Thread did not terminate cleanly")
-
-        # Destroy the window
+            if self.currentThread and self.currentThread.is_alive():
+                self.currentThread.join(timeout=5.0)
         self.root.destroy()
 
     def runExperimentThread(self):
-        # entry point for the background experiment thread
         try:
             config = self.getConfig()
             name = config.get("experimentName", "Experiment")
+            self._trainStartTime = time.time()
+            self._totalRounds = config.get('nRounds', 100)
             sendNotification("Run Started", f"{name} has started.", priority="default")
             self._executeExperiment(config)
             name = config.get("experimentName", "Experiment")
@@ -433,35 +856,92 @@ class ExperimentGUI:
             self.logMessage(f"\nERROR: {str(e)}")
             self.logMessage(traceback.format_exc())
             sendNotification("Run FAILED", str(e), priority="urgent")
+            self.root.after(0, self._setStatus, f"ERROR: {str(e)[:80]}")
         finally:
-            self.runButton.config(state=tk.NORMAL)
-            self.runAllButton.config(state=tk.NORMAL)
-            self.stopButton.config(state=tk.DISABLED)
-            self.isRunning = False
+            self.root.after(0, self._onRunFinished)
 
+    def _onRunFinished(self):
+        self.runButton.config(state=tk.NORMAL)
+        self.runAllButton.config(state=tk.NORMAL)
+        self.stopButton.config(state=tk.DISABLED)
+        self.isRunning = False
+        self._progressVar.set(100 if self._liveAccData else 0)
+        self._setStatus("Idle  ·  Experiment finished.")
+
+    # ── _getResultPaths / _isAlreadyRun ───────────────────────────────────────
+    def _getResultPaths(self, config):
+        dataset = config.get('dataset', '')
+        attackParts = []
+        if config.get('attackGaussian'):    attackParts.append('gaussian')
+        if config.get('attackSignFlip'):    attackParts.append('signflip')
+        if config.get('attackHidden'):      attackParts.append('hidden')
+        if config.get('attackModelPoison'): attackParts.append('model_poison')
+        if config.get('attackScaling'):     attackParts.append('scaling')
+        if config.get('attackAlie'):        attackParts.append('alie')
+        if config.get('attackIpm'):         attackParts.append('ipm')
+        if config.get('attackNoiseAmp'):    attackParts.append('noise_amp')
+        attackKey = "_".join(attackParts) if attackParts else "none"
+
+        expName = config.get('experimentName', '').strip()
+        if not expName:
+            return None, None
+        safeName = "".join(c if c.isalnum() or c in " _-" else "_" for c in expName).strip().replace(" ", "_")
+        approach  = config.get('approach', 'basil')
+        resultDir = f"experiments/results/gui/{dataset}/{attackKey}/{approach}"
+        return f"{resultDir}/acc_{safeName}.npy", f"{resultDir}/config_{safeName}.json"
+
+    def _isAlreadyRun(self, config):
+        accPath, configPath = self._getResultPaths(config)
+        if accPath is None or not os.path.exists(accPath):
+            return False
+        if not os.path.exists(configPath):
+            return False
+        try:
+            with open(configPath, 'r') as f:
+                saved = json.load(f)
+            for key, val in config.items():
+                if saved.get(key) != val:
+                    return False
+            return True
+        except Exception:
+            return False
+
+    # ── Run All ───────────────────────────────────────────────────────────────
     def runAll(self):
-        # scan gui/configs/ for JSON files, confirm, then run each in sequence
         if self.isRunning:
             messagebox.showwarning("Warning", "An experiment is already running!")
             return
 
-        configDir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "configs")
+        configDir  = os.path.join(os.path.dirname(os.path.abspath(__file__)), "configs")
         configFiles = sorted([
             os.path.join(configDir, f)
-            for f in os.listdir(configDir)
-            if f.endswith('.json')
+            for f in os.listdir(configDir) if f.endswith('.json')
         ])
-
         if not configFiles:
             messagebox.showwarning("No Configs", "No config files found in gui/configs/")
             return
 
-        fileList = "\n".join(f"  {i+1}. {os.path.basename(f)}" for i, f in enumerate(configFiles))
-        response = messagebox.askyesno(
-            "Run All Configs",
-            f"Found {len(configFiles)} config files. Run all sequentially?\n\n{fileList}"
-        )
-        if not response:
+        pending, skipped = [], []
+        for filepath in configFiles:
+            try:
+                with open(filepath, 'r') as f:
+                    cfg = json.load(f)
+                (skipped if self._isAlreadyRun(cfg) else pending).append(filepath)
+            except Exception:
+                pending.append(filepath)
+
+        nTotal, nSkip, nRun = len(configFiles), len(skipped), len(pending)
+
+        if nRun == 0:
+            messagebox.showinfo("All Done",
+                                f"All {nTotal} experiments have already been completed.\nNothing to run.")
+            return
+
+        if not messagebox.askyesno("Run All Configs",
+                                   f"Found {nTotal} configs\n\n"
+                                   f"  • To run:       {nRun}\n"
+                                   f"  • Already done: {nSkip}\n\n"
+                                   f"Proceed?"):
             return
 
         self.runButton.config(state=tk.DISABLED)
@@ -469,31 +949,44 @@ class ExperimentGUI:
         self.stopButton.config(state=tk.NORMAL)
         self.isRunning = True
         self.clearOutput()
+        self._liveAccData.clear()
+        self._liveWorstData.clear()
+        self._refreshLiveChart()
+        self.notebook.select(3)
 
-        self.currentThread = threading.Thread(target=self.runAllThread, args=(configFiles,))
+        self.currentThread = threading.Thread(target=self.runAllThread, args=(pending, nSkip))
         self.currentThread.start()
 
-    def runAllThread(self, configFiles):
-        # iterate over config files and execute each experiment in order
-        total = len(configFiles)
-        completed = 0
+    def runAllThread(self, configFiles, nSkipped=0):
+        total, completed = len(configFiles), 0
         try:
-            self.logMessage("="*80)
-            self.logMessage(f"RUN ALL: {total} experiments queued")
-            self.logMessage("="*80)
-            self.logMessage("")
+            self.logMessage("=" * 80)
+            self.logMessage(f"RUN ALL: {total} experiments queued  ({nSkipped} already done, skipped)")
+            self.logMessage("=" * 80 + "\n")
 
             for idx, filepath in enumerate(configFiles, 1):
                 if not self.isRunning:
                     self.logMessage("\n[STOPPED] Run All cancelled by user.")
                     break
 
-                self.logMessage("="*80)
-                self.logMessage(f"[{idx}/{total}] {os.path.basename(filepath)}")
-                self.logMessage("="*80)
-
                 with open(filepath, 'r') as f:
                     config = json.load(f)
+
+                if self._isAlreadyRun(config):
+                    self.logMessage(f"[{idx}/{total}] SKIP (already done): {os.path.basename(filepath)}")
+                    completed += 1
+                    continue
+
+                self.logMessage("=" * 80)
+                self.logMessage(f"[{idx}/{total}] {os.path.basename(filepath)}")
+                self.logMessage("=" * 80)
+
+                self._trainStartTime = time.time()
+                self._totalRounds = config.get('nRounds', 100)
+                self._liveAccData.clear()
+                self._liveWorstData.clear()
+                self.root.after(0, self._progressVar.set, 0)
+                self.root.after(0, self._roundLabel.config, {'text': f"Round 0/{self._totalRounds}"})
 
                 expName = config.get("experimentName", os.path.basename(filepath))
                 sendNotification("Run Started", f"[{idx}/{total}] {expName} has started.", priority="default")
@@ -507,9 +1000,9 @@ class ExperimentGUI:
                 self.logMessage(f"\n[{idx}/{total}] Done.\n")
 
             self.logMessage("")
-            self.logMessage("="*80)
+            self.logMessage("=" * 80)
             self.logMessage(f"RUN ALL FINISHED: {completed}/{total} experiments completed.")
-            self.logMessage("="*80)
+            self.logMessage("=" * 80)
             sendNotification("Run All Complete", f"{completed}/{total} experiments finished.", priority="high")
 
         except Exception as e:
@@ -517,41 +1010,36 @@ class ExperimentGUI:
             self.logMessage(traceback.format_exc())
             sendNotification("Run All FAILED", str(e), priority="urgent")
         finally:
-            self.runButton.config(state=tk.NORMAL)
-            self.runAllButton.config(state=tk.NORMAL)
-            self.stopButton.config(state=tk.DISABLED)
-            self.isRunning = False
+            self.root.after(0, self._onRunFinished)
 
+    # ── _executeExperiment ────────────────────────────────────────────────────
     def _executeExperiment(self, config):
-        # load data, build nodes, run training, evaluate, save results
-        self.logMessage("="*80)
+        self.logMessage("=" * 80)
         self.logMessage("STARTING EXPERIMENT")
-        self.logMessage("="*80)
+        self.logMessage("=" * 80)
         self.logMessage(f"Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         self.logMessage("")
 
         approachLabels = {
-            'basil': 'BASIL Only (Ring Topology - Paper 001)',
-            'noisy': 'Noisy Channel Only (FedAvg - Paper 002)',
-            'merged': 'Merged (Ring + EBM/WCM)'
+            'basil':  'BASIL Only (Ring Topology - Paper 001)',
+            'noisy':  'Noisy Channel Only (FedAvg - Paper 002)',
+            'merged': 'Merged (Ring + EBM)',
         }
         self.logMessage("Configuration:")
         self.logMessage(f"  Experiment: {config.get('experimentName', '(unnamed)')}")
-        self.logMessage(f"  Dataset: {config['dataset']}")
-        self.logMessage(f"  Approach: {approachLabels.get(config['approach'], config['approach'])}")
-        self.logMessage(f"  Nodes: {config['nNodes']}, Rounds: {config['nRounds']}")
+        self.logMessage(f"  Dataset:    {config['dataset']}")
+        self.logMessage(f"  Approach:   {approachLabels.get(config['approach'], config['approach'])}")
+        self.logMessage(f"  Nodes: {config['nNodes']},  Rounds: {config['nRounds']}")
         lrDecayStr = "decay" if config.get('useLrDecay', True) else "fixed"
-        self.logMessage(f"  Learning Rate: {config['learningRate']} ({lrDecayStr}), Momentum: {config.get('momentum', 0.0)}")
-        self.logMessage(f"  Use BASIL: {config['useBasil']}")
-        self.logMessage(f"  Use Channel Noise: {config['useChannelNoise']}")
+        self.logMessage(f"  LR: {config['learningRate']} ({lrDecayStr}),  Momentum: {config.get('momentum', 0.0)}")
+        self.logMessage(f"  Use BASIL: {config['useBasil']},  Use Noise: {config['useChannelNoise']}")
         if config['useChannelNoise']:
-            self.logMessage(f"  Noise Sigma: {config['channelNoiseSigma']}, Mitigation: {config['noiseMitigation']}")
+            self.logMessage(f"  Noise σ: {config['channelNoiseSigma']},  Mitigation: {config['noiseMitigation']}")
             if config['noiseMitigation'] == 'ebm':
                 scale = 1.0 + config['ebmLambda'] * config['channelNoiseSigma'] ** 2
-                self.logMessage(f"  EBM Lambda: {config['ebmLambda']} (scale={scale:.2f})")
+                self.logMessage(f"  EBM λ: {config['ebmLambda']} (scale={scale:.2f})")
         self.logMessage("")
 
-        # Setup GPU
         deviceInfo = setupGpu()
         self.logMessage("=" * 40)
         if deviceInfo["device"] == "CUDA":
@@ -559,36 +1047,29 @@ class ExperimentGUI:
             for name in deviceInfo["gpus"]:
                 self.logMessage(f"  GPU: {name}")
         else:
-            self.logMessage(f"  DEVICE: CPU  (no GPU available)")
-        self.logMessage("=" * 40)
-        self.logMessage("")
+            self.logMessage("  DEVICE: CPU  (no GPU available)")
+        self.logMessage("=" * 40 + "\n")
 
-        # Load data
-        self.logMessage(f"Loading {config['dataset'].upper()} dataset...")
+        self.logMessage(f"Loading {config['dataset'].upper()} dataset…")
         train, test = self.loadDataset(config['dataset'])
-        trainLoaders, testLoader = self.makeLoaders(config['dataset'], train, test, config['batchSize'], config['nNodes'])
+        trainLoaders, testLoader = self.makeLoaders(
+            config['dataset'], train, test, config['batchSize'], config['nNodes'])
         self.logMessage(f"  Training samples: {len(train)}")
-        self.logMessage(f"  Test samples: {len(test)}")
-        self.logMessage("")
+        self.logMessage(f"  Test samples:     {len(test)}\n")
 
-        # Create nodes
-        self.logMessage(f"Creating {config['nNodes']} nodes...")
+        self.logMessage(f"Creating {config['nNodes']} nodes…")
         nodes = self.createNodes(config, trainLoaders)
         self.logMessage("")
 
-        # Prepare attacks
         attackTypes, attackerIds = self.prepareAttacks(config)
         self.logMessage(f"Attack configuration:")
-        self.logMessage(f"  Attackers: {attackerIds if attackerIds else 'None'}")
-        self.logMessage(f"  Attack types: {attackTypes}")
-        self.logMessage("")
+        self.logMessage(f"  Attackers:    {attackerIds if attackerIds else 'None'}")
+        self.logMessage(f"  Attack types: {attackTypes}\n")
 
-        # Run training
         if config['approach'] == 'noisy':
-            self.logMessage(f"Starting FedAvg training for {config['nRounds']} rounds...")
-            self.logMessage("Training Mode: FedAvg (Parallel + Averaging) - Paper 002")
-            self.logMessage("-"*80)
-
+            self.logMessage(f"Starting FedAvg training for {config['nRounds']} rounds…")
+            self.logMessage("Mode: FedAvg (Parallel + Averaging) - Paper 002")
+            self.logMessage("-" * 80)
             avgAccHist, worstAccHist = fedAvgTrainingWithNoise(
                 nodes=nodes,
                 rounds=config['nRounds'],
@@ -600,15 +1081,16 @@ class ExperimentGUI:
                 noiseModel=self.getNoiseModel(config),
                 channelNoiseStart=config['channelNoiseStart'] if config['useChannelNoise'] else 0,
                 lr0=config['learningRate'],
-                stepsPerEpoch=100,
+                localEpochs=config['localEpochs'],
+                stepsPerEpoch=5,
                 stopCallback=lambda: not self.isRunning,
-                useLrDecay=True,
+                useLrDecay=config.get('useLrDecay', True),
+                roundCallback=self._onRoundComplete,
             )
         else:
-            self.logMessage(f"Starting Ring training for {config['nRounds']} rounds...")
-            self.logMessage("Training Mode: Ring Topology (Sequential) - Paper 001")
-            self.logMessage("-"*80)
-
+            self.logMessage(f"Starting Ring training for {config['nRounds']} rounds…")
+            self.logMessage("Mode: Ring Topology (Sequential) - Paper 001")
+            self.logMessage("-" * 80)
             avgAccHist, worstAccHist = basilRingTrainingWithAttack(
                 nodes=nodes,
                 rounds=config['nRounds'],
@@ -620,118 +1102,105 @@ class ExperimentGUI:
                 noiseModel=self.getNoiseModel(config),
                 channelNoiseStart=config['channelNoiseStart'] if config['useChannelNoise'] else 0,
                 lr0=config['learningRate'],
-                stepsPerEpoch=100,
+                stepsPerEpoch=5,
                 useSnapshots=config['useBasil'],
                 useSequential=True,
                 stopCallback=lambda: not self.isRunning,
-                useLrDecay=True,
+                useLrDecay=config.get('useLrDecay', True),
+                roundCallback=self._onRoundComplete,
             )
 
-        # check if user stopped the run before it finished
         if not self.isRunning:
-            self.logMessage("")
-            self.logMessage("="*80)
-            self.logMessage("EXPERIMENT STOPPED BY USER - no results saved")
-            self.logMessage("="*80)
+            self.logMessage("\n" + "=" * 80)
+            self.logMessage("EXPERIMENT STOPPED BY USER — no results saved")
+            self.logMessage("=" * 80)
             return
 
-        # Final evaluation
         self.logMessage("")
-        self.logMessage("="*80)
+        self.logMessage("=" * 80)
         finalAvg, finalWorst, allAccs = evaluateAll(nodes, testLoader)
-        self.logMessage(f"FINAL RESULTS:")
-        self.logMessage(f"  Average Accuracy: {finalAvg:.4f}")
-        self.logMessage(f"  Worst Node Accuracy: {finalWorst:.4f}")
-        self.logMessage(f"  Per-node accuracies: {[f'{acc:.4f}' for acc in allAccs]}")
-        self.logMessage("="*80)
+        self.logMessage("FINAL RESULTS:")
+        self.logMessage(f"  Average Accuracy:      {finalAvg:.4f}  ({finalAvg:.1%})")
+        self.logMessage(f"  Worst Node Accuracy:   {finalWorst:.4f}  ({finalWorst:.1%})")
+        self.logMessage(f"  Per-node: {[f'{a:.3f}' for a in allAccs]}")
+        self.logMessage("=" * 80)
 
-        # save results only if run completed fully
         self.saveResults(config, avgAccHist, worstAccHist, finalAvg, finalWorst)
         self.logMessage("\nExperiment completed successfully!")
+        self.root.after(0, self._setStatus,
+                        f"Done  ·  Avg acc {finalAvg:.1%}  ·  Worst {finalWorst:.1%}")
 
+    # ── Validation / Config ───────────────────────────────────────────────────
     def validateConfig(self):
-        # check required fields have valid values before starting
         try:
             if self.nRoundsVar.get() <= 0:
-                messagebox.showerror("Error", "Number of rounds must be positive")
-                return False
+                messagebox.showerror("Error", "Number of rounds must be positive"); return False
             if self.nNodesVar.get() <= 0:
-                messagebox.showerror("Error", "Number of nodes must be positive")
-                return False
-            if self.channelNoiseStartVar.get() < 0 or self.channelNoiseStartVar.get() >= self.nRoundsVar.get():
-                messagebox.showerror("Error", f"Channel noise start round must be between 0 and {self.nRoundsVar.get()-1}")
-                return False
+                messagebox.showerror("Error", "Number of nodes must be positive"); return False
+            cns = self.channelNoiseStartVar.get()
+            if cns < 0 or cns >= self.nRoundsVar.get():
+                messagebox.showerror("Error", f"Channel noise start must be 0 … {self.nRoundsVar.get()-1}"); return False
             return True
         except Exception as e:
-            messagebox.showerror("Error", f"Invalid configuration: {str(e)}")
-            return False
+            messagebox.showerror("Error", f"Invalid configuration: {e}"); return False
 
     def getConfig(self):
-        # read all tkinter variables into a plain dict
         return {
-            'experimentName': self.experimentNameVar.get(),
-            'dataset': self.datasetVar.get(),
-            'approach': self.approachVar.get(),
-            'useBasil': self.useBasilVar.get(),
-            'basilMemorySize': self.basilMemorySizeVar.get(),
-            'useChannelNoise': self.useChannelNoiseVar.get(),
-            'channelNoiseStart': self.channelNoiseStartVar.get(),
-            'channelNoiseSigma': self.channelNoiseSigmaVar.get(),
-            'noiseMitigation': self.noiseMitigationVar.get(),
-            'ebmLambda': self.ebmLambdaVar.get(),
-            'wcmLambda': self.wcmLambdaVar.get(),
-            'wcmSamples': self.wcmSamplesVar.get(),
-            'wcmRho': self.wcmRhoVar.get(),
-            'momentum': self.momentumVar.get(),
-            'attackGaussian': self.attackGaussianVar.get(),
-            'attackGaussianStart': self.attackGaussianStartVar.get(),
-            'attackSignFlip': self.attackSignFlipVar.get(),
-            'attackSignFlipStart': self.attackSignFlipStartVar.get(),
-            'attackHidden': self.attackHiddenVar.get(),
-            'attackHiddenStart': self.attackHiddenStartVar.get(),
-            'attackModelPoison': self.attackModelPoisonVar.get(),
+            'experimentName':        self.experimentNameVar.get(),
+            'dataset':               self.datasetVar.get(),
+            'approach':              self.approachVar.get(),
+            'useBasil':              self.useBasilVar.get(),
+            'basilMemorySize':       self.basilMemorySizeVar.get(),
+            'useChannelNoise':       self.useChannelNoiseVar.get(),
+            'channelNoiseStart':     self.channelNoiseStartVar.get(),
+            'channelNoiseSigma':     self.channelNoiseSigmaVar.get(),
+            'noiseMitigation':       self.noiseMitigationVar.get(),
+            'ebmLambda':             self.ebmLambdaVar.get(),
+            'momentum':              self.momentumVar.get(),
+            'attackGaussian':        self.attackGaussianVar.get(),
+            'attackGaussianStart':   self.attackGaussianStartVar.get(),
+            'attackSignFlip':        self.attackSignFlipVar.get(),
+            'attackSignFlipStart':   self.attackSignFlipStartVar.get(),
+            'attackHidden':          self.attackHiddenVar.get(),
+            'attackHiddenStart':     self.attackHiddenStartVar.get(),
+            'attackModelPoison':     self.attackModelPoisonVar.get(),
             'attackModelPoisonStart': self.attackModelPoisonStartVar.get(),
-            'attackerIds': self.attackerIdsVar.get(),
-            'nNodes': self.nNodesVar.get(),
-            'nRounds': self.nRoundsVar.get(),
-            'localEpochs': self.localEpochsVar.get(),
-            'learningRate': self.learningRateVar.get(),
-            'batchSize': self.batchSizeVar.get(),
-            'useLrDecay': self.useLrDecayVar.get(),
+            'attackScaling':         self.attackScalingVar.get(),
+            'attackScalingStart':    self.attackScalingStartVar.get(),
+            'attackAlie':            self.attackAlieVar.get(),
+            'attackAlieStart':       self.attackAlieStartVar.get(),
+            'attackIpm':             self.attackIpmVar.get(),
+            'attackIpmStart':        self.attackIpmStartVar.get(),
+            'attackNoiseAmp':        self.attackNoiseAmpVar.get(),
+            'attackNoiseAmpStart':   self.attackNoiseAmpStartVar.get(),
+            'attackerIds':           self.attackerIdsVar.get(),
+            'nNodes':                self.nNodesVar.get(),
+            'nRounds':               self.nRoundsVar.get(),
+            'localEpochs':           self.localEpochsVar.get(),
+            'learningRate':          self.learningRateVar.get(),
+            'batchSize':             self.batchSizeVar.get(),
+            'useLrDecay':            self.useLrDecayVar.get(),
         }
 
+    # ── Data / Node helpers ───────────────────────────────────────────────────
     def loadDataset(self, dataset):
-        # delegate to the correct loader function based on dataset name
-        if dataset == "mnist":
-            return loadMnist()
-        elif dataset == "cifar10":
-            return loadCifar10()
-        elif dataset == "nmnist":
-            return loadNMnist()
-        else:
-            raise ValueError(f"Unknown dataset: {dataset}")
+        if dataset == "mnist":    return loadMnist()
+        if dataset == "cifar10":  return loadCifar10()
+        if dataset == "nmnist":   return loadNMnist()
+        raise ValueError(f"Unknown dataset: {dataset}")
 
     def makeLoaders(self, dataset, train, test, batchSize, nClients):
-        # route to the matching makeLoaders function for the dataset
-        if dataset == "mnist":
-            return makeMnistLoaders(train, test, batchSize=batchSize, nClients=nClients)
-        elif dataset == "cifar10":
-            return makeCifarLoaders(train, test, batchSize=batchSize, nClients=nClients)
-        elif dataset == "nmnist":
-            return makeNMnistLoaders(train, test, batchSize=batchSize, nClients=nClients)
-        else:
-            raise ValueError(f"Unknown dataset: {dataset}")
+        if dataset == "mnist":   return makeMnistLoaders(train, test, batchSize=batchSize, nClients=nClients)
+        if dataset == "cifar10": return makeCifarLoaders(train, test, batchSize=batchSize, nClients=nClients)
+        if dataset == "nmnist":  return makeNMnistLoaders(train, test, batchSize=batchSize, nClients=nClients)
+        raise ValueError(f"Unknown dataset: {dataset}")
 
     def createNodes(self, config, trainLoaders):
-        # instantiate one BasilNode per node ID with config-derived params
         modelClass = self.getModelClass(config['dataset'])
         nodes = []
-
         for i in range(config['nNodes']):
-            model = modelClass()
-            nodeConfig = {
-                "nodeId": i,
-                "model": model,
+            nodeCfg = {
+                "nodeId": i, "model": modelClass(),
                 "dataLoader": trainLoaders[i],
                 "S": config['basilMemorySize'],
                 "noiseModel": self.getNoiseModel(config),
@@ -740,107 +1209,69 @@ class ExperimentGUI:
                 "localEpochs": config['localEpochs'],
                 "momentum": config.get('momentum', 0.0),
             }
-
-            # Add mitigation-specific parameters
             if config['noiseMitigation'] == 'ebm':
-                nodeConfig['ebmLambda'] = config['ebmLambda']
-            elif config['noiseMitigation'] == 'wcm':
-                nodeConfig['wcmLambda'] = config['wcmLambda']
-                nodeConfig['wcmSamples'] = config['wcmSamples']
-                nodeConfig['wcmRho'] = config['wcmRho']
-
-            nodes.append(BasilNode(**nodeConfig))
-
+                nodeCfg['ebmLambda'] = config['ebmLambda']
+            nodes.append(BasilNode(**nodeCfg))
         return nodes
 
     def getModelClass(self, dataset):
-        # return the correct model class for the given dataset string
-        if dataset == "mnist":
-            return MNISTModel
-        elif dataset == "cifar10":
-            return CIFARModel
-        elif dataset == "nmnist":
-            return NMNISTModel
-        else:
-            raise ValueError(f"Unknown dataset: {dataset}")
+        if dataset == "mnist":   return MNISTModel
+        if dataset == "cifar10": return CIFARModel
+        if dataset == "nmnist":  return NMNISTModel
+        raise ValueError(f"Unknown dataset: {dataset}")
 
     def getNoiseModel(self, config):
-        # map noise enable/mitigation flags to the noise model string
-        if not config['useChannelNoise']:
-            return "none"
-        elif config['noiseMitigation'] == 'ebm':
-            return "ebm"
-        elif config['noiseMitigation'] == 'wcm':
-            return "wcm"
-        else:
-            return "noisy"
+        if not config['useChannelNoise']:         return "none"
+        if config['noiseMitigation'] == 'ebm':    return "ebm"
+        return "noisy"
 
     def prepareAttacks(self, config):
-        # parse attacker IDs and build ordered list of active attack types
-        attackTypes = []
-
-        # Parse attacker IDs
         try:
             attackerIds = [int(x.strip()) for x in config['attackerIds'].split(',') if x.strip()]
-        except:
+        except Exception:
             attackerIds = []
-
         if not attackerIds:
             return ["none"], []
 
-        # Collect active attacks with their start rounds
         attacks = []
-        if config['attackGaussian']:
-            attacks.append(('gaussian', config['attackGaussianStart']))
-        if config['attackSignFlip']:
-            attacks.append(('signFlip', config['attackSignFlipStart']))
-        if config['attackHidden']:
-            attacks.append(('hidden', config['attackHiddenStart']))
-        if config.get('attackModelPoison'):
-            attacks.append(('model_poison', config['attackModelPoisonStart']))
-
+        if config['attackGaussian']:   attacks.append(('gaussian',    config['attackGaussianStart']))
+        if config['attackSignFlip']:   attacks.append(('signFlip',    config['attackSignFlipStart']))
+        if config['attackHidden']:     attacks.append(('hidden',      config['attackHiddenStart']))
+        if config.get('attackModelPoison'): attacks.append(('model_poison', config['attackModelPoisonStart']))
+        if config.get('attackScaling'):     attacks.append(('scaling',      config['attackScalingStart']))
+        if config.get('attackAlie'):        attacks.append(('alie',         config['attackAlieStart']))
+        if config.get('attackIpm'):         attacks.append(('ipm',          config['attackIpmStart']))
+        if config.get('attackNoiseAmp'):    attacks.append(('noise_amp',    config['attackNoiseAmpStart']))
         if not attacks:
             return ["none"], []
-
-        # Sort by start round
         attacks.sort(key=lambda x: x[1])
-        attackTypes = [a[0] for a in attacks]
+        return [a[0] for a in attacks], attackerIds
 
-        return attackTypes, attackerIds
-
+    # ── Save / Load results & config ──────────────────────────────────────────
     def saveResults(self, config, avgAccHist, worstAccHist, finalAvg, finalWorst):
-        # write accuracy .npy and config .json under experiments/results/gui/{dataset}/{attack_type}/
         dataset = config['dataset']
-
-        # build attack type folder name from active attacks
         attackParts = []
-        if config.get('attackGaussian'):
-            attackParts.append('gaussian')
-        if config.get('attackSignFlip'):
-            attackParts.append('signflip')
-        if config.get('attackHidden'):
-            attackParts.append('hidden')
-        if config.get('attackModelPoison'):
-            attackParts.append('model_poison')
+        for k, s in [('attackGaussian','gaussian'),('attackSignFlip','signflip'),
+                     ('attackHidden','hidden'),('attackModelPoison','model_poison'),
+                     ('attackScaling','scaling'),('attackAlie','alie'),
+                     ('attackIpm','ipm'),('attackNoiseAmp','noise_amp')]:
+            if config.get(k):
+                attackParts.append(s)
         attackKey = "_".join(attackParts) if attackParts else "none"
 
-        # use experiment name as filename, fall back to approach+timestamp
         expName = config.get('experimentName', '').strip()
         if expName:
             safeName = "".join(c if c.isalnum() or c in " _-" else "_" for c in expName).strip().replace(" ", "_")
         else:
-            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-            safeName = f"{config['approach']}_{timestamp}"
+            safeName = f"{config['approach']}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
 
-        resultDir = f"experiments/results/gui/{dataset}/{attackKey}"
+        approach  = config.get('approach', 'basil')
+        resultDir = f"experiments/results/gui/{dataset}/{attackKey}/{approach}"
         os.makedirs(resultDir, exist_ok=True)
 
-        # save average accuracy curve
-        avgPath = f"{resultDir}/acc_{safeName}.npy"
-        np.save(avgPath, np.array(avgAccHist))
-
-        # save configuration alongside the curve
+        avgPath    = f"{resultDir}/acc_{safeName}.npy"
         configPath = f"{resultDir}/config_{safeName}.json"
+        np.save(avgPath, np.array(avgAccHist))
         with open(configPath, 'w') as f:
             json.dump(config, f, indent=2)
 
@@ -849,55 +1280,32 @@ class ExperimentGUI:
         self.logMessage(f"  {configPath}")
 
     def saveConfig(self):
-        # prompt user for filename then write config dict to gui/configs/
-        config = self.getConfig()
-
-        # Use experiment name as default filename, fallback to timestamp
+        config  = self.getConfig()
         expName = config.get('experimentName', '').strip()
-        if expName:
-            defaultName = expName
-        else:
-            defaultName = f"config_{config['dataset']}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-
-        # Ask user for filename
+        default = expName or f"config_{config['dataset']}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
         userInput = simpledialog.askstring(
-            "Save Configuration",
-            "Enter a name for this configuration:",
-            initialvalue=defaultName,
-            parent=self.root
-        )
-
+            "Save Configuration", "Enter a name for this configuration:",
+            initialvalue=default, parent=self.root)
         if not userInput:
-            return  # User cancelled
-
-        # Ensure .json extension
+            return
         if not userInput.endswith('.json'):
             userInput += '.json'
-
         filepath = os.path.join("gui", "configs", userInput)
         os.makedirs(os.path.dirname(filepath), exist_ok=True)
-
         with open(filepath, 'w') as f:
             json.dump(config, f, indent=2)
-
-        messagebox.showinfo("Success", f"Configuration saved to:\n{filepath}")
+        messagebox.showinfo("Saved", f"Configuration saved to:\n{filepath}")
+        self._setStatus(f"Config saved: {filepath}")
 
     def loadConfig(self):
-        # open file dialog then populate all tkinter variables from JSON
         filepath = filedialog.askopenfilename(
-            title="Load Configuration",
-            initialdir="gui/configs",
-            filetypes=[("JSON files", "*.json"), ("All files", "*.*")]
-        )
-
+            title="Load Configuration", initialdir="gui/configs",
+            filetypes=[("JSON files", "*.json"), ("All files", "*.*")])
         if not filepath:
             return
-
         try:
             with open(filepath, 'r') as f:
                 config = json.load(f)
-
-            # Set all variables
             self.experimentNameVar.set(config.get('experimentName', ''))
             self.datasetVar.set(config.get('dataset', 'mnist'))
             self.approachVar.set(config.get('approach', 'basil'))
@@ -908,40 +1316,45 @@ class ExperimentGUI:
             self.channelNoiseSigmaVar.set(config.get('channelNoiseSigma', 0.1))
             self.noiseMitigationVar.set(config.get('noiseMitigation', 'none'))
             self.ebmLambdaVar.set(config.get('ebmLambda', 0.01))
-            self.wcmLambdaVar.set(config.get('wcmLambda', 0.1))
-            self.wcmSamplesVar.set(config.get('wcmSamples', 5))
-            self.wcmRhoVar.set(config.get('wcmRho', 0.5))
-            self.momentumVar.set(config.get('momentum', 0.0))
+            self.momentumVar.set(config.get('momentum', 0.9))
             self.attackGaussianVar.set(config.get('attackGaussian', False))
             self.attackGaussianStartVar.set(config.get('attackGaussianStart', 0))
             self.attackSignFlipVar.set(config.get('attackSignFlip', False))
             self.attackSignFlipStartVar.set(config.get('attackSignFlipStart', 0))
             self.attackHiddenVar.set(config.get('attackHidden', False))
-            self.attackHiddenStartVar.set(config.get('attackHiddenStart', 10))
+            self.attackHiddenStartVar.set(config.get('attackHiddenStart', 0))
             self.attackModelPoisonVar.set(config.get('attackModelPoison', False))
             self.attackModelPoisonStartVar.set(config.get('attackModelPoisonStart', 0))
+            self.attackScalingVar.set(config.get('attackScaling', False))
+            self.attackScalingStartVar.set(config.get('attackScalingStart', 0))
+            self.attackAlieVar.set(config.get('attackAlie', False))
+            self.attackAlieStartVar.set(config.get('attackAlieStart', 0))
+            self.attackIpmVar.set(config.get('attackIpm', False))
+            self.attackIpmStartVar.set(config.get('attackIpmStart', 0))
+            self.attackNoiseAmpVar.set(config.get('attackNoiseAmp', False))
+            self.attackNoiseAmpStartVar.set(config.get('attackNoiseAmpStart', 0))
             self.attackerIdsVar.set(config.get('attackerIds', '0,5'))
             self.nNodesVar.set(config.get('nNodes', 10))
-            self.nRoundsVar.set(config.get('nRounds', 30))
+            self.nRoundsVar.set(config.get('nRounds', 100))
             self.localEpochsVar.set(config.get('localEpochs', 1))
             self.learningRateVar.set(config.get('learningRate', 0.05))
             self.batchSizeVar.set(config.get('batchSize', 32))
             self.useLrDecayVar.set(config.get('useLrDecay', True))
-
-            messagebox.showinfo("Success", "Configuration loaded successfully!")
-
+            messagebox.showinfo("Loaded", "Configuration loaded successfully!")
+            self._setStatus(f"Config loaded: {os.path.basename(filepath)}")
         except Exception as e:
-            messagebox.showerror("Error", f"Failed to load configuration:\n{str(e)}")
+            messagebox.showerror("Error", f"Failed to load configuration:\n{e}")
 
+    # ── Plot results ──────────────────────────────────────────────────────────
     def plotResults(self):
-        # generate plots grouped by dataset and attack type
         try:
-            from plotGui import discoverDatasets, discoverAttackTypes, discoverExperiments, \
-                plotDatasetExperiments, plotDatasetGrid, plotFinalAccuracyBar
+            from plotGui import (discoverDatasets, discoverAttackTypes, discoverApproaches,
+                                 discoverExperiments, plotDatasetExperiments,
+                                 plotDatasetGrid, plotFinalAccuracyBar)
 
-            self.logMessage("\n" + "="*60)
+            self.logMessage("\n" + "=" * 60)
             self.logMessage("GENERATING PLOTS")
-            self.logMessage("="*60)
+            self.logMessage("=" * 60)
 
             datasets = discoverDatasets()
             if not datasets:
@@ -950,42 +1363,33 @@ class ExperimentGUI:
                 return
 
             self.logMessage(f"Found datasets: {datasets}")
-
             for dataset in datasets:
                 attackTypes = discoverAttackTypes(dataset)
                 if not attackTypes:
                     continue
-
-                self.logMessage(f"\nDataset: {dataset.upper()} - Attack types: {attackTypes}")
-
+                self.logMessage(f"\nDataset: {dataset.upper()} — attacks: {attackTypes}")
                 for attackKey in attackTypes:
-                    experiments = discoverExperiments(dataset, attackKey)
-                    if not experiments:
+                    approaches = discoverApproaches(dataset, attackKey)
+                    if not approaches:
                         continue
-
-                    self.logMessage(f"\n  Attack: {attackKey} ({len(experiments)} experiments)")
-
-                    # overlay comparison chart
-                    plotDatasetExperiments(dataset, attackKey, experiments)
-                    self.logMessage(f"    Saved: plots/images/gui/{dataset}/{attackKey}_experiments_avg.png")
-
-                    # grid view
-                    if len(experiments) > 1:
-                        plotDatasetGrid(dataset, attackKey, experiments)
-                        self.logMessage(f"    Saved: plots/images/gui/{dataset}/{attackKey}_grid_avg.png")
-
-                    # final accuracy bar chart
-                    plotFinalAccuracyBar(dataset, attackKey, experiments)
-                    self.logMessage(f"    Saved: plots/images/gui/{dataset}/{attackKey}_final_accuracy_avg.png")
+                    for approach in approaches:
+                        experiments = discoverExperiments(dataset, attackKey, approach)
+                        if not experiments:
+                            continue
+                        self.logMessage(f"  {attackKey} | {approach}  ({len(experiments)} experiments)")
+                        plotDatasetExperiments(dataset, attackKey, approach, experiments)
+                        if len(experiments) > 1:
+                            plotDatasetGrid(dataset, attackKey, approach, experiments)
+                        plotFinalAccuracyBar(dataset, attackKey, approach, experiments)
 
             self.logMessage("\nAll plots saved to: plots/images/gui/")
-            self.logMessage("="*60)
+            self.logMessage("=" * 60)
             messagebox.showinfo("Success", "Plots saved to plots/images/gui/")
-
+            self._setStatus("Plots saved to plots/images/gui/")
         except Exception as e:
-            self.logMessage(f"\nERROR generating plots: {str(e)}")
+            self.logMessage(f"\nERROR generating plots: {e}")
             self.logMessage(traceback.format_exc())
-            messagebox.showerror("Error", f"Failed to generate plots:\n{str(e)}")
+            messagebox.showerror("Error", f"Failed to generate plots:\n{e}")
 
 
 def main():

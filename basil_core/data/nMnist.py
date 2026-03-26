@@ -105,30 +105,22 @@ def makeLoaders(train, test, batchSize=32, iid=True, nClients=10):
     np.random.shuffle(idx)
     chunks = np.array_split(idx, nClients)
 
-    def toBatches(indices):
+    def toDataset(indices):
         data = [train[i] for i in indices]
-        X, y, out = [], [], []
-        for xi, yi in data:
-            X.append(xi)
-            y.append(yi)
-            if len(X) == batchSize:
-                out.append((np.stack(X), np.array(y)))
-                X, y = [], []
-        if X:
-            out.append((np.stack(X), np.array(y)))
-        return out
+        X = np.stack([xi for xi, _ in data]).astype(np.float32)
+        y = np.array([yi for _, yi in data], dtype=np.int32)
+        ds = tf.data.Dataset.from_tensor_slices((X, y))
+        ds = ds.batch(batchSize, drop_remainder=False)
+        ds = ds.prefetch(tf.data.AUTOTUNE)
+        return ds
 
-    trainLoaders = [toBatches(c) for c in chunks]
+    trainLoaders = [toDataset(c) for c in chunks]
 
     # Single shared test loader
-    Xt, yt, tLoader = [], [], []
-    for xi, yi in test:
-        Xt.append(xi)
-        yt.append(yi)
-        if len(Xt) == batchSize:
-            tLoader.append((np.stack(Xt), np.array(yt)))
-            Xt, yt = [], []
-    if Xt:
-        tLoader.append((np.stack(Xt), np.array(yt)))
+    Xt = np.stack([xi for xi, _ in test]).astype(np.float32)
+    yt = np.array([yi for _, yi in test], dtype=np.int32)
+    tLoader = tf.data.Dataset.from_tensor_slices((Xt, yt))
+    tLoader = tLoader.batch(batchSize, drop_remainder=False)
+    tLoader = tLoader.prefetch(tf.data.AUTOTUNE)
 
     return trainLoaders, tLoader

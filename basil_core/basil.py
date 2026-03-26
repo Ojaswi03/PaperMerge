@@ -151,6 +151,7 @@ def basilRingTrainingWithAttack(
     useSequential=True,  # True = paper's sequential, False = parallel (faster but less accurate)
     stopCallback=None,
     useLrDecay=True,  # Set False for EBM with high noise + momentum
+    roundCallback=None,  # called as roundCallback(roundNum, avgAcc, worstAcc, totalRounds)
     **kwargs,
 ):
 
@@ -186,7 +187,6 @@ def basilRingTrainingWithAttack(
     lrSched = makeLrScheduler(lr0, alpha=lrAlpha, useBasilSchedule=True, useLrDecay=useLrDecay)
 
     avgAccHist, worstAccHist = [], []
-
 
     for r in range(rounds):
         # Check stop callback
@@ -241,13 +241,14 @@ def basilRingTrainingWithAttack(
                 if i in attackers:
                     if atk == "hidden" and r < hiddenStartRound:
                         pass  # Hidden attack not yet active
-                    elif useSnapshots or atk == "model_poison":
-                        # Model poisoning (gradient ascent) when BASIL is active
-                        # or explicitly selected — harder for loss-based selection to detect
+                    elif atk == "model_poison":
+                        # Model poisoning: compute poisoned params to SEND, but restore
+                        # nd.model to its trained state so it doesn't corrupt its own future training
                         setParams(nd.model, noisyParams)
+                        trainedParams = [p.copy() for p in noisyParams]
                         noisyParams = modelPoisonAttack(nd.model, nd.dataLoader)
+                        setParams(nd.model, trainedParams)  # restore own model
                     else:
-                        # Standard noise attack when no BASIL defense
                         noisyParams = applyAttack(noisyParams, atk)
 
                 # Step 5: Multicast to next S clockwise neighbors (paper's key feature)
@@ -278,9 +279,11 @@ def basilRingTrainingWithAttack(
                 if i in attackers:
                     if atk == "hidden" and r < hiddenStartRound:
                         pass
-                    elif useSnapshots or atk == "model_poison":
+                    elif atk == "model_poison":
                         setParams(nodes[i].model, noisyParams)
+                        trainedParams = [p.copy() for p in noisyParams]
                         noisyParams = modelPoisonAttack(nodes[i].model, nodes[i].dataLoader)
+                        setParams(nodes[i].model, trainedParams)  # restore own model
                     else:
                         noisyParams = applyAttack(noisyParams, atk)
 
@@ -295,6 +298,8 @@ def basilRingTrainingWithAttack(
             print(f"[round {r}] eval avg={avg:.4f}", flush=True)
             avgAccHist.append(avg)
             worstAccHist.append(worst)
+            if roundCallback is not None:
+                roundCallback(r + 1, avg, worst, rounds)
 
     return avgAccHist, worstAccHist
 
@@ -353,6 +358,7 @@ def fedAvgTrainingWithNoise(
     stepsPerEpoch=100,
     stopCallback=None,
     useLrDecay=True,  # Set False for EBM with high noise + momentum
+    roundCallback=None,  # called as roundCallback(roundNum, avgAcc, worstAcc, totalRounds)
     **kwargs,
 ):
     # Backward compatibility
@@ -390,7 +396,6 @@ def fedAvgTrainingWithNoise(
     for nd in nodes:
         setParams(nd.model, globalParams)
 
- #   # Pre-training evaluation (optional) --- IGNORE ---
     for r in range(rounds):
         # Check stop callback
         if stopCallback is not None and stopCallback():
@@ -430,7 +435,9 @@ def fedAvgTrainingWithNoise(
                     pass  # Hidden attack not yet active
                 elif atk == "model_poison":
                     setParams(nd.model, localParams)
+                    savedParams = [p.copy() for p in localParams]
                     localParams = modelPoisonAttack(nd.model, nd.dataLoader)
+                    setParams(nd.model, savedParams)  # restore own model
                 else:
                     localParams = applyAttack(localParams, atk)
 
@@ -462,5 +469,7 @@ def fedAvgTrainingWithNoise(
             print(f"[round {r}] eval acc={acc:.4f}", flush=True)
             avgAccHist.append(acc)
             worstAccHist.append(acc)  # Same as avg since all nodes have same model
+            if roundCallback is not None:
+                roundCallback(r + 1, acc, acc, rounds)
 
     return avgAccHist, worstAccHist

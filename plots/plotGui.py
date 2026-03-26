@@ -1,9 +1,18 @@
 """
 Plotting for GUI experiment results.
 Auto-discovers all experiments saved in experiments/results/gui/
-and generates comparison plots per dataset.
+and generates comparison plots per dataset / attack type / approach.
 
-Plots are saved to plots/images/gui/
+Folder structure (results):
+  experiments/results/gui/{dataset}/{attackKey}/{approach}/
+      acc_*.npy
+      config_*.json
+
+Folder structure (plots):
+  plots/images/gui/{dataset}/{attackKey}/{approach}/
+      experiments_avg.png
+      grid_avg.png
+      final_accuracy_avg.png
 
 CONFIGURATION: Edit the variables below to customize your plots
 """
@@ -62,7 +71,9 @@ def getMarkers(n):
 
 
 def discoverDatasets():
-    # scan gui results directory for dataset subdirs that have attack subfolders with .npy files
+    # scan gui results directory for dataset subdirs
+    # supports both old flat structure (dataset/attack/*.npy)
+    # and new structure (dataset/attack/approach/*.npy)
     guiDir = "experiments/results/gui"
     if not os.path.isdir(guiDir):
         print(f"No GUI results directory found at {guiDir}")
@@ -73,17 +84,18 @@ def discoverDatasets():
         entryPath = os.path.join(guiDir, entry)
         if not os.path.isdir(entryPath):
             continue
-        # check for .npy files either directly or inside attack subfolders
-        directNpy = glob.glob(os.path.join(entryPath, "*.npy"))
-        nestedNpy = glob.glob(os.path.join(entryPath, "*", "*.npy"))
-        if directNpy or nestedNpy:
+        # new structure: 3 levels deep
+        newNpy = glob.glob(os.path.join(entryPath, "*", "*", "*.npy"))
+        # old flat structure: 2 levels deep
+        oldNpy = glob.glob(os.path.join(entryPath, "*", "*.npy"))
+        if newNpy or oldNpy:
             datasets.append(entry)
 
     return datasets
 
 
 def discoverAttackTypes(dataset):
-    # return the list of attack type subfolders that have results for this dataset
+    # return attack type subfolders that have results (new or old structure)
     datasetDir = f"experiments/results/gui/{dataset}"
     if not os.path.isdir(datasetDir):
         return []
@@ -91,17 +103,42 @@ def discoverAttackTypes(dataset):
     attackTypes = []
     for entry in sorted(os.listdir(datasetDir)):
         entryPath = os.path.join(datasetDir, entry)
-        if os.path.isdir(entryPath):
-            if glob.glob(os.path.join(entryPath, "*.npy")):
-                attackTypes.append(entry)
+        if not os.path.isdir(entryPath):
+            continue
+        # new structure: approach subdir contains npy
+        newNpy = glob.glob(os.path.join(entryPath, "*", "*.npy"))
+        # old flat structure: npy directly in attack folder
+        oldNpy = glob.glob(os.path.join(entryPath, "*.npy"))
+        if newNpy or oldNpy:
+            attackTypes.append(entry)
 
     return attackTypes
 
 
-def discoverExperiments(dataset, attackKey=None):
+def discoverApproaches(dataset, attackKey):
+    # return approach subfolders (basil / noisy / merged) that have npy files
+    attackDir = f"experiments/results/gui/{dataset}/{attackKey}"
+    if not os.path.isdir(attackDir):
+        return []
+
+    approaches = []
+    for entry in sorted(os.listdir(attackDir)):
+        entryPath = os.path.join(attackDir, entry)
+        if os.path.isdir(entryPath) and glob.glob(os.path.join(entryPath, "*.npy")):
+            approaches.append(entry)
+
+    # fall back to old flat structure: npy files directly in attack folder
+    if not approaches and glob.glob(os.path.join(attackDir, "*.npy")):
+        approaches.append("_legacy")
+
+    return approaches
+
+
+def discoverExperiments(dataset, attackKey=None, approach=None):
     # find config JSON files and pair each with its .npy accuracy file
-    # if attackKey is given look in {dataset}/{attackKey}/, otherwise look directly in {dataset}/
-    if attackKey:
+    if attackKey and approach and approach != "_legacy":
+        resultDir = f"experiments/results/gui/{dataset}/{attackKey}/{approach}"
+    elif attackKey:
         resultDir = f"experiments/results/gui/{dataset}/{attackKey}"
     else:
         resultDir = f"experiments/results/gui/{dataset}"
@@ -135,7 +172,6 @@ def discoverExperiments(dataset, attackKey=None):
 
 def buildLabel(config):
     # use custom experiment name if provided, otherwise auto-generate from config fields
-    # If user provided a custom name, use it
     customName = config.get('experimentName', '').strip()
     if customName:
         return customName
@@ -155,8 +191,6 @@ def buildLabel(config):
         # Mitigation
         if mitigation == 'ebm':
             noisePart += " + With EBM"
-        elif mitigation == 'wcm':
-            noisePart += " + With WCM"
         else:
             noisePart += " + No EBM"
 
@@ -170,6 +204,14 @@ def buildLabel(config):
         attacks.append(f"Hidden@{config.get('attackHiddenStart', 0)}")
     if config.get('attackModelPoison'):
         attacks.append(f"ModelPoison@{config.get('attackModelPoisonStart', 0)}")
+    if config.get('attackScaling'):
+        attacks.append(f"Scaling@{config.get('attackScalingStart', 0)}")
+    if config.get('attackAlie'):
+        attacks.append(f"ALIE@{config.get('attackAlieStart', 0)}")
+    if config.get('attackIpm'):
+        attacks.append(f"IPM@{config.get('attackIpmStart', 0)}")
+    if config.get('attackNoiseAmp'):
+        attacks.append(f"NoiseAmp@{config.get('attackNoiseAmpStart', 0)}")
 
     if attacks:
         attackPart = " + ".join(attacks)
@@ -177,15 +219,23 @@ def buildLabel(config):
         attackPart = "No Byzantine Nodes"
 
     # Topology
-    if useBasil:
-        topo = "BASIL Ring"
-    else:
-        topo = "Ring Topology"
+    topo = "BASIL Ring" if useBasil else "Ring Topology"
 
     return f"{topo} ({noisePart} + {attackPart})"
 
 
-def plotDatasetExperiments(dataset, attackKey, experiments):
+def _approachTitle(approach):
+    # human-readable approach label for plot titles
+    titles = {
+        'basil':   'BASIL Ring',
+        'noisy':   'Noisy Channel (FedAvg)',
+        'merged':  'Merged (BASIL + EBM)',
+        '_legacy': 'Legacy',
+    }
+    return titles.get(approach, approach.title())
+
+
+def plotDatasetExperiments(dataset, attackKey, approach, experiments):
     # overlay all experiment curves on one axes and save the figure
     datasetTitles = {
         'mnist': 'MNIST',
@@ -213,23 +263,24 @@ def plotDatasetExperiments(dataset, attackKey, experiments):
 
     title = datasetTitles.get(dataset, dataset.upper())
     attackTitle = attackKey.replace("_", " + ").title()
+    approachTitle = _approachTitle(approach)
     ax.set_xlabel('Training Round', fontsize=12)
     ax.set_ylabel('Average Accuracy', fontsize=12)
-    ax.set_title(f'{title} - Attack: {attackTitle} - Average Accuracy',
+    ax.set_title(f'{title} | {attackTitle} | {approachTitle} — Average Accuracy',
                  fontsize=14, fontweight='bold')
     ax.legend(fontsize=9, loc='upper left', bbox_to_anchor=(1.01, 1), borderaxespad=0)
     ax.grid(True, alpha=0.3)
     ax.set_ylim([0, 1])
 
     plt.tight_layout()
-    savePath = f"plots/images/gui/{dataset}/{attackKey}_experiments_avg.png"
+    savePath = f"plots/images/gui/{dataset}/{attackKey}/{approach}/experiments_avg.png"
     os.makedirs(os.path.dirname(savePath), exist_ok=True)
     plt.savefig(savePath, dpi=300, bbox_inches='tight')
     print(f"Saved: {savePath}")
     plt.close()
 
 
-def plotDatasetGrid(dataset, attackKey, experiments):
+def plotDatasetGrid(dataset, attackKey, approach, experiments):
     # one subplot per experiment arranged in a grid layout
     if len(experiments) <= 1:
         return
@@ -251,7 +302,8 @@ def plotDatasetGrid(dataset, attackKey, experiments):
 
     title = datasetTitles.get(dataset, dataset.upper())
     attackTitle = attackKey.replace("_", " + ").title()
-    fig.suptitle(f'{title} - Attack: {attackTitle} - Average Accuracy',
+    approachTitle = _approachTitle(approach)
+    fig.suptitle(f'{title} | {attackTitle} | {approachTitle} — Average Accuracy',
                  fontsize=16, fontweight='bold')
 
     colors = getColors(len(experiments))
@@ -284,14 +336,14 @@ def plotDatasetGrid(dataset, attackKey, experiments):
         axes[idx].set_visible(False)
 
     plt.tight_layout()
-    savePath = f"plots/images/gui/{dataset}/{attackKey}_grid_avg.png"
+    savePath = f"plots/images/gui/{dataset}/{attackKey}/{approach}/grid_avg.png"
     os.makedirs(os.path.dirname(savePath), exist_ok=True)
     plt.savefig(savePath, dpi=300, bbox_inches='tight')
     print(f"Saved: {savePath}")
     plt.close()
 
 
-def plotFinalAccuracyBar(dataset, attackKey, experiments):
+def plotFinalAccuracyBar(dataset, attackKey, approach, experiments):
     # bar chart of each experiment's final accuracy value
     datasetTitles = {
         'mnist': 'MNIST',
@@ -323,8 +375,9 @@ def plotFinalAccuracyBar(dataset, attackKey, experiments):
 
     title = datasetTitles.get(dataset, dataset.upper())
     attackTitle = attackKey.replace("_", " + ").title()
+    approachTitle = _approachTitle(approach)
     ax.set_ylabel('Average Accuracy', fontsize=12)
-    ax.set_title(f'Final Accuracy - {title} - Attack: {attackTitle}',
+    ax.set_title(f'Final Accuracy | {title} | {attackTitle} | {approachTitle}',
                  fontsize=14, fontweight='bold')
     ax.set_xticks(range(len(labels)))
     ax.set_xticklabels(labels, rotation=30, ha='right', fontsize=9)
@@ -332,7 +385,7 @@ def plotFinalAccuracyBar(dataset, attackKey, experiments):
     ax.grid(True, alpha=0.3, axis='y')
 
     plt.tight_layout()
-    savePath = f"plots/images/gui/{dataset}/{attackKey}_final_accuracy_avg.png"
+    savePath = f"plots/images/gui/{dataset}/{attackKey}/{approach}/final_accuracy_avg.png"
     os.makedirs(os.path.dirname(savePath), exist_ok=True)
     plt.savefig(savePath, dpi=300, bbox_inches='tight')
     print(f"Saved: {savePath}")
@@ -340,7 +393,7 @@ def plotFinalAccuracyBar(dataset, attackKey, experiments):
 
 
 def generateGuiPlots():
-    # discover datasets and attack types, then generate one set of plots per combination
+    # discover datasets → attack types → approaches, then generate plots per combination
     print("\n" + "=" * 80)
     print("GENERATING GUI EXPERIMENT PLOTS")
     print("=" * 80)
@@ -364,23 +417,27 @@ def generateGuiPlots():
         print(f"\nDataset: {dataset.upper()} - Attack types: {attackTypes}")
 
         for attackKey in attackTypes:
-            experiments = discoverExperiments(dataset, attackKey)
-            if not experiments:
+            approaches = discoverApproaches(dataset, attackKey)
+            if not approaches:
                 continue
 
-            print(f"\n  Attack: {attackKey} ({len(experiments)} experiment(s))")
-            for exp in experiments:
-                print(f"    - {exp['label']}")
+            print(f"\n  Attack: {attackKey} - Approaches: {approaches}")
 
-            # overlay all experiments for this dataset + attack type on one chart
-            plotDatasetExperiments(dataset, attackKey, experiments)
+            for approach in approaches:
+                experiments = discoverExperiments(dataset, attackKey, approach)
+                if not experiments:
+                    continue
 
-            # grid view - one subplot per experiment
-            if len(experiments) > 1:
-                plotDatasetGrid(dataset, attackKey, experiments)
+                print(f"\n    Approach: {approach} ({len(experiments)} experiment(s))")
+                for exp in experiments:
+                    print(f"      - {exp['label']}")
 
-            # final accuracy bar chart
-            plotFinalAccuracyBar(dataset, attackKey, experiments)
+                plotDatasetExperiments(dataset, attackKey, approach, experiments)
+
+                if len(experiments) > 1:
+                    plotDatasetGrid(dataset, attackKey, approach, experiments)
+
+                plotFinalAccuracyBar(dataset, attackKey, approach, experiments)
 
     print("\nAll GUI plots generated!")
     print("Plots saved to: plots/images/gui/")
@@ -389,11 +446,11 @@ def generateGuiPlots():
 if __name__ == "__main__":
     print("""
 =========================================================================
-                      GUI EXPERIMENT PLOTTING SCRIPT                     
-                                                                        
-   Auto-discovers and plots all experiments from experiments/results/gui 
-                                                                        
-   To customize: Edit the CONFIGURATION section at the top of this file  
+                      GUI EXPERIMENT PLOTTING SCRIPT
+
+   Auto-discovers and plots all experiments from experiments/results/gui
+
+   Organized by: dataset / attack type / approach
 =========================================================================
     """)
 

@@ -75,6 +75,41 @@ def modelPoisonAttack(model, dataLoader, nSteps=10, poisonLr=0.015, noiseStd=0.0
     return params
 
 
+def scalingAttack(weights, scaleFactor=10.0):
+    # Model replacement / scaling: multiply weights by a large negative factor
+    # to dominate FedAvg aggregation and push the global model in the wrong direction
+    return [(-scaleFactor * w).astype(np.float32) for w in weights]
+
+
+def alieAttack(weights, zMax=1.5):
+    # A Little Is Enough (ALIE): shift all weights downward by z_max * std while
+    # preserving the weight structure so the attack stays within the honest weight
+    # distribution and evades norm-based defenses
+    out = []
+    for w in weights:
+        std = max(np.std(w), 1e-6)
+        # subtract a constant shift per layer — preserves relative weight structure
+        out.append((w - zMax * std).astype(np.float32))
+    return out
+
+
+def innerProductAttack(weights, epsilon=3.0):
+    # Inner Product Manipulation (Fall of Empires): negate and scale weights to
+    # maximize the negative inner product with the honest gradient direction
+    return [(-epsilon * w).astype(np.float32) for w in weights]
+
+
+def noiseAmplificationAttack(weights, amplification=5.0):
+    # Amplified noise: inject Gaussian noise scaled to each layer's weight std,
+    # producing large perturbations that evade per-layer magnitude checks
+    out = []
+    for w in weights:
+        std = max(np.std(w), 0.01)
+        noise = np.random.normal(0, amplification * std, size=w.shape)
+        out.append((w + noise).astype(np.float32))
+    return out
+
+
 def applyAttack(weights, attackType, maliciousWeights=None, blendRatio=0.5):
     # normalize attack type string then dispatch to the right function
     atk = (attackType or "none").lower().replace("-", "_")
@@ -87,6 +122,18 @@ def applyAttack(weights, attackType, maliciousWeights=None, blendRatio=0.5):
 
     if atk == "hidden":
         return hiddenAttack(weights, maliciousWeights, blendRatio=0.55, attackStrength=1.4)
+
+    if atk == "scaling":
+        return scalingAttack(weights, scaleFactor=10.0)
+
+    if atk == "alie":
+        return alieAttack(weights, zMax=1.5)
+
+    if atk in ("ipm", "inner_product"):
+        return innerProductAttack(weights, epsilon=3.0)
+
+    if atk in ("noise_amp", "noise_amplification"):
+        return noiseAmplificationAttack(weights, amplification=5.0)
 
     if atk in ("none", "clean"):
         return weights

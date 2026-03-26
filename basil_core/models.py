@@ -43,29 +43,36 @@ class MNISTModel:
 
 class CIFARModel:
     """
-    CIFAR-10 model matching BASIL paper Table II:
-    - conv1: 3->16 filters, 3x3 kernel, ReLU, MaxPool(2x2)
-    - conv2: 16->64 filters, 4x4 kernel, ReLU, MaxPool(2x2)
-    - fc1: flattened -> 384, ReLU
-    - fc2: 384 -> 192, ReLU
-    - fc3: 192 -> 10 (logits)
+    CIFAR-10 CNN targeting 85-90% clean accuracy.
+    VGG-style: 3 conv blocks (64→128→256 filters) + 512-unit head.
+    Uses He normal init and Dropout — no BatchNorm so federated
+    parameter averaging (getParams/setParams) works on trainable
+    weights only without BN running-stat issues.
     """
     def __init__(self, input_shape=(32, 32, 3), num_classes=10):
+        ki = 'he_normal'
         self.model = models.Sequential([
             layers.Input(shape=input_shape),
-            # conv1: 3->16 filters, 3x3 kernel (paper Table II)
-            layers.Conv2D(16, 3, padding="same", activation="relu"),
-            layers.MaxPool2D(pool_size=(2, 2)),
-            # conv2: 16->64 filters, 4x4 kernel (paper Table II)
-            layers.Conv2D(64, 4, padding="same", activation="relu"),
-            layers.MaxPool2D(pool_size=(2, 2)),
+            # Block 1 — 64 filters
+            layers.Conv2D(64, 3, padding='same', activation='relu', kernel_initializer=ki),
+            layers.Conv2D(64, 3, padding='same', activation='relu', kernel_initializer=ki),
+            layers.MaxPool2D(2),
+            layers.Dropout(0.25),
+            # Block 2 — 128 filters
+            layers.Conv2D(128, 3, padding='same', activation='relu', kernel_initializer=ki),
+            layers.Conv2D(128, 3, padding='same', activation='relu', kernel_initializer=ki),
+            layers.MaxPool2D(2),
+            layers.Dropout(0.25),
+            # Block 3 — 256 filters
+            layers.Conv2D(256, 3, padding='same', activation='relu', kernel_initializer=ki),
+            layers.Conv2D(256, 3, padding='same', activation='relu', kernel_initializer=ki),
+            layers.MaxPool2D(2),
+            layers.Dropout(0.4),
+            # Classifier
             layers.Flatten(),
-            # fc1: -> 384 (paper Table II)
-            layers.Dense(384, activation="relu"),
-            # fc2: 384 -> 192 (paper Table II)
-            layers.Dense(192, activation="relu"),
-            # fc3: 192 -> 10 logits (paper Table II)
-            layers.Dense(num_classes)
+            layers.Dense(512, activation='relu', kernel_initializer=ki),
+            layers.Dropout(0.5),
+            layers.Dense(num_classes),
         ])
 
     # ----- Basil convenience API -----

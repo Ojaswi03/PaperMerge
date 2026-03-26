@@ -30,24 +30,21 @@ def sendNotification(title, message, priority="default"):
 
 def setupGpu():
     # find all physical GPUs and enable memory growth
+    # safe to call multiple times — ignores already-initialized errors
     try:
         import tensorflow as tf
 
         gpus = tf.config.list_physical_devices('GPU')
         if gpus:
-            try:
-                # Enable memory growth - don't allocate all GPU memory at once
-                for gpu in gpus:
+            for gpu in gpus:
+                try:
                     tf.config.experimental.set_memory_growth(gpu, True)
-                gpuNames = [g.name for g in gpus]
-                print(f"[GPU] Successfully configured {len(gpus)} GPU(s): {gpuNames}")
-                return {"device": "CUDA", "gpus": gpuNames, "count": len(gpus)}
-            except RuntimeError as e:
-                print(f"[GPU] Error configuring GPU: {e}")
-                print("[CPU] Falling back to CPU (training will be slower)")
-                # Force CPU usage
-                tf.config.set_visible_devices([], 'GPU')
-                return {"device": "CPU", "gpus": [], "count": 0}
+                except RuntimeError:
+                    # already initialized (e.g. called a second time) — GPU is still active
+                    pass
+            gpuNames = [g.name for g in gpus]
+            print(f"[GPU] Successfully configured {len(gpus)} GPU(s): {gpuNames}")
+            return {"device": "CUDA", "gpus": gpuNames, "count": len(gpus)}
         else:
             print("[CPU] No GPU found, using CPU (training will be slower)")
             return {"device": "CPU", "gpus": [], "count": 0}
