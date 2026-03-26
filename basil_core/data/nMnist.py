@@ -96,6 +96,10 @@ def loadNMnist():
         yTrain = yTrain.astype("int32")
         yTest = yTest.astype("int32")
 
+        # MNIST is 28x28; N-MNIST sensor is 34x34 — pad to match model input
+        xTrain = np.pad(xTrain, ((0, 0), (3, 3), (3, 3)), mode='constant')
+        xTest  = np.pad(xTest,  ((0, 0), (3, 3), (3, 3)), mode='constant')
+
     return (list(zip(xTrain, yTrain)), list(zip(xTest, yTest)))
 
 
@@ -110,6 +114,7 @@ def makeLoaders(train, test, batchSize=32, iid=True, nClients=10):
         X = np.stack([xi for xi, _ in data]).astype(np.float32)
         y = np.array([yi for _, yi in data], dtype=np.int32)
         ds = tf.data.Dataset.from_tensor_slices((X, y))
+        ds = ds.shuffle(buffer_size=len(indices), reshuffle_each_iteration=True)
         ds = ds.batch(batchSize, drop_remainder=False)
         ds = ds.prefetch(tf.data.AUTOTUNE)
         return ds
