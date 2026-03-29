@@ -32,7 +32,7 @@ S_MEMORY = 3  # S = b + 1
 
 # Noise config
 SIGMA = 0.2
-EBM_LAMBDA = 75
+EBM_LAMBDA = 25
 
 # Attack config
 ATTACK_TYPE = "gaussian"

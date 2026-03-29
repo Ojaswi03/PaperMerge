@@ -88,7 +88,7 @@ def alieAttack(weights, zMax=1.5):
     out = []
     for w in weights:
         std = max(np.std(w), 1e-6)
-        # subtract a constant shift per layer — preserves relative weight structure
+        # subtract a constant shift per layer - preserves relative weight structure
         out.append((w - zMax * std).astype(np.float32))
     return out
 

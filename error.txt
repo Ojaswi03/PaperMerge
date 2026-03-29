@@ -1,0 +1,53 @@
+[2026-03-26 23:25:56] Traceback (most recent call last):
+  File "/home/ojaswi/PaperMerge/gui/experimentGui.py", line 1044, in runAllThread
+    self._executeExperiment(config)
+  File "/home/ojaswi/PaperMerge/gui/experimentGui.py", line 1124, in _executeExperiment
+    avgAccHist, worstAccHist = fedAvgTrainingWithNoise(
+                               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ojaswi/PaperMerge/basil_core/basil.py", line 487, in fedAvgTrainingWithNoise
+    nd.localTrain(lr=lr, stepsPerEpoch=stepsPerEpoch)
+  File "/home/ojaswi/PaperMerge/basil_core/basil.py", line 185, in localTrain
+    self._ensureCompiled()
+  File "/home/ojaswi/PaperMerge/basil_core/basil.py", line 131, in _ensureCompiled
+    self._opt = tf.keras.optimizers.SGD(
+                ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ojaswi/PaperMerge/environment/basil-noise-env/lib/python3.12/site-packages/keras/src/optimizers/sgd.py", line 60, in __init__
+    super().__init__(
+  File "/home/ojaswi/PaperMerge/environment/basil-noise-env/lib/python3.12/site-packages/keras/src/backend/tensorflow/optimizer.py", line 21, in __init__
+    super().__init__(*args, **kwargs)
+  File "/home/ojaswi/PaperMerge/environment/basil-noise-env/lib/python3.12/site-packages/keras/src/optimizers/base_optimizer.py", line 177, in __init__
+    raise ValueError(
+ValueError: Argument `learning_rate` should be float, or an instance of LearningRateSchedule, or a callable (that takes in the current iteration value and returns the corresponding learning rate value). Received instead: learning_rate=<tf.Variable 'node0_lr:0' shape=() dtype=float32, numpy=0.05000000074505806>
+
+[2026-03-26 23:28:32] Traceback (most recent call last):
+  File "/home/ojaswi/PaperMerge/gui/experimentGui.py", line 1044, in runAllThread
+    self._executeExperiment(config)
+  File "/home/ojaswi/PaperMerge/gui/experimentGui.py", line 1124, in _executeExperiment
+    avgAccHist, worstAccHist = fedAvgTrainingWithNoise(
+                               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ojaswi/PaperMerge/basil_core/basil.py", line 503, in fedAvgTrainingWithNoise
+    nd.localTrain(lr=lr, stepsPerEpoch=stepsPerEpoch)
+  File "/home/ojaswi/PaperMerge/basil_core/basil.py", line 203, in localTrain
+    self._resetOptimizerSlots()  # fresh momentum each round
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ojaswi/PaperMerge/basil_core/basil.py", line 182, in _resetOptimizerSlots
+    for v in self._opt.variables():
+             ^^^^^^^^^^^^^^^^^^^^^
+TypeError: 'list' object is not callable
+
+[2026-03-26 23:29:31] Traceback (most recent call last):
+  File "/home/ojaswi/PaperMerge/gui/experimentGui.py", line 1045, in runAllThread
+    self._executeExperiment(config)
+  File "/home/ojaswi/PaperMerge/gui/experimentGui.py", line 1125, in _executeExperiment
+    avgAccHist, worstAccHist = fedAvgTrainingWithNoise(
+                               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ojaswi/PaperMerge/basil_core/basil.py", line 503, in fedAvgTrainingWithNoise
+    nd.localTrain(lr=lr, stepsPerEpoch=stepsPerEpoch)
+  File "/home/ojaswi/PaperMerge/basil_core/basil.py", line 203, in localTrain
+    self._resetOptimizerSlots()  # fresh momentum each round
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ojaswi/PaperMerge/basil_core/basil.py", line 182, in _resetOptimizerSlots
+    for v in self._opt.variables():
+             ^^^^^^^^^^^^^^^^^^^^^
+TypeError: 'list' object is not callable
+

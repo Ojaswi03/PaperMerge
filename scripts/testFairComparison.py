@@ -17,7 +17,7 @@ from scripts.common import setupGpu
 
 # Configuration
 SIGMA = 0.2
-EBM_LAMBDA = 75
+EBM_LAMBDA = 25
 LR = 0.03
 N_NODES = 10
 N_ROUNDS = 30

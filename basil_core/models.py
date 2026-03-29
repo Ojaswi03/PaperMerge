@@ -12,7 +12,7 @@ class MNISTModel:
             layers.Flatten(),
             layers.Dense(100, activation='relu'),
             layers.Dense(100, activation='relu'),
-            layers.Dense(num_classes)  # logits
+            layers.Dense(num_classes)
         ])
 
     # ----- Basil convenience API -----
@@ -45,7 +45,7 @@ class CIFARModel:
     """
     CIFAR-10 CNN targeting 85-90% clean accuracy.
     VGG-style: 3 conv blocks (64→128→256 filters) + 512-unit head.
-    Uses He normal init and Dropout — no BatchNorm so federated
+    Uses He normal init and Dropout - no BatchNorm so federated
     parameter averaging (getParams/setParams) works on trainable
     weights only without BN running-stat issues.
     """
@@ -53,17 +53,17 @@ class CIFARModel:
         ki = 'he_normal'
         self.model = models.Sequential([
             layers.Input(shape=input_shape),
-            # Block 1 — 64 filters
+            # Block 1 - 64 filters
             layers.Conv2D(64, 3, padding='same', activation='relu', kernel_initializer=ki),
             layers.Conv2D(64, 3, padding='same', activation='relu', kernel_initializer=ki),
             layers.MaxPool2D(2),
             layers.Dropout(0.25),
-            # Block 2 — 128 filters
+            # Block 2 - 128 filters
             layers.Conv2D(128, 3, padding='same', activation='relu', kernel_initializer=ki),
             layers.Conv2D(128, 3, padding='same', activation='relu', kernel_initializer=ki),
             layers.MaxPool2D(2),
             layers.Dropout(0.25),
-            # Block 3 — 256 filters
+            # Block 3 - 256 filters
             layers.Conv2D(256, 3, padding='same', activation='relu', kernel_initializer=ki),
             layers.Conv2D(256, 3, padding='same', activation='relu', kernel_initializer=ki),
             layers.MaxPool2D(2),

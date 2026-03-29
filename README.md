@@ -58,19 +58,21 @@ The GUI will display whether it is running on CUDA (GPU) or CPU at the start of 
 
 ## Quick Start
 
-### Step 1 — Activate the environment
+### Step 1 - Activate the environment
 
 ```bash
 source environment/basil-noise-env/bin/activate
 ```
 
-### Step 2 — Launch the GUI
+### Step 2 - Launch the GUI
 
 ```bash
 python runGui.py
 ```
 
-### Step 3 — Run an experiment
+This starts the **auto-reload launcher**. The GUI opens as a subprocess and will restart automatically whenever you save any `.py` file. Use the **Reload** button (or `Ctrl+Shift+R`) inside the GUI for a manual restart.
+
+### Step 3 - Run an experiment
 
 1. Select a **Dataset** (MNIST is fastest for testing; CIFAR-10 for publication-quality results)
 2. Select an **Approach** (BASIL Only, Noisy Channel, or Merged)
@@ -136,7 +138,7 @@ For each training round:
 - Honest models produce **low loss** on honest local data
 - Loss-based selection naturally filters out Byzantine contributions
 
-### EBM — Expectation-Based Model (Paper 002)
+### EBM - Expectation-Based Model (Paper 002)
 
 EBM mitigates channel noise by pushing the model toward **flat minima** where weight perturbations cause minimal accuracy degradation.
 
@@ -169,7 +171,7 @@ Combines both defense mechanisms:
 
 ```
 PaperMerge/
-├── runGui.py                    # Entry point — launches the GUI
+├── runGui.py                    # Entry point - launches the GUI
 ├── error.txt                    # Auto-generated error log from GUI
 ├── basil_core/
 │   ├── basil.py                 # BASIL ring topology + FedAvg training loops
@@ -254,13 +256,15 @@ He normal initialisation throughout. Targets 88–92% on clean CIFAR-10.
 | LR Decay | false (clean) / false (EBM) | See below |
 | Steps per Epoch | 5 | Controls per-round granularity |
 
-### LR Decay Policy
+### LR Schedule Policy
 
-| Config type | `useLrDecay` | Reason |
-|-------------|-------------|--------|
-| Clean (no noise) | `false` | Fixed LR at 0.05 throughout; allows reaching 88–92% |
-| Noisy + EBM | `false` | LR decay degrades EBM effectiveness in later rounds |
-| Noisy (no mitigation) | `true` | Decay needed to prevent oscillation |
+| Config type | Recommended schedule | Reason |
+|-------------|---------------------|--------|
+| Clean (no noise) | `usePlateauLr=true` or `useLrDecay=false` | Plateau LR auto-reduces near convergence; fixed LR also works |
+| Noisy + EBM | `useLrDecay=false` | LR decay degrades EBM effectiveness in later rounds |
+| Noisy (no mitigation) | `useLrDecay=true` | Decay needed to prevent oscillation |
+
+**`usePlateauLr` overrides `useLrDecay`** - if plateau is enabled, the decay schedule is ignored.
 
 ### EBM Parameters
 
@@ -268,7 +272,7 @@ He normal initialisation throughout. Targets 88–92% on clean CIFAR-10.
 |---------|---------|-------|----------|
 | 0.05 | 400 | 2.0 | Low noise |
 | 0.1 | 100 | 2.0 | Medium noise |
-| 0.2 | 75 | 4.0 | High noise — optimal |
+| 0.2 | 25 | 2.0 | High noise - default |
 
 **Critical:** EBM with σ=0.2 requires `momentum=0.9` and `useLrDecay=false` for stable high accuracy.
 
@@ -405,11 +409,110 @@ tail -50 error.txt     # last 50 error lines
 
 ## Changelog
 
-### Recent Updates
+### v5 - Auto-Reload GUI, Hotfix
+
+#### Auto-Reload Launcher (`runGui.py`)
+- `runGui.py` now runs in two modes: **launcher** (default) and **GUI subprocess** (`--gui` flag)
+- The launcher polls every 0.8 seconds for changes to any `.py` file under `basil_core/`, `gui/`, `scripts/`, `noise_comm/`, and `runGui.py` itself
+- When a change is detected the old GUI subprocess is terminated and a fresh one is started automatically - no manual restart needed
+- The launcher exits cleanly on Ctrl+C, and shuts down when the user closes the GUI window normally
+
+#### Reload Button and Shortcut (`gui/experimentGui.py`)
+- Added **Reload** button to the button bar (right side, next to Exit)
+- Added `Ctrl+Shift+R` keyboard shortcut for reload
+- Clicking Reload (or pressing the shortcut) exits the GUI with code 42, which the launcher treats as an immediate restart signal
+- If an experiment is running, a confirmation dialog is shown before reloading
+- Status bar updated to show the new shortcut hint
+
+#### Hotfix - Tkinter Key Binding
+- Fixed `_tkinter.TclError: bad event type or keysym "shift"` - Tkinter requires `Shift` (capital S) and uppercase letter: `<Control-Shift-R>` not `<Control-shift-R>`
+
+---
+
+### v4 - Adaptive LR (Reduce on Plateau), Config Audit
+
+#### Reduce LR on Plateau (`basil_core/basil.py`, `gui/experimentGui.py`)
+- Added **ReduceLROnPlateau** to both `basilRingTrainingWithAttack` and `fedAvgTrainingWithNoise`
+- When enabled, LR starts at `lr0` and is multiplied by `plateauFactor` whenever accuracy fails to improve by more than `plateauThreshold` for `plateauPatience` consecutive rounds
+- A **cooldown** period (`plateauPatience // 2` rounds) prevents back-to-back reductions after each adjustment
+- Overrides the existing `useLrDecay` schedule - the two are mutually exclusive (plateau gives more precise control)
+- Prints `ReduceLROnPlateau: 0.050000 → 0.025000` in the log each time it fires
+- Off by default (`usePlateauLr: false`) - existing experiments are unaffected
+
+**New parameters (all configurable in GUI Advanced tab and per-config JSON):**
+
+| Parameter | Default | Meaning |
+|-----------|---------|---------|
+| `usePlateauLr` | `false` | Enable/disable feature |
+| `plateauPatience` | `10` | Rounds of no improvement before reducing |
+| `plateauFactor` | `0.5` | LR multiplier on plateau (e.g. 0.5 = halve) |
+| `plateauMinLr` | `0.0001` | Floor - LR never drops below this |
+| `plateauThreshold` | `0.002` | Minimum accuracy gain to count as improvement |
+
+**Recommended use:** Enable on clean CIFAR-10 baselines - LR stays at 0.05 during fast convergence, then auto-halves when approaching the accuracy ceiling (~round 70–80), potentially pushing final accuracy above 88%.
+
+#### Config Audit - All 68 Configs Brought Up to Date
+- Audited every field read via `config.get(...)` in the GUI against all 68 JSON files
+- The following fields were present in code but missing from every config (causing silent fallback to defaults with no way to override per-config):
+
+| Field added | Default value | Why it matters |
+|-------------|--------------|----------------|
+| `stepsPerEpoch` | `5` | Controls gradient steps per node per round; was GUI-hardcoded, now per-config |
+| `usePlateauLr` | `false` | New plateau LR feature |
+| `plateauPatience` | `10` | New plateau LR feature |
+| `plateauFactor` | `0.5` | New plateau LR feature |
+| `plateauMinLr` | `0.0001` | New plateau LR feature |
+| `plateauThreshold` | `0.002` | New plateau LR feature (was also missing from GUI entirely) |
+
+- All 68 configs now contain every parameter the training code reads, making each config a complete, self-contained experiment specification
+
+---
+
+### v3 - EBM Fix, Training Speed, Realistic ETA
+
+#### EBM Lambda Correction (critical bug fix)
+- **Root cause**: `lambda=75, sigma=0.2` gives `scale = 1 + 75×0.04 = 4.0`, not 2.0 as the GUI hint claimed. With `momentum=0.9` the effective gradient amplification caused NaN weights from round 1 onward, keeping accuracy stuck at ~10% (random chance) for the entire run.
+- **Fix**: Changed `lambda` from `75 → 25` everywhere. With `sigma=0.2`: `scale = 1 + 25×0.04 = 2.0` (matches paper's intended scale).
+- Updated in: `basil_core/basil.py`, `basil_core/trainer.py`, `gui/experimentGui.py` (default, presets, load fallback, hint text), all 68 JSON configs, all test scripts, `tests/test_convergence.py`
+
+**Correct lambda reference table:**
+
+| Noise σ | Lambda λ | Scale | Use Case |
+|---------|---------|-------|----------|
+| 1.0 | 1 | 2.0 | Paper's original setting |
+| 0.2 | 25 | 2.0 | High noise - default |
+| 0.1 | 100 | 2.0 | Medium noise |
+| 0.05 | 400 | 2.0 | Low noise |
+
+#### EBM Gradient Clipping
+- Added `tf.clip_by_global_norm(scaled, 5.0)` to the EBM compiled training step in `basil_core/basil.py`
+- Prevents NaN weights when training resumes from channel-noise-corrupted starting weights (round after noise activates)
+- Only active for EBM path; standard and WCM paths are unaffected
+
+#### Training Pipeline Speed-up (WSL2 / WDDM overhead reduction)
+- **Single iterator per local training call**: the nested epoch loop (`for epoch: for batch`) was creating one TF dataset iterator per epoch per node per round (5 iterators/node/round = 4,000+ across a 100-round run). Each iterator startup on WSL2 carries significant WDDM overhead. Replaced with a single `for batch in _iterLimited(dataLoader, localEpochs * stepsPerEpoch)` loop. Change applied in both `BasilNode.localTrain` and `trainer.localUpdate`.
+- **`drop_remainder=True`** on all training loaders (`mnist.py`, `cifar.py`, `nMnist.py`): guarantees every batch is the same shape, preventing `@tf.function` retracing for partial end-of-epoch batches.
+- **`.repeat()` on training datasets**: makes each client's dataset infinite so it never exhausts mid-training. The `_iterLimited` step-count cap is the only stop condition.
+
+#### `stepsPerEpoch` Now Configurable per Config
+- GUI previously hardcoded `stepsPerEpoch=5` in both the BASIL ring and FedAvg training calls, ignoring any value in the JSON config.
+- Changed to `config.get('stepsPerEpoch', 5)` - existing configs default to 5 (no behaviour change); individual configs can now override with `"stepsPerEpoch": N`.
+
+#### Realistic ETA Countdown (gui/experimentGui.py)
+- **Before**: ETA used a simple all-time average (`elapsed / roundsDone`). The first round is always slow (TF graph compilation warmup), permanently inflating the estimate.
+- **After**:
+  - Per-round durations are recorded in `_roundTimes`
+  - **Exponential moving average** (α = 0.25) maintained in `_emaRoundTime` - recent rounds receive ~4× more weight than older rounds; the slow warmup round is nearly forgotten after 4–5 rounds
+  - **Smooth countdown**: the displayed ETA decreases by 1 second per tick normally. If the EMA drops significantly (model sped up), the display catches up at 30% of the gap per tick rather than jumping instantly
+  - State (`_roundTimes`, `_emaRoundTime`, `_smoothedEta`) is reset at the start of each experiment, including between runs in a "Run All" queue, so timing from one experiment never bleeds into the next
+
+---
+
+### v2 - VGG Model, GUI Redesign, Convergence Fixes
 
 #### GPU & Performance
 - `runGui.py`: `setupGpu()` is now called **before** any TensorFlow imports, eliminating the "GPU forced to CPU on second call" bug
-- All data loaders (`mnist.py`, `cifar.py`, `nMnist.py`) converted from plain Python lists to `tf.data.Dataset` with `.prefetch(AUTOTUNE)` — GPU now prefetches the next batch during compute
+- All data loaders (`mnist.py`, `cifar.py`, `nMnist.py`) converted from plain Python lists to `tf.data.Dataset` with `.prefetch(AUTOTUNE)` - GPU now prefetches the next batch during compute
 - `TF_CPP_MIN_LOG_LEVEL=2` suppresses TensorFlow INFO messages
 
 #### CIFAR-10 Model (models.py)
@@ -423,7 +526,7 @@ tail -50 error.txt     # last 50 error lines
 - Training loader now shuffles each epoch
 
 #### Training Loops (basil_core/basil.py)
-- Added `roundCallback(roundNum, avgAcc, worstAcc, totalRounds)` parameter to both `basilRingTrainingWithAttack` and `fedAvgTrainingWithNoise` — called after every round evaluation
+- Added `roundCallback(roundNum, avgAcc, worstAcc, totalRounds)` parameter to both `basilRingTrainingWithAttack` and `fedAvgTrainingWithNoise` - called after every round evaluation
 - Removed all pre-training evaluation (no model eval before the first training round)
 - Round labels in logs are now 0-indexed and consistent across both training functions
 
@@ -435,7 +538,7 @@ tail -50 error.txt     # last 50 error lines
 - Default `batchSize`: `32 → 512`
 - Fixed `fedAvgTrainingWithNoise` ignoring the config's `localEpochs` (was hardcoded to 1)
 - Fixed both training functions ignoring the config's `useLrDecay` (was hardcoded `True`)
-- `stepsPerEpoch`: `100 → 5` — reduces per-round gradient steps so the accuracy curve starts near ~10–20% and rises gradually rather than jumping to ~50% in round 0
+- `stepsPerEpoch`: `100 → 5` - reduces per-round gradient steps so the accuracy curve starts near ~10–20% and rises gradually rather than jumping to ~50% in round 0
 - All 68 configs updated: `useLrDecay=false` for no-noise configs; `useLrDecay=false` for EBM configs
 - All 68 configs updated to `attackHiddenStart=0`, `dataset=cifar10`, `momentum=0.9`, `learningRate=0.05`, `nRounds=100`
 
@@ -446,12 +549,12 @@ tail -50 error.txt     # last 50 error lines
 - **Live accuracy chart**: embedded matplotlib figure (right panel of Output tab), updates after every round via `roundCallback`
 - **Progress bar**: shows `Round N/100`, ETA, and latest accuracy % between tabs and buttons
 - **Status bar**: persistent one-line status at bottom of window
-- **Colour-coded log**: dark terminal style — blue for round info, green for success, red for errors, yellow for warnings
+- **Colour-coded log**: dark terminal style - blue for round info, green for success, red for errors, yellow for warnings
 - **Keyboard shortcuts**: `Ctrl+R` run, `Ctrl+S` save, `Ctrl+L` load, `Esc` stop
 - **Copy from log**: right-click context menu (Copy / Select All / Copy All / Save Errors), `Ctrl+A`, and "Copy All" header button
 - **Error logging**: errors auto-appended to `error.txt` with timestamps; "Save Errors" button/menu item for manual export
 - **Run All Configs**: dialog now shows counts only (found / to run / already done) without listing every file
-- **Skip completed experiments**: `_isAlreadyRun()` compares saved config JSON against source config — if any field changed the experiment re-runs automatically
+- **Skip completed experiments**: `_isAlreadyRun()` compares saved config JSON against source config - if any field changed the experiment re-runs automatically
 
 ---
 

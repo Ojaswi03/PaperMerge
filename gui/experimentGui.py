@@ -68,7 +68,7 @@ PRESETS = {
     "Noisy + EBM": {
         'dataset': 'cifar10', 'approach': 'noisy', 'useBasil': False,
         'useChannelNoise': True, 'channelNoiseSigma': 0.2, 'noiseMitigation': 'ebm',
-        'ebmLambda': 75.0, 'attackerIds': '', 'nNodes': 10, 'nRounds': 100,
+        'ebmLambda': 25.0, 'attackerIds': '', 'nNodes': 10, 'nRounds': 100,
         'localEpochs': 5, 'learningRate': 0.05, 'batchSize': 512,
         'momentum': 0.9, 'useLrDecay': False,
     },
@@ -83,7 +83,7 @@ PRESETS = {
     "Merged (Best)": {
         'dataset': 'cifar10', 'approach': 'merged', 'useBasil': True,
         'useChannelNoise': True, 'channelNoiseSigma': 0.2, 'noiseMitigation': 'ebm',
-        'ebmLambda': 75.0, 'attackGaussian': False, 'attackerIds': '',
+        'ebmLambda': 25.0, 'attackGaussian': False, 'attackerIds': '',
         'nNodes': 10, 'nRounds': 100, 'localEpochs': 5, 'learningRate': 0.05,
         'batchSize': 512, 'momentum': 0.9, 'useLrDecay': False,
     },
@@ -104,10 +104,14 @@ class ExperimentGUI:
         self.currentThread = None
 
         # Live-chart / progress tracking
-        self._liveAccData   = []
-        self._liveWorstData = []
+        self._liveAccData    = []
+        self._liveWorstData  = []
         self._trainStartTime = None
+        self._lastRoundEndTime = None
         self._totalRounds    = 0
+        self._roundTimes     = []   # per-round durations for EMA
+        self._emaRoundTime   = None # exponential moving average of round time
+        self._smoothedEta    = None # smoothed ETA to avoid jarring jumps
 
         self._setupStyle()
         self.setupVariables()
@@ -115,7 +119,7 @@ class ExperimentGUI:
         self._setupKeyboardShortcuts()
 
         self.root.protocol("WM_DELETE_WINDOW", self.onClosing)
-        self._setStatus("Ready  ·  Ctrl+R = Run   Ctrl+S = Save   Ctrl+L = Load   Esc = Stop")
+        self._setStatus("Ready  ·  Ctrl+R = Run   Ctrl+S = Save   Ctrl+L = Load   Esc = Stop   Ctrl+Shift+R = Reload")
 
     # ── style ─────────────────────────────────────────────────────────────────
     def _setupStyle(self):
@@ -175,9 +179,14 @@ class ExperimentGUI:
         self.channelNoiseStartVar = tk.IntVar(value=0)
         self.channelNoiseSigmaVar = tk.DoubleVar(value=0.2)
         self.noiseMitigationVar   = tk.StringVar(value="none")
-        self.ebmLambdaVar         = tk.DoubleVar(value=75.0)
+        self.ebmLambdaVar         = tk.DoubleVar(value=25.0)
         self.momentumVar          = tk.DoubleVar(value=0.9)
         self.useLrDecayVar        = tk.BooleanVar(value=True)
+        self.usePlateauLrVar        = tk.BooleanVar(value=False)
+        self.plateauPatienceVar     = tk.IntVar(value=10)
+        self.plateauFactorVar       = tk.DoubleVar(value=0.5)
+        self.plateauMinLrVar        = tk.DoubleVar(value=1e-4)
+        self.plateauThresholdVar    = tk.DoubleVar(value=0.002)
         self.attackGaussianVar         = tk.BooleanVar(value=False)
         self.attackGaussianStartVar    = tk.IntVar(value=0)
         self.attackSignFlipVar         = tk.BooleanVar(value=False)
@@ -391,7 +400,7 @@ class ExperimentGUI:
         rows = [
             ("Start Noise at Round:", self.channelNoiseStartVar, "(0 = from beginning)"),
             ("Noise Sigma (σ):",      self.channelNoiseSigmaVar, "Standard deviation of Gaussian noise"),
-            ("EBM Lambda:",           self.ebmLambdaVar,         "scale = 1 + λσ²  (default λ=75, σ=0.2 → scale=2.0)"),
+            ("EBM Lambda:",           self.ebmLambdaVar,         "scale = 1 + λσ²  (default λ=25, σ=0.2 → scale=2.0)"),
             ("Momentum:",             self.momentumVar,          "0.9 recommended for SGD on CIFAR-10"),
         ]
         for i, (lbl, var, hint) in enumerate(rows, start=1):
@@ -418,6 +427,26 @@ class ExperimentGUI:
                         variable=self.useLrDecayVar).pack(anchor=tk.W)
         ttk.Label(lrFrame, text="lr(t) = lr₀ / (1 + lr₀ · t)   when enabled",
                   foreground=MUTED, font=('Segoe UI', 8)).pack(anchor=tk.W, pady=(2, 0))
+
+        # Plateau LR
+        ttk.Separator(lrFrame, orient='horizontal').pack(fill=tk.X, pady=6)
+        ttk.Checkbutton(lrFrame,
+                        text="Reduce LR on Plateau  (overrides decay schedule)",
+                        variable=self.usePlateauLrVar).pack(anchor=tk.W)
+        ttk.Label(lrFrame,
+                  text="Halves LR when accuracy does not improve for N rounds. Prevents overshoot at convergence.",
+                  foreground=MUTED, font=('Segoe UI', 8), wraplength=480, justify=tk.LEFT
+                  ).pack(anchor=tk.W, pady=(2, 6))
+        pRow = ttk.Frame(lrFrame)
+        pRow.pack(fill=tk.X)
+        ttk.Label(pRow, text="Patience (rounds):").pack(side=tk.LEFT)
+        ttk.Entry(pRow, textvariable=self.plateauPatienceVar, width=6).pack(side=tk.LEFT, padx=(4, 16))
+        ttk.Label(pRow, text="Factor:").pack(side=tk.LEFT)
+        ttk.Entry(pRow, textvariable=self.plateauFactorVar, width=6).pack(side=tk.LEFT, padx=(4, 16))
+        ttk.Label(pRow, text="Min LR:").pack(side=tk.LEFT)
+        ttk.Entry(pRow, textvariable=self.plateauMinLrVar, width=8).pack(side=tk.LEFT, padx=(4, 16))
+        ttk.Label(pRow, text="Threshold:").pack(side=tk.LEFT)
+        ttk.Entry(pRow, textvariable=self.plateauThresholdVar, width=8).pack(side=tk.LEFT, padx=(4, 0))
 
     # ── Attack tab ────────────────────────────────────────────────────────────
     def createAttackTab(self, parent):
@@ -458,7 +487,7 @@ class ExperimentGUI:
             ("Hidden / Backdoor",          self.attackHiddenVar,      self.attackHiddenStartVar,
              "Behaves normally initially, then injects malicious updates at start round"),
             ("Model Poisoning",            self.attackModelPoisonVar,  self.attackModelPoisonStartVar,
-             "Gradient ascent to corrupt the model — hardest to detect"),
+             "Gradient ascent to corrupt the model - hardest to detect"),
             ("Scaling (Model Replacement)", self.attackScalingVar,    self.attackScalingStartVar,
              "Multiplies weights by a large negative factor to dominate aggregation"),
             ("ALIE (A Little Is Enough)",  self.attackAlieVar,        self.attackAlieStartVar,
@@ -522,6 +551,8 @@ class ExperimentGUI:
         self.outputText.bind('<Button-3>', self._showLogMenu)
         self.outputText.bind('<Control-a>', lambda e: self._selectAllLog())
         self.outputText.bind('<Control-A>', lambda e: self._selectAllLog())
+        self.outputText.bind('<Control-c>', lambda e: self._copySelection())
+        self.outputText.bind('<Control-C>', lambda e: self._copySelection())
 
         # Configure log colour tags
         self.outputText.tag_configure('header',  foreground='#93c5fd', font=('Consolas', 9, 'bold'))
@@ -591,6 +622,7 @@ class ExperimentGUI:
         ttk.Button(bf, text="Save Config",     command=self.saveConfig).pack(side=tk.LEFT, padx=2)
         ttk.Button(bf, text="Load Config",     command=self.loadConfig).pack(side=tk.LEFT, padx=2)
 
+        ttk.Button(bf, text="Reload",          command=self.reloadGui).pack(side=tk.RIGHT, padx=2)
         ttk.Button(bf, text="Exit",            command=self.onClosing).pack(side=tk.RIGHT, padx=2)
 
         # Keyboard hint labels
@@ -605,42 +637,99 @@ class ExperimentGUI:
         self.root.bind('<Control-s>', lambda e: self.saveConfig())
         self.root.bind('<Control-l>', lambda e: self.loadConfig())
         self.root.bind('<Escape>',    lambda e: self.stopExperiment() if self.isRunning else None)
+        self.root.bind('<Control-Shift-R>', lambda e: self.reloadGui())
 
     # ── Status / progress helpers ─────────────────────────────────────────────
     def _setStatus(self, msg):
         self._statusVar.set(f"  {msg}")
 
     def _onRoundComplete(self, roundNum, avgAcc, worstAcc, totalRounds):
-        """Called from training thread — schedules UI update on main thread."""
+        """Called from training thread - schedules UI update on main thread."""
+        now = time.time()
+        if self._lastRoundEndTime is not None:
+            dt = now - self._lastRoundEndTime
+            if dt > 0:
+                self._roundTimes.append(dt)
+                # EMA with α=0.25 - weights last ~4 rounds heavily, ignores slow warmup
+                if self._emaRoundTime is None:
+                    self._emaRoundTime = dt
+                else:
+                    self._emaRoundTime = 0.25 * dt + 0.75 * self._emaRoundTime
+        self._lastRoundEndTime = now
         self.root.after(0, self._updateUIAfterRound, roundNum, avgAcc, worstAcc, totalRounds)
 
     def _updateUIAfterRound(self, roundNum, avgAcc, worstAcc, totalRounds):
-        """UI updates after each round — runs on main thread via root.after()."""
+        """UI updates after each round - runs on main thread via root.after()."""
         self._liveAccData.append(avgAcc)
         self._liveWorstData.append(worstAcc)
 
-        # Progress bar
+        # Progress bar (exact at round boundaries)
         if totalRounds > 0:
-            pct = roundNum / totalRounds * 100
-            self._progressVar.set(pct)
+            self._progressVar.set(roundNum / totalRounds * 100)
             self._roundLabel.config(text=f"Round {roundNum}/{totalRounds}")
-
-        # ETA
-        if self._trainStartTime and roundNum > 0:
-            elapsed = time.time() - self._trainStartTime
-            rate = elapsed / roundNum
-            remaining = (totalRounds - roundNum) * rate
-            m, s = int(remaining // 60), int(remaining % 60)
-            self._etaLabel.config(text=f"ETA  {m}m {s:02d}s")
 
         # Latest accuracy
         self._accLabel.config(text=f"Acc  {avgAcc:.1%}")
+
+    def _etaTicker(self):
+        """Fires every second to update ETA and progress bar in real-time."""
+        if not self.isRunning:
+            return
+
+        now = time.time()
+        elapsed = now - self._trainStartTime if self._trainStartTime else 0
+        roundsDone = len(self._liveAccData)
+        totalRounds = self._totalRounds or 1
+
+        if roundsDone > 0 and self._emaRoundTime and elapsed > 0:
+            emaTime = self._emaRoundTime
+
+            # How far through the current round we are
+            timeSinceLastRound = (now - self._lastRoundEndTime) if self._lastRoundEndTime else 0
+            fraction = min(timeSinceLastRound / emaTime, 0.99) if emaTime > 0 else 0
+            fractionalDone = roundsDone + fraction
+
+            # Smooth progress bar
+            self._progressVar.set(min(fractionalDone / totalRounds * 100, 99.9))
+            self._roundLabel.config(text=f"Round {roundsDone}/{totalRounds}")
+
+            # Raw ETA based on EMA round time
+            rawEta = max(0.0, (totalRounds - fractionalDone) * emaTime)
+
+            # Smooth ETA: only allow it to decrease by at most 1s per tick (no upward jumps)
+            if self._smoothedEta is None:
+                self._smoothedEta = rawEta
+            else:
+                # Allow instant drop if raw is much lower (model sped up), else ease down
+                gap = self._smoothedEta - rawEta
+                if gap > 5:
+                    # Raw dropped significantly - catch up quickly
+                    self._smoothedEta = self._smoothedEta - min(gap * 0.3, gap - 1)
+                else:
+                    # Normal countdown: tick down by 1 per second
+                    self._smoothedEta = max(rawEta, self._smoothedEta - 1)
+
+            remaining = self._smoothedEta
+            h = int(remaining // 3600)
+            m = int((remaining % 3600) // 60)
+            s = int(remaining % 60)
+            if h > 0:
+                self._etaLabel.config(text=f"ETA  {h}h {m:02d}m {s:02d}s")
+            else:
+                self._etaLabel.config(text=f"ETA  {m}m {s:02d}s")
+        elif elapsed > 0:
+            # Waiting for first round - show elapsed
+            m, s = int(elapsed // 60), int(elapsed % 60)
+            self._etaLabel.config(text=f"Elapsed  {m}m {s:02d}s")
+
+        self.root.after(1000, self._etaTicker)
 
         # Live chart
         self._refreshLiveChart()
 
         # Status bar
-        self._setStatus(f"Training…  round {roundNum}/{totalRounds}  avg acc = {avgAcc:.4f}")
+        accStr = f"  avg acc = {self._liveAccData[-1]:.4f}" if self._liveAccData else ""
+        self._setStatus(f"Training…  round {roundsDone}/{totalRounds}{accStr}")
 
     def _refreshLiveChart(self):
         ax = self.liveAx
@@ -751,18 +840,32 @@ class ExperimentGUI:
         self.outputText.delete(1.0, tk.END)
 
     def _showLogMenu(self, event):
+        # Save selection range before popup steals focus/selection
+        try:
+            self._savedSel = (self.outputText.index(tk.SEL_FIRST),
+                              self.outputText.index(tk.SEL_LAST))
+        except tk.TclError:
+            self._savedSel = None
         try:
             self._logMenu.tk_popup(event.x_root, event.y_root)
         finally:
             self._logMenu.grab_release()
 
     def _copySelection(self):
+        # Try live selection first, fall back to saved selection from right-click
         try:
             text = self.outputText.get(tk.SEL_FIRST, tk.SEL_LAST)
-            self.root.clipboard_clear()
-            self.root.clipboard_append(text)
         except tk.TclError:
-            pass  # nothing selected
+            if getattr(self, '_savedSel', None):
+                try:
+                    text = self.outputText.get(self._savedSel[0], self._savedSel[1])
+                except tk.TclError:
+                    return
+            else:
+                return
+        self.root.clipboard_clear()
+        self.root.clipboard_append(text)
+        self._setStatus("Copied to clipboard.")
 
     def _selectAllLog(self):
         self.outputText.tag_add(tk.SEL, '1.0', tk.END)
@@ -819,6 +922,9 @@ class ExperimentGUI:
         self.clearOutput()
         self._liveAccData.clear()
         self._liveWorstData.clear()
+        self._roundTimes.clear()
+        self._emaRoundTime   = None
+        self._smoothedEta    = None
         self._refreshLiveChart()
 
         self.notebook.select(3)  # switch to Output tab
@@ -830,7 +936,7 @@ class ExperimentGUI:
     def stopExperiment(self):
         self.isRunning = False
         self.logMessage("\n[STOP REQUESTED] Stopping experiment…")
-        self._setStatus("Stop requested — waiting for current round to finish…")
+        self._setStatus("Stop requested - waiting for current round to finish…")
 
     def onClosing(self):
         if self.isRunning:
@@ -842,12 +948,27 @@ class ExperimentGUI:
                 self.currentThread.join(timeout=5.0)
         self.root.destroy()
 
+    def reloadGui(self):
+        """Exit with code 42 so the launcher restarts the GUI with latest code."""
+        if self.isRunning:
+            if not messagebox.askyesno("Experiment Running",
+                                       "An experiment is running. Stop it and reload?"):
+                return
+            self.isRunning = False
+            if self.currentThread and self.currentThread.is_alive():
+                self.currentThread.join(timeout=5.0)
+        self.root.destroy()
+        import sys
+        sys.exit(42)
+
     def runExperimentThread(self):
         try:
             config = self.getConfig()
             name = config.get("experimentName", "Experiment")
             self._trainStartTime = time.time()
+            self._lastRoundEndTime = self._trainStartTime
             self._totalRounds = config.get('nRounds', 100)
+            self.root.after(1000, self._etaTicker)
             sendNotification("Run Started", f"{name} has started.", priority="default")
             self._executeExperiment(config)
             name = config.get("experimentName", "Experiment")
@@ -982,7 +1103,12 @@ class ExperimentGUI:
                 self.logMessage("=" * 80)
 
                 self._trainStartTime = time.time()
+                self._lastRoundEndTime = self._trainStartTime
                 self._totalRounds = config.get('nRounds', 100)
+                self._roundTimes.clear()
+                self._emaRoundTime   = None
+                self._smoothedEta    = None
+                self.root.after(1000, self._etaTicker)
                 self._liveAccData.clear()
                 self._liveWorstData.clear()
                 self.root.after(0, self._progressVar.set, 0)
@@ -1030,7 +1156,12 @@ class ExperimentGUI:
         self.logMessage(f"  Dataset:    {config['dataset']}")
         self.logMessage(f"  Approach:   {approachLabels.get(config['approach'], config['approach'])}")
         self.logMessage(f"  Nodes: {config['nNodes']},  Rounds: {config['nRounds']}")
-        lrDecayStr = "decay" if config.get('useLrDecay', True) else "fixed"
+        if config.get('usePlateauLr', False):
+            lrDecayStr = f"plateau (patience={config.get('plateauPatience',10)}, factor={config.get('plateauFactor',0.5)}, min={config.get('plateauMinLr',1e-4)}, threshold={config.get('plateauThreshold',0.002)})"
+        elif config.get('useLrDecay', True):
+            lrDecayStr = "decay"
+        else:
+            lrDecayStr = "fixed"
         self.logMessage(f"  LR: {config['learningRate']} ({lrDecayStr}),  Momentum: {config.get('momentum', 0.0)}")
         self.logMessage(f"  Use BASIL: {config['useBasil']},  Use Noise: {config['useChannelNoise']}")
         if config['useChannelNoise']:
@@ -1082,9 +1213,14 @@ class ExperimentGUI:
                 channelNoiseStart=config['channelNoiseStart'] if config['useChannelNoise'] else 0,
                 lr0=config['learningRate'],
                 localEpochs=config['localEpochs'],
-                stepsPerEpoch=5,
+                stepsPerEpoch=config.get('stepsPerEpoch', 5),
                 stopCallback=lambda: not self.isRunning,
                 useLrDecay=config.get('useLrDecay', True),
+                usePlateauLr=config.get('usePlateauLr', False),
+                plateauPatience=config.get('plateauPatience', 10),
+                plateauFactor=config.get('plateauFactor', 0.5),
+                plateauMinLr=config.get('plateauMinLr', 1e-4),
+                plateauThreshold=config.get('plateauThreshold', 0.002),
                 roundCallback=self._onRoundComplete,
             )
         else:
@@ -1102,17 +1238,22 @@ class ExperimentGUI:
                 noiseModel=self.getNoiseModel(config),
                 channelNoiseStart=config['channelNoiseStart'] if config['useChannelNoise'] else 0,
                 lr0=config['learningRate'],
-                stepsPerEpoch=5,
+                stepsPerEpoch=config.get('stepsPerEpoch', 5),
                 useSnapshots=config['useBasil'],
                 useSequential=True,
                 stopCallback=lambda: not self.isRunning,
                 useLrDecay=config.get('useLrDecay', True),
+                usePlateauLr=config.get('usePlateauLr', False),
+                plateauPatience=config.get('plateauPatience', 10),
+                plateauFactor=config.get('plateauFactor', 0.5),
+                plateauMinLr=config.get('plateauMinLr', 1e-4),
+                plateauThreshold=config.get('plateauThreshold', 0.002),
                 roundCallback=self._onRoundComplete,
             )
 
         if not self.isRunning:
             self.logMessage("\n" + "=" * 80)
-            self.logMessage("EXPERIMENT STOPPED BY USER — no results saved")
+            self.logMessage("EXPERIMENT STOPPED BY USER - no results saved")
             self.logMessage("=" * 80)
             return
 
@@ -1180,6 +1321,11 @@ class ExperimentGUI:
             'learningRate':          self.learningRateVar.get(),
             'batchSize':             self.batchSizeVar.get(),
             'useLrDecay':            self.useLrDecayVar.get(),
+            'usePlateauLr':          self.usePlateauLrVar.get(),
+            'plateauPatience':       self.plateauPatienceVar.get(),
+            'plateauFactor':         self.plateauFactorVar.get(),
+            'plateauMinLr':          self.plateauMinLrVar.get(),
+            'plateauThreshold':      self.plateauThresholdVar.get(),
         }
 
     # ── Data / Node helpers ───────────────────────────────────────────────────
@@ -1315,7 +1461,7 @@ class ExperimentGUI:
             self.channelNoiseStartVar.set(config.get('channelNoiseStart', 0))
             self.channelNoiseSigmaVar.set(config.get('channelNoiseSigma', 0.1))
             self.noiseMitigationVar.set(config.get('noiseMitigation', 'none'))
-            self.ebmLambdaVar.set(config.get('ebmLambda', 0.01))
+            self.ebmLambdaVar.set(config.get('ebmLambda', 25.0))
             self.momentumVar.set(config.get('momentum', 0.9))
             self.attackGaussianVar.set(config.get('attackGaussian', False))
             self.attackGaussianStartVar.set(config.get('attackGaussianStart', 0))
@@ -1340,6 +1486,11 @@ class ExperimentGUI:
             self.learningRateVar.set(config.get('learningRate', 0.05))
             self.batchSizeVar.set(config.get('batchSize', 32))
             self.useLrDecayVar.set(config.get('useLrDecay', True))
+            self.usePlateauLrVar.set(config.get('usePlateauLr', False))
+            self.plateauPatienceVar.set(config.get('plateauPatience', 10))
+            self.plateauFactorVar.set(config.get('plateauFactor', 0.5))
+            self.plateauMinLrVar.set(config.get('plateauMinLr', 1e-4))
+            self.plateauThresholdVar.set(config.get('plateauThreshold', 0.002))
             messagebox.showinfo("Loaded", "Configuration loaded successfully!")
             self._setStatus(f"Config loaded: {os.path.basename(filepath)}")
         except Exception as e:
@@ -1367,7 +1518,7 @@ class ExperimentGUI:
                 attackTypes = discoverAttackTypes(dataset)
                 if not attackTypes:
                     continue
-                self.logMessage(f"\nDataset: {dataset.upper()} — attacks: {attackTypes}")
+                self.logMessage(f"\nDataset: {dataset.upper()} - attacks: {attackTypes}")
                 for attackKey in attackTypes:
                     approaches = discoverApproaches(dataset, attackKey)
                     if not approaches:

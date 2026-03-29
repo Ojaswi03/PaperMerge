@@ -93,13 +93,13 @@ def main():
     )
     results["ebm_25"] = final2
 
-    # Test 3: EBM with lambda=75 (scale=4.0)
+    # Test 3: EBM with lambda=50 (scale=3.0) — higher than recommended for comparison
     acc3, _, final3 = runTest(
         noiseModel="ebm",
-        ebmLambda=75,
-        label="EBM (lambda=75, scale=4.0)"
+        ebmLambda=50,
+        label="EBM (lambda=50, scale=3.0)"
     )
-    results["ebm_75"] = final3
+    results["ebm_50"] = final3
 
     # Summary
     print("\n" + "="*60)
@@ -107,14 +107,14 @@ def main():
     print("="*60)
     print(f"Noisy baseline:     {results['noisy']*100:.2f}%")
     print(f"EBM (λ=25, s=2.0):  {results['ebm_25']*100:.2f}%  (Δ = {(results['ebm_25']-results['noisy'])*100:+.2f}%)")
-    print(f"EBM (λ=75, s=4.0):  {results['ebm_75']*100:.2f}%  (Δ = {(results['ebm_75']-results['noisy'])*100:+.2f}%)")
+    print(f"EBM (λ=50, s=3.0):  {results['ebm_50']*100:.2f}%  (Δ = {(results['ebm_50']-results['noisy'])*100:+.2f}%)")
     print("="*60)
 
     # Save results
     os.makedirs("experiments/results/ebm_test", exist_ok=True)
     np.save("experiments/results/ebm_test/noisy_baseline.npy", acc1)
     np.save("experiments/results/ebm_test/ebm_lambda25.npy", acc2)
-    np.save("experiments/results/ebm_test/ebm_lambda75.npy", acc3)
+    np.save("experiments/results/ebm_test/ebm_lambda50.npy", acc3)
     print("\nResults saved to experiments/results/ebm_test/")
 
 

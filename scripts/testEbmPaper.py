@@ -18,7 +18,7 @@ from scripts.common import setupGpu
 
 # Configuration
 SIGMA = 0.2
-EBM_LAMBDA = 75
+EBM_LAMBDA = 25
 LR = 0.03
 MOMENTUM = 0.9  # Same for all tests (fair comparison)
 N_NODES = 10

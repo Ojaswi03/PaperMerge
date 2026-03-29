@@ -69,7 +69,7 @@ for i in range(N_NODES):
         lr0=0.05,
         localEpochs=5,
         momentum=0.9,
-        ebmLambda=75.0,
+        ebmLambda=25.0,
     )
     basilNodes.append(node)
 
@@ -161,7 +161,7 @@ for i in range(N_NODES):
         lr0=0.05,
         localEpochs=5,
         momentum=0.9,
-        ebmLambda=75.0,
+        ebmLambda=25.0,
     )
     fedAvgNodes.append(node)
 

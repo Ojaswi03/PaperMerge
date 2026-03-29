@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Test EBM with LR decay + momentum
-Settings: lr=0.03, decay=ON, momentum=0.9, EBM lambda=75, sigma=0.2
+Settings: lr=0.03, decay=ON, momentum=0.9, EBM lambda=25, sigma=0.2
 """
 
 import sys
@@ -18,7 +18,7 @@ from scripts.common import setupGpu
 
 # Configuration - User's requested settings
 SIGMA = 0.2
-EBM_LAMBDA = 75
+EBM_LAMBDA = 25
 LR = 0.03
 MOMENTUM = 0.9
 USE_LR_DECAY = True

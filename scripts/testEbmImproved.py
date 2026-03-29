@@ -138,36 +138,36 @@ def main():
 
     results = []
 
-    # Test 1: Original settings (baseline)
+    # Test 1: Correct settings (scale=2.0)
     print("\n" + "="*70)
-    print("TEST 1: Original EBM (λ=75, lr=0.03, decay)")
+    print("TEST 1: Correct EBM (λ=25, scale=2.0, lr=0.03, decay)")
     print("="*70)
     acc1, best1, r1 = runImprovedEbm(trainLoaders, testLoader,
-                                      ebmLambda=75, lr=0.03, nRounds=30,
+                                      ebmLambda=25, lr=0.03, nRounds=30,
                                       useMomentum=False, lrDecay=True)
-    results.append(("Original (λ=75, decay)", best1))
+    results.append(("Correct (λ=25, decay)", best1))
 
     # Test 2: Fixed LR (no decay)
     print("\n" + "="*70)
-    print("TEST 2: Fixed LR (λ=75, lr=0.03, no decay)")
+    print("TEST 2: Fixed LR (λ=25, lr=0.03, no decay)")
     print("="*70)
     acc2, best2, r2 = runImprovedEbm(trainLoaders, testLoader,
-                                      ebmLambda=75, lr=0.03, nRounds=30,
+                                      ebmLambda=25, lr=0.03, nRounds=30,
                                       useMomentum=False, lrDecay=False)
-    results.append(("Fixed LR (λ=75)", best2))
+    results.append(("Fixed LR (λ=25)", best2))
 
     # Test 3: With momentum
     print("\n" + "="*70)
-    print("TEST 3: With Momentum (λ=75, lr=0.01, momentum=0.9)")
+    print("TEST 3: With Momentum (λ=25, lr=0.01, momentum=0.9)")
     print("="*70)
     acc3, best3, r3 = runImprovedEbm(trainLoaders, testLoader,
-                                      ebmLambda=75, lr=0.01, nRounds=30,
+                                      ebmLambda=25, lr=0.01, nRounds=30,
                                       useMomentum=True, lrDecay=False)
-    results.append(("Momentum (λ=75)", best3))
+    results.append(("Momentum (λ=25)", best3))
 
-    # Test 4: Higher lambda with lower LR
+    # Test 4: Higher lambda (scale=5.0)
     print("\n" + "="*70)
-    print("TEST 4: Higher Lambda (λ=100, lr=0.02, no decay)")
+    print("TEST 4: Higher Lambda (λ=100, scale=5.0, lr=0.02, no decay)")
     print("="*70)
     acc4, best4, r4 = runImprovedEbm(trainLoaders, testLoader,
                                       ebmLambda=100, lr=0.02, nRounds=30,
@@ -176,19 +176,19 @@ def main():
 
     # Test 5: More rounds
     print("\n" + "="*70)
-    print("TEST 5: More Rounds (λ=75, lr=0.03, 50 rounds)")
+    print("TEST 5: More Rounds (λ=25, lr=0.03, 50 rounds)")
     print("="*70)
     acc5, best5, r5 = runImprovedEbm(trainLoaders, testLoader,
-                                      ebmLambda=75, lr=0.03, nRounds=50,
+                                      ebmLambda=25, lr=0.03, nRounds=50,
                                       useMomentum=False, lrDecay=False)
-    results.append(("50 rounds (λ=75)", best5))
+    results.append(("50 rounds (λ=25)", best5))
 
     # Test 6: Momentum + More rounds
     print("\n" + "="*70)
-    print("TEST 6: Momentum + More Rounds (λ=75, lr=0.01, momentum, 50 rounds)")
+    print("TEST 6: Momentum + More Rounds (λ=25, lr=0.01, momentum, 50 rounds)")
     print("="*70)
     acc6, best6, r6 = runImprovedEbm(trainLoaders, testLoader,
-                                      ebmLambda=75, lr=0.01, nRounds=50,
+                                      ebmLambda=25, lr=0.01, nRounds=50,
                                       useMomentum=True, lrDecay=False)
     results.append(("Momentum + 50 rounds", best6))
 

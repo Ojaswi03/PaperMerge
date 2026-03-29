@@ -48,7 +48,7 @@ MODES = {
     "ebm": {
         "noiseModel": "ebm",
         "sigma": 0.1,
-        "ebmLambda": 0.01,
+        "ebmLambda": 100.0,
         "useSnapshots": False,
         "description": "EBM regularization only"
     },
@@ -64,7 +64,7 @@ MODES = {
     "basilEbm": {
         "noiseModel": "ebm",
         "sigma": 0.1,
-        "ebmLambda": 0.01,
+        "ebmLambda": 100.0,
         "useSnapshots": True,
         "description": "BASIL + EBM combined"
     },

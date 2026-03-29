@@ -29,7 +29,8 @@ def makeLoaders(train, test, batchSize=32, iid=True, nClients=10):
         ds = tf.data.Dataset.from_tensor_slices((X, y))
         ds = ds.shuffle(buffer_size=len(indices), reshuffle_each_iteration=True)
         ds = ds.map(_augment, num_parallel_calls=tf.data.AUTOTUNE)
-        ds = ds.batch(batchSize, drop_remainder=False)
+        ds = ds.batch(batchSize, drop_remainder=True)
+        ds = ds.repeat()
         ds = ds.prefetch(tf.data.AUTOTUNE)
         return ds
 

@@ -12,8 +12,7 @@ Reference: "BASIL: A Fast and Byzantine-Resilient Approach for Decentralized Tra
 """
 
 import sys
-from copy import deepcopy
-
+import tensorflow as tf
 from .attacks import applyAttack, modelPoisonAttack
 from .trainer import (
     localUpdate,
@@ -25,7 +24,26 @@ from .trainer import (
     makeLrScheduler,
     evaluate,
     evaluateAll,
+    lossFn,
+    _iterLimited,
 )
+
+
+class _MutableLR(tf.keras.optimizers.schedules.LearningRateSchedule):
+    """A LearningRateSchedule backed by a tf.Variable so we can update LR
+    between rounds without triggering a @tf.function retrace."""
+    def __init__(self, initial_lr):
+        super().__init__()
+        self._var = tf.Variable(float(initial_lr), trainable=False, dtype=tf.float32)
+
+    def __call__(self, step):
+        return self._var   # TF reads the variable value dynamically each step
+
+    def assign(self, value):
+        self._var.assign(float(value))
+
+    def get_config(self):
+        return {"initial_lr": float(self._var.numpy())}
 
 
 class BasilNode:
@@ -48,7 +66,7 @@ class BasilNode:
         sigma=0.0,
         lr0=0.05,
         localEpochs=1,
-        ebmLambda=400.0,  # With sigma=0.05: scale = 1 + 400*0.0025 = 2.0
+        ebmLambda=25.0,   # With sigma=0.2: scale = 1 + 25*0.04 = 2.0
         wcmLambda=0.1,
         wcmSamples=5,
         wcmRho=0.5,
@@ -73,10 +91,15 @@ class BasilNode:
         self.momentum = float(momentum)
 
         # Memory stores models from S counterclockwise neighbors
-        # Key: sender node ID, Value: model params (list of numpy arrays)
-        # We keep at most S entries (one per counterclockwise neighbor)
         self.neighborMemory = {}
         self.round = 0
+
+        # Compiled training step - built lazily on first localTrain call so that
+        # noiseModel/sigma (which may be overwritten by basilRingTrainingWithAttack
+        # before training starts) are finalised before we compile.
+        self._lrSchedule = _MutableLR(float(lr0))
+        self._opt = None
+        self._compiledStep = None
 
     def receiveModel(self, senderId, params):
         # store received params under sender ID
@@ -116,22 +139,79 @@ class BasilNode:
         if verbose:
             print(f"    [Node {self.nodeId}] Losses: {', '.join(f'{k}={v:.4f}' for k,v in allLosses.items())} → selected {bestSource}")
 
-    def localTrain(self, lr, stepsPerEpoch=100):
-        # delegate to trainer.localUpdate with all noise/mitigation settings
-        localUpdate(
-            self.model,
-            self.dataLoader,
-            epochs=self.localEpochs,
-            lr=lr,
-            noiseModel=self.noiseModel,
-            sigma=self.sigma,
-            ebmLambda=self.ebmLambda,
-            wcmLambda=self.wcmLambda,
-            wcmSamples=self.wcmSamples,
-            wcmRho=self.wcmRho,
-            stepsPerEpoch=stepsPerEpoch,
-            momentum=self.momentum,
+    def _ensureCompiled(self):
+        """Build the compiled train step the first time it is needed.
+        Called lazily so noiseModel/sigma are set before we compile."""
+        if self._compiledStep is not None:
+            return
+        self._opt = tf.keras.optimizers.SGD(
+            learning_rate=self._lrSchedule, momentum=self.momentum
         )
+        model_inner = self.model.model   # the underlying Keras Sequential
+        opt = self._opt
+
+        if self.noiseModel == "ebm" and self.sigma > 0:
+            # Scale = 1 + λσ²  (constant for the lifetime of this node)
+            scale = tf.constant(
+                1.0 + self.ebmLambda * self.sigma * self.sigma, dtype=tf.float32
+            )
+            def _step_fn(x, y):
+                with tf.GradientTape() as tape:
+                    logits = model_inner(x, training=True)
+                    loss = lossFn(y, logits)
+                grads = tape.gradient(loss, model_inner.trainable_weights)
+                scaled = [g * scale for g in grads]
+                # Clip to prevent explosion when starting from noisy weights
+                clipped, _ = tf.clip_by_global_norm(scaled, 5.0)
+                opt.apply_gradients(
+                    zip(clipped, model_inner.trainable_weights)
+                )
+        else:
+            def _step_fn(x, y):
+                with tf.GradientTape() as tape:
+                    logits = model_inner(x, training=True)
+                    loss = lossFn(y, logits)
+                grads = tape.gradient(loss, model_inner.trainable_weights)
+                opt.apply_gradients(zip(grads, model_inner.trainable_weights))
+
+        self._compiledStep = tf.function(_step_fn)
+
+    def _resetOptimizerSlots(self):
+        """Zero momentum buffers so each round starts fresh (matches original semantics)."""
+        if self._opt is None:
+            return
+        for v in self._opt.variables:
+            if 'iterations' not in v.name:
+                v.assign(tf.zeros_like(v))
+
+    def localTrain(self, lr, stepsPerEpoch=100):
+        # WCM requires custom gradient logic - fall back to existing path
+        if self.noiseModel == "wcm" and self.sigma > 0:
+            localUpdate(
+                self.model, self.dataLoader,
+                epochs=self.localEpochs, lr=lr,
+                noiseModel=self.noiseModel, sigma=self.sigma,
+                wcmLambda=self.wcmLambda, wcmSamples=self.wcmSamples,
+                wcmRho=self.wcmRho, stepsPerEpoch=stepsPerEpoch,
+                momentum=self.momentum,
+            )
+            return
+
+        # Compiled path: forward + backward + optimizer in a single TF graph.
+        # Compiled once per node on first call; reused every round.
+        self._ensureCompiled()
+        self._lrSchedule.assign(lr)
+        self._resetOptimizerSlots()  # fresh momentum each round
+
+        # Single continuous iterator for all epochs combined - the dataset uses
+        # .repeat() so it never exhausts, and we do exactly localEpochs*stepsPerEpoch
+        # steps with one iterator creation instead of localEpochs separate ones.
+        totalSteps = self.localEpochs * stepsPerEpoch
+        for xBatch, yBatch in _iterLimited(self.dataLoader, maxBatches=totalSteps):
+            self._compiledStep(
+                tf.cast(xBatch, tf.float32),
+                tf.cast(yBatch, tf.int32),
+            )
 
 
 def basilRingTrainingWithAttack(
@@ -151,6 +231,11 @@ def basilRingTrainingWithAttack(
     useSequential=True,  # True = paper's sequential, False = parallel (faster but less accurate)
     stopCallback=None,
     useLrDecay=True,  # Set False for EBM with high noise + momentum
+    usePlateauLr=False,   # Reduce LR when accuracy stops improving
+    plateauPatience=10,   # Rounds of no improvement before reducing
+    plateauFactor=0.5,    # Multiply LR by this on plateau
+    plateauMinLr=1e-4,    # Floor for plateau reductions
+    plateauThreshold=0.002, # Minimum improvement to count as progress
     roundCallback=None,  # called as roundCallback(roundNum, avgAcc, worstAcc, totalRounds)
     **kwargs,
 ):
@@ -186,6 +271,12 @@ def basilRingTrainingWithAttack(
     # For EBM with high noise + momentum, use useLrDecay=False for best results
     lrSched = makeLrScheduler(lr0, alpha=lrAlpha, useBasilSchedule=True, useLrDecay=useLrDecay)
 
+    # Plateau LR state
+    _plateauLr        = float(lr0)
+    _plateauBestAcc   = -1.0
+    _plateauPatience  = 0
+    _plateauCooldown  = 0  # rounds to wait after a reduction before checking again
+
     avgAccHist, worstAccHist = [], []
 
     for r in range(rounds):
@@ -197,7 +288,7 @@ def basilRingTrainingWithAttack(
         # Channel noise only activates at channelNoiseStart
         channelNoiseActive = (r >= channelNoiseStart) and noiseModel not in ("none", "clean") and sigma > 0
 
-        lr = lrSched(r)
+        lr = _plateauLr if usePlateauLr else lrSched(r)
         mitigationStr = f" {mitigation.upper()} training" if mitigation != "none" else ""
         if channelNoiseActive:
             noiseStatus = f" channel_noise(sigma={sigma}){' +' + mitigationStr if mitigationStr else ''}"
@@ -254,7 +345,7 @@ def basilRingTrainingWithAttack(
                 # Step 5: Multicast to next S clockwise neighbors (paper's key feature)
                 for offset in range(1, S + 1):
                     j = (i + offset) % n
-                    nodes[j].receiveModel(i, deepcopy(noisyParams))
+                    nodes[j].receiveModel(i, noisyParams)
 
         else:
             # ===== PARALLEL TRAINING (faster but less accurate) =====
@@ -290,16 +381,33 @@ def basilRingTrainingWithAttack(
                 # Multicast to next S clockwise neighbors
                 for offset in range(1, S + 1):
                     j = (i + offset) % n
-                    nodes[j].receiveModel(i, deepcopy(noisyParams))
+                    nodes[j].receiveModel(i, noisyParams)
 
-        # Evaluation
+        # Evaluation - maxBatches=5 (~2500 samples) is fast enough for per-round tracking
         if testLoader is not None:
-            avg, worst, _ = evaluateAll(nodes, testLoader)
+            avg, worst, _ = evaluateAll(nodes, testLoader, maxBatches=5)
             print(f"[round {r}] eval avg={avg:.4f}", flush=True)
             avgAccHist.append(avg)
             worstAccHist.append(worst)
             if roundCallback is not None:
                 roundCallback(r + 1, avg, worst, rounds)
+
+            # Plateau LR check
+            if usePlateauLr:
+                if _plateauCooldown > 0:
+                    _plateauCooldown -= 1
+                elif avg > _plateauBestAcc + plateauThreshold:
+                    _plateauBestAcc  = avg
+                    _plateauPatience = 0
+                else:
+                    _plateauPatience += 1
+                    if _plateauPatience >= plateauPatience:
+                        new_lr = max(plateauMinLr, _plateauLr * plateauFactor)
+                        if new_lr < _plateauLr:
+                            print(f"[round {r}] ReduceLROnPlateau: {_plateauLr:.6f} → {new_lr:.6f}", flush=True)
+                            _plateauLr = new_lr
+                        _plateauPatience = 0
+                        _plateauCooldown = plateauPatience // 2  # cooldown = half of patience
 
     return avgAccHist, worstAccHist
 
@@ -358,6 +466,11 @@ def fedAvgTrainingWithNoise(
     stepsPerEpoch=100,
     stopCallback=None,
     useLrDecay=True,  # Set False for EBM with high noise + momentum
+    usePlateauLr=False,
+    plateauPatience=10,
+    plateauFactor=0.5,
+    plateauMinLr=1e-4,
+    plateauThreshold=0.002,
     roundCallback=None,  # called as roundCallback(roundNum, avgAcc, worstAcc, totalRounds)
     **kwargs,
 ):
@@ -387,6 +500,12 @@ def fedAvgTrainingWithNoise(
     # For EBM with high noise + momentum, use useLrDecay=False for best results
     lrSched = makeLrScheduler(lr0, alpha=lrAlpha, useBasilSchedule=True, useLrDecay=useLrDecay)
 
+    # Plateau LR state
+    _plateauLr        = float(lr0)
+    _plateauBestAcc   = -1.0
+    _plateauPatience  = 0
+    _plateauCooldown  = 0
+
     avgAccHist, worstAccHist = [], []
 
     # Initialize global model from node 0
@@ -402,7 +521,7 @@ def fedAvgTrainingWithNoise(
             print(f"[round {r}] STOP REQUESTED - terminating training early", flush=True)
             break
 
-        lr = lrSched(r)
+        lr = _plateauLr if usePlateauLr else lrSched(r)
         channelNoiseActive = (r >= channelNoiseStart) and noiseModel not in ("none", "clean") and sigma > 0
 
         mitigationStr = f" {mitigation.upper()}" if mitigation != "none" else ""
@@ -471,5 +590,22 @@ def fedAvgTrainingWithNoise(
             worstAccHist.append(acc)  # Same as avg since all nodes have same model
             if roundCallback is not None:
                 roundCallback(r + 1, acc, acc, rounds)
+
+            # Plateau LR check
+            if usePlateauLr:
+                if _plateauCooldown > 0:
+                    _plateauCooldown -= 1
+                elif acc > _plateauBestAcc + plateauThreshold:
+                    _plateauBestAcc  = acc
+                    _plateauPatience = 0
+                else:
+                    _plateauPatience += 1
+                    if _plateauPatience >= plateauPatience:
+                        new_lr = max(plateauMinLr, _plateauLr * plateauFactor)
+                        if new_lr < _plateauLr:
+                            print(f"[round {r}] ReduceLROnPlateau: {_plateauLr:.6f} → {new_lr:.6f}", flush=True)
+                            _plateauLr = new_lr
+                        _plateauPatience = 0
+                        _plateauCooldown = plateauPatience // 2
 
     return avgAccHist, worstAccHist
