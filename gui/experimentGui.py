@@ -837,7 +837,28 @@ class ExperimentGUI:
         return 'normal'
 
     def clearOutput(self):
+        # Text log
         self.outputText.delete(1.0, tk.END)
+
+        # Live chart and its backing data
+        self._liveAccData.clear()
+        self._liveWorstData.clear()
+        self._refreshLiveChart()
+
+        # Progress bar, round/ETA/accuracy labels
+        self._progressVar.set(0)
+        self._roundLabel.config(text="Round -/-")
+        self._etaLabel.config(text="")
+        self._accLabel.config(text="")
+
+        # ETA state so stale timing does not bleed into the next run
+        self._roundTimes.clear()
+        self._emaRoundTime  = None
+        self._smoothedEta   = None
+        self._lastRoundEndTime = None
+
+        # Terminal - print a form-feed so past output scrolls out of view
+        print("\033[2J\033[H", end="", flush=True)
 
     def _showLogMenu(self, event):
         # Save selection range before popup steals focus/selection

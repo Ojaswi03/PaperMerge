@@ -409,7 +409,7 @@ tail -50 error.txt     # last 50 error lines
 
 ## Changelog
 
-### v5 - Auto-Reload GUI, Hotfix
+### v5 - Auto-Reload GUI, Full Clear Log, Hotfix
 
 #### Auto-Reload Launcher (`runGui.py`)
 - `runGui.py` now runs in two modes: **launcher** (default) and **GUI subprocess** (`--gui` flag)
@@ -423,6 +423,15 @@ tail -50 error.txt     # last 50 error lines
 - Clicking Reload (or pressing the shortcut) exits the GUI with code 42, which the launcher treats as an immediate restart signal
 - If an experiment is running, a confirmation dialog is shown before reloading
 - Status bar updated to show the new shortcut hint
+
+#### Full Clear Log (`gui/experimentGui.py`)
+- **Clear Log** button (and right-click menu item) now clears everything in the Output tab, not just the text:
+  - Text log widget
+  - Live accuracy/worst-accuracy chart (redraws empty placeholder)
+  - Progress bar reset to 0
+  - Round label reset to `Round -/-`, ETA and accuracy labels blanked
+  - ETA state (`_roundTimes`, `_emaRoundTime`, `_smoothedEta`, `_lastRoundEndTime`) cleared so stale timing never carries into the next run
+- Also clears the terminal via ANSI escape `\033[2J\033[H` (clear screen + cursor to top), removing past `[round N] eval avg=...` lines from view
 
 #### Hotfix - Tkinter Key Binding
 - Fixed `_tkinter.TclError: bad event type or keysym "shift"` - Tkinter requires `Shift` (capital S) and uppercase letter: `<Control-Shift-R>` not `<Control-shift-R>`
