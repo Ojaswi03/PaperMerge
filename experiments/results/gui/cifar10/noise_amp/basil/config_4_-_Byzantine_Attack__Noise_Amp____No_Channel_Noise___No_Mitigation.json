@@ -1,5 +1,5 @@
 {
-  "experimentName": "0 - Byzantine Nodes + No Channel Noise + No Mitigation",
+  "experimentName": "4 - Byzantine Attack (Noise Amp) + No Channel Noise + No Mitigation",
   "dataset": "cifar10",
   "approach": "basil",
   "useBasil": false,
@@ -24,9 +24,9 @@
   "attackAlieStart": 0,
   "attackIpm": false,
   "attackIpmStart": 0,
-  "attackNoiseAmp": false,
+  "attackNoiseAmp": true,
   "attackNoiseAmpStart": 0,
-  "attackerIds": "",
+  "attackerIds": "0,3,5,7",
   "nNodes": 10,
   "nRounds": 100,
   "localEpochs": 5,
