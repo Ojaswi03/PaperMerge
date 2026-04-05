@@ -235,6 +235,28 @@ def _approachTitle(approach):
     return titles.get(approach, approach.title())
 
 
+CLEAN_COLOR = '#16a34a'   # green
+CLEAN_STYLE = '--'
+CLEAN_LW    = 2.0
+CLEAN_ALPHA = 0.75
+
+
+def loadCleanBaselines(dataset, approach):
+    """Return experiments from the 'none' attack folder — the clean reference runs."""
+    return discoverExperiments(dataset, 'none', approach)
+
+
+def bestCleanAcc(dataset, approach):
+    """Final accuracy of the highest-performing clean experiment, or None."""
+    best = None
+    for exp in loadCleanBaselines(dataset, approach):
+        if os.path.exists(exp['avgPath']):
+            acc = np.load(exp['avgPath'])
+            if len(acc) > 0 and (best is None or acc[-1] > best):
+                best = float(acc[-1])
+    return best
+
+
 def plotDatasetExperiments(dataset, attackKey, approach, experiments):
     # overlay all experiment curves on one axes and save the figure
     datasetTitles = {
@@ -260,6 +282,17 @@ def plotDatasetExperiments(dataset, attackKey, approach, experiments):
                 color=colors[idx], linewidth=2.5,
                 marker=markers[idx], markersize=5,
                 markevery=max(1, len(rounds) // 10))
+
+    # Overlay clean baselines as dashed green reference lines
+    if attackKey != 'none':
+        for exp in loadCleanBaselines(dataset, approach):
+            if not os.path.exists(exp['avgPath']):
+                continue
+            acc    = np.load(exp['avgPath'])
+            rounds = np.arange(len(acc))
+            ax.plot(rounds, acc, label=f"[Clean] {exp['label']}",
+                    color=CLEAN_COLOR, linewidth=CLEAN_LW,
+                    linestyle=CLEAN_STYLE, alpha=CLEAN_ALPHA)
 
     title = datasetTitles.get(dataset, dataset.upper())
     attackTitle = attackKey.replace("_", " + ").title()
@@ -306,15 +339,18 @@ def plotDatasetGrid(dataset, attackKey, approach, experiments):
     fig.suptitle(f'{title} | {attackTitle} | {approachTitle} — Average Accuracy',
                  fontsize=16, fontweight='bold')
 
-    colors = getColors(len(experiments))
+    colors  = getColors(len(experiments))
     markers = getMarkers(len(experiments))
+
+    # Pre-load best clean accuracy for this dataset/approach
+    _cleanAcc = bestCleanAcc(dataset, approach) if attackKey != 'none' else None
 
     for idx, exp in enumerate(experiments):
         ax = axes[idx]
         if not os.path.exists(exp['avgPath']):
             continue
 
-        acc = np.load(exp['avgPath'])
+        acc    = np.load(exp['avgPath'])
         rounds = np.arange(len(acc))
 
         ax.plot(rounds, acc, color=colors[idx], linewidth=2.5,
@@ -324,6 +360,13 @@ def plotDatasetGrid(dataset, attackKey, approach, experiments):
         ax.set_title(exp['label'], fontsize=10, fontweight='bold')
         ax.grid(True, alpha=0.3)
         ax.set_ylim([0, 1])
+
+        # Dashed green clean-baseline reference line
+        if _cleanAcc is not None:
+            ax.axhline(y=_cleanAcc, color=CLEAN_COLOR, linestyle=CLEAN_STYLE,
+                       linewidth=CLEAN_LW, alpha=CLEAN_ALPHA,
+                       label=f'Clean: {_cleanAcc:.3f}')
+            ax.legend(fontsize=8, loc='lower right')
 
         # annotate the final accuracy value on the last point
         if len(acc) > 0:
@@ -367,11 +410,20 @@ def plotFinalAccuracyBar(dataset, attackKey, approach, experiments):
     fig, ax = plt.subplots(figsize=(max(8, len(labels) * 2), 6))
 
     colors = getColors(len(labels))
-    bars = ax.bar(range(len(labels)), finalAccs, color=colors, width=0.6)
+    bars   = ax.bar(range(len(labels)), finalAccs, color=colors, width=0.6)
 
     for bar, acc in zip(bars, finalAccs):
         ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.01,
                 f'{acc:.3f}', ha='center', va='bottom', fontsize=10, fontweight='bold')
+
+    # Dashed green clean-baseline reference line
+    if attackKey != 'none':
+        _cleanAcc = bestCleanAcc(dataset, approach)
+        if _cleanAcc is not None:
+            ax.axhline(y=_cleanAcc, color=CLEAN_COLOR, linestyle=CLEAN_STYLE,
+                       linewidth=CLEAN_LW, alpha=CLEAN_ALPHA,
+                       label=f'Clean baseline: {_cleanAcc:.3f}', zorder=5)
+            ax.legend(fontsize=10, loc='upper right')
 
     title = datasetTitles.get(dataset, dataset.upper())
     attackTitle = attackKey.replace("_", " + ").title()

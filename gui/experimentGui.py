@@ -76,7 +76,7 @@ PRESETS = {
         'dataset': 'cifar10', 'approach': 'basil', 'useBasil': True,
         'useChannelNoise': False, 'noiseMitigation': 'none',
         'attackGaussian': True, 'attackGaussianStart': 0,
-        'attackerIds': '0,3,5,7', 'nNodes': 10, 'nRounds': 100,
+        'attackerIds': '1,4,6,8', 'nNodes': 10, 'nRounds': 100,
         'localEpochs': 5, 'learningRate': 0.05, 'batchSize': 512,
         'momentum': 0.9, 'useLrDecay': True,
     },
@@ -102,6 +102,10 @@ class ExperimentGUI:
         # Running state
         self.isRunning = False
         self.currentThread = None
+
+        # Config queue (list of config dicts; same config may appear multiple times)
+        self.configQueue = []
+        self.queueButton = None   # set when toolbar is built
 
         # Live-chart / progress tracking
         self._liveAccData    = []
@@ -153,6 +157,9 @@ class ExperimentGUI:
         s.configure('Stop.TButton',    background=DANGER, foreground='white',
                     font=('Segoe UI', 10, 'bold'), padding=(14, 6))
         s.map('Stop.TButton',          background=[('active', DANGER_DK), ('disabled', '#fca5a5')])
+        s.configure('Queue.TButton',   background='#7c3aed', foreground='white',
+                    font=('Segoe UI', 10, 'bold'), padding=(14, 6))
+        s.map('Queue.TButton',         background=[('active', '#6d28d9'), ('disabled', '#c4b5fd')])
         s.configure('Preset.TButton',  background='#f1f5f9', foreground=HEADER,
                     font=('Segoe UI', 8), padding=(6, 3))
         s.map('Preset.TButton',        background=[('active', '#e2e8f0')])
@@ -173,7 +180,7 @@ class ExperimentGUI:
         self.experimentNameVar    = tk.StringVar(value="")
         self.datasetVar           = tk.StringVar(value="cifar10")
         self.approachVar          = tk.StringVar(value="basil")
-        self.useBasilVar          = tk.BooleanVar(value=True)
+        self.useBasilVar          = tk.BooleanVar(value=False)
         self.basilMemorySizeVar   = tk.IntVar(value=4)
         self.useChannelNoiseVar   = tk.BooleanVar(value=False)
         self.channelNoiseStartVar = tk.IntVar(value=0)
@@ -182,11 +189,11 @@ class ExperimentGUI:
         self.ebmLambdaVar         = tk.DoubleVar(value=25.0)
         self.momentumVar          = tk.DoubleVar(value=0.9)
         self.useLrDecayVar        = tk.BooleanVar(value=True)
-        self.usePlateauLrVar        = tk.BooleanVar(value=False)
-        self.plateauPatienceVar     = tk.IntVar(value=10)
+        self.usePlateauLrVar        = tk.BooleanVar(value=True)
+        self.plateauPatienceVar     = tk.IntVar(value=5)
         self.plateauFactorVar       = tk.DoubleVar(value=0.5)
         self.plateauMinLrVar        = tk.DoubleVar(value=1e-4)
-        self.plateauThresholdVar    = tk.DoubleVar(value=0.002)
+        self.plateauThresholdVar    = tk.DoubleVar(value=0.01)
         self.attackGaussianVar         = tk.BooleanVar(value=False)
         self.attackGaussianStartVar    = tk.IntVar(value=0)
         self.attackSignFlipVar         = tk.BooleanVar(value=False)
@@ -203,7 +210,7 @@ class ExperimentGUI:
         self.attackIpmStartVar         = tk.IntVar(value=0)
         self.attackNoiseAmpVar         = tk.BooleanVar(value=False)
         self.attackNoiseAmpStartVar    = tk.IntVar(value=0)
-        self.attackerIdsVar   = tk.StringVar(value="0,3,5,7")
+        self.attackerIdsVar   = tk.StringVar(value="1,4,6,8")
         self.nNodesVar        = tk.IntVar(value=10)
         self.nRoundsVar       = tk.IntVar(value=100)
         self.localEpochsVar   = tk.IntVar(value=5)
@@ -473,7 +480,7 @@ class ExperimentGUI:
         ttk.Label(frame, text="Attacker Node IDs:").grid(row=0, column=0, sticky=tk.W, pady=5)
         ttk.Entry(frame, textvariable=self.attackerIdsVar, width=25).grid(
             row=0, column=1, sticky=tk.W, padx=8)
-        ttk.Label(frame, text="comma-separated, e.g. 0,3,5,7",
+        ttk.Label(frame, text="comma-separated, e.g. 1,4,6,8",
                   foreground=MUTED, font=('Segoe UI', 8)).grid(row=0, column=2, sticky=tk.W)
 
         ttk.Separator(frame, orient='horizontal').grid(
@@ -608,6 +615,11 @@ class ExperimentGUI:
             bf, text="▶▶  Run All Configs", style='RunAll.TButton',
             command=self.runAll)
         self.runAllButton.pack(side=tk.LEFT, padx=4)
+
+        self.queueButton = ttk.Button(
+            bf, text="≡  Queue (0)", style='Queue.TButton',
+            command=self.openQueueManager)
+        self.queueButton.pack(side=tk.LEFT, padx=4)
 
         self.stopButton = ttk.Button(
             bf, text="■  Stop", style='Stop.TButton',
@@ -918,7 +930,7 @@ class ExperimentGUI:
     def onApproachChange(self):
         approach = self.approachVar.get()
         if approach == "basil":
-            self.useBasilVar.set(True);  self.useChannelNoiseVar.set(False)
+            self.useBasilVar.set(False); self.useChannelNoiseVar.set(False)
         elif approach == "noisy":
             self.useBasilVar.set(False); self.useChannelNoiseVar.set(True)
         elif approach == "merged":
@@ -934,6 +946,7 @@ class ExperimentGUI:
 
         self.runButton.config(state=tk.DISABLED)
         self.runAllButton.config(state=tk.DISABLED)
+        self.queueButton.config(state=tk.DISABLED)
         self.stopButton.config(state=tk.NORMAL)
         self.isRunning = True
         self._progressVar.set(0)
@@ -1005,6 +1018,7 @@ class ExperimentGUI:
     def _onRunFinished(self):
         self.runButton.config(state=tk.NORMAL)
         self.runAllButton.config(state=tk.NORMAL)
+        self.queueButton.config(state=tk.NORMAL)
         self.stopButton.config(state=tk.DISABLED)
         self.isRunning = False
         self._progressVar.set(100 if self._liveAccData else 0)
@@ -1056,8 +1070,9 @@ class ExperimentGUI:
 
         configDir  = os.path.join(os.path.dirname(os.path.abspath(__file__)), "configs")
         configFiles = sorted([
-            os.path.join(configDir, f)
-            for f in os.listdir(configDir) if f.endswith('.json')
+            os.path.join(root, fname)
+            for root, _, files in os.walk(configDir)
+            for fname in files if fname.endswith('.json')
         ])
         if not configFiles:
             messagebox.showwarning("No Configs", "No config files found in gui/configs/")
@@ -1088,6 +1103,7 @@ class ExperimentGUI:
 
         self.runButton.config(state=tk.DISABLED)
         self.runAllButton.config(state=tk.DISABLED)
+        self.queueButton.config(state=tk.DISABLED)
         self.stopButton.config(state=tk.NORMAL)
         self.isRunning = True
         self.clearOutput()
@@ -1177,8 +1193,8 @@ class ExperimentGUI:
         self.logMessage(f"  Dataset:    {config['dataset']}")
         self.logMessage(f"  Approach:   {approachLabels.get(config['approach'], config['approach'])}")
         self.logMessage(f"  Nodes: {config['nNodes']},  Rounds: {config['nRounds']}")
-        if config.get('usePlateauLr', False):
-            lrDecayStr = f"plateau (patience={config.get('plateauPatience',10)}, factor={config.get('plateauFactor',0.5)}, min={config.get('plateauMinLr',1e-4)}, threshold={config.get('plateauThreshold',0.002)})"
+        if config.get('usePlateauLr', True):
+            lrDecayStr = f"plateau (patience={config.get('plateauPatience',10)}, factor={config.get('plateauFactor',0.5)}, min={config.get('plateauMinLr',1e-4)}, threshold={config.get('plateauThreshold',0.01)})"
         elif config.get('useLrDecay', True):
             lrDecayStr = "decay"
         else:
@@ -1235,13 +1251,15 @@ class ExperimentGUI:
                 lr0=config['learningRate'],
                 localEpochs=config['localEpochs'],
                 stepsPerEpoch=config.get('stepsPerEpoch', 5),
+                useSnapshots=config.get('useBasil', False),
+                S=config.get('basilMemorySize', 4),
                 stopCallback=lambda: not self.isRunning,
                 useLrDecay=config.get('useLrDecay', True),
-                usePlateauLr=config.get('usePlateauLr', False),
-                plateauPatience=config.get('plateauPatience', 10),
+                usePlateauLr=config.get('usePlateauLr', True),
+                plateauPatience=config.get('plateauPatience', 5),
                 plateauFactor=config.get('plateauFactor', 0.5),
                 plateauMinLr=config.get('plateauMinLr', 1e-4),
-                plateauThreshold=config.get('plateauThreshold', 0.002),
+                plateauThreshold=config.get('plateauThreshold', 0.01),
                 roundCallback=self._onRoundComplete,
             )
         else:
@@ -1264,11 +1282,11 @@ class ExperimentGUI:
                 useSequential=True,
                 stopCallback=lambda: not self.isRunning,
                 useLrDecay=config.get('useLrDecay', True),
-                usePlateauLr=config.get('usePlateauLr', False),
-                plateauPatience=config.get('plateauPatience', 10),
+                usePlateauLr=config.get('usePlateauLr', True),
+                plateauPatience=config.get('plateauPatience', 5),
                 plateauFactor=config.get('plateauFactor', 0.5),
                 plateauMinLr=config.get('plateauMinLr', 1e-4),
-                plateauThreshold=config.get('plateauThreshold', 0.002),
+                plateauThreshold=config.get('plateauThreshold', 0.01),
                 roundCallback=self._onRoundComplete,
             )
 
@@ -1446,37 +1464,432 @@ class ExperimentGUI:
         self.logMessage(f"  {avgPath}")
         self.logMessage(f"  {configPath}")
 
-    def saveConfig(self):
-        config  = self.getConfig()
-        expName = config.get('experimentName', '').strip()
-        default = expName or f"config_{config['dataset']}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-        userInput = simpledialog.askstring(
-            "Save Configuration", "Enter a name for this configuration:",
-            initialvalue=default, parent=self.root)
-        if not userInput:
+    # ── Config Queue ──────────────────────────────────────────────────────────
+    def _updateQueueButton(self):
+        n = len(self.configQueue)
+        self.queueButton.config(text=f"≡  Queue ({n})")
+
+    def openQueueManager(self):
+        configDir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "configs")
+
+        dlg = tk.Toplevel(self.root)
+        dlg.title("Config Queue")
+        dlg.configure(bg=BG)
+        dlg.resizable(True, True)
+        dlg.transient(self.root)
+
+        # ── Top controls ──
+        topFrame = tk.Frame(dlg, bg=BG)
+        topFrame.pack(fill=tk.X, padx=12, pady=(12, 4))
+
+        ttk.Button(topFrame, text="+ Add Current Config",
+                   command=lambda: addCurrent()).pack(side=tk.LEFT, padx=(0, 4))
+        ttk.Button(topFrame, text="+ Add from File",
+                   command=lambda: addFromFile()).pack(side=tk.LEFT, padx=4)
+
+        tk.Label(topFrame, text="Repeat:", bg=BG, fg=HEADER,
+                 font=('Segoe UI', 9)).pack(side=tk.LEFT, padx=(16, 4))
+        repeatVar = tk.IntVar(value=1)
+        ttk.Spinbox(topFrame, from_=1, to=50, width=4,
+                    textvariable=repeatVar).pack(side=tk.LEFT)
+        tk.Label(topFrame, text="times", bg=BG, fg=MUTED,
+                 font=('Segoe UI', 9)).pack(side=tk.LEFT, padx=(4, 0))
+
+        # ── Queue treeview ──
+        treeFrame = tk.Frame(dlg, bg=BG)
+        treeFrame.pack(fill=tk.BOTH, expand=True, padx=12, pady=6)
+
+        cols = ('#', 'Experiment Name', 'Approach', 'Attack', 'Noise')
+        tree = ttk.Treeview(treeFrame, columns=cols, show='headings',
+                            selectmode='browse', height=16)
+        tree.heading('#',               text='#',            anchor=tk.CENTER)
+        tree.heading('Experiment Name', text='Experiment Name')
+        tree.heading('Approach',        text='Approach',     anchor=tk.CENTER)
+        tree.heading('Attack',          text='Attack',       anchor=tk.CENTER)
+        tree.heading('Noise',           text='Noise',        anchor=tk.CENTER)
+        tree.column('#',               width=35,  stretch=False, anchor=tk.CENTER)
+        tree.column('Experiment Name', width=380, stretch=True)
+        tree.column('Approach',        width=70,  stretch=False, anchor=tk.CENTER)
+        tree.column('Attack',          width=80,  stretch=False, anchor=tk.CENTER)
+        tree.column('Noise',           width=60,  stretch=False, anchor=tk.CENTER)
+
+        sb = ttk.Scrollbar(treeFrame, orient=tk.VERTICAL, command=tree.yview)
+        tree.configure(yscrollcommand=sb.set)
+        tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        sb.pack(side=tk.RIGHT, fill=tk.Y)
+
+        # ── Bottom bar ──
+        botFrame = tk.Frame(dlg, bg=BG)
+        botFrame.pack(fill=tk.X, padx=12, pady=(0, 12))
+
+        ttk.Button(botFrame, text="↑ Move Up",   command=lambda: moveUp()).pack(side=tk.LEFT, padx=(0, 2))
+        ttk.Button(botFrame, text="↓ Move Down", command=lambda: moveDown()).pack(side=tk.LEFT, padx=2)
+        ttk.Button(botFrame, text="✕ Remove",    command=lambda: removeSelected()).pack(side=tk.LEFT, padx=2)
+        ttk.Button(botFrame, text="Clear All",   command=lambda: clearAll()).pack(side=tk.LEFT, padx=(12, 2))
+
+        countLabel = tk.Label(botFrame, text="0 items", bg=BG, fg=MUTED,
+                              font=('Segoe UI', 9))
+        countLabel.pack(side=tk.LEFT, padx=12)
+
+        ttk.Button(botFrame, text="Run Queue", style='Queue.TButton',
+                   command=lambda: runQueueAndClose()).pack(side=tk.RIGHT)
+
+        # ── Helpers ──
+        def _attackSummary(cfg):
+            parts = []
+            for k, s in [('attackGaussian','Gaussian'),('attackSignFlip','SignFlip'),
+                         ('attackHidden','Hidden'),('attackModelPoison','ModelPoison'),
+                         ('attackScaling','Scaling'),('attackAlie','ALIE'),
+                         ('attackIpm','IPM'),('attackNoiseAmp','NoiseAmp')]:
+                if cfg.get(k):
+                    parts.append(s)
+            return '+'.join(parts) if parts else 'None'
+
+        def refreshTree():
+            tree.delete(*tree.get_children())
+            for i, cfg in enumerate(self.configQueue, 1):
+                name    = cfg.get('experimentName', f'Config #{i}')
+                approach = cfg.get('approach', '?')
+                attack   = _attackSummary(cfg)
+                noise    = 'Yes' if cfg.get('useChannelNoise') else 'No'
+                tree.insert('', tk.END, iid=str(i-1), values=(i, name, approach, attack, noise))
+            countLabel.config(text=f"{len(self.configQueue)} item{'s' if len(self.configQueue) != 1 else ''}")
+            self._updateQueueButton()
+
+        def addCurrent():
+            cfg = self.getConfig()
+            for _ in range(repeatVar.get()):
+                self.configQueue.append(dict(cfg))
+            refreshTree()
+
+        def addFromFile():
+            # Reuse the existing custom picker dialog logic
+            currentApproach = self.approachVar.get() if hasattr(self, 'approachVar') else 'basil'
+            pickerDlg = tk.Toplevel(dlg)
+            pickerDlg.title("Add Config from File")
+            pickerDlg.configure(bg=BG)
+            pickerDlg.resizable(True, True)
+            pickerDlg.transient(dlg)
+            pickerDlg.grab_set()
+
+            pickedPath = [None]
+            approachVar2 = tk.StringVar(value=currentApproach)
+
+            tabFrame2 = tk.Frame(pickerDlg, bg=BG)
+            tabFrame2.pack(fill=tk.X, padx=12, pady=(12, 0))
+            tk.Label(tabFrame2, text="Approach:", bg=BG, fg=HEADER,
+                     font=('Segoe UI', 9, 'bold')).pack(side=tk.LEFT, padx=(0, 8))
+            for ap in ('basil', 'noisy', 'merged'):
+                folder = os.path.join(configDir, ap)
+                n = len([f for f in os.listdir(folder) if f.endswith('.json')]) if os.path.isdir(folder) else 0
+                ttk.Radiobutton(tabFrame2, text=f"{ap.capitalize()}  ({n})",
+                                variable=approachVar2, value=ap,
+                                command=lambda: refreshPicker()).pack(side=tk.LEFT, padx=6)
+
+            listFrame2 = tk.Frame(pickerDlg, bg=BG)
+            listFrame2.pack(fill=tk.BOTH, expand=True, padx=12, pady=8)
+            sb2 = ttk.Scrollbar(listFrame2, orient=tk.VERTICAL)
+            sb2.pack(side=tk.RIGHT, fill=tk.Y)
+            listbox2 = tk.Listbox(listFrame2, yscrollcommand=sb2.set, selectmode=tk.SINGLE,
+                                  activestyle='dotbox', font=('Segoe UI', 9),
+                                  bg=PANEL_BG, fg=HEADER,
+                                  selectbackground=ACCENT, selectforeground='white',
+                                  relief=tk.FLAT, highlightthickness=1, highlightcolor=BORDER)
+            listbox2.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+            sb2.config(command=listbox2.yview)
+
+            botFrame2 = tk.Frame(pickerDlg, bg=BG)
+            botFrame2.pack(fill=tk.X, padx=12, pady=(0, 12))
+            countLabel2 = tk.Label(botFrame2, text="0 files", bg=BG, fg=MUTED,
+                                   font=('Segoe UI', 9))
+            countLabel2.pack(side=tk.LEFT)
+            ttk.Button(botFrame2, text="Cancel", command=pickerDlg.destroy).pack(side=tk.RIGHT, padx=(4, 0))
+            ttk.Button(botFrame2, text="Add to Queue", style='Run.TButton',
+                       command=lambda: onPickAdd()).pack(side=tk.RIGHT, padx=(0, 4))
+
+            def refreshPicker():
+                ap = approachVar2.get()
+                folder = os.path.join(configDir, ap)
+                files = sorted([f for f in os.listdir(folder) if f.endswith('.json')]) \
+                        if os.path.isdir(folder) else []
+                listbox2.delete(0, tk.END)
+                for f in files:
+                    listbox2.insert(tk.END, f[:-5])
+                countLabel2.config(text=f"{len(files)} file{'s' if len(files) != 1 else ''}")
+
+            def onPickAdd():
+                sel = listbox2.curselection()
+                if not sel:
+                    return
+                name = listbox2.get(sel[0]) + '.json'
+                path = os.path.join(configDir, approachVar2.get(), name)
+                try:
+                    with open(path) as f:
+                        cfg = json.load(f)
+                    for _ in range(repeatVar.get()):
+                        self.configQueue.append(dict(cfg))
+                    refreshTree()
+                    pickerDlg.destroy()
+                except Exception as e:
+                    messagebox.showerror("Error", str(e), parent=pickerDlg)
+
+            listbox2.bind('<Double-Button-1>', lambda e: onPickAdd())
+            pickerDlg.bind('<Escape>', lambda e: pickerDlg.destroy())
+
+            pickerDlg.update_idletasks()
+            w2, h2 = 560, 420
+            x2 = dlg.winfo_x() + (dlg.winfo_width()  - w2) // 2
+            y2 = dlg.winfo_y() + (dlg.winfo_height() - h2) // 2
+            pickerDlg.geometry(f"{w2}x{h2}+{x2}+{y2}")
+            refreshPicker()
+            pickerDlg.wait_window()
+
+        def _selectedIdx():
+            sel = tree.selection()
+            return int(sel[0]) if sel else None
+
+        def moveUp():
+            idx = _selectedIdx()
+            if idx is None or idx == 0:
+                return
+            self.configQueue[idx], self.configQueue[idx-1] = \
+                self.configQueue[idx-1], self.configQueue[idx]
+            refreshTree()
+            tree.selection_set(str(idx-1))
+
+        def moveDown():
+            idx = _selectedIdx()
+            if idx is None or idx >= len(self.configQueue) - 1:
+                return
+            self.configQueue[idx], self.configQueue[idx+1] = \
+                self.configQueue[idx+1], self.configQueue[idx]
+            refreshTree()
+            tree.selection_set(str(idx+1))
+
+        def removeSelected():
+            idx = _selectedIdx()
+            if idx is None:
+                return
+            del self.configQueue[idx]
+            refreshTree()
+
+        def clearAll():
+            if self.configQueue and not messagebox.askyesno(
+                    "Clear Queue", f"Remove all {len(self.configQueue)} items?", parent=dlg):
+                return
+            self.configQueue.clear()
+            refreshTree()
+
+        def runQueueAndClose():
+            if not self.configQueue:
+                messagebox.showwarning("Empty Queue", "Queue is empty.", parent=dlg)
+                return
+            dlg.destroy()
+            self.runQueue()
+
+        # Center and populate
+        dlg.update_idletasks()
+        w, h = 700, 520
+        x = self.root.winfo_x() + (self.root.winfo_width()  - w) // 2
+        y = self.root.winfo_y() + (self.root.winfo_height() - h) // 2
+        dlg.geometry(f"{w}x{h}+{x}+{y}")
+        refreshTree()
+
+    def runQueue(self):
+        if self.isRunning:
+            messagebox.showwarning("Warning", "An experiment is already running!")
             return
-        if not userInput.endswith('.json'):
-            userInput += '.json'
-        filepath = os.path.join("gui", "configs", userInput)
+        if not self.configQueue:
+            messagebox.showwarning("Empty Queue", "The config queue is empty.")
+            return
+
+        self.runButton.config(state=tk.DISABLED)
+        self.runAllButton.config(state=tk.DISABLED)
+        self.queueButton.config(state=tk.DISABLED)
+        self.stopButton.config(state=tk.NORMAL)
+        self.isRunning = True
+        self.clearOutput()
+        self._liveAccData.clear()
+        self._liveWorstData.clear()
+        self._refreshLiveChart()
+        self.notebook.select(3)
+
+        configs = list(self.configQueue)   # snapshot; queue stays intact until user clears
+        self.currentThread = threading.Thread(target=self.runQueueThread, args=(configs,))
+        self.currentThread.start()
+
+    def runQueueThread(self, configs):
+        total, completed = len(configs), 0
+        try:
+            self.logMessage("=" * 80)
+            self.logMessage(f"RUN QUEUE: {total} experiment(s) queued")
+            self.logMessage("=" * 80 + "\n")
+
+            for idx, config in enumerate(configs, 1):
+                if not self.isRunning:
+                    self.logMessage("\n[STOPPED] Queue run cancelled by user.")
+                    break
+
+                self.logMessage("=" * 80)
+                expName = config.get('experimentName', f'Queue item #{idx}')
+                self.logMessage(f"[{idx}/{total}] {expName}")
+                self.logMessage("=" * 80)
+
+                self._trainStartTime  = time.time()
+                self._lastRoundEndTime = self._trainStartTime
+                self._totalRounds     = config.get('nRounds', 100)
+                self._roundTimes.clear()
+                self._emaRoundTime  = None
+                self._smoothedEta   = None
+                self.root.after(1000, self._etaTicker)
+                self._liveAccData.clear()
+                self._liveWorstData.clear()
+                self.root.after(0, self._progressVar.set, 0)
+                self.root.after(0, self._roundLabel.config, {'text': f"Round 0/{self._totalRounds}"})
+
+                sendNotification("Queue Started", f"[{idx}/{total}] {expName} has started.", priority="default")
+                self._executeExperiment(config)
+                completed += 1
+
+                if not self.isRunning:
+                    break
+
+                sendNotification("Queue Step Done", f"[{idx}/{total}] {expName} finished.", priority="high")
+                self.logMessage(f"\n[{idx}/{total}] Done.\n")
+
+            self.logMessage("")
+            self.logMessage("=" * 80)
+            self.logMessage(f"QUEUE FINISHED: {completed}/{total} experiments completed.")
+            self.logMessage("=" * 80)
+            sendNotification("Queue Complete", f"{completed}/{total} queue items finished.", priority="high")
+
+        except Exception as e:
+            self.logMessage(f"\nQUEUE ERROR: {str(e)}")
+            self.logMessage(traceback.format_exc())
+            sendNotification("Queue FAILED", str(e), priority="urgent")
+        finally:
+            self.root.after(0, self._onRunFinished)
+
+    def saveConfig(self):
+        config   = self.getConfig()
+        approach = config.get('approach', 'basil')
+        expName  = config.get('experimentName', '').strip()
+        default  = expName or f"config_{config['dataset']}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        if not default.endswith('.json'):
+            default += '.json'
+        configDir  = os.path.join(os.path.dirname(os.path.abspath(__file__)), "configs")
+        initialdir = os.path.join(configDir, approach)
+        os.makedirs(initialdir, exist_ok=True)
+        filepath = filedialog.asksaveasfilename(
+            title=f"Save Configuration — {approach.capitalize()}",
+            initialdir=initialdir,
+            initialfile=default,
+            defaultextension=".json",
+            filetypes=[("JSON files", "*.json"), ("All files", "*.*")],
+            parent=self.root)
+        if not filepath:
+            return
+        if not filepath.endswith('.json'):
+            filepath += '.json'
         os.makedirs(os.path.dirname(filepath), exist_ok=True)
         with open(filepath, 'w') as f:
             json.dump(config, f, indent=2)
         messagebox.showinfo("Saved", f"Configuration saved to:\n{filepath}")
-        self._setStatus(f"Config saved: {filepath}")
+        self._setStatus(f"Config saved: {os.path.basename(filepath)}")
 
     def loadConfig(self):
-        filepath = filedialog.askopenfilename(
-            title="Load Configuration", initialdir="gui/configs",
-            filetypes=[("JSON files", "*.json"), ("All files", "*.*")])
+        configDir      = os.path.join(os.path.dirname(os.path.abspath(__file__)), "configs")
+        currentApproach = self.approachVar.get() if hasattr(self, 'approachVar') else 'basil'
+
+        # ── Custom picker dialog ──────────────────────────────────────────────
+        dlg = tk.Toplevel(self.root)
+        dlg.title("Load Configuration")
+        dlg.configure(bg=BG)
+        dlg.resizable(True, True)
+        dlg.transient(self.root)
+        dlg.grab_set()
+
+        selectedPath = [None]
+        approachVar  = tk.StringVar(value=currentApproach)
+
+        # Approach selector with live counts
+        tabFrame = tk.Frame(dlg, bg=BG)
+        tabFrame.pack(fill=tk.X, padx=12, pady=(12, 0))
+        tk.Label(tabFrame, text="Approach:", bg=BG, fg=HEADER,
+                 font=('Segoe UI', 9, 'bold')).pack(side=tk.LEFT, padx=(0, 8))
+        for ap in ('basil', 'noisy', 'merged'):
+            folder = os.path.join(configDir, ap)
+            n = len([f for f in os.listdir(folder) if f.endswith('.json')]) if os.path.isdir(folder) else 0
+            ttk.Radiobutton(tabFrame, text=f"{ap.capitalize()}  ({n})",
+                            variable=approachVar, value=ap,
+                            command=lambda: refreshList()).pack(side=tk.LEFT, padx=6)
+
+        # File listbox
+        listFrame = tk.Frame(dlg, bg=BG)
+        listFrame.pack(fill=tk.BOTH, expand=True, padx=12, pady=8)
+        sb = ttk.Scrollbar(listFrame, orient=tk.VERTICAL)
+        sb.pack(side=tk.RIGHT, fill=tk.Y)
+        listbox = tk.Listbox(listFrame, yscrollcommand=sb.set, selectmode=tk.SINGLE,
+                             activestyle='dotbox', font=('Segoe UI', 9),
+                             bg=PANEL_BG, fg=HEADER,
+                             selectbackground=ACCENT, selectforeground='white',
+                             relief=tk.FLAT, highlightthickness=1, highlightcolor=BORDER)
+        listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        sb.config(command=listbox.yview)
+
+        # Bottom bar: count (left) + buttons (right)
+        bottomFrame = tk.Frame(dlg, bg=BG)
+        bottomFrame.pack(fill=tk.X, padx=12, pady=(0, 12))
+        countLabel = tk.Label(bottomFrame, text="0 files", bg=BG, fg=MUTED,
+                              font=('Segoe UI', 9))
+        countLabel.pack(side=tk.LEFT)
+        ttk.Button(bottomFrame, text="Cancel", command=dlg.destroy).pack(side=tk.RIGHT, padx=(4, 0))
+        ttk.Button(bottomFrame, text="Load", style='Run.TButton',
+                   command=lambda: onLoad()).pack(side=tk.RIGHT, padx=(0, 4))
+
+        def refreshList():
+            ap     = approachVar.get()
+            folder = os.path.join(configDir, ap)
+            files  = sorted([f for f in os.listdir(folder) if f.endswith('.json')]) \
+                     if os.path.isdir(folder) else []
+            listbox.delete(0, tk.END)
+            for f in files:
+                listbox.insert(tk.END, f[:-5])          # strip .json for display
+            countLabel.config(text=f"{len(files)} file{'s' if len(files) != 1 else ''}")
+
+        def onLoad():
+            sel = listbox.curselection()
+            if not sel:
+                return
+            name = listbox.get(sel[0]) + '.json'
+            selectedPath[0] = os.path.join(configDir, approachVar.get(), name)
+            dlg.destroy()
+
+        listbox.bind('<Double-Button-1>', lambda e: onLoad())
+        dlg.bind('<Return>', lambda e: onLoad())
+        dlg.bind('<Escape>', lambda e: dlg.destroy())
+
+        # Center over main window
+        dlg.update_idletasks()
+        w, h = 580, 440
+        x = self.root.winfo_x() + (self.root.winfo_width()  - w) // 2
+        y = self.root.winfo_y() + (self.root.winfo_height() - h) // 2
+        dlg.geometry(f"{w}x{h}+{x}+{y}")
+
+        refreshList()
+        dlg.wait_window()
+
+        filepath = selectedPath[0]
         if not filepath:
             return
+        # ─────────────────────────────────────────────────────────────────────
         try:
             with open(filepath, 'r') as f:
                 config = json.load(f)
             self.experimentNameVar.set(config.get('experimentName', ''))
             self.datasetVar.set(config.get('dataset', 'mnist'))
             self.approachVar.set(config.get('approach', 'basil'))
-            self.useBasilVar.set(config.get('useBasil', True))
+            self.useBasilVar.set(config.get('useBasil', False))
             self.basilMemorySizeVar.set(config.get('basilMemorySize', 10))
             self.useChannelNoiseVar.set(config.get('useChannelNoise', False))
             self.channelNoiseStartVar.set(config.get('channelNoiseStart', 0))
@@ -1500,18 +1913,18 @@ class ExperimentGUI:
             self.attackIpmStartVar.set(config.get('attackIpmStart', 0))
             self.attackNoiseAmpVar.set(config.get('attackNoiseAmp', False))
             self.attackNoiseAmpStartVar.set(config.get('attackNoiseAmpStart', 0))
-            self.attackerIdsVar.set(config.get('attackerIds', '0,5'))
+            self.attackerIdsVar.set(config.get('attackerIds', '1,4,6,8'))
             self.nNodesVar.set(config.get('nNodes', 10))
             self.nRoundsVar.set(config.get('nRounds', 100))
             self.localEpochsVar.set(config.get('localEpochs', 1))
             self.learningRateVar.set(config.get('learningRate', 0.05))
             self.batchSizeVar.set(config.get('batchSize', 32))
             self.useLrDecayVar.set(config.get('useLrDecay', True))
-            self.usePlateauLrVar.set(config.get('usePlateauLr', False))
-            self.plateauPatienceVar.set(config.get('plateauPatience', 10))
+            self.usePlateauLrVar.set(config.get('usePlateauLr', True))
+            self.plateauPatienceVar.set(config.get('plateauPatience', 5))
             self.plateauFactorVar.set(config.get('plateauFactor', 0.5))
             self.plateauMinLrVar.set(config.get('plateauMinLr', 1e-4))
-            self.plateauThresholdVar.set(config.get('plateauThreshold', 0.002))
+            self.plateauThresholdVar.set(config.get('plateauThreshold', 0.01))
             messagebox.showinfo("Loaded", "Configuration loaded successfully!")
             self._setStatus(f"Config loaded: {os.path.basename(filepath)}")
         except Exception as e:

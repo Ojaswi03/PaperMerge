@@ -392,9 +392,12 @@ def basilRingTrainingWithAttack(
             if roundCallback is not None:
                 roundCallback(r + 1, avg, worst, rounds)
 
-            # Plateau LR check
+            # Plateau LR check (only after model clears 25% baseline)
             if usePlateauLr:
-                if _plateauCooldown > 0:
+                if avg <= 0.25:
+                    _plateauBestAcc  = -1.0
+                    _plateauPatience = 0
+                elif _plateauCooldown > 0:
                     _plateauCooldown -= 1
                 elif avg > _plateauBestAcc + plateauThreshold:
                     _plateauBestAcc  = avg
@@ -407,7 +410,7 @@ def basilRingTrainingWithAttack(
                             print(f"[round {r}] ReduceLROnPlateau: {_plateauLr:.6f} → {new_lr:.6f}", flush=True)
                             _plateauLr = new_lr
                         _plateauPatience = 0
-                        _plateauCooldown = plateauPatience // 2  # cooldown = half of patience
+                        _plateauCooldown = plateauPatience // 2
 
     return avgAccHist, worstAccHist
 
@@ -471,6 +474,8 @@ def fedAvgTrainingWithNoise(
     plateauFactor=0.5,
     plateauMinLr=1e-4,
     plateauThreshold=0.002,
+    useSnapshots=False,  # Server-side SS: discard worst S models before averaging
+    S=1,                 # Number of models to discard (= basilMemorySize)
     roundCallback=None,  # called as roundCallback(roundNum, avgAcc, worstAcc, totalRounds)
     **kwargs,
 ):
@@ -526,12 +531,13 @@ def fedAvgTrainingWithNoise(
 
         mitigationStr = f" {mitigation.upper()}" if mitigation != "none" else ""
         noiseStatus = f" channel_noise(σ={sigma})" if channelNoiseActive else ""
+        ssStr = f" SS(discard={S})" if useSnapshots else ""
 
         # Determine current attack type
         atk = attackTypes[r % len(attackTypes)]
 
         attackStr = f" | attack={atk}({len(attackers)} nodes)" if attackers and atk != "none" else ""
-        print(f"[round {r}] lr={lr:.6f}{noiseStatus}{attackStr} parallel training...", flush=True)
+        print(f"[round {r}] lr={lr:.6f}{noiseStatus}{ssStr}{attackStr} parallel training...", flush=True)
 
         # ===== STEP 1: ALL NODES TRAIN IN PARALLEL =====
         # Each node starts from the same global model
@@ -564,8 +570,25 @@ def fedAvgTrainingWithNoise(
             # Weight by data size (approximate: use equal weights for now)
             dataWeights.append(1.0)
 
-        # ===== STEP 2: AVERAGE ALL LOCAL MODELS (Eq 3a) =====
-        avgParams = averageParams(localUpdates, weights=dataWeights)
+        # ===== STEP 2: AVERAGE LOCAL MODELS (with optional server-side SS) =====
+        if useSnapshots and testLoader is not None and len(localUpdates) > S:
+            # Evaluate each submitted model on one test batch (balanced, server-held)
+            # Use node 0's model as scratch space — it gets reset to globalParams next round
+            evalNode = nodes[0]
+            savedParams = getParams(evalNode.model)
+            losses = []
+            for params in localUpdates:
+                setParams(evalNode.model, params)
+                losses.append(evaluateBatchLoss(evalNode.model, testLoader))
+            setParams(evalNode.model, savedParams)
+            # Keep the n-S lowest-loss models (discard S worst)
+            order = sorted(range(len(losses)), key=lambda i: losses[i])
+            kept = order[:len(localUpdates) - S]
+            print(f"[round {r}] SS discarded nodes {[order[i] for i in range(len(localUpdates)-S, len(localUpdates))]} (highest loss)", flush=True)
+            avgParams = averageParams([localUpdates[i] for i in kept],
+                                      weights=[dataWeights[i] for i in kept])
+        else:
+            avgParams = averageParams(localUpdates, weights=dataWeights)
 
         # ===== STEP 3: ADD CHANNEL NOISE (Paper 002) =====
         # Noise added to broadcast when server sends to all nodes
@@ -591,9 +614,12 @@ def fedAvgTrainingWithNoise(
             if roundCallback is not None:
                 roundCallback(r + 1, acc, acc, rounds)
 
-            # Plateau LR check
+            # Plateau LR check (only after model clears 25% baseline)
             if usePlateauLr:
-                if _plateauCooldown > 0:
+                if acc <= 0.25:
+                    _plateauBestAcc  = -1.0
+                    _plateauPatience = 0
+                elif _plateauCooldown > 0:
                     _plateauCooldown -= 1
                 elif acc > _plateauBestAcc + plateauThreshold:
                     _plateauBestAcc  = acc

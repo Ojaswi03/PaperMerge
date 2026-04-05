@@ -33,10 +33,9 @@
   "learningRate": 0.05,
   "batchSize": 512,
   "useLrDecay": false,
-  "stepsPerEpoch": 5,
-  "usePlateauLr": false,
-  "plateauPatience": 10,
+  "usePlateauLr": true,
+  "plateauPatience": 5,
   "plateauFactor": 0.5,
   "plateauMinLr": 0.0001,
-  "plateauThreshold": 0.002
+  "plateauThreshold": 0.01
 }

@@ -208,3 +208,6 @@ __marimo__/
 
 # Session logs (private notes)
 LOGS.md
+
+# Claude Code instructions (local dev only)
+CLAUDE.md
