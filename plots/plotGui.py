@@ -1,15 +1,17 @@
 """
 Plotting for GUI experiment results.
 Auto-discovers all experiments saved in experiments/results/gui/
-and generates comparison plots per dataset / attack type / approach.
+and generates comparison plots per data split / dataset / attack type / approach.
 
 Folder structure (results):
-  experiments/results/gui/{dataset}/{attackKey}/{approach}/
+  experiments/results/gui/{split}/{dataset}/{attackKey}/{approach}/
       acc_*.npy
       config_*.json
+  Legacy results without split are still read from:
+  experiments/results/gui/{dataset}/{attackKey}/{approach}/
 
 Folder structure (plots):
-  plots/images/gui/{dataset}/{attackKey}/{approach}/
+  plots/images/gui/{split}/{dataset}/{attackKey}/{approach}/
       experiments_avg.png
       grid_avg.png
       final_accuracy_avg.png
@@ -35,6 +37,7 @@ DATASETS_TO_PLOT = None
 
 # Which metric? Options: "avg" only (worst is no longer saved)
 METRIC = "avg"
+DATA_SPLITS = ("nonIID", "IID")
 
 # ============================================================================
 # END CONFIGURATION
@@ -50,6 +53,24 @@ plt.style.use('seaborn-v0_8-darkgrid')
 
 # All distinct matplotlib markers
 _ALL_MARKERS = ['o', 's', '^', 'D', 'v', 'P', 'X', '*', 'h', '<', '>', 'p', 'H', '8', '+', 'x', '1', '2', '3', '4']
+_CLEAN_COLORS = [
+    '#111827',  # charcoal
+    '#f97316',  # orange
+    '#7c3aed',  # violet
+    '#059669',  # emerald
+    '#dc2626',  # red
+    '#0891b2',  # cyan
+    '#ca8a04',  # amber
+]
+_CLEAN_LINESTYLES = [
+    (0, (8, 3)),
+    (0, (3, 2, 1, 2)),
+    (0, (1, 2)),
+    (0, (6, 2, 2, 2)),
+    (0, (10, 2)),
+    (0, (4, 4)),
+    (0, (2, 1)),
+]
 
 
 def getColors(n):
@@ -70,86 +91,139 @@ def getMarkers(n):
     return [m for _, m in zip(range(n), itertools.cycle(_ALL_MARKERS))]
 
 
-def discoverDatasets():
+def splitFromConfig(config):
+    return "nonIID" if config.get("nonIID", True) else "IID"
+
+
+def _resultRoot(split=None):
+    return os.path.join("experiments", "results", "gui", split) if split else os.path.join("experiments", "results", "gui")
+
+
+def _plotDir(split, dataset, attackKey, approach):
+    return os.path.join("plots", "images", "gui", split, dataset, attackKey, approach)
+
+
+def _iterConfigFiles(split=None):
+    """Yield config paths from split-aware and legacy GUI result layouts."""
+    roots = []
+    if split:
+        roots.append(_resultRoot(split))
+    else:
+        roots.extend(_resultRoot(sp) for sp in DATA_SPLITS)
+    roots.append(_resultRoot())
+
+    seen = set()
+    for root in roots:
+        if not os.path.isdir(root):
+            continue
+        for configPath in glob.glob(os.path.join(root, "**", "config_*.json"), recursive=True):
+            if configPath in seen:
+                continue
+            seen.add(configPath)
+            try:
+                with open(configPath, 'r') as f:
+                    config = json.load(f)
+            except Exception:
+                continue
+            if split and splitFromConfig(config) != split:
+                continue
+            yield configPath, config
+
+
+def _pathPartsAfterGui(path):
+    root = os.path.normpath(_resultRoot())
+    rel = os.path.relpath(os.path.normpath(path), root)
+    return rel.split(os.sep)
+
+
+def _metadataFromConfigPath(configPath):
+    parts = _pathPartsAfterGui(configPath)
+    if parts and parts[0] in DATA_SPLITS:
+        parts = parts[1:]
+    if len(parts) < 4:
+        return None
+    return {
+        'dataset': parts[0],
+        'attackKey': parts[1],
+        'approach': parts[2],
+    }
+
+
+def discoverDataSplits():
+    splits = set()
+    for split in DATA_SPLITS:
+        if os.path.isdir(_resultRoot(split)):
+            splits.add(split)
+    for _, config in _iterConfigFiles():
+        splits.add(splitFromConfig(config))
+    return [sp for sp in DATA_SPLITS if sp in splits]
+
+
+def discoverDatasets(split=None):
     # scan gui results directory for dataset subdirs
-    # supports both old flat structure (dataset/attack/*.npy)
-    # and new structure (dataset/attack/approach/*.npy)
-    guiDir = "experiments/results/gui"
-    if not os.path.isdir(guiDir):
+    # supports split-aware and legacy structures
+    guiDir = _resultRoot(split)
+    if split and not os.path.isdir(guiDir) and not os.path.isdir(_resultRoot()):
         print(f"No GUI results directory found at {guiDir}")
         return []
 
-    datasets = []
-    for entry in sorted(os.listdir(guiDir)):
-        entryPath = os.path.join(guiDir, entry)
-        if not os.path.isdir(entryPath):
-            continue
-        # new structure: 3 levels deep
-        newNpy = glob.glob(os.path.join(entryPath, "*", "*", "*.npy"))
-        # old flat structure: 2 levels deep
-        oldNpy = glob.glob(os.path.join(entryPath, "*", "*.npy"))
-        if newNpy or oldNpy:
-            datasets.append(entry)
+    datasets = set()
+    for configPath, _ in _iterConfigFiles(split):
+        meta = _metadataFromConfigPath(configPath)
+        if meta:
+            datasets.add(meta['dataset'])
 
-    return datasets
+    return sorted(datasets)
 
 
-def discoverAttackTypes(dataset):
+def discoverAttackTypes(dataset, split=None):
     # return attack type subfolders that have results (new or old structure)
-    datasetDir = f"experiments/results/gui/{dataset}"
-    if not os.path.isdir(datasetDir):
-        return []
+    attackTypes = set()
+    for configPath, _ in _iterConfigFiles(split):
+        meta = _metadataFromConfigPath(configPath)
+        if meta and meta['dataset'] == dataset:
+            attackTypes.add(meta['attackKey'])
 
-    attackTypes = []
-    for entry in sorted(os.listdir(datasetDir)):
-        entryPath = os.path.join(datasetDir, entry)
-        if not os.path.isdir(entryPath):
-            continue
-        # new structure: approach subdir contains npy
-        newNpy = glob.glob(os.path.join(entryPath, "*", "*.npy"))
-        # old flat structure: npy directly in attack folder
-        oldNpy = glob.glob(os.path.join(entryPath, "*.npy"))
-        if newNpy or oldNpy:
-            attackTypes.append(entry)
-
-    return attackTypes
+    return sorted(attackTypes)
 
 
-def discoverApproaches(dataset, attackKey):
+def discoverApproaches(dataset, attackKey, split=None):
     # return approach subfolders (basil / noisy / merged) that have npy files
-    attackDir = f"experiments/results/gui/{dataset}/{attackKey}"
-    if not os.path.isdir(attackDir):
-        return []
+    approaches = set()
+    legacyFlat = False
+    for configPath, _ in _iterConfigFiles(split):
+        meta = _metadataFromConfigPath(configPath)
+        if not meta or meta['dataset'] != dataset or meta['attackKey'] != attackKey:
+            continue
+        approaches.add(meta['approach'])
+        if meta['approach'].startswith("config_"):
+            legacyFlat = True
 
-    approaches = []
-    for entry in sorted(os.listdir(attackDir)):
-        entryPath = os.path.join(attackDir, entry)
-        if os.path.isdir(entryPath) and glob.glob(os.path.join(entryPath, "*.npy")):
-            approaches.append(entry)
+    if legacyFlat:
+        approaches.discard(next((ap for ap in approaches if ap.startswith("config_")), ""))
+        approaches.add("_legacy")
 
-    # fall back to old flat structure: npy files directly in attack folder
-    if not approaches and glob.glob(os.path.join(attackDir, "*.npy")):
-        approaches.append("_legacy")
-
-    return approaches
+    return sorted(approaches)
 
 
-def discoverExperiments(dataset, attackKey=None, approach=None):
+def discoverExperiments(dataset, attackKey=None, approach=None, split=None):
     # find config JSON files and pair each with its .npy accuracy file
-    if attackKey and approach and approach != "_legacy":
-        resultDir = f"experiments/results/gui/{dataset}/{attackKey}/{approach}"
-    elif attackKey:
-        resultDir = f"experiments/results/gui/{dataset}/{attackKey}"
-    else:
-        resultDir = f"experiments/results/gui/{dataset}"
-
-    if not os.path.isdir(resultDir):
-        return []
-
-    configFiles = sorted(glob.glob(os.path.join(resultDir, "config_*.json")))
-
     experiments = []
-    for configPath in configFiles:
+    seen = set()
+    for configPath, config in _iterConfigFiles(split):
+        meta = _metadataFromConfigPath(configPath)
+        if not meta:
+            continue
+        if dataset and meta['dataset'] != dataset:
+            continue
+        if attackKey and meta['attackKey'] != attackKey:
+            continue
+        if approach and approach != "_legacy" and meta['approach'] != approach:
+            continue
+        if approach == "_legacy" and meta['approach'] not in ("", "_legacy"):
+            continue
+
+        resultDir = os.path.dirname(configPath)
         configName = os.path.basename(configPath)
         name = configName.replace("config_", "").replace(".json", "")
 
@@ -157,17 +231,79 @@ def discoverExperiments(dataset, attackKey=None, approach=None):
         if not os.path.exists(avgPath):
             continue
 
-        with open(configPath, 'r') as f:
-            config = json.load(f)
+        dedupeKey = (splitFromConfig(config), meta['dataset'], meta['attackKey'], meta['approach'], name)
+        if dedupeKey in seen:
+            continue
+        seen.add(dedupeKey)
 
         experiments.append({
             'name': name,
             'config': config,
             'avgPath': avgPath,
             'label': buildLabel(config),
+            'split': splitFromConfig(config),
         })
 
     return experiments
+
+
+ATTACK_FLAGS = (
+    'attackGaussian',
+    'attackSignFlip',
+    'attackHidden',
+    'attackModelPoison',
+    'attackScaling',
+    'attackAlie',
+    'attackIpm',
+    'attackNoiseAmp',
+)
+
+
+def hasByzantineAttack(config):
+    return any(bool(config.get(flag)) for flag in ATTACK_FLAGS)
+
+
+def isCleanEnvironment(config):
+    """True only for the clean reference: no Byzantine nodes and no channel noise."""
+    return (
+        not hasByzantineAttack(config)
+        and not bool(config.get('useChannelNoise', False))
+        and config.get('noiseMitigation', 'none') == 'none'
+    )
+
+
+def isCleanReferenceConfig(config):
+    """True for the single clean threshold config used as the upper reference."""
+    return (
+        isCleanEnvironment(config)
+        and config.get('experimentName', '').strip()
+        == '0 - Byzantine Nodes + No Channel Noise + No Mitigation'
+    )
+
+
+def _currentConfigPath(config):
+    expName = config.get('experimentName', '').strip()
+    if not expName:
+        return None
+    split = splitFromConfig(config)
+    approach = config.get('approach', 'basil')
+    return os.path.join('gui', 'configs', split, approach, f'{expName}.json')
+
+
+def _matchesCurrentConfig(config):
+    """Return False when a saved result was produced from an obsolete config."""
+    path = _currentConfigPath(config)
+    if not path or not os.path.exists(path):
+        return True
+    try:
+        with open(path, 'r') as f:
+            current = json.load(f)
+    except Exception:
+        return True
+    for key, val in current.items():
+        if config.get(key) != val:
+            return False
+    return True
 
 
 def buildLabel(config):
@@ -181,12 +317,16 @@ def buildLabel(config):
     mitigation = config.get('noiseMitigation', 'none')
     useBasil = config.get('useBasil', False)
 
-    # Noise description
-    if not useNoise:
-        noisePart = "Clean"
+    # Noise/environment description. Reserve "Clean Environment" for the one
+    # true clean reference; Byzantine-only runs are not clean just because the
+    # channel is noiseless.
+    if isCleanEnvironment(config):
+        noisePart = "Clean Environment"
+    elif not useNoise:
+        noisePart = "No Channel Noise"
     else:
         noiseStart = config.get('channelNoiseStart', 0)
-        noisePart = f"Noisy@Round {noiseStart}" if noiseStart > 0 else "Noisy"
+        noisePart = f"Channel Noise@Round {noiseStart}" if noiseStart > 0 else "Channel Noise"
 
         # Mitigation
         if mitigation == 'ebm':
@@ -230,34 +370,39 @@ def _approachTitle(approach):
         'basil':   'BASIL Ring',
         'noisy':   'Noisy Channel (FedAvg)',
         'merged':  'Merged (BASIL + EBM)',
+        'cart':    'CART (Class-Aware Ring)',
         '_legacy': 'Legacy',
     }
     return titles.get(approach, approach.title())
 
 
-CLEAN_COLOR = '#16a34a'   # green
-CLEAN_STYLE = '--'
 CLEAN_LW    = 2.0
-CLEAN_ALPHA = 0.75
+CLEAN_ALPHA = 0.95
 
 
-def loadCleanBaselines(dataset, approach):
-    """Return experiments from the 'none' attack folder — the clean reference runs."""
-    return discoverExperiments(dataset, 'none', approach)
+def loadCleanBaselines(dataset, approach, split=None):
+    """Return only the true clean reference runs.
+
+    The attack folder named "none" also contains channel-noise experiments.
+    Those are not clean baselines and should not be labeled or plotted as the
+    clean upper threshold.
+    """
+    return [
+        exp for exp in discoverExperiments(dataset, 'none', approach, split=split)
+        if isCleanReferenceConfig(exp['config']) and _matchesCurrentConfig(exp['config'])
+    ]
 
 
-def bestCleanAcc(dataset, approach):
-    """Final accuracy of the highest-performing clean experiment, or None."""
-    best = None
-    for exp in loadCleanBaselines(dataset, approach):
-        if os.path.exists(exp['avgPath']):
-            acc = np.load(exp['avgPath'])
-            if len(acc) > 0 and (best is None or acc[-1] > best):
-                best = float(acc[-1])
-    return best
+def cleanOverlayStyle(idx):
+    """Distinct styling for each 'none' baseline overlaid on attack plots."""
+    return {
+        'color': _CLEAN_COLORS[idx % len(_CLEAN_COLORS)],
+        'linestyle': _CLEAN_LINESTYLES[idx % len(_CLEAN_LINESTYLES)],
+        'marker': _ALL_MARKERS[idx % len(_ALL_MARKERS)],
+    }
 
 
-def plotDatasetExperiments(dataset, attackKey, approach, experiments):
+def plotDatasetExperiments(dataset, attackKey, approach, experiments, split=None):
     # overlay all experiment curves on one axes and save the figure
     datasetTitles = {
         'mnist': 'MNIST',
@@ -267,7 +412,9 @@ def plotDatasetExperiments(dataset, attackKey, approach, experiments):
 
     fig, ax = plt.subplots(figsize=(12, 6))
 
-    colors = getColors(len(experiments))
+    split = split or (experiments[0].get('split') if experiments else 'nonIID')
+    cleanExperiments = loadCleanBaselines(dataset, approach, split=split) if attackKey != 'none' else []
+    colors = getColors(len(experiments) + len(cleanExperiments))
     markers = getMarkers(len(experiments))
 
     for idx, exp in enumerate(experiments):
@@ -283,16 +430,20 @@ def plotDatasetExperiments(dataset, attackKey, approach, experiments):
                 marker=markers[idx], markersize=5,
                 markevery=max(1, len(rounds) // 10))
 
-    # Overlay clean baselines as dashed green reference lines
-    if attackKey != 'none':
-        for exp in loadCleanBaselines(dataset, approach):
-            if not os.path.exists(exp['avgPath']):
-                continue
-            acc    = np.load(exp['avgPath'])
-            rounds = np.arange(len(acc))
-            ax.plot(rounds, acc, label=f"[Clean] {exp['label']}",
-                    color=CLEAN_COLOR, linewidth=CLEAN_LW,
-                    linestyle=CLEAN_STYLE, alpha=CLEAN_ALPHA)
+    # Overlay clean baselines as dashed reference lines. Use distinct colors
+    # for each clean run so multiple "none" folder overlays are distinguishable.
+    cleanMarkers = getMarkers(len(cleanExperiments))
+    for cleanIdx, exp in enumerate(cleanExperiments):
+        if not os.path.exists(exp['avgPath']):
+            continue
+        acc    = np.load(exp['avgPath'])
+        rounds = np.arange(len(acc))
+        style = cleanOverlayStyle(cleanIdx)
+        ax.plot(rounds, acc, label=f"[Clean Environment] {exp['label']}",
+                color=style['color'], linewidth=CLEAN_LW,
+                linestyle=style['linestyle'], alpha=CLEAN_ALPHA,
+                marker=cleanMarkers[cleanIdx], markersize=4,
+                markevery=max(1, len(rounds) // 10))
 
     title = datasetTitles.get(dataset, dataset.upper())
     attackTitle = attackKey.replace("_", " + ").title()
@@ -306,14 +457,14 @@ def plotDatasetExperiments(dataset, attackKey, approach, experiments):
     ax.set_ylim([0, 1])
 
     plt.tight_layout()
-    savePath = f"plots/images/gui/{dataset}/{attackKey}/{approach}/experiments_avg.png"
+    savePath = os.path.join(_plotDir(split, dataset, attackKey, approach), "experiments_avg.png")
     os.makedirs(os.path.dirname(savePath), exist_ok=True)
     plt.savefig(savePath, dpi=300, bbox_inches='tight')
     print(f"Saved: {savePath}")
     plt.close()
 
 
-def plotDatasetGrid(dataset, attackKey, approach, experiments):
+def plotDatasetGrid(dataset, attackKey, approach, experiments, split=None):
     # one subplot per experiment arranged in a grid layout
     if len(experiments) <= 1:
         return
@@ -342,8 +493,8 @@ def plotDatasetGrid(dataset, attackKey, approach, experiments):
     colors  = getColors(len(experiments))
     markers = getMarkers(len(experiments))
 
-    # Pre-load best clean accuracy for this dataset/approach
-    _cleanAcc = bestCleanAcc(dataset, approach) if attackKey != 'none' else None
+    split = split or (experiments[0].get('split') if experiments else 'nonIID')
+    cleanExperiments = loadCleanBaselines(dataset, approach, split=split) if attackKey != 'none' else []
 
     for idx, exp in enumerate(experiments):
         ax = axes[idx]
@@ -361,12 +512,24 @@ def plotDatasetGrid(dataset, attackKey, approach, experiments):
         ax.grid(True, alpha=0.3)
         ax.set_ylim([0, 1])
 
-        # Dashed green clean-baseline reference line
-        if _cleanAcc is not None:
-            ax.axhline(y=_cleanAcc, color=CLEAN_COLOR, linestyle=CLEAN_STYLE,
-                       linewidth=CLEAN_LW, alpha=CLEAN_ALPHA,
-                       label=f'Clean: {_cleanAcc:.3f}')
-            ax.legend(fontsize=8, loc='lower right')
+        # Overlay every clean run from the 'none' folder with unique styling.
+        for cleanIdx, cleanExp in enumerate(cleanExperiments):
+            if not os.path.exists(cleanExp['avgPath']):
+                continue
+            cleanAcc = np.load(cleanExp['avgPath'])
+            if len(cleanAcc) == 0:
+                continue
+            cleanRounds = np.arange(len(cleanAcc))
+            style = cleanOverlayStyle(cleanIdx)
+            ax.plot(cleanRounds, cleanAcc,
+                    color=style['color'], linestyle=style['linestyle'],
+                    linewidth=CLEAN_LW, alpha=CLEAN_ALPHA,
+                    marker=style['marker'], markersize=3,
+                    markevery=max(1, len(cleanRounds) // 10),
+                    label=f"[Clean Environment] {cleanExp['label']}")
+
+        if cleanExperiments:
+            ax.legend(fontsize=7, loc='lower right')
 
         # annotate the final accuracy value on the last point
         if len(acc) > 0:
@@ -379,14 +542,14 @@ def plotDatasetGrid(dataset, attackKey, approach, experiments):
         axes[idx].set_visible(False)
 
     plt.tight_layout()
-    savePath = f"plots/images/gui/{dataset}/{attackKey}/{approach}/grid_avg.png"
+    savePath = os.path.join(_plotDir(split, dataset, attackKey, approach), "grid_avg.png")
     os.makedirs(os.path.dirname(savePath), exist_ok=True)
     plt.savefig(savePath, dpi=300, bbox_inches='tight')
     print(f"Saved: {savePath}")
     plt.close()
 
 
-def plotFinalAccuracyBar(dataset, attackKey, approach, experiments):
+def plotFinalAccuracyBar(dataset, attackKey, approach, experiments, split=None):
     # bar chart of each experiment's final accuracy value
     datasetTitles = {
         'mnist': 'MNIST',
@@ -416,14 +579,25 @@ def plotFinalAccuracyBar(dataset, attackKey, approach, experiments):
         ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.01,
                 f'{acc:.3f}', ha='center', va='bottom', fontsize=10, fontweight='bold')
 
-    # Dashed green clean-baseline reference line
+    # Overlay each clean run's final accuracy from the 'none' folder.
+    split = split or (experiments[0].get('split') if experiments else 'nonIID')
     if attackKey != 'none':
-        _cleanAcc = bestCleanAcc(dataset, approach)
-        if _cleanAcc is not None:
-            ax.axhline(y=_cleanAcc, color=CLEAN_COLOR, linestyle=CLEAN_STYLE,
+        cleanExperiments = loadCleanBaselines(dataset, approach, split=split)
+        for cleanIdx, cleanExp in enumerate(cleanExperiments):
+            if not os.path.exists(cleanExp['avgPath']):
+                continue
+            cleanAcc = np.load(cleanExp['avgPath'])
+            if len(cleanAcc) == 0:
+                continue
+            style = cleanOverlayStyle(cleanIdx)
+            finalCleanAcc = float(cleanAcc[-1])
+            ax.axhline(y=finalCleanAcc,
+                       color=style['color'], linestyle=style['linestyle'],
                        linewidth=CLEAN_LW, alpha=CLEAN_ALPHA,
-                       label=f'Clean baseline: {_cleanAcc:.3f}', zorder=5)
-            ax.legend(fontsize=10, loc='upper right')
+                       label=f"[Clean Environment] {cleanExp['label']}: {finalCleanAcc:.3f}",
+                       zorder=5)
+        if cleanExperiments:
+            ax.legend(fontsize=9, loc='upper left', bbox_to_anchor=(1.01, 1), borderaxespad=0)
 
     title = datasetTitles.get(dataset, dataset.upper())
     attackTitle = attackKey.replace("_", " + ").title()
@@ -437,7 +611,7 @@ def plotFinalAccuracyBar(dataset, attackKey, approach, experiments):
     ax.grid(True, alpha=0.3, axis='y')
 
     plt.tight_layout()
-    savePath = f"plots/images/gui/{dataset}/{attackKey}/{approach}/final_accuracy_avg.png"
+    savePath = os.path.join(_plotDir(split, dataset, attackKey, approach), "final_accuracy_avg.png")
     os.makedirs(os.path.dirname(savePath), exist_ok=True)
     plt.savefig(savePath, dpi=300, bbox_inches='tight')
     print(f"Saved: {savePath}")
@@ -450,46 +624,53 @@ def generateGuiPlots():
     print("GENERATING GUI EXPERIMENT PLOTS")
     print("=" * 80)
 
-    datasets = DATASETS_TO_PLOT if DATASETS_TO_PLOT else discoverDatasets()
-
-    if not datasets:
+    splits = discoverDataSplits()
+    if not splits:
         print("No GUI experiment results found in experiments/results/gui/")
         print("Run experiments via the GUI first (python runGui.py)")
         return
 
-    print(f"Datasets found: {datasets}")
+    print(f"Data splits found: {splits}")
     print("=" * 80)
 
-    for dataset in datasets:
-        attackTypes = discoverAttackTypes(dataset)
-        if not attackTypes:
-            print(f"\nNo attack type subfolders found for {dataset}, skipping...")
+    for split in splits:
+        datasets = DATASETS_TO_PLOT if DATASETS_TO_PLOT else discoverDatasets(split=split)
+        if not datasets:
+            print(f"\nNo datasets found for split {split}, skipping...")
             continue
 
-        print(f"\nDataset: {dataset.upper()} - Attack types: {attackTypes}")
+        print(f"\nSplit: {split} - Datasets: {datasets}")
 
-        for attackKey in attackTypes:
-            approaches = discoverApproaches(dataset, attackKey)
-            if not approaches:
+        for dataset in datasets:
+            attackTypes = discoverAttackTypes(dataset, split=split)
+            if not attackTypes:
+                print(f"\nNo attack type subfolders found for {split}/{dataset}, skipping...")
                 continue
 
-            print(f"\n  Attack: {attackKey} - Approaches: {approaches}")
+            print(f"\nDataset: {dataset.upper()} [{split}] - Attack types: {attackTypes}")
 
-            for approach in approaches:
-                experiments = discoverExperiments(dataset, attackKey, approach)
-                if not experiments:
+            for attackKey in attackTypes:
+                approaches = discoverApproaches(dataset, attackKey, split=split)
+                if not approaches:
                     continue
 
-                print(f"\n    Approach: {approach} ({len(experiments)} experiment(s))")
-                for exp in experiments:
-                    print(f"      - {exp['label']}")
+                print(f"\n  Attack: {attackKey} - Approaches: {approaches}")
 
-                plotDatasetExperiments(dataset, attackKey, approach, experiments)
+                for approach in approaches:
+                    experiments = discoverExperiments(dataset, attackKey, approach, split=split)
+                    if not experiments:
+                        continue
 
-                if len(experiments) > 1:
-                    plotDatasetGrid(dataset, attackKey, approach, experiments)
+                    print(f"\n    Approach: {approach} ({len(experiments)} experiment(s))")
+                    for exp in experiments:
+                        print(f"      - [{exp['split']}] {exp['label']}")
 
-                plotFinalAccuracyBar(dataset, attackKey, approach, experiments)
+                    plotDatasetExperiments(dataset, attackKey, approach, experiments, split=split)
+
+                    if len(experiments) > 1:
+                        plotDatasetGrid(dataset, attackKey, approach, experiments, split=split)
+
+                    plotFinalAccuracyBar(dataset, attackKey, approach, experiments, split=split)
 
     print("\nAll GUI plots generated!")
     print("Plots saved to: plots/images/gui/")

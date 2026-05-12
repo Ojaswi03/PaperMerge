@@ -19,6 +19,7 @@ __all__ = [
     "evaluate",
     "evaluateBatchLoss",
     "evaluateAll",
+    "evaluatePerClass",
     "makeLrScheduler",
     "localUpdate",
     "_iterLimited",
@@ -28,12 +29,38 @@ __all__ = [
 lossFn = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
 
 def addChannelNoiseToParams(params, sigma):
-    # skip if no noise requested
+    """Add Gaussian channel noise using sigma as a model-level relative L2 budget.
+
+    The noisy-channel paper's sigma is a communication perturbation budget for
+    the transmitted model, not an absolute stddev applied independently to every
+    parameter coordinate. For CIFAR-scale CNNs, absolute or per-tensor stddev
+    noise destroys the model because millions of coordinates are perturbed.
+
+    We sample isotropic Gaussian noise and scale it so the expected full-model
+    L2 norm is sigma * ||w||_2:
+
+        noise_coord_std = sigma * ||w||_2 / sqrt(num_params)
+
+    This keeps sigma comparable across MNIST/CIFAR and lets EBM target channel
+    noise instead of recovering from a completely randomized model.
+    """
     if not sigma or sigma <= 0:
         return params
+    total_sq = 0.0
+    total_dim = 0
+    for w in params:
+        wf = w.astype(np.float32, copy=False)
+        total_sq += float(np.sum(wf * wf))
+        total_dim += int(wf.size)
+    if total_dim <= 0:
+        return params
+
+    model_norm = float(np.sqrt(max(total_sq, 1e-12)))
+    noise_std = float(sigma) * model_norm / float(np.sqrt(total_dim))
+
     noisy = []
     for w in params:
-        noise = np.random.normal(0.0, sigma, size=w.shape).astype(np.float32)
+        noise = np.random.normal(0.0, noise_std, size=w.shape).astype(np.float32)
         noisy.append((w + noise).astype(np.float32))
     return noisy
 
@@ -104,6 +131,27 @@ def evaluateBatchLoss(model, dataLoader):
         return float(lossFn(yb, logits).numpy())
     return 0.0
 
+def evaluatePerClass(model, dataLoader, nClasses=10, maxBatches=None):
+    """Return per-class accuracy as np.float32 array of shape (nClasses,).
+
+    Uses at most maxBatches batches (None = full loader). Suitable for CART
+    class registry updates and class-aware snapshot selection.
+    """
+    correct = np.zeros(nClasses, dtype=np.int64)
+    total = np.zeros(nClasses, dtype=np.int64)
+    for xBatch, yBatch in _iterLimited(dataLoader, maxBatches=maxBatches):
+        xb = tf.cast(xBatch, tf.float32)
+        logits = _forwardPass(model, xb)
+        preds = tf.argmax(logits, axis=1).numpy()
+        yNp = yBatch.numpy() if hasattr(yBatch, "numpy") else np.array(yBatch)
+        for c in range(nClasses):
+            mask = yNp == c
+            total[c] += mask.sum()
+            correct[c] += (preds[mask] == c).sum()
+    with np.errstate(divide='ignore', invalid='ignore'):
+        acc = np.where(total > 0, correct / total, 0.0)
+    return acc.astype(np.float32)
+
 def evaluateAll(nodes, testLoader, maxBatches=None):
     # evaluate every node and aggregate into avg/worst
     accs = [evaluate(node.model, testLoader, maxBatches=maxBatches) for node in nodes]
@@ -129,7 +177,7 @@ def makeLrScheduler(lr0, alpha=0.6, minLr=1e-4, useBasilSchedule=True, useLrDeca
             return float(max(minLr, lr0 * (t + 1) ** (-alpha)))
         return lr
 
-@tf.function
+@tf.function(reduce_retracing=True)
 def _computeGrads(model, x, y):
     # compute cross-entropy gradients and loss in one tape pass
     with tf.GradientTape() as tape:
@@ -139,7 +187,7 @@ def _computeGrads(model, x, y):
     return grads, loss
 
 
-@tf.function
+@tf.function(reduce_retracing=True)
 def _forwardPass(model, x):
     return model(x, training=False)
 
@@ -213,7 +261,8 @@ def localUpdate(
 
             grads, _ = _computeGrads(model, xb, yb)
             scale = 1.0 + ebmLambda * sigma * sigma  # (1 + λσ²)
-            scaledGrads = [g * scale for g in grads]
+            clipped, _ = tf.clip_by_global_norm(grads, 5.0)
+            scaledGrads = [g * scale for g in clipped]
             optimizer.apply_gradients(zip(scaledGrads, model.trainable_weights))
 
         else:

@@ -103,11 +103,29 @@ def loadNMnist():
     return (list(zip(xTrain, yTrain)), list(zip(xTest, yTest)))
 
 
-def makeLoaders(train, test, batchSize=32, iid=True, nClients=10):
-    # Simple IID split into nClients chunks
-    idx = np.arange(len(train))
-    np.random.shuffle(idx)
-    chunks = np.array_split(idx, nClients)
+def _dirichletPartition(train, nClients, alpha):
+    """Partition training data using Dirichlet distribution for non-IID splits."""
+    labels = np.array([y for _, y in train])
+    nClasses = int(labels.max()) + 1
+    clientIndices = [[] for _ in range(nClients)]
+
+    for c in range(nClasses):
+        classIdx = np.where(labels == c)[0]
+        np.random.shuffle(classIdx)
+        proportions = np.random.dirichlet(alpha * np.ones(nClients))
+        splits = (np.cumsum(proportions) * len(classIdx)).astype(int)[:-1]
+        for cid, chunk in enumerate(np.split(classIdx, splits)):
+            clientIndices[cid].extend(chunk.tolist())
+
+    return [np.array(indices) for indices in clientIndices]
+
+def makeLoaders(train, test, batchSize=32, iid=True, nClients=10, dirichletAlpha=0.5):
+    if iid:
+        idx = np.arange(len(train))
+        np.random.shuffle(idx)
+        chunks = np.array_split(idx, nClients)
+    else:
+        chunks = _dirichletPartition(train, nClients, dirichletAlpha)
 
     def toDataset(indices):
         data = [train[i] for i in indices]

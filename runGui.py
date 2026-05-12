@@ -70,17 +70,6 @@ def _run_watcher():
     import subprocess
     import time
 
-    print("""
-====================================================================
-          BASIL + Noisy Channel Experiment GUI - Auto-Reload
-
-   Watching for .py file changes. The GUI will restart automatically
-   whenever you save an edited file.
-   Use the [Reload] button inside the GUI to reload manually.
-   Press Ctrl+C here to exit completely.
-====================================================================
-    """)
-
     mtimes = _collect_mtimes()
     proc = _launch_subprocess()
 

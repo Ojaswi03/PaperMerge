@@ -12,6 +12,7 @@ Reference: "BASIL: A Fast and Byzantine-Resilient Approach for Decentralized Tra
 """
 
 import sys
+import math
 import tensorflow as tf
 from .attacks import applyAttack, modelPoisonAttack
 from .trainer import (
@@ -139,6 +140,7 @@ class BasilNode:
         if verbose:
             print(f"    [Node {self.nodeId}] Losses: {', '.join(f'{k}={v:.4f}' for k,v in allLosses.items())} → selected {bestSource}")
 
+
     def _ensureCompiled(self):
         """Build the compiled train step the first time it is needed.
         Called lazily so noiseModel/sigma are set before we compile."""
@@ -160,11 +162,14 @@ class BasilNode:
                     logits = model_inner(x, training=True)
                     loss = lossFn(y, logits)
                 grads = tape.gradient(loss, model_inner.trainable_weights)
-                scaled = [g * scale for g in grads]
-                # Clip to prevent explosion when starting from noisy weights
-                clipped, _ = tf.clip_by_global_norm(scaled, 5.0)
+                # Clip raw gradients first, then apply EBM scale.
+                # Clipping AFTER scaling was halving the effective clip threshold
+                # (clip=5 on 2x-scaled grads = clip=2.5 on real grads), which
+                # severely under-stepped at the start of training.
+                clipped, _ = tf.clip_by_global_norm(grads, 5.0)
+                scaled = [g * scale for g in clipped]
                 opt.apply_gradients(
-                    zip(clipped, model_inner.trainable_weights)
+                    zip(scaled, model_inner.trainable_weights)
                 )
         else:
             def _step_fn(x, y):
@@ -177,12 +182,17 @@ class BasilNode:
         self._compiledStep = tf.function(_step_fn)
 
     def _resetOptimizerSlots(self):
-        """Zero momentum buffers so each round starts fresh (matches original semantics)."""
+        """Zero momentum buffers so each round starts fresh (matches original semantics).
+        Must skip: 'iteration' step counter (Keras 3 name) and rank-0 scalar variables
+        (includes the LR tf.Variable) — zeroing those kills learning from round 1."""
         if self._opt is None:
             return
         for v in self._opt.variables:
-            if 'iterations' not in v.name:
-                v.assign(tf.zeros_like(v))
+            if 'iteration' in v.name:   # Keras 3 uses 'iteration', not 'iterations'
+                continue
+            if v.shape.rank == 0:       # skip scalars — includes the LR tf.Variable
+                continue
+            v.assign(tf.zeros_like(v))
 
     def localTrain(self, lr, stepsPerEpoch=100):
         # WCM requires custom gradient logic - fall back to existing path
@@ -229,6 +239,7 @@ def basilRingTrainingWithAttack(
     stepsPerEpoch=100,
     useSnapshots=True,
     useSequential=True,  # True = paper's sequential, False = parallel (faster but less accurate)
+    aggregationMode="handoff",
     stopCallback=None,
     useLrDecay=True,  # Set False for EBM with high noise + momentum
     usePlateauLr=False,   # Reduce LR when accuracy stops improving
@@ -248,13 +259,18 @@ def basilRingTrainingWithAttack(
         attackTypes = [attackTypes]
     if not attackTypes:
         attackTypes = ["none"]
+    if aggregationMode not in ("handoff", "consensus"):
+        raise ValueError(f"Unknown aggregationMode: {aggregationMode}")
 
     n = len(nodes)
     channelNoiseStart = int(channelNoiseStart)
     attackers = set(attackerIds or [])
 
-    # S = memory size (paper: S = b+1 where b = max Byzantine nodes)
+    # S = memory size for BASIL snapshot selection (paper: S = b+1).
+    # Consensus mode is a separate decentralized averaging baseline and needs
+    # full-ring mixing rather than one-predecessor handoff.
     S = nodes[0].S if nodes else 10
+    fanout = n - 1 if aggregationMode == "consensus" else S
 
     # EBM/WCM mitigation starts from round 0 to pre-condition model
     mitigation = noiseModel if noiseModel in ("ebm", "wcm") else "none"
@@ -301,8 +317,16 @@ def basilRingTrainingWithAttack(
         attackStr = f" | attack={atk}({len(attackers)} nodes)" if attackers and atk != "none" else ""
         print(f"[round {r}] lr={lr:.6f}{noiseStatus}{attackStr}...", flush=True)
 
-        # Communication sigma
-        commSigma = sigma if channelNoiseActive else 0.0
+        # Communication sigma.
+        # EBM calibration fix: EBM trains for noise σ applied once, but in ring topology
+        # each model passes through N hops per round, accumulating √N × σ_hop total noise.
+        # Scale per-hop noise down so accumulated noise = σ (what EBM trained for):
+        #   σ_hop = σ / √N  →  accumulated = √N × σ/√N = σ  ✓
+        # Non-EBM configs keep full σ per hop to show unmitigated degradation.
+        if channelNoiseActive and noiseModel == "ebm":
+            commSigma = sigma / math.sqrt(n)
+        else:
+            commSigma = sigma if channelNoiseActive else 0.0
 
         if useSequential:
             # ===== PAPER'S SEQUENTIAL ALGORITHM (Algorithm 1) =====
@@ -315,8 +339,18 @@ def basilRingTrainingWithAttack(
                     if useSnapshots:
                         # BASIL: Select best model from memory
                         nd.selectBestModel()
+                    elif aggregationMode == "consensus":
+                        # Consensus/gossip-inspired baseline: mix the node's
+                        # current model with received neighbor models before SGD.
+                        paramsList = [getParams(nd.model)]
+                        paramsList.extend(
+                            [p.copy() for p in params]
+                            for params in nd.neighborMemory.values()
+                        )
+                        setParams(nd.model, averageParams(paramsList))
                     else:
-                        # No BASIL: adopt predecessor's model
+                        # R-plain baseline from the BASIL paper: adopt the
+                        # immediate counterclockwise predecessor's model.
                         predecessorId = (i - 1) % n
                         if predecessorId in nd.neighborMemory:
                             setParams(nd.model, nd.neighborMemory[predecessorId])
@@ -342,8 +376,9 @@ def basilRingTrainingWithAttack(
                     else:
                         noisyParams = applyAttack(noisyParams, atk)
 
-                # Step 5: Multicast to next S clockwise neighbors (paper's key feature)
-                for offset in range(1, S + 1):
+                # Step 5: Multicast clockwise. BASIL uses S predecessors;
+                # consensus mode circulates to the full ring.
+                for offset in range(1, fanout + 1):
                     j = (i + offset) % n
                     nodes[j].receiveModel(i, noisyParams)
 
@@ -355,8 +390,15 @@ def basilRingTrainingWithAttack(
                     if useSnapshots:
                         # BASIL: Select best model from memory
                         nd.selectBestModel()
+                    elif aggregationMode == "consensus":
+                        paramsList = [getParams(nd.model)]
+                        paramsList.extend(
+                            [p.copy() for p in params]
+                            for params in nd.neighborMemory.values()
+                        )
+                        setParams(nd.model, averageParams(paramsList))
                     else:
-                        # No BASIL: adopt predecessor's model
+                        # R-plain baseline from the BASIL paper.
                         predecessorId = (i - 1) % n
                         if predecessorId in nd.neighborMemory:
                             setParams(nd.model, nd.neighborMemory[predecessorId])
@@ -378,8 +420,9 @@ def basilRingTrainingWithAttack(
                     else:
                         noisyParams = applyAttack(noisyParams, atk)
 
-                # Multicast to next S clockwise neighbors
-                for offset in range(1, S + 1):
+                # Multicast clockwise. BASIL uses S predecessors;
+                # consensus mode circulates to the full ring.
+                for offset in range(1, fanout + 1):
                     j = (i + offset) % n
                     nodes[j].receiveModel(i, noisyParams)
 

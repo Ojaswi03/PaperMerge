@@ -17,10 +17,29 @@ def _augment(x, y):
     x = tf.image.random_crop(x, [32, 32, 3])
     return x, y
 
-def makeLoaders(train, test, batchSize=32, iid=True, nClients=10):
-    idx = np.arange(len(train))
-    np.random.shuffle(idx)
-    chunks = np.array_split(idx, nClients)
+def _dirichletPartition(train, nClients, alpha):
+    """Partition training data using Dirichlet distribution for non-IID splits."""
+    labels = np.array([y for _, y in train])
+    nClasses = int(labels.max()) + 1
+    clientIndices = [[] for _ in range(nClients)]
+
+    for c in range(nClasses):
+        classIdx = np.where(labels == c)[0]
+        np.random.shuffle(classIdx)
+        proportions = np.random.dirichlet(alpha * np.ones(nClients))
+        splits = (np.cumsum(proportions) * len(classIdx)).astype(int)[:-1]
+        for cid, chunk in enumerate(np.split(classIdx, splits)):
+            clientIndices[cid].extend(chunk.tolist())
+
+    return [np.array(indices) for indices in clientIndices]
+
+def makeLoaders(train, test, batchSize=32, iid=True, nClients=10, dirichletAlpha=0.5):
+    if iid:
+        idx = np.arange(len(train))
+        np.random.shuffle(idx)
+        chunks = np.array_split(idx, nClients)
+    else:
+        chunks = _dirichletPartition(train, nClients, dirichletAlpha)
 
     def toDataset(indices):
         data = [train[i] for i in indices]
@@ -29,8 +48,8 @@ def makeLoaders(train, test, batchSize=32, iid=True, nClients=10):
         ds = tf.data.Dataset.from_tensor_slices((X, y))
         ds = ds.shuffle(buffer_size=len(indices), reshuffle_each_iteration=True)
         ds = ds.map(_augment, num_parallel_calls=tf.data.AUTOTUNE)
-        ds = ds.batch(batchSize, drop_remainder=True)
         ds = ds.repeat()
+        ds = ds.batch(batchSize, drop_remainder=True)
         ds = ds.prefetch(tf.data.AUTOTUNE)
         return ds
 

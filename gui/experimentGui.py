@@ -37,6 +37,7 @@ from basil_core.data.cifar import loadCifar10, makeLoaders as makeCifarLoaders
 from basil_core.data.nMnist import loadNMnist, makeLoaders as makeNMnistLoaders
 from basil_core.models import MNISTModel, CIFARModel, NMNISTModel
 from basil_core.basil import BasilNode, basilRingTrainingWithAttack, fedAvgTrainingWithNoise
+from basil_core.cart import CARTNode, cartRingTraining
 from basil_core.trainer import evaluateAll
 from scripts.common import setupGpu, sendNotification
 from plotGui import discoverDatasets, discoverExperiments, getColors, getMarkers
@@ -188,11 +189,14 @@ class ExperimentGUI:
         self.noiseMitigationVar   = tk.StringVar(value="none")
         self.ebmLambdaVar         = tk.DoubleVar(value=25.0)
         self.momentumVar          = tk.DoubleVar(value=0.9)
+        self.distillStrengthVar   = tk.DoubleVar(value=0.5)
+        self.verifyThresholdVar   = tk.DoubleVar(value=0.05)
+        self.cartAlgorithmVar     = tk.StringVar(value="cart")   # cart | basil | noisy | merged
         self.useLrDecayVar        = tk.BooleanVar(value=True)
         self.usePlateauLrVar        = tk.BooleanVar(value=True)
-        self.plateauPatienceVar     = tk.IntVar(value=5)
-        self.plateauFactorVar       = tk.DoubleVar(value=0.5)
-        self.plateauMinLrVar        = tk.DoubleVar(value=1e-4)
+        self.plateauPatienceVar     = tk.IntVar(value=8)
+        self.plateauFactorVar       = tk.DoubleVar(value=0.7)
+        self.plateauMinLrVar        = tk.DoubleVar(value=0.001)
         self.plateauThresholdVar    = tk.DoubleVar(value=0.01)
         self.attackGaussianVar         = tk.BooleanVar(value=False)
         self.attackGaussianStartVar    = tk.IntVar(value=0)
@@ -210,6 +214,8 @@ class ExperimentGUI:
         self.attackIpmStartVar         = tk.IntVar(value=0)
         self.attackNoiseAmpVar         = tk.BooleanVar(value=False)
         self.attackNoiseAmpStartVar    = tk.IntVar(value=0)
+        self.nonIIDVar        = tk.BooleanVar(value=True)
+        self.dirichletAlphaVar = tk.DoubleVar(value=0.2)
         self.attackerIdsVar   = tk.StringVar(value="1,4,6,8")
         self.nNodesVar        = tk.IntVar(value=10)
         self.nRoundsVar       = tk.IntVar(value=100)
@@ -221,7 +227,22 @@ class ExperimentGUI:
 
     # ── UI construction ───────────────────────────────────────────────────────
     def createUI(self):
-        # ---- notebook (tabs) -----------------------------------------------
+        # Bottom-anchored widgets must be packed BEFORE the expanding notebook
+        # so they are always visible regardless of window height.
+
+        # ---- status bar (very bottom) --------------------------------------
+        self._statusVar = tk.StringVar(value="")
+        ttk.Label(self.root, textvariable=self._statusVar,
+                  style='Status.TLabel', anchor=tk.W
+                  ).pack(side=tk.BOTTOM, fill=tk.X)
+
+        # ---- progress bar (above status) -----------------------------------
+        self._createProgressFrame()
+
+        # ---- button bar (above progress) -----------------------------------
+        self.createButtons()
+
+        # ---- notebook (fills all remaining space) --------------------------
         self.notebook = ttk.Notebook(self.root)
         self.notebook.pack(fill=tk.BOTH, expand=True, padx=8, pady=(8, 0))
 
@@ -240,21 +261,9 @@ class ExperimentGUI:
         self.createAttackTab(attackTab)
         self.createOutputTab(outputTab)
 
-        # ---- progress bar --------------------------------------------------
-        self._createProgressFrame()
-
-        # ---- button bar ----------------------------------------------------
-        self.createButtons()
-
-        # ---- status bar ----------------------------------------------------
-        self._statusVar = tk.StringVar(value="")
-        ttk.Label(self.root, textvariable=self._statusVar,
-                  style='Status.TLabel', anchor=tk.W
-                  ).pack(fill=tk.X, side=tk.BOTTOM)
-
     def _createProgressFrame(self):
         pf = ttk.Frame(self.root)
-        pf.pack(fill=tk.X, padx=8, pady=(4, 0))
+        pf.pack(side=tk.BOTTOM, fill=tk.X, padx=8, pady=(4, 2))
 
         self._progressBar = ttk.Progressbar(pf, variable=self._progressVar,
                                             maximum=100, length=400,
@@ -329,9 +338,9 @@ class ExperimentGUI:
             row=row, column=0, columnspan=4, sticky='ew', pady=8)
         row += 1
 
-        # Approach
+        # Approach — 2 rows × 2 cols so all 4 fit without crowding
         ttk.Label(frame, text="Approach:", font=('Segoe UI', 9, 'bold')).grid(
-            row=row, column=0, sticky=tk.W, pady=5)
+            row=row, column=0, rowspan=2, sticky=tk.W, pady=5)
         ttk.Radiobutton(frame, text="BASIL Only",
                         variable=self.approachVar, value="basil",
                         command=self.onApproachChange).grid(row=row, column=1, sticky=tk.W, padx=8)
@@ -341,7 +350,10 @@ class ExperimentGUI:
         ttk.Radiobutton(frame, text="Merged (BASIL + Noisy)",
                         variable=self.approachVar, value="merged",
                         command=self.onApproachChange).grid(row=row, column=3, sticky=tk.W, padx=8)
-        row += 1
+        ttk.Radiobutton(frame, text="CART (Class-Aware Ring - Paper 003)",
+                        variable=self.approachVar, value="cart",
+                        command=self.onApproachChange).grid(row=row+1, column=1, columnspan=3, sticky=tk.W, padx=8)
+        row += 2
 
         ttk.Separator(frame, orient='horizontal').grid(
             row=row, column=0, columnspan=4, sticky='ew', pady=8)
@@ -454,6 +466,54 @@ class ExperimentGUI:
         ttk.Entry(pRow, textvariable=self.plateauMinLrVar, width=8).pack(side=tk.LEFT, padx=(4, 16))
         ttk.Label(pRow, text="Threshold:").pack(side=tk.LEFT)
         ttk.Entry(pRow, textvariable=self.plateauThresholdVar, width=8).pack(side=tk.LEFT, padx=(4, 0))
+
+        # Data Distribution
+        distFrame = ttk.LabelFrame(frame, text="Data Distribution", padding=10)
+        distFrame.pack(fill=tk.X, pady=(8, 0))
+
+        ttk.Checkbutton(distFrame, text="Non-IID Data (Dirichlet partitioning)",
+                        variable=self.nonIIDVar,
+                        command=self._onNonIIDChange).grid(row=0, column=0, columnspan=3,
+                                                            sticky=tk.W, pady=5)
+        ttk.Label(distFrame, text="Dirichlet Alpha (α):").grid(row=1, column=0, sticky=tk.W)
+        self._alphaEntry = ttk.Entry(distFrame, textvariable=self.dirichletAlphaVar, width=10)
+        self._alphaEntry.grid(row=1, column=1, sticky=tk.W, padx=8)
+        ttk.Label(distFrame,
+                  text="Lower = more skewed  (0.1 = extreme, 0.2 = severe, 0.5 = moderate, 1.0 = mild)",
+                  foreground=MUTED, font=('Segoe UI', 8)).grid(row=1, column=2, sticky=tk.W)
+        self._onNonIIDChange()
+
+        # CART
+        cartFrame = ttk.LabelFrame(frame, text="CART Configuration (Paper 003)", padding=10)
+        cartFrame.pack(fill=tk.X, pady=(8, 0))
+
+        # Algorithm selector — lets you run baselines under the same non-IID CART setting
+        ttk.Label(cartFrame, text="Algorithm:", font=('Segoe UI', 9, 'bold')).grid(
+            row=0, column=0, sticky=tk.W, pady=(0, 4))
+        algFrame = ttk.Frame(cartFrame)
+        algFrame.grid(row=0, column=1, columnspan=2, sticky=tk.W)
+        for _alg, _lbl in (("cart",   "CART (Paper 003)"),
+                            ("basil",  "BASIL Ring (baseline)"),
+                            ("noisy",  "FedAvg / Noisy (baseline)"),
+                            ("merged", "Merged Ring+EBM (baseline)")):
+            ttk.Radiobutton(algFrame, text=_lbl,
+                            variable=self.cartAlgorithmVar, value=_alg).pack(anchor=tk.W)
+
+        ttk.Separator(cartFrame, orient='horizontal').grid(
+            row=1, column=0, columnspan=3, sticky='ew', pady=6)
+
+        cartRows = [
+            ("Distillation Strength (γ):", self.distillStrengthVar,
+             "Proximal coefficient scale — higher = stronger class knowledge preservation"),
+            ("Verify Threshold:",           self.verifyThresholdVar,
+             "Max allowed registry claim gap before rejecting Byzantine inflation"),
+        ]
+        for i, (lbl, var, hint) in enumerate(cartRows, start=2):
+            ttk.Label(cartFrame, text=lbl).grid(row=i, column=0, sticky=tk.W, pady=2)
+            ttk.Entry(cartFrame, textvariable=var, width=10).grid(
+                row=i, column=1, sticky=tk.W, padx=8)
+            ttk.Label(cartFrame, text=hint, foreground=MUTED,
+                      font=('Segoe UI', 8)).grid(row=i, column=2, sticky=tk.W)
 
     # ── Attack tab ────────────────────────────────────────────────────────────
     def createAttackTab(self, parent):
@@ -604,7 +664,7 @@ class ExperimentGUI:
     # ── Buttons ───────────────────────────────────────────────────────────────
     def createButtons(self):
         bf = ttk.Frame(self.root)
-        bf.pack(fill=tk.X, padx=8, pady=6)
+        bf.pack(side=tk.BOTTOM, fill=tk.X, padx=8, pady=6)
 
         self.runButton = ttk.Button(
             bf, text="▶  Run Experiment", style='Run.TButton',
@@ -777,6 +837,10 @@ class ExperimentGUI:
         self._refreshLiveChart()
 
     # ── Preset & auto-name helpers ─────────────────────────────────────────────
+    def _onNonIIDChange(self):
+        state = tk.NORMAL if self.nonIIDVar.get() else tk.DISABLED
+        self._alphaEntry.configure(state=state)
+
     def _applyPreset(self, name):
         cfg = PRESETS[name]
         mapping = {
@@ -807,7 +871,7 @@ class ExperimentGUI:
 
     def _autoGenerateName(self):
         dataset  = self.datasetVar.get().upper()
-        approach = {'basil': 'BASIL', 'noisy': 'FedAvg', 'merged': 'Merged'}.get(
+        approach = {'basil': 'BASIL', 'noisy': 'FedAvg', 'merged': 'Merged', 'cart': 'CART'}.get(
             self.approachVar.get(), self.approachVar.get())
         noisy  = " + Noise" if self.useChannelNoiseVar.get() else ""
         mitig  = f" + {self.noiseMitigationVar.get().upper()}" if self.useChannelNoiseVar.get() and self.noiseMitigationVar.get() != 'none' else ""
@@ -935,6 +999,8 @@ class ExperimentGUI:
             self.useBasilVar.set(False); self.useChannelNoiseVar.set(True)
         elif approach == "merged":
             self.useBasilVar.set(True);  self.useChannelNoiseVar.set(True)
+        elif approach == "cart":
+            self.useBasilVar.set(True);  self.useChannelNoiseVar.set(False)
 
     # ── Run / Stop ────────────────────────────────────────────────────────────
     def runExperiment(self):
@@ -1043,7 +1109,8 @@ class ExperimentGUI:
             return None, None
         safeName = "".join(c if c.isalnum() or c in " _-" else "_" for c in expName).strip().replace(" ", "_")
         approach  = config.get('approach', 'basil')
-        resultDir = f"experiments/results/gui/{dataset}/{attackKey}/{approach}"
+        split = 'nonIID' if config.get('nonIID', True) else 'IID'
+        resultDir = f"experiments/results/gui/{split}/{dataset}/{attackKey}/{approach}"
         return f"{resultDir}/acc_{safeName}.npy", f"{resultDir}/config_{safeName}.json"
 
     def _isAlreadyRun(self, config):
@@ -1187,6 +1254,7 @@ class ExperimentGUI:
             'basil':  'BASIL Only (Ring Topology - Paper 001)',
             'noisy':  'Noisy Channel Only (FedAvg - Paper 002)',
             'merged': 'Merged (Ring + EBM)',
+            'cart':   f"CART — {config.get('cartAlgorithm','cart').upper()} algorithm",
         }
         self.logMessage("Configuration:")
         self.logMessage(f"  Experiment: {config.get('experimentName', '(unnamed)')}")
@@ -1220,10 +1288,18 @@ class ExperimentGUI:
 
         self.logMessage(f"Loading {config['dataset'].upper()} dataset…")
         train, test = self.loadDataset(config['dataset'])
+        iid = not config.get('nonIID', True)
+        alpha = config.get('dirichletAlpha', 0.2)
         trainLoaders, testLoader = self.makeLoaders(
-            config['dataset'], train, test, config['batchSize'], config['nNodes'])
+            config['dataset'], train, test, config['batchSize'], config['nNodes'],
+            iid=iid, dirichletAlpha=alpha)
         self.logMessage(f"  Training samples: {len(train)}")
-        self.logMessage(f"  Test samples:     {len(test)}\n")
+        self.logMessage(f"  Test samples:     {len(test)}")
+        if config.get('nonIID', True):
+            self.logMessage(f"  Data split:       Non-IID (Dirichlet α={alpha})")
+        else:
+            self.logMessage(f"  Data split:       IID (uniform random)")
+        self.logMessage("")
 
         self.logMessage(f"Creating {config['nNodes']} nodes…")
         nodes = self.createNodes(config, trainLoaders)
@@ -1234,7 +1310,105 @@ class ExperimentGUI:
         self.logMessage(f"  Attackers:    {attackerIds if attackerIds else 'None'}")
         self.logMessage(f"  Attack types: {attackTypes}\n")
 
-        if config['approach'] == 'noisy':
+        cartAlg = config.get('cartAlgorithm', 'cart')
+        aggregationMode = config.get(
+            'aggregationMode',
+            'consensus' if config.get('approach') in ('merged', 'cart') else 'handoff',
+        )
+
+        if config['approach'] == 'cart' and cartAlg == 'cart':
+            self.logMessage(f"Starting CART ring training for {config['nRounds']} rounds…")
+            self.logMessage(f"Mode: CART (Class-Aware Ring Training, {aggregationMode} aggregation) - Paper 003")
+            self.logMessage("-" * 80)
+            avgAccHist, worstAccHist = cartRingTraining(
+                nodes=nodes,
+                rounds=config['nRounds'],
+                testLoader=testLoader,
+                attackTypes=attackTypes,
+                attackerIds=attackerIds,
+                hiddenStartRound=config['attackHiddenStart'] if config['attackHidden'] else 999,
+                sigma=config['channelNoiseSigma'] if config['useChannelNoise'] else 0.0,
+                noiseModel=self.getNoiseModel(config),
+                channelNoiseStart=config['channelNoiseStart'] if config['useChannelNoise'] else 0,
+                lr0=config['learningRate'],
+                stepsPerEpoch=config.get('stepsPerEpoch', 5),
+                useSnapshots=config.get('useBasil', True),
+                aggregationMode=aggregationMode,
+                stopCallback=lambda: not self.isRunning,
+                useLrDecay=config.get('useLrDecay', True),
+                usePlateauLr=config.get('usePlateauLr', True),
+                plateauPatience=config.get('plateauPatience', 8),
+                plateauFactor=config.get('plateauFactor', 0.7),
+                plateauMinLr=config.get('plateauMinLr', 0.001),
+                plateauThreshold=config.get('plateauThreshold', 0.01),
+                nClasses=10,
+                verifyThreshold=config.get('verifyThreshold', 0.05),
+                roundCallback=self._onRoundComplete,
+            )
+        elif config['approach'] == 'cart' and cartAlg == 'noisy':
+            self.logMessage(f"Starting CART-setting FedAvg (baseline) for {config['nRounds']} rounds…")
+            self.logMessage("Mode: FedAvg baseline in CART non-IID setting")
+            self.logMessage("-" * 80)
+            avgAccHist, worstAccHist = fedAvgTrainingWithNoise(
+                nodes=nodes,
+                rounds=config['nRounds'],
+                testLoader=testLoader,
+                attackTypes=attackTypes,
+                attackerIds=attackerIds,
+                hiddenStartRound=config['attackHiddenStart'] if config['attackHidden'] else 999,
+                sigma=config['channelNoiseSigma'] if config['useChannelNoise'] else 0.0,
+                noiseModel=self.getNoiseModel(config),
+                channelNoiseStart=config['channelNoiseStart'] if config['useChannelNoise'] else 0,
+                lr0=config['learningRate'],
+                localEpochs=config['localEpochs'],
+                stepsPerEpoch=config.get('stepsPerEpoch', 5),
+                useSnapshots=False,
+                S=config.get('basilMemorySize', 4),
+                stopCallback=lambda: not self.isRunning,
+                useLrDecay=config.get('useLrDecay', True),
+                usePlateauLr=config.get('usePlateauLr', True),
+                plateauPatience=config.get('plateauPatience', 8),
+                plateauFactor=config.get('plateauFactor', 0.7),
+                plateauMinLr=config.get('plateauMinLr', 0.001),
+                plateauThreshold=config.get('plateauThreshold', 0.01),
+                roundCallback=self._onRoundComplete,
+            )
+        elif config['approach'] == 'cart' and cartAlg in ('basil', 'merged'):
+            _ssOn  = True   # both basil and merged use SS
+            _ebm   = (cartAlg == 'merged')  # merged also uses EBM
+            _label = 'BASIL Ring baseline' if cartAlg == 'basil' else 'Merged Ring+EBM baseline'
+            self.logMessage(f"Starting CART-setting {_label} for {config['nRounds']} rounds…")
+            self.logMessage(f"Mode: {_label} in CART non-IID setting")
+            self.logMessage("-" * 80)
+            # Override noise model for merged: enable EBM
+            _noiseModel = self.getNoiseModel(config)
+            if _ebm and config.get('channelNoiseSigma', 0) > 0:
+                _noiseModel = 'ebm'
+            avgAccHist, worstAccHist = basilRingTrainingWithAttack(
+                nodes=nodes,
+                rounds=config['nRounds'],
+                testLoader=testLoader,
+                attackTypes=attackTypes,
+                attackerIds=attackerIds,
+                hiddenStartRound=config['attackHiddenStart'] if config['attackHidden'] else 999,
+                sigma=config['channelNoiseSigma'] if config['useChannelNoise'] else 0.0,
+                noiseModel=_noiseModel,
+                channelNoiseStart=config['channelNoiseStart'] if config['useChannelNoise'] else 0,
+                lr0=config['learningRate'],
+                stepsPerEpoch=config.get('stepsPerEpoch', 5),
+                useSnapshots=_ssOn,
+                useSequential=True,
+                aggregationMode=aggregationMode,
+                stopCallback=lambda: not self.isRunning,
+                useLrDecay=config.get('useLrDecay', True),
+                usePlateauLr=config.get('usePlateauLr', True),
+                plateauPatience=config.get('plateauPatience', 8),
+                plateauFactor=config.get('plateauFactor', 0.7),
+                plateauMinLr=config.get('plateauMinLr', 0.001),
+                plateauThreshold=config.get('plateauThreshold', 0.01),
+                roundCallback=self._onRoundComplete,
+            )
+        elif config['approach'] == 'noisy':
             self.logMessage(f"Starting FedAvg training for {config['nRounds']} rounds…")
             self.logMessage("Mode: FedAvg (Parallel + Averaging) - Paper 002")
             self.logMessage("-" * 80)
@@ -1256,15 +1430,15 @@ class ExperimentGUI:
                 stopCallback=lambda: not self.isRunning,
                 useLrDecay=config.get('useLrDecay', True),
                 usePlateauLr=config.get('usePlateauLr', True),
-                plateauPatience=config.get('plateauPatience', 5),
-                plateauFactor=config.get('plateauFactor', 0.5),
-                plateauMinLr=config.get('plateauMinLr', 1e-4),
+                plateauPatience=config.get('plateauPatience', 8),
+                plateauFactor=config.get('plateauFactor', 0.7),
+                plateauMinLr=config.get('plateauMinLr', 0.001),
                 plateauThreshold=config.get('plateauThreshold', 0.01),
                 roundCallback=self._onRoundComplete,
             )
         else:
             self.logMessage(f"Starting Ring training for {config['nRounds']} rounds…")
-            self.logMessage("Mode: Ring Topology (Sequential) - Paper 001")
+            self.logMessage(f"Mode: Ring Topology (Sequential, {aggregationMode} aggregation)")
             self.logMessage("-" * 80)
             avgAccHist, worstAccHist = basilRingTrainingWithAttack(
                 nodes=nodes,
@@ -1280,12 +1454,13 @@ class ExperimentGUI:
                 stepsPerEpoch=config.get('stepsPerEpoch', 5),
                 useSnapshots=config['useBasil'],
                 useSequential=True,
+                aggregationMode=aggregationMode,
                 stopCallback=lambda: not self.isRunning,
                 useLrDecay=config.get('useLrDecay', True),
                 usePlateauLr=config.get('usePlateauLr', True),
-                plateauPatience=config.get('plateauPatience', 5),
-                plateauFactor=config.get('plateauFactor', 0.5),
-                plateauMinLr=config.get('plateauMinLr', 1e-4),
+                plateauPatience=config.get('plateauPatience', 8),
+                plateauFactor=config.get('plateauFactor', 0.7),
+                plateauMinLr=config.get('plateauMinLr', 0.001),
                 plateauThreshold=config.get('plateauThreshold', 0.01),
                 roundCallback=self._onRoundComplete,
             )
@@ -1353,12 +1528,18 @@ class ExperimentGUI:
             'attackIpmStart':        self.attackIpmStartVar.get(),
             'attackNoiseAmp':        self.attackNoiseAmpVar.get(),
             'attackNoiseAmpStart':   self.attackNoiseAmpStartVar.get(),
+            'nonIID':                self.nonIIDVar.get(),
+            'dirichletAlpha':        self.dirichletAlphaVar.get(),
+            'distillStrength':       self.distillStrengthVar.get(),
+            'verifyThreshold':       self.verifyThresholdVar.get(),
+            'cartAlgorithm':         self.cartAlgorithmVar.get(),
             'attackerIds':           self.attackerIdsVar.get(),
             'nNodes':                self.nNodesVar.get(),
             'nRounds':               self.nRoundsVar.get(),
             'localEpochs':           self.localEpochsVar.get(),
             'learningRate':          self.learningRateVar.get(),
             'batchSize':             self.batchSizeVar.get(),
+            'stepsPerEpoch':         5,
             'useLrDecay':            self.useLrDecayVar.get(),
             'usePlateauLr':          self.usePlateauLrVar.get(),
             'plateauPatience':       self.plateauPatienceVar.get(),
@@ -1374,14 +1555,17 @@ class ExperimentGUI:
         if dataset == "nmnist":   return loadNMnist()
         raise ValueError(f"Unknown dataset: {dataset}")
 
-    def makeLoaders(self, dataset, train, test, batchSize, nClients):
-        if dataset == "mnist":   return makeMnistLoaders(train, test, batchSize=batchSize, nClients=nClients)
-        if dataset == "cifar10": return makeCifarLoaders(train, test, batchSize=batchSize, nClients=nClients)
-        if dataset == "nmnist":  return makeNMnistLoaders(train, test, batchSize=batchSize, nClients=nClients)
+    def makeLoaders(self, dataset, train, test, batchSize, nClients, iid=True, dirichletAlpha=0.2):
+        kwargs = dict(batchSize=batchSize, nClients=nClients, iid=iid, dirichletAlpha=dirichletAlpha)
+        if dataset == "mnist":   return makeMnistLoaders(train, test, **kwargs)
+        if dataset == "cifar10": return makeCifarLoaders(train, test, **kwargs)
+        if dataset == "nmnist":  return makeNMnistLoaders(train, test, **kwargs)
         raise ValueError(f"Unknown dataset: {dataset}")
 
     def createNodes(self, config, trainLoaders):
         modelClass = self.getModelClass(config['dataset'])
+        isCart = (config.get('approach') == 'cart' and
+                  config.get('cartAlgorithm', 'cart') == 'cart')
         nodes = []
         for i in range(config['nNodes']):
             nodeCfg = {
@@ -1396,7 +1580,12 @@ class ExperimentGUI:
             }
             if config['noiseMitigation'] == 'ebm':
                 nodeCfg['ebmLambda'] = config['ebmLambda']
-            nodes.append(BasilNode(**nodeCfg))
+            if isCart:
+                nodeCfg['distillStrength'] = config.get('distillStrength', 0.5)
+                nodeCfg['verifyThreshold'] = config.get('verifyThreshold', 0.05)
+                nodes.append(CARTNode(**nodeCfg))
+            else:
+                nodes.append(BasilNode(**nodeCfg))
         return nodes
 
     def getModelClass(self, dataset):
@@ -1451,7 +1640,8 @@ class ExperimentGUI:
             safeName = f"{config['approach']}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
 
         approach  = config.get('approach', 'basil')
-        resultDir = f"experiments/results/gui/{dataset}/{attackKey}/{approach}"
+        split = 'nonIID' if config.get('nonIID', True) else 'IID'
+        resultDir = f"experiments/results/gui/{split}/{dataset}/{attackKey}/{approach}"
         os.makedirs(resultDir, exist_ok=True)
 
         avgPath    = f"{resultDir}/acc_{safeName}.npy"
@@ -1486,6 +1676,8 @@ class ExperimentGUI:
                    command=lambda: addCurrent()).pack(side=tk.LEFT, padx=(0, 4))
         ttk.Button(topFrame, text="+ Add from File",
                    command=lambda: addFromFile()).pack(side=tk.LEFT, padx=4)
+        ttk.Button(topFrame, text="+ Add All…",
+                   command=lambda: addAllDialog()).pack(side=tk.LEFT, padx=4)
 
         tk.Label(topFrame, text="Repeat:", bg=BG, fg=HEADER,
                  font=('Segoe UI', 9)).pack(side=tk.LEFT, padx=(16, 4))
@@ -1563,7 +1755,6 @@ class ExperimentGUI:
             refreshTree()
 
         def addFromFile():
-            # Reuse the existing custom picker dialog logic
             currentApproach = self.approachVar.get() if hasattr(self, 'approachVar') else 'basil'
             pickerDlg = tk.Toplevel(dlg)
             pickerDlg.title("Add Config from File")
@@ -1572,25 +1763,39 @@ class ExperimentGUI:
             pickerDlg.transient(dlg)
             pickerDlg.grab_set()
 
-            pickedPath = [None]
+            splitVar2    = tk.StringVar(value='nonIID')
             approachVar2 = tk.StringVar(value=currentApproach)
 
-            tabFrame2 = tk.Frame(pickerDlg, bg=BG)
-            tabFrame2.pack(fill=tk.X, padx=12, pady=(12, 0))
-            tk.Label(tabFrame2, text="Approach:", bg=BG, fg=HEADER,
+            # ── Data split selector ──
+            splitFrame2 = tk.Frame(pickerDlg, bg=BG)
+            splitFrame2.pack(fill=tk.X, padx=12, pady=(12, 0))
+            tk.Label(splitFrame2, text="Data Split:", bg=BG, fg=HEADER,
                      font=('Segoe UI', 9, 'bold')).pack(side=tk.LEFT, padx=(0, 8))
-            for ap in ('basil', 'noisy', 'merged'):
-                folder = os.path.join(configDir, ap)
-                n = len([f for f in os.listdir(folder) if f.endswith('.json')]) if os.path.isdir(folder) else 0
-                ttk.Radiobutton(tabFrame2, text=f"{ap.capitalize()}  ({n})",
-                                variable=approachVar2, value=ap,
+            for sp in ('nonIID', 'IID'):
+                ttk.Radiobutton(splitFrame2, text=sp, variable=splitVar2, value=sp,
                                 command=lambda: refreshPicker()).pack(side=tk.LEFT, padx=6)
+
+            # ── Approach selector ──
+            tabFrame2 = tk.Frame(pickerDlg, bg=BG)
+            tabFrame2.pack(fill=tk.X, padx=12, pady=(6, 0))
+            tk.Label(tabFrame2, text="Approach:", bg=BG, fg=HEADER,
+                     font=('Segoe UI', 9, 'bold')).grid(row=0, column=0, rowspan=2, sticky=tk.W, padx=(0, 8))
+
+            apCountLabels2 = {}
+            _apList2 = ('basil', 'noisy', 'merged', 'cart')
+            for _idx2, ap in enumerate(_apList2):
+                _r2, _c2 = divmod(_idx2, 2)
+                lbl_var = tk.StringVar(value=f"{ap.capitalize()}  (?)")
+                apCountLabels2[ap] = lbl_var
+                ttk.Radiobutton(tabFrame2, textvariable=lbl_var,
+                                variable=approachVar2, value=ap,
+                                command=lambda: refreshPicker()).grid(row=_r2, column=_c2 + 1, sticky=tk.W, padx=6, pady=1)
 
             listFrame2 = tk.Frame(pickerDlg, bg=BG)
             listFrame2.pack(fill=tk.BOTH, expand=True, padx=12, pady=8)
             sb2 = ttk.Scrollbar(listFrame2, orient=tk.VERTICAL)
             sb2.pack(side=tk.RIGHT, fill=tk.Y)
-            listbox2 = tk.Listbox(listFrame2, yscrollcommand=sb2.set, selectmode=tk.SINGLE,
+            listbox2 = tk.Listbox(listFrame2, yscrollcommand=sb2.set, selectmode=tk.EXTENDED,
                                   activestyle='dotbox', font=('Segoe UI', 9),
                                   bg=PANEL_BG, fg=HEADER,
                                   selectbackground=ACCENT, selectforeground='white',
@@ -1604,12 +1809,18 @@ class ExperimentGUI:
                                    font=('Segoe UI', 9))
             countLabel2.pack(side=tk.LEFT)
             ttk.Button(botFrame2, text="Cancel", command=pickerDlg.destroy).pack(side=tk.RIGHT, padx=(4, 0))
-            ttk.Button(botFrame2, text="Add to Queue", style='Run.TButton',
+            ttk.Button(botFrame2, text="Add Selected to Queue", style='Run.TButton',
                        command=lambda: onPickAdd()).pack(side=tk.RIGHT, padx=(0, 4))
 
             def refreshPicker():
+                sp = splitVar2.get()
                 ap = approachVar2.get()
-                folder = os.path.join(configDir, ap)
+                # Update counts on all approach labels
+                for _ap, lv in apCountLabels2.items():
+                    _f = os.path.join(configDir, sp, _ap)
+                    _n = len([x for x in os.listdir(_f) if x.endswith('.json')]) if os.path.isdir(_f) else 0
+                    lv.set(f"{_ap.capitalize()}  ({_n})")
+                folder = os.path.join(configDir, sp, ap)
                 files = sorted([f for f in os.listdir(folder) if f.endswith('.json')]) \
                         if os.path.isdir(folder) else []
                 listbox2.delete(0, tk.END)
@@ -1621,28 +1832,93 @@ class ExperimentGUI:
                 sel = listbox2.curselection()
                 if not sel:
                     return
-                name = listbox2.get(sel[0]) + '.json'
-                path = os.path.join(configDir, approachVar2.get(), name)
-                try:
-                    with open(path) as f:
-                        cfg = json.load(f)
-                    for _ in range(repeatVar.get()):
-                        self.configQueue.append(dict(cfg))
-                    refreshTree()
-                    pickerDlg.destroy()
-                except Exception as e:
-                    messagebox.showerror("Error", str(e), parent=pickerDlg)
+                for idx in sel:
+                    name = listbox2.get(idx) + '.json'
+                    path = os.path.join(configDir, splitVar2.get(), approachVar2.get(), name)
+                    try:
+                        with open(path) as f:
+                            cfg = json.load(f)
+                        for _ in range(repeatVar.get()):
+                            self.configQueue.append(dict(cfg))
+                    except Exception as e:
+                        messagebox.showerror("Error", str(e), parent=pickerDlg)
+                        return
+                refreshTree()
+                pickerDlg.destroy()
 
             listbox2.bind('<Double-Button-1>', lambda e: onPickAdd())
             pickerDlg.bind('<Escape>', lambda e: pickerDlg.destroy())
 
             pickerDlg.update_idletasks()
-            w2, h2 = 560, 420
+            w2, h2 = 580, 460
             x2 = dlg.winfo_x() + (dlg.winfo_width()  - w2) // 2
             y2 = dlg.winfo_y() + (dlg.winfo_height() - h2) // 2
             pickerDlg.geometry(f"{w2}x{h2}+{x2}+{y2}")
             refreshPicker()
             pickerDlg.wait_window()
+
+        def addAllDialog():
+            """Small dialog: pick split + approach → bulk-add all configs."""
+            adlg = tk.Toplevel(dlg)
+            adlg.title("Add All Configs")
+            adlg.configure(bg=BG)
+            adlg.resizable(False, False)
+            adlg.transient(dlg)
+            adlg.grab_set()
+
+            splitVarA = tk.StringVar(value='nonIID')
+            apVarA    = tk.StringVar(value='cart')
+
+            tk.Label(adlg, text="Data Split:", bg=BG, fg=HEADER,
+                     font=('Segoe UI', 9, 'bold')).grid(row=0, column=0, sticky=tk.W, padx=12, pady=(14, 4))
+            splitF = tk.Frame(adlg, bg=BG)
+            splitF.grid(row=0, column=1, sticky=tk.W, padx=4, pady=(14, 4))
+            for sp in ('nonIID', 'IID'):
+                ttk.Radiobutton(splitF, text=sp, variable=splitVarA, value=sp).pack(side=tk.LEFT, padx=6)
+
+            tk.Label(adlg, text="Approach:", bg=BG, fg=HEADER,
+                     font=('Segoe UI', 9, 'bold')).grid(row=1, column=0, sticky=tk.W, padx=12, pady=4)
+            apF = tk.Frame(adlg, bg=BG)
+            apF.grid(row=1, column=1, sticky=tk.W, padx=4, pady=4)
+            for ap in ('basil', 'noisy', 'merged', 'cart'):
+                ttk.Radiobutton(apF, text=ap.capitalize(), variable=apVarA, value=ap).pack(side=tk.LEFT, padx=6)
+
+            btnF = tk.Frame(adlg, bg=BG)
+            btnF.grid(row=2, column=0, columnspan=2, pady=(8, 14), padx=12)
+            ttk.Button(btnF, text="Cancel", command=adlg.destroy).pack(side=tk.RIGHT, padx=(4, 0))
+            ttk.Button(btnF, text="Add All to Queue", style='Run.TButton',
+                       command=lambda: doAddAll()).pack(side=tk.RIGHT)
+
+            def doAddAll():
+                sp = splitVarA.get()
+                ap = apVarA.get()
+                folder = os.path.join(configDir, sp, ap)
+                if not os.path.isdir(folder):
+                    messagebox.showerror("Error", f"Folder not found: {sp}/{ap}", parent=adlg)
+                    return
+                files = sorted([f for f in os.listdir(folder) if f.endswith('.json')])
+                if not files:
+                    messagebox.showwarning("No Configs", f"No JSON configs in {sp}/{ap}/", parent=adlg)
+                    return
+                added = 0
+                for fname in files:
+                    try:
+                        with open(os.path.join(folder, fname)) as f:
+                            cfg = json.load(f)
+                        for _ in range(repeatVar.get()):
+                            self.configQueue.append(dict(cfg))
+                        added += 1
+                    except Exception:
+                        pass
+                adlg.destroy()
+                refreshTree()
+                messagebox.showinfo("Added", f"Added {added} {sp}/{ap.upper()} configs to queue.", parent=dlg)
+
+            adlg.update_idletasks()
+            x = dlg.winfo_x() + (dlg.winfo_width()  - adlg.winfo_width())  // 2
+            y = dlg.winfo_y() + (dlg.winfo_height() - adlg.winfo_height()) // 2
+            adlg.geometry(f"+{x}+{y}")
+            adlg.wait_window()
 
         def _selectedIdx():
             sel = tree.selection()
@@ -1773,12 +2049,13 @@ class ExperimentGUI:
     def saveConfig(self):
         config   = self.getConfig()
         approach = config.get('approach', 'basil')
+        split    = 'nonIID' if config.get('nonIID', True) else 'IID'
         expName  = config.get('experimentName', '').strip()
         default  = expName or f"config_{config['dataset']}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
         if not default.endswith('.json'):
             default += '.json'
         configDir  = os.path.join(os.path.dirname(os.path.abspath(__file__)), "configs")
-        initialdir = os.path.join(configDir, approach)
+        initialdir = os.path.join(configDir, split, approach)
         os.makedirs(initialdir, exist_ok=True)
         filepath = filedialog.asksaveasfilename(
             title=f"Save Configuration — {approach.capitalize()}",
@@ -1798,7 +2075,7 @@ class ExperimentGUI:
         self._setStatus(f"Config saved: {os.path.basename(filepath)}")
 
     def loadConfig(self):
-        configDir      = os.path.join(os.path.dirname(os.path.abspath(__file__)), "configs")
+        configDir       = os.path.join(os.path.dirname(os.path.abspath(__file__)), "configs")
         currentApproach = self.approachVar.get() if hasattr(self, 'approachVar') else 'basil'
 
         # ── Custom picker dialog ──────────────────────────────────────────────
@@ -1810,21 +2087,34 @@ class ExperimentGUI:
         dlg.grab_set()
 
         selectedPath = [None]
+        splitVar     = tk.StringVar(value='nonIID')
         approachVar  = tk.StringVar(value=currentApproach)
 
-        # Approach selector with live counts
-        tabFrame = tk.Frame(dlg, bg=BG)
-        tabFrame.pack(fill=tk.X, padx=12, pady=(12, 0))
-        tk.Label(tabFrame, text="Approach:", bg=BG, fg=HEADER,
+        # ── Data split selector ──
+        splitFrame = tk.Frame(dlg, bg=BG)
+        splitFrame.pack(fill=tk.X, padx=12, pady=(12, 0))
+        tk.Label(splitFrame, text="Data Split:", bg=BG, fg=HEADER,
                  font=('Segoe UI', 9, 'bold')).pack(side=tk.LEFT, padx=(0, 8))
-        for ap in ('basil', 'noisy', 'merged'):
-            folder = os.path.join(configDir, ap)
-            n = len([f for f in os.listdir(folder) if f.endswith('.json')]) if os.path.isdir(folder) else 0
-            ttk.Radiobutton(tabFrame, text=f"{ap.capitalize()}  ({n})",
-                            variable=approachVar, value=ap,
+        for sp in ('nonIID', 'IID'):
+            ttk.Radiobutton(splitFrame, text=sp, variable=splitVar, value=sp,
                             command=lambda: refreshList()).pack(side=tk.LEFT, padx=6)
 
-        # File listbox
+        # ── Approach selector with live counts ──
+        tabFrame = tk.Frame(dlg, bg=BG)
+        tabFrame.pack(fill=tk.X, padx=12, pady=(6, 0))
+        tk.Label(tabFrame, text="Approach:", bg=BG, fg=HEADER,
+                 font=('Segoe UI', 9, 'bold')).grid(row=0, column=0, rowspan=2, sticky=tk.W, padx=(0, 8))
+
+        apCountLabels = {}
+        _apList = ('basil', 'noisy', 'merged', 'cart')
+        for _idx, ap in enumerate(_apList):
+            _r, _c = divmod(_idx, 2)
+            lbl_var = tk.StringVar(value=f"{ap.capitalize()}  (?)")
+            apCountLabels[ap] = lbl_var
+            ttk.Radiobutton(tabFrame, textvariable=lbl_var, variable=approachVar, value=ap,
+                            command=lambda: refreshList()).grid(row=_r, column=_c + 1, sticky=tk.W, padx=6, pady=1)
+
+        # ── File listbox ──
         listFrame = tk.Frame(dlg, bg=BG)
         listFrame.pack(fill=tk.BOTH, expand=True, padx=12, pady=8)
         sb = ttk.Scrollbar(listFrame, orient=tk.VERTICAL)
@@ -1837,7 +2127,7 @@ class ExperimentGUI:
         listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         sb.config(command=listbox.yview)
 
-        # Bottom bar: count (left) + buttons (right)
+        # ── Bottom bar ──
         bottomFrame = tk.Frame(dlg, bg=BG)
         bottomFrame.pack(fill=tk.X, padx=12, pady=(0, 12))
         countLabel = tk.Label(bottomFrame, text="0 files", bg=BG, fg=MUTED,
@@ -1848,13 +2138,19 @@ class ExperimentGUI:
                    command=lambda: onLoad()).pack(side=tk.RIGHT, padx=(0, 4))
 
         def refreshList():
-            ap     = approachVar.get()
-            folder = os.path.join(configDir, ap)
+            sp = splitVar.get()
+            ap = approachVar.get()
+            # Update counts on all approach labels
+            for _ap, lv in apCountLabels.items():
+                _f = os.path.join(configDir, sp, _ap)
+                _n = len([x for x in os.listdir(_f) if x.endswith('.json')]) if os.path.isdir(_f) else 0
+                lv.set(f"{_ap.capitalize()}  ({_n})")
+            folder = os.path.join(configDir, sp, ap)
             files  = sorted([f for f in os.listdir(folder) if f.endswith('.json')]) \
                      if os.path.isdir(folder) else []
             listbox.delete(0, tk.END)
             for f in files:
-                listbox.insert(tk.END, f[:-5])          # strip .json for display
+                listbox.insert(tk.END, f[:-5])
             countLabel.config(text=f"{len(files)} file{'s' if len(files) != 1 else ''}")
 
         def onLoad():
@@ -1862,16 +2158,15 @@ class ExperimentGUI:
             if not sel:
                 return
             name = listbox.get(sel[0]) + '.json'
-            selectedPath[0] = os.path.join(configDir, approachVar.get(), name)
+            selectedPath[0] = os.path.join(configDir, splitVar.get(), approachVar.get(), name)
             dlg.destroy()
 
         listbox.bind('<Double-Button-1>', lambda e: onLoad())
         dlg.bind('<Return>', lambda e: onLoad())
         dlg.bind('<Escape>', lambda e: dlg.destroy())
 
-        # Center over main window
         dlg.update_idletasks()
-        w, h = 580, 440
+        w, h = 640, 520
         x = self.root.winfo_x() + (self.root.winfo_width()  - w) // 2
         y = self.root.winfo_y() + (self.root.winfo_height() - h) // 2
         dlg.geometry(f"{w}x{h}+{x}+{y}")
@@ -1913,6 +2208,12 @@ class ExperimentGUI:
             self.attackIpmStartVar.set(config.get('attackIpmStart', 0))
             self.attackNoiseAmpVar.set(config.get('attackNoiseAmp', False))
             self.attackNoiseAmpStartVar.set(config.get('attackNoiseAmpStart', 0))
+            self.nonIIDVar.set(config.get('nonIID', True))
+            self.dirichletAlphaVar.set(config.get('dirichletAlpha', 0.2))
+            self.distillStrengthVar.set(config.get('distillStrength', 0.5))
+            self.verifyThresholdVar.set(config.get('verifyThreshold', 0.05))
+            self.cartAlgorithmVar.set(config.get('cartAlgorithm', 'cart'))
+            self._onNonIIDChange()
             self.attackerIdsVar.set(config.get('attackerIds', '1,4,6,8'))
             self.nNodesVar.set(config.get('nNodes', 10))
             self.nRoundsVar.set(config.get('nRounds', 100))
@@ -1921,9 +2222,9 @@ class ExperimentGUI:
             self.batchSizeVar.set(config.get('batchSize', 32))
             self.useLrDecayVar.set(config.get('useLrDecay', True))
             self.usePlateauLrVar.set(config.get('usePlateauLr', True))
-            self.plateauPatienceVar.set(config.get('plateauPatience', 5))
-            self.plateauFactorVar.set(config.get('plateauFactor', 0.5))
-            self.plateauMinLrVar.set(config.get('plateauMinLr', 1e-4))
+            self.plateauPatienceVar.set(config.get('plateauPatience', 8))
+            self.plateauFactorVar.set(config.get('plateauFactor', 0.7))
+            self.plateauMinLrVar.set(config.get('plateauMinLr', 0.001))
             self.plateauThresholdVar.set(config.get('plateauThreshold', 0.01))
             messagebox.showinfo("Loaded", "Configuration loaded successfully!")
             self._setStatus(f"Config loaded: {os.path.basename(filepath)}")
@@ -1933,7 +2234,7 @@ class ExperimentGUI:
     # ── Plot results ──────────────────────────────────────────────────────────
     def plotResults(self):
         try:
-            from plotGui import (discoverDatasets, discoverAttackTypes, discoverApproaches,
+            from plotGui import (discoverDataSplits, discoverDatasets, discoverAttackTypes, discoverApproaches,
                                  discoverExperiments, plotDatasetExperiments,
                                  plotDatasetGrid, plotFinalAccuracyBar)
 
@@ -1941,40 +2242,46 @@ class ExperimentGUI:
             self.logMessage("GENERATING PLOTS")
             self.logMessage("=" * 60)
 
-            datasets = discoverDatasets()
-            if not datasets:
+            splits = discoverDataSplits()
+            if not splits:
                 self.logMessage("No experiment results found. Run some experiments first!")
                 messagebox.showinfo("No Results", "No experiment results found.\nRun some experiments first!")
                 return
 
-            self.logMessage(f"Found datasets: {datasets}")
-            for dataset in datasets:
-                attackTypes = discoverAttackTypes(dataset)
-                if not attackTypes:
+            self.logMessage(f"Found data splits: {splits}")
+            for split in splits:
+                datasets = discoverDatasets(split=split)
+                if not datasets:
                     continue
-                self.logMessage(f"\nDataset: {dataset.upper()} - attacks: {attackTypes}")
-                for attackKey in attackTypes:
-                    approaches = discoverApproaches(dataset, attackKey)
-                    if not approaches:
+                self.logMessage(f"\nSplit: {split} - datasets: {datasets}")
+                for dataset in datasets:
+                    attackTypes = discoverAttackTypes(dataset, split=split)
+                    if not attackTypes:
                         continue
-                    for approach in approaches:
-                        experiments = discoverExperiments(dataset, attackKey, approach)
-                        if not experiments:
+                    self.logMessage(f"\nDataset: {dataset.upper()} [{split}] - attacks: {attackTypes}")
+                    for attackKey in attackTypes:
+                        approaches = discoverApproaches(dataset, attackKey, split=split)
+                        if not approaches:
                             continue
-                        self.logMessage(f"  {attackKey} | {approach}  ({len(experiments)} experiments)")
-                        plotDatasetExperiments(dataset, attackKey, approach, experiments)
-                        if len(experiments) > 1:
-                            plotDatasetGrid(dataset, attackKey, approach, experiments)
-                        plotFinalAccuracyBar(dataset, attackKey, approach, experiments)
+                        for approach in approaches:
+                            experiments = discoverExperiments(dataset, attackKey, approach, split=split)
+                            if not experiments:
+                                continue
+                            self.logMessage(f"  {split} | {attackKey} | {approach}  ({len(experiments)} experiments)")
+                            plotDatasetExperiments(dataset, attackKey, approach, experiments, split=split)
+                            if len(experiments) > 1:
+                                plotDatasetGrid(dataset, attackKey, approach, experiments, split=split)
+                            plotFinalAccuracyBar(dataset, attackKey, approach, experiments, split=split)
 
-            self.logMessage("\nAll plots saved to: plots/images/gui/")
+            self.logMessage("\nAll plots saved to: plots/images/gui/{split}/")
             self.logMessage("=" * 60)
-            messagebox.showinfo("Success", "Plots saved to plots/images/gui/")
-            self._setStatus("Plots saved to plots/images/gui/")
+            messagebox.showinfo("Success", "Plots saved to plots/images/gui/{IID|nonIID}/")
+            self._setStatus("Plots saved to plots/images/gui/{IID|nonIID}/")
         except Exception as e:
             self.logMessage(f"\nERROR generating plots: {e}")
             self.logMessage(traceback.format_exc())
             messagebox.showerror("Error", f"Failed to generate plots:\n{e}")
+
 
 
 def main():
