@@ -38,7 +38,7 @@ from basil_core.data.nMnist import loadNMnist, makeLoaders as makeNMnistLoaders
 from basil_core.models import MNISTModel, CIFARModel, NMNISTModel
 from basil_core.basil import BasilNode, basilRingTrainingWithAttack, fedAvgTrainingWithNoise
 from basil_core.cart import CARTNode, cartRingTraining
-from basil_core.trainer import evaluateAll
+from basil_core.trainer import evaluateAll, getParams, setParams
 from scripts.common import setupGpu, sendNotification
 from plotGui import discoverDatasets, discoverExperiments, getColors, getMarkers
 
@@ -106,6 +106,10 @@ class ExperimentGUI:
 
         # Config queue (list of config dicts; same config may appear multiple times)
         self.configQueue = []
+        self._queueLock = threading.Lock()
+        self._queueStatePath = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), "queue_state.json"
+        )
         self.queueButton = None   # set when toolbar is built
 
         # Live-chart / progress tracking
@@ -121,6 +125,7 @@ class ExperimentGUI:
         self._setupStyle()
         self.setupVariables()
         self.createUI()
+        self._loadQueueState()
         self._setupKeyboardShortcuts()
 
         self.root.protocol("WM_DELETE_WINDOW", self.onClosing)
@@ -1012,7 +1017,7 @@ class ExperimentGUI:
 
         self.runButton.config(state=tk.DISABLED)
         self.runAllButton.config(state=tk.DISABLED)
-        self.queueButton.config(state=tk.DISABLED)
+        self.queueButton.config(state=tk.NORMAL)
         self.stopButton.config(state=tk.NORMAL)
         self.isRunning = True
         self._progressVar.set(0)
@@ -1064,6 +1069,7 @@ class ExperimentGUI:
     def runExperimentThread(self):
         try:
             config = self.getConfig()
+            config['aggregationMode'] = self.defaultAggregationMode(config)
             name = config.get("experimentName", "Experiment")
             self._trainStartTime = time.time()
             self._lastRoundEndTime = self._trainStartTime
@@ -1110,8 +1116,16 @@ class ExperimentGUI:
         safeName = "".join(c if c.isalnum() or c in " _-" else "_" for c in expName).strip().replace(" ", "_")
         approach  = config.get('approach', 'basil')
         split = 'nonIID' if config.get('nonIID', True) else 'IID'
-        resultDir = f"experiments/results/gui/{split}/{dataset}/{attackKey}/{approach}"
+        resultDir = self._resultDir(config, split, dataset, attackKey, approach)
         return f"{resultDir}/acc_{safeName}.npy", f"{resultDir}/config_{safeName}.json"
+
+    def _resultDir(self, config, split, dataset, attackKey, approach):
+        parts = ["experiments", "results", "gui", split, dataset, attackKey, approach]
+        if config.get('useChannelNoise', False):
+            sigma = float(config.get('channelNoiseSigma', 0.0))
+            sigmaLabel = f"sigma_{sigma:.1f}".replace('.', '_')
+            parts.append(sigmaLabel)
+        return os.path.join(*parts)
 
     def _isAlreadyRun(self, config):
         accPath, configPath = self._getResultPaths(config)
@@ -1128,6 +1142,15 @@ class ExperimentGUI:
             return True
         except Exception:
             return False
+
+    def defaultAggregationMode(self, config):
+        if config.get('aggregationMode'):
+            return config['aggregationMode']
+        if config.get('useBasil', False):
+            return 'handoff'
+        if config.get('approach') in ('merged', 'cart'):
+            return 'consensus'
+        return 'handoff'
 
     # ── Run All ───────────────────────────────────────────────────────────────
     def runAll(self):
@@ -1170,7 +1193,7 @@ class ExperimentGUI:
 
         self.runButton.config(state=tk.DISABLED)
         self.runAllButton.config(state=tk.DISABLED)
-        self.queueButton.config(state=tk.DISABLED)
+        self.queueButton.config(state=tk.NORMAL)
         self.stopButton.config(state=tk.NORMAL)
         self.isRunning = True
         self.clearOutput()
@@ -1311,10 +1334,8 @@ class ExperimentGUI:
         self.logMessage(f"  Attack types: {attackTypes}\n")
 
         cartAlg = config.get('cartAlgorithm', 'cart')
-        aggregationMode = config.get(
-            'aggregationMode',
-            'consensus' if config.get('approach') in ('merged', 'cart') else 'handoff',
-        )
+        aggregationMode = self.defaultAggregationMode(config)
+        config['aggregationMode'] = aggregationMode
 
         if config['approach'] == 'cart' and cartAlg == 'cart':
             self.logMessage(f"Starting CART ring training for {config['nRounds']} rounds…")
@@ -1586,6 +1607,10 @@ class ExperimentGUI:
                 nodes.append(CARTNode(**nodeCfg))
             else:
                 nodes.append(BasilNode(**nodeCfg))
+        if nodes:
+            initialParams = getParams(nodes[0].model)
+            for nd in nodes[1:]:
+                setParams(nd.model, initialParams)
         return nodes
 
     def getModelClass(self, dataset):
@@ -1623,6 +1648,7 @@ class ExperimentGUI:
 
     # ── Save / Load results & config ──────────────────────────────────────────
     def saveResults(self, config, avgAccHist, worstAccHist, finalAvg, finalWorst):
+        config['aggregationMode'] = self.defaultAggregationMode(config)
         dataset = config['dataset']
         attackParts = []
         for k, s in [('attackGaussian','gaussian'),('attackSignFlip','signflip'),
@@ -1641,7 +1667,7 @@ class ExperimentGUI:
 
         approach  = config.get('approach', 'basil')
         split = 'nonIID' if config.get('nonIID', True) else 'IID'
-        resultDir = f"experiments/results/gui/{split}/{dataset}/{attackKey}/{approach}"
+        resultDir = self._resultDir(config, split, dataset, attackKey, approach)
         os.makedirs(resultDir, exist_ok=True)
 
         avgPath    = f"{resultDir}/acc_{safeName}.npy"
@@ -1653,8 +1679,28 @@ class ExperimentGUI:
         self.logMessage(f"\nResults saved:")
         self.logMessage(f"  {avgPath}")
         self.logMessage(f"  {configPath}")
+        self.generatePlots(showDialog=False)
 
     # ── Config Queue ──────────────────────────────────────────────────────────
+    def _saveQueueState(self):
+        try:
+            os.makedirs(os.path.dirname(self._queueStatePath), exist_ok=True)
+            with open(self._queueStatePath, 'w') as f:
+                json.dump(self.configQueue, f, indent=2)
+        except Exception as e:
+            self.logMessage(f"WARNING: could not save queue state: {e}")
+
+    def _loadQueueState(self):
+        try:
+            if os.path.exists(self._queueStatePath):
+                with open(self._queueStatePath, 'r') as f:
+                    loaded = json.load(f)
+                if isinstance(loaded, list):
+                    self.configQueue = [dict(cfg) for cfg in loaded if isinstance(cfg, dict)]
+        except Exception as e:
+            self.logMessage(f"WARNING: could not load queue state: {e}")
+        self._updateQueueButton()
+
     def _updateQueueButton(self):
         n = len(self.configQueue)
         self.queueButton.config(text=f"≡  Queue ({n})")
@@ -1739,19 +1785,23 @@ class ExperimentGUI:
 
         def refreshTree():
             tree.delete(*tree.get_children())
-            for i, cfg in enumerate(self.configQueue, 1):
+            with self._queueLock:
+                queueSnapshot = list(self.configQueue)
+            for i, cfg in enumerate(queueSnapshot, 1):
                 name    = cfg.get('experimentName', f'Config #{i}')
                 approach = cfg.get('approach', '?')
                 attack   = _attackSummary(cfg)
                 noise    = 'Yes' if cfg.get('useChannelNoise') else 'No'
                 tree.insert('', tk.END, iid=str(i-1), values=(i, name, approach, attack, noise))
-            countLabel.config(text=f"{len(self.configQueue)} item{'s' if len(self.configQueue) != 1 else ''}")
+            countLabel.config(text=f"{len(queueSnapshot)} item{'s' if len(queueSnapshot) != 1 else ''}")
             self._updateQueueButton()
 
         def addCurrent():
             cfg = self.getConfig()
-            for _ in range(repeatVar.get()):
-                self.configQueue.append(dict(cfg))
+            with self._queueLock:
+                for _ in range(repeatVar.get()):
+                    self.configQueue.append(dict(cfg))
+                self._saveQueueState()
             refreshTree()
 
         def addFromFile():
@@ -1838,8 +1888,10 @@ class ExperimentGUI:
                     try:
                         with open(path) as f:
                             cfg = json.load(f)
-                        for _ in range(repeatVar.get()):
-                            self.configQueue.append(dict(cfg))
+                        with self._queueLock:
+                            for _ in range(repeatVar.get()):
+                                self.configQueue.append(dict(cfg))
+                            self._saveQueueState()
                     except Exception as e:
                         messagebox.showerror("Error", str(e), parent=pickerDlg)
                         return
@@ -1901,15 +1953,17 @@ class ExperimentGUI:
                     messagebox.showwarning("No Configs", f"No JSON configs in {sp}/{ap}/", parent=adlg)
                     return
                 added = 0
-                for fname in files:
-                    try:
-                        with open(os.path.join(folder, fname)) as f:
-                            cfg = json.load(f)
-                        for _ in range(repeatVar.get()):
-                            self.configQueue.append(dict(cfg))
-                        added += 1
-                    except Exception:
-                        pass
+                with self._queueLock:
+                    for fname in files:
+                        try:
+                            with open(os.path.join(folder, fname)) as f:
+                                cfg = json.load(f)
+                            for _ in range(repeatVar.get()):
+                                self.configQueue.append(dict(cfg))
+                            added += 1
+                        except Exception:
+                            pass
+                    self._saveQueueState()
                 adlg.destroy()
                 refreshTree()
                 messagebox.showinfo("Added", f"Added {added} {sp}/{ap.upper()} configs to queue.", parent=dlg)
@@ -1928,8 +1982,10 @@ class ExperimentGUI:
             idx = _selectedIdx()
             if idx is None or idx == 0:
                 return
-            self.configQueue[idx], self.configQueue[idx-1] = \
-                self.configQueue[idx-1], self.configQueue[idx]
+            with self._queueLock:
+                self.configQueue[idx], self.configQueue[idx-1] = \
+                    self.configQueue[idx-1], self.configQueue[idx]
+                self._saveQueueState()
             refreshTree()
             tree.selection_set(str(idx-1))
 
@@ -1937,8 +1993,10 @@ class ExperimentGUI:
             idx = _selectedIdx()
             if idx is None or idx >= len(self.configQueue) - 1:
                 return
-            self.configQueue[idx], self.configQueue[idx+1] = \
-                self.configQueue[idx+1], self.configQueue[idx]
+            with self._queueLock:
+                self.configQueue[idx], self.configQueue[idx+1] = \
+                    self.configQueue[idx+1], self.configQueue[idx]
+                self._saveQueueState()
             refreshTree()
             tree.selection_set(str(idx+1))
 
@@ -1946,14 +2004,18 @@ class ExperimentGUI:
             idx = _selectedIdx()
             if idx is None:
                 return
-            del self.configQueue[idx]
+            with self._queueLock:
+                del self.configQueue[idx]
+                self._saveQueueState()
             refreshTree()
 
         def clearAll():
             if self.configQueue and not messagebox.askyesno(
                     "Clear Queue", f"Remove all {len(self.configQueue)} items?", parent=dlg):
                 return
-            self.configQueue.clear()
+            with self._queueLock:
+                self.configQueue.clear()
+                self._saveQueueState()
             refreshTree()
 
         def runQueueAndClose():
@@ -1990,25 +2052,32 @@ class ExperimentGUI:
         self._refreshLiveChart()
         self.notebook.select(3)
 
-        configs = list(self.configQueue)   # snapshot; queue stays intact until user clears
-        self.currentThread = threading.Thread(target=self.runQueueThread, args=(configs,))
+        self.currentThread = threading.Thread(target=self.runQueueThread)
         self.currentThread.start()
 
-    def runQueueThread(self, configs):
-        total, completed = len(configs), 0
+    def runQueueThread(self):
+        completed = 0
         try:
             self.logMessage("=" * 80)
-            self.logMessage(f"RUN QUEUE: {total} experiment(s) queued")
+            self.logMessage(f"RUN QUEUE: {len(self.configQueue)} experiment(s) queued")
             self.logMessage("=" * 80 + "\n")
 
-            for idx, config in enumerate(configs, 1):
+            while self.isRunning:
+                with self._queueLock:
+                    if not self.configQueue:
+                        break
+                    config = self.configQueue.pop(0)
+                    remaining = len(self.configQueue)
+                    self._saveQueueState()
+                self.root.after(0, self._updateQueueButton)
+
                 if not self.isRunning:
                     self.logMessage("\n[STOPPED] Queue run cancelled by user.")
                     break
 
                 self.logMessage("=" * 80)
-                expName = config.get('experimentName', f'Queue item #{idx}')
-                self.logMessage(f"[{idx}/{total}] {expName}")
+                expName = config.get('experimentName', f'Queue item #{completed + 1}')
+                self.logMessage(f"[{completed + 1}] {expName}  ({remaining} still queued)")
                 self.logMessage("=" * 80)
 
                 self._trainStartTime  = time.time()
@@ -2023,19 +2092,20 @@ class ExperimentGUI:
                 self.root.after(0, self._progressVar.set, 0)
                 self.root.after(0, self._roundLabel.config, {'text': f"Round 0/{self._totalRounds}"})
 
-                sendNotification("Queue Started", f"[{idx}/{total}] {expName} has started.", priority="default")
+                sendNotification("Queue Started", f"{expName} has started.", priority="default")
+                config['aggregationMode'] = self.defaultAggregationMode(config)
                 self._executeExperiment(config)
                 completed += 1
 
                 if not self.isRunning:
                     break
 
-                sendNotification("Queue Step Done", f"[{idx}/{total}] {expName} finished.", priority="high")
-                self.logMessage(f"\n[{idx}/{total}] Done.\n")
+                sendNotification("Queue Step Done", f"{expName} finished.", priority="high")
+                self.logMessage(f"\n[{completed}] Done.\n")
 
             self.logMessage("")
             self.logMessage("=" * 80)
-            self.logMessage(f"QUEUE FINISHED: {completed}/{total} experiments completed.")
+            self.logMessage(f"QUEUE FINISHED: {completed} experiment(s) completed.")
             self.logMessage("=" * 80)
             sendNotification("Queue Complete", f"{completed}/{total} queue items finished.", priority="high")
 
@@ -2233,10 +2303,13 @@ class ExperimentGUI:
 
     # ── Plot results ──────────────────────────────────────────────────────────
     def plotResults(self):
+        self.generatePlots(showDialog=True)
+
+    def generatePlots(self, showDialog=True):
         try:
             from plotGui import (discoverDataSplits, discoverDatasets, discoverAttackTypes, discoverApproaches,
-                                 discoverExperiments, plotDatasetExperiments,
-                                 plotDatasetGrid, plotFinalAccuracyBar)
+                                 discoverExperiments, groupExperimentsByNoiseBucket,
+                                 plotExperimentSet)
 
             self.logMessage("\n" + "=" * 60)
             self.logMessage("GENERATING PLOTS")
@@ -2245,7 +2318,8 @@ class ExperimentGUI:
             splits = discoverDataSplits()
             if not splits:
                 self.logMessage("No experiment results found. Run some experiments first!")
-                messagebox.showinfo("No Results", "No experiment results found.\nRun some experiments first!")
+                if showDialog:
+                    messagebox.showinfo("No Results", "No experiment results found.\nRun some experiments first!")
                 return
 
             self.logMessage(f"Found data splits: {splits}")
@@ -2268,19 +2342,22 @@ class ExperimentGUI:
                             if not experiments:
                                 continue
                             self.logMessage(f"  {split} | {attackKey} | {approach}  ({len(experiments)} experiments)")
-                            plotDatasetExperiments(dataset, attackKey, approach, experiments, split=split)
-                            if len(experiments) > 1:
-                                plotDatasetGrid(dataset, attackKey, approach, experiments, split=split)
-                            plotFinalAccuracyBar(dataset, attackKey, approach, experiments, split=split)
+                            plotExperimentSet(dataset, attackKey, approach, experiments, split=split)
+                            for bucket, bucketExperiments in groupExperimentsByNoiseBucket(experiments).items():
+                                self.logMessage(f"    bucket: {bucket} ({len(bucketExperiments)} experiments)")
+                                plotExperimentSet(dataset, attackKey, approach, bucketExperiments,
+                                                  split=split, plotSubdir=bucket)
 
             self.logMessage("\nAll plots saved to: plots/images/gui/{split}/")
             self.logMessage("=" * 60)
-            messagebox.showinfo("Success", "Plots saved to plots/images/gui/{IID|nonIID}/")
+            if showDialog:
+                messagebox.showinfo("Success", "Plots saved to plots/images/gui/{IID|nonIID}/")
             self._setStatus("Plots saved to plots/images/gui/{IID|nonIID}/")
         except Exception as e:
             self.logMessage(f"\nERROR generating plots: {e}")
             self.logMessage(traceback.format_exc())
-            messagebox.showerror("Error", f"Failed to generate plots:\n{e}")
+            if showDialog:
+                messagebox.showerror("Error", f"Failed to generate plots:\n{e}")
 
 
 

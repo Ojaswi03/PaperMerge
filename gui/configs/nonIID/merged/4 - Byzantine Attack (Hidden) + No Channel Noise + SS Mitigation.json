@@ -35,6 +35,7 @@
   "plateauThreshold": 0.01,
   "experimentName": "4 - Byzantine Attack (Hidden) + No Channel Noise + SS Mitigation",
   "approach": "merged",
+  "aggregationMode": "handoff",
   "useBasil": true,
   "useChannelNoise": false,
   "noiseMitigation": "none",

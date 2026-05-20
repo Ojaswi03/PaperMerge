@@ -13,8 +13,11 @@ Folder structure (results):
 Folder structure (plots):
   plots/images/gui/{split}/{dataset}/{attackKey}/{approach}/
       experiments_avg.png
+      experiments_avg_zoom.png
       grid_avg.png
       final_accuracy_avg.png
+      improvement_over_no_mitigation_avg.png
+      ablation_groups_avg.png
 
 CONFIGURATION: Edit the variables below to customize your plots
 """
@@ -99,8 +102,35 @@ def _resultRoot(split=None):
     return os.path.join("experiments", "results", "gui", split) if split else os.path.join("experiments", "results", "gui")
 
 
-def _plotDir(split, dataset, attackKey, approach):
-    return os.path.join("plots", "images", "gui", split, dataset, attackKey, approach)
+def _plotDir(split, dataset, attackKey, approach, subdir=None):
+    parts = ["plots", "images", "gui", split, dataset, attackKey, approach]
+    if subdir:
+        parts.append(subdir)
+    return os.path.join(*parts)
+
+
+def noiseBucket(config):
+    if not config.get('useChannelNoise', False):
+        return "no_channel_noise"
+    sigma = float(config.get('channelNoiseSigma', 0.0))
+    return f"sigma_{sigma:.1f}".replace('.', '_')
+
+
+def groupExperimentsByNoiseBucket(experiments):
+    buckets = {}
+    noNoise = [exp for exp in experiments if noiseBucket(exp['config']) == "no_channel_noise"]
+    for exp in experiments:
+        bucket = noiseBucket(exp['config'])
+        if bucket == "no_channel_noise":
+            continue
+        buckets.setdefault(bucket, [])
+        buckets[bucket].append(exp)
+    if noNoise:
+        buckets["no_channel_noise"] = noNoise
+        for bucket in list(buckets):
+            if bucket != "no_channel_noise":
+                buckets[bucket] = noNoise + buckets[bucket]
+    return buckets
 
 
 def _iterConfigFiles(split=None):
@@ -229,6 +259,8 @@ def discoverExperiments(dataset, attackKey=None, approach=None, split=None):
 
         avgPath = os.path.join(resultDir, f"acc_{name}.npy")
         if not os.path.exists(avgPath):
+            continue
+        if not _matchesCurrentConfig(config):
             continue
 
         dedupeKey = (splitFromConfig(config), meta['dataset'], meta['attackKey'], meta['approach'], name)
@@ -402,7 +434,48 @@ def cleanOverlayStyle(idx):
     }
 
 
-def plotDatasetExperiments(dataset, attackKey, approach, experiments, split=None):
+def datasetTitle(dataset):
+    return {
+        'mnist': 'MNIST',
+        'cifar10': 'CIFAR-10',
+        'nmnist': 'Neuromorphic MNIST'
+    }.get(dataset, dataset.upper())
+
+
+def environmentLabel(config, attackKey):
+    hasAttack = attackKey != 'none'
+    hasNoise = bool(config.get('useChannelNoise', False))
+    if hasAttack and hasNoise:
+        return 'Byzantine + Channel Noise'
+    if hasAttack:
+        return 'Byzantine Only'
+    if hasNoise:
+        return 'Channel Noise Only'
+    return 'Clean'
+
+
+def methodLabel(config):
+    ss = bool(config.get('useBasil', False))
+    ebm = config.get('noiseMitigation', 'none') == 'ebm'
+    if ss and ebm:
+        return 'SS + EBM'
+    if ss:
+        return 'SS'
+    if ebm:
+        return 'EBM'
+    return 'No Mitigation'
+
+
+def _finalAcc(exp):
+    if not os.path.exists(exp['avgPath']):
+        return None
+    acc = np.load(exp['avgPath'])
+    if len(acc) == 0:
+        return None
+    return float(acc[-1])
+
+
+def plotDatasetExperiments(dataset, attackKey, approach, experiments, split=None, plotSubdir=None):
     # overlay all experiment curves on one axes and save the figure
     datasetTitles = {
         'mnist': 'MNIST',
@@ -457,14 +530,69 @@ def plotDatasetExperiments(dataset, attackKey, approach, experiments, split=None
     ax.set_ylim([0, 1])
 
     plt.tight_layout()
-    savePath = os.path.join(_plotDir(split, dataset, attackKey, approach), "experiments_avg.png")
+    savePath = os.path.join(_plotDir(split, dataset, attackKey, approach, plotSubdir), "experiments_avg.png")
     os.makedirs(os.path.dirname(savePath), exist_ok=True)
     plt.savefig(savePath, dpi=300, bbox_inches='tight')
     print(f"Saved: {savePath}")
     plt.close()
 
 
-def plotDatasetGrid(dataset, attackKey, approach, experiments, split=None):
+def plotDatasetExperimentsZoom(dataset, attackKey, approach, experiments, split=None, plotSubdir=None):
+    """Zoomed line plot for comparing mitigation curves without the clean scale."""
+    if len(experiments) <= 1:
+        return
+
+    split = split or (experiments[0].get('split') if experiments else 'nonIID')
+    fig, ax = plt.subplots(figsize=(12, 6))
+
+    colors = getColors(len(experiments))
+    markers = getMarkers(len(experiments))
+    yVals = []
+
+    for idx, exp in enumerate(experiments):
+        if not os.path.exists(exp['avgPath']):
+            continue
+        acc = np.load(exp['avgPath'])
+        if len(acc) == 0:
+            continue
+        rounds = np.arange(len(acc))
+        yVals.extend(float(x) for x in acc)
+        ax.plot(rounds, acc,
+                label=exp['label'],
+                color=colors[idx], linewidth=2.5,
+                marker=markers[idx], markersize=5,
+                markevery=max(1, len(rounds) // 10))
+
+    if not yVals:
+        plt.close()
+        return
+
+    yMin = max(0.0, min(yVals) - 0.03)
+    yMax = min(1.0, max(yVals) + 0.06)
+    if yMax - yMin < 0.12:
+        center = (yMax + yMin) / 2
+        yMin = max(0.0, center - 0.06)
+        yMax = min(1.0, center + 0.06)
+
+    attackTitle = attackKey.replace("_", " + ").title()
+    approachTitle = _approachTitle(approach)
+    ax.set_xlabel('Training Round', fontsize=12)
+    ax.set_ylabel('Average Accuracy', fontsize=12)
+    ax.set_title(f'Zoomed Accuracy | {datasetTitle(dataset)} | {attackTitle} | {approachTitle}',
+                 fontsize=14, fontweight='bold')
+    ax.legend(fontsize=9, loc='upper left', bbox_to_anchor=(1.01, 1), borderaxespad=0)
+    ax.grid(True, alpha=0.3)
+    ax.set_ylim([yMin, yMax])
+
+    plt.tight_layout()
+    savePath = os.path.join(_plotDir(split, dataset, attackKey, approach, plotSubdir), "experiments_avg_zoom.png")
+    os.makedirs(os.path.dirname(savePath), exist_ok=True)
+    plt.savefig(savePath, dpi=300, bbox_inches='tight')
+    print(f"Saved: {savePath}")
+    plt.close()
+
+
+def plotDatasetGrid(dataset, attackKey, approach, experiments, split=None, plotSubdir=None):
     # one subplot per experiment arranged in a grid layout
     if len(experiments) <= 1:
         return
@@ -542,14 +670,123 @@ def plotDatasetGrid(dataset, attackKey, approach, experiments, split=None):
         axes[idx].set_visible(False)
 
     plt.tight_layout()
-    savePath = os.path.join(_plotDir(split, dataset, attackKey, approach), "grid_avg.png")
+    savePath = os.path.join(_plotDir(split, dataset, attackKey, approach, plotSubdir), "grid_avg.png")
     os.makedirs(os.path.dirname(savePath), exist_ok=True)
     plt.savefig(savePath, dpi=300, bbox_inches='tight')
     print(f"Saved: {savePath}")
     plt.close()
 
 
-def plotFinalAccuracyBar(dataset, attackKey, approach, experiments, split=None):
+def plotImprovementOverNoMitigation(dataset, attackKey, approach, experiments, split=None, plotSubdir=None):
+    """Final-accuracy gain relative to matching no-mitigation environment."""
+    split = split or (experiments[0].get('split') if experiments else 'nonIID')
+    baselines = {}
+    rows = []
+
+    for exp in experiments:
+        final = _finalAcc(exp)
+        if final is None:
+            continue
+        config = exp['config']
+        env = environmentLabel(config, attackKey)
+        method = methodLabel(config)
+        if method == 'No Mitigation':
+            baselines[env] = final
+        rows.append((env, method, exp['label'], final))
+
+    plotRows = []
+    for env, method, label, final in rows:
+        if method == 'No Mitigation' or env not in baselines:
+            continue
+        plotRows.append((f"{env}\n{method}", final - baselines[env]))
+
+    if not plotRows:
+        return
+
+    labels, gains = zip(*plotRows)
+    fig, ax = plt.subplots(figsize=(max(8, len(labels) * 1.7), 6))
+    colors = ['#16a34a' if g >= 0 else '#dc2626' for g in gains]
+    bars = ax.bar(range(len(labels)), gains, color=colors, width=0.65)
+    ax.axhline(0.0, color='#111827', linewidth=1.5)
+
+    for bar, gain in zip(bars, gains):
+        va = 'bottom' if gain >= 0 else 'top'
+        offset = 0.005 if gain >= 0 else -0.005
+        ax.text(bar.get_x() + bar.get_width() / 2, gain + offset,
+                f'{gain:+.3f}', ha='center', va=va, fontsize=10, fontweight='bold')
+
+    attackTitle = attackKey.replace("_", " + ").title()
+    approachTitle = _approachTitle(approach)
+    ax.set_ylabel('Final Accuracy Gain', fontsize=12)
+    ax.set_title(f'Improvement Over No Mitigation | {datasetTitle(dataset)} | {attackTitle} | {approachTitle}',
+                 fontsize=14, fontweight='bold')
+    ax.set_xticks(range(len(labels)))
+    ax.set_xticklabels(labels, rotation=25, ha='right', fontsize=9)
+    ax.grid(True, alpha=0.3, axis='y')
+
+    plt.tight_layout()
+    savePath = os.path.join(_plotDir(split, dataset, attackKey, approach, plotSubdir), "improvement_over_no_mitigation_avg.png")
+    os.makedirs(os.path.dirname(savePath), exist_ok=True)
+    plt.savefig(savePath, dpi=300, bbox_inches='tight')
+    print(f"Saved: {savePath}")
+    plt.close()
+
+
+def plotAblationGroups(dataset, attackKey, approach, experiments, split=None, plotSubdir=None):
+    """Grouped final-accuracy bars by environment and mitigation method."""
+    split = split or (experiments[0].get('split') if experiments else 'nonIID')
+    envOrder = ['Clean', 'Channel Noise Only', 'Byzantine Only', 'Byzantine + Channel Noise']
+    methodOrder = ['No Mitigation', 'SS', 'EBM', 'SS + EBM']
+    values = {}
+
+    for exp in experiments:
+        final = _finalAcc(exp)
+        if final is None:
+            continue
+        env = environmentLabel(exp['config'], attackKey)
+        method = methodLabel(exp['config'])
+        values[(env, method)] = max(final, values.get((env, method), -1.0))
+
+    envs = [env for env in envOrder if any((env, m) in values for m in methodOrder)]
+    methods = [m for m in methodOrder if any((env, m) in values for env in envs)]
+    if not envs or not methods:
+        return
+
+    x = np.arange(len(envs))
+    width = min(0.18, 0.8 / max(1, len(methods)))
+    fig, ax = plt.subplots(figsize=(max(9, len(envs) * 2.5), 6))
+    colors = getColors(len(methods))
+
+    for idx, method in enumerate(methods):
+        offsets = x + (idx - (len(methods) - 1) / 2) * width
+        heights = [values.get((env, method), 0.0) for env in envs]
+        bars = ax.bar(offsets, heights, width=width, label=method, color=colors[idx])
+        for bar, height in zip(bars, heights):
+            if height <= 0:
+                continue
+            ax.text(bar.get_x() + bar.get_width() / 2, height + 0.008,
+                    f'{height:.3f}', ha='center', va='bottom', fontsize=8, rotation=90)
+
+    attackTitle = attackKey.replace("_", " + ").title()
+    approachTitle = _approachTitle(approach)
+    ax.set_ylabel('Final Average Accuracy', fontsize=12)
+    ax.set_title(f'Ablation Groups | {datasetTitle(dataset)} | {attackTitle} | {approachTitle}',
+                 fontsize=14, fontweight='bold')
+    ax.set_xticks(x)
+    ax.set_xticklabels(envs, fontsize=10)
+    ax.set_ylim([0, min(1.0, max(values.values()) + 0.12)])
+    ax.legend(fontsize=9, loc='upper left', bbox_to_anchor=(1.01, 1), borderaxespad=0)
+    ax.grid(True, alpha=0.3, axis='y')
+
+    plt.tight_layout()
+    savePath = os.path.join(_plotDir(split, dataset, attackKey, approach, plotSubdir), "ablation_groups_avg.png")
+    os.makedirs(os.path.dirname(savePath), exist_ok=True)
+    plt.savefig(savePath, dpi=300, bbox_inches='tight')
+    print(f"Saved: {savePath}")
+    plt.close()
+
+
+def plotFinalAccuracyBar(dataset, attackKey, approach, experiments, split=None, plotSubdir=None):
     # bar chart of each experiment's final accuracy value
     datasetTitles = {
         'mnist': 'MNIST',
@@ -611,11 +848,21 @@ def plotFinalAccuracyBar(dataset, attackKey, approach, experiments, split=None):
     ax.grid(True, alpha=0.3, axis='y')
 
     plt.tight_layout()
-    savePath = os.path.join(_plotDir(split, dataset, attackKey, approach), "final_accuracy_avg.png")
+    savePath = os.path.join(_plotDir(split, dataset, attackKey, approach, plotSubdir), "final_accuracy_avg.png")
     os.makedirs(os.path.dirname(savePath), exist_ok=True)
     plt.savefig(savePath, dpi=300, bbox_inches='tight')
     print(f"Saved: {savePath}")
     plt.close()
+
+
+def plotExperimentSet(dataset, attackKey, approach, experiments, split=None, plotSubdir=None):
+    plotDatasetExperiments(dataset, attackKey, approach, experiments, split=split, plotSubdir=plotSubdir)
+    plotDatasetExperimentsZoom(dataset, attackKey, approach, experiments, split=split, plotSubdir=plotSubdir)
+    if len(experiments) > 1:
+        plotDatasetGrid(dataset, attackKey, approach, experiments, split=split, plotSubdir=plotSubdir)
+    plotFinalAccuracyBar(dataset, attackKey, approach, experiments, split=split, plotSubdir=plotSubdir)
+    plotImprovementOverNoMitigation(dataset, attackKey, approach, experiments, split=split, plotSubdir=plotSubdir)
+    plotAblationGroups(dataset, attackKey, approach, experiments, split=split, plotSubdir=plotSubdir)
 
 
 def generateGuiPlots():
@@ -665,12 +912,11 @@ def generateGuiPlots():
                     for exp in experiments:
                         print(f"      - [{exp['split']}] {exp['label']}")
 
-                    plotDatasetExperiments(dataset, attackKey, approach, experiments, split=split)
-
-                    if len(experiments) > 1:
-                        plotDatasetGrid(dataset, attackKey, approach, experiments, split=split)
-
-                    plotFinalAccuracyBar(dataset, attackKey, approach, experiments, split=split)
+                    plotExperimentSet(dataset, attackKey, approach, experiments, split=split)
+                    for bucket, bucketExperiments in groupExperimentsByNoiseBucket(experiments).items():
+                        print(f"      Bucket: {bucket} ({len(bucketExperiments)} experiment(s))")
+                        plotExperimentSet(dataset, attackKey, approach, bucketExperiments,
+                                          split=split, plotSubdir=bucket)
 
     print("\nAll GUI plots generated!")
     print("Plots saved to: plots/images/gui/")

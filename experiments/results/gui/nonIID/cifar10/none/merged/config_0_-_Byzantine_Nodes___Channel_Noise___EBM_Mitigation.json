@@ -35,6 +35,7 @@
   "plateauThreshold": 0.01,
   "experimentName": "0 - Byzantine Nodes + Channel Noise + EBM Mitigation",
   "approach": "merged",
+  "aggregationMode": "consensus",
   "useBasil": false,
   "useChannelNoise": true,
   "noiseMitigation": "ebm",

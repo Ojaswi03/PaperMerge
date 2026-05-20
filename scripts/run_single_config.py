@@ -38,10 +38,10 @@ dataset      = cfg.get("dataset", "cifar10")
 approach     = cfg.get("approach", "basil")
 cartAlgo     = cfg.get("cartAlgorithm", "basil")
 useBasil     = cfg.get("useBasil", False)
-aggregationMode = cfg.get(
-    "aggregationMode",
-    "consensus" if approach in ("merged", "cart") else "handoff",
-)
+aggregationMode = cfg.get("aggregationMode")
+if not aggregationMode:
+    aggregationMode = "handoff" if useBasil else ("consensus" if approach in ("merged", "cart") else "handoff")
+cfg["aggregationMode"] = aggregationMode
 S            = cfg.get("basilMemorySize", 1)
 sigma        = cfg.get("channelNoiseSigma", 0.0) if cfg.get("useChannelNoise") else 0.0
 ebmLambda    = cfg.get("ebmLambda", 25.0)
