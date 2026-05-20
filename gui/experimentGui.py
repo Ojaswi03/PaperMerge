@@ -1703,7 +1703,8 @@ class ExperimentGUI:
 
     def _updateQueueButton(self):
         n = len(self.configQueue)
-        self.queueButton.config(text=f"≡  Queue ({n})")
+        if self.queueButton is not None:
+            self.queueButton.config(text=f"≡  Queue ({n})")
 
     def openQueueManager(self):
         configDir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "configs")
@@ -2035,7 +2036,7 @@ class ExperimentGUI:
 
     def runQueue(self):
         if self.isRunning:
-            messagebox.showwarning("Warning", "An experiment is already running!")
+            self.openQueueManager()
             return
         if not self.configQueue:
             messagebox.showwarning("Empty Queue", "The config queue is empty.")
@@ -2043,7 +2044,7 @@ class ExperimentGUI:
 
         self.runButton.config(state=tk.DISABLED)
         self.runAllButton.config(state=tk.DISABLED)
-        self.queueButton.config(state=tk.DISABLED)
+        self.queueButton.config(state=tk.NORMAL)
         self.stopButton.config(state=tk.NORMAL)
         self.isRunning = True
         self.clearOutput()
@@ -2059,7 +2060,9 @@ class ExperimentGUI:
         completed = 0
         try:
             self.logMessage("=" * 80)
-            self.logMessage(f"RUN QUEUE: {len(self.configQueue)} experiment(s) queued")
+            with self._queueLock:
+                initialQueued = len(self.configQueue)
+            self.logMessage(f"RUN QUEUE: {initialQueued} experiment(s) queued")
             self.logMessage("=" * 80 + "\n")
 
             while self.isRunning:
@@ -2107,7 +2110,9 @@ class ExperimentGUI:
             self.logMessage("=" * 80)
             self.logMessage(f"QUEUE FINISHED: {completed} experiment(s) completed.")
             self.logMessage("=" * 80)
-            sendNotification("Queue Complete", f"{completed}/{total} queue items finished.", priority="high")
+            with self._queueLock:
+                remaining = len(self.configQueue)
+            sendNotification("Queue Complete", f"{completed} queue item(s) finished, {remaining} remaining.", priority="high")
 
         except Exception as e:
             self.logMessage(f"\nQUEUE ERROR: {str(e)}")
