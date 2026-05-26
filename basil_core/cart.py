@@ -151,9 +151,11 @@ class CARTNode(BasilNode):
                 loss = ce_loss + (proxMu / 2.0) * prox
             grads = tape.gradient(loss, model_inner.trainable_weights)
             if ebmEnabled:
-                grads = [g * scale for g in grads]
-            clipped, _ = tf.clip_by_global_norm(grads, 5.0)
-            opt.apply_gradients(zip(clipped, model_inner.trainable_weights))
+                clipped, _ = tf.clip_by_global_norm(grads, 5.0)
+                grads = [g * scale for g in clipped]
+            else:
+                grads, _ = tf.clip_by_global_norm(grads, 5.0)
+            opt.apply_gradients(zip(grads, model_inner.trainable_weights))
 
         self._cartStep = tf.function(_cart_step)
 

@@ -465,6 +465,12 @@ def environmentLabel(config, attackKey):
     return 'Clean'
 
 
+def noiseLevelLabel(config):
+    if not config.get('useChannelNoise', False):
+        return ''
+    return f"σ={float(config.get('channelNoiseSigma', 0.0)):.1f}"
+
+
 def methodLabel(config):
     ss = bool(config.get('useBasil', False))
     ebm = config.get('noiseMitigation', 'none') == 'ebm'
@@ -713,31 +719,42 @@ def plotImprovementOverNoMitigation(dataset, attackKey, approach, experiments, s
             continue
         config = exp['config']
         env = environmentLabel(config, attackKey)
+        bucket = noiseBucket(config)
         method = methodLabel(config)
         if method == 'No Mitigation':
-            baselines[env] = final
-        rows.append((env, method, exp['label'], final))
+            baselines[(env, bucket)] = max(final, baselines.get((env, bucket), -1.0))
+        rows.append((env, bucket, method, exp['label'], final, noiseLevelLabel(config)))
 
-    plotRows = []
-    for env, method, label, final in rows:
-        if method == 'No Mitigation' or env not in baselines:
+    bestRows = {}
+    for env, bucket, method, label, final, noiseLabel in rows:
+        if method == 'No Mitigation' or (env, bucket) not in baselines:
             continue
-        plotRows.append((f"{env}\n{method}", final - baselines[env]))
+        displayEnv = f"{env} ({noiseLabel})" if noiseLabel else env
+        displayLabel = f"{displayEnv}\n{method}"
+        gain = final - baselines[(env, bucket)]
+        key = (env, bucket, method)
+        if key not in bestRows or gain > bestRows[key][1]:
+            bestRows[key] = (displayLabel, gain, noiseLabel)
+
+    plotRows = list(bestRows.values())
 
     if not plotRows:
         return
 
-    labels, gains = zip(*plotRows)
+    labels, gains, noiseLabels = zip(*plotRows)
     fig, ax = plt.subplots(figsize=(max(8, len(labels) * 1.7), 6))
     colors = ['#16a34a' if g >= 0 else '#dc2626' for g in gains]
     bars = ax.bar(range(len(labels)), gains, color=colors, width=0.65)
     ax.axhline(0.0, color='#111827', linewidth=1.5)
 
-    for bar, gain in zip(bars, gains):
+    for bar, gain, noiseLabel in zip(bars, gains, noiseLabels):
         va = 'bottom' if gain >= 0 else 'top'
         offset = 0.005 if gain >= 0 else -0.005
+        annotation = f'{gain:+.3f}'
+        if noiseLabel:
+            annotation += f'\n{noiseLabel}'
         ax.text(bar.get_x() + bar.get_width() / 2, gain + offset,
-                f'{gain:+.3f}', ha='center', va=va, fontsize=10, fontweight='bold')
+                annotation, ha='center', va=va, fontsize=9, fontweight='bold')
 
     attackTitle = attackKey.replace("_", " + ").title()
     approachTitle = _approachTitle(approach)
@@ -772,7 +789,9 @@ def plotAblationGroups(dataset, attackKey, approach, experiments, split=None, pl
             continue
         env = environmentLabel(exp['config'], attackKey)
         method = methodLabel(exp['config'])
-        values[(env, method)] = max(final, values.get((env, method), -1.0))
+        key = (env, method)
+        if key not in values or final > values[key][0]:
+            values[key] = (final, noiseLevelLabel(exp['config']))
 
     envs = [env for env in envOrder if any((env, m) in values for m in methodOrder)]
     methods = [m for m in methodOrder if any((env, m) in values for env in envs)]
@@ -786,13 +805,17 @@ def plotAblationGroups(dataset, attackKey, approach, experiments, split=None, pl
 
     for idx, method in enumerate(methods):
         offsets = x + (idx - (len(methods) - 1) / 2) * width
-        heights = [values.get((env, method), 0.0) for env in envs]
+        heights = [values.get((env, method), (0.0, ''))[0] for env in envs]
+        noiseLabels = [values.get((env, method), (0.0, ''))[1] for env in envs]
         bars = ax.bar(offsets, heights, width=width, label=method, color=colors[idx])
-        for bar, height in zip(bars, heights):
+        for bar, height, noiseLabel in zip(bars, heights, noiseLabels):
             if height <= 0:
                 continue
+            annotation = f'{height:.3f}'
+            if noiseLabel:
+                annotation += f'\n{noiseLabel}'
             ax.text(bar.get_x() + bar.get_width() / 2, height + 0.008,
-                    f'{height:.3f}', ha='center', va='bottom', fontsize=8, rotation=90)
+                    annotation, ha='center', va='bottom', fontsize=8, rotation=90)
 
     attackTitle = attackKey.replace("_", " + ").title()
     approachTitle = _approachTitle(approach)
@@ -801,7 +824,8 @@ def plotAblationGroups(dataset, attackKey, approach, experiments, split=None, pl
                  fontsize=14, fontweight='bold')
     ax.set_xticks(x)
     ax.set_xticklabels(envs, fontsize=10)
-    ax.set_ylim([0, min(1.0, max(values.values()) + 0.12)])
+    maxValue = max(value for value, _ in values.values())
+    ax.set_ylim([0, min(1.0, maxValue + 0.12)])
     ax.legend(fontsize=9, loc='upper left', bbox_to_anchor=(1.01, 1), borderaxespad=0)
     ax.grid(True, alpha=0.3, axis='y')
 
@@ -827,6 +851,7 @@ def plotFinalAccuracyBar(dataset, attackKey, approach, experiments, split=None, 
 
     labels = []
     finalAccs = []
+    noiseLabels = []
 
     for exp in experiments:
         if not os.path.exists(exp['avgPath']):
@@ -834,6 +859,7 @@ def plotFinalAccuracyBar(dataset, attackKey, approach, experiments, split=None, 
         acc = np.load(exp['avgPath'])
         labels.append(exp['label'])
         finalAccs.append(acc[-1] if len(acc) > 0 else 0)
+        noiseLabels.append(noiseLevelLabel(exp['config']))
 
     if not labels:
         return
@@ -843,9 +869,12 @@ def plotFinalAccuracyBar(dataset, attackKey, approach, experiments, split=None, 
     colors = getColors(len(labels))
     bars   = ax.bar(range(len(labels)), finalAccs, color=colors, width=0.6)
 
-    for bar, acc in zip(bars, finalAccs):
+    for bar, acc, noiseLabel in zip(bars, finalAccs, noiseLabels):
+        annotation = f'{acc:.3f}'
+        if noiseLabel:
+            annotation += f'\n{noiseLabel}'
         ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.01,
-                f'{acc:.3f}', ha='center', va='bottom', fontsize=10, fontweight='bold')
+                annotation, ha='center', va='bottom', fontsize=9, fontweight='bold')
 
     # Overlay each clean run's final accuracy from the 'none' folder.
     if attackKey != 'none':
