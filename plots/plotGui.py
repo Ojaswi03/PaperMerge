@@ -109,6 +109,17 @@ def _plotDir(split, dataset, attackKey, approach, subdir=None):
     return os.path.join(*parts)
 
 
+def _plotPath(split, dataset, attackKey, approach, filename, subdir=None):
+    return os.path.join(_plotDir(split, dataset, attackKey, approach, subdir), filename)
+
+
+def _shouldSkipPlot(savePath, skipExisting=False):
+    if skipExisting and os.path.exists(savePath):
+        print(f"Exists, skipping: {savePath}")
+        return True
+    return False
+
+
 def noiseBucket(config):
     if not config.get('useChannelNoise', False):
         return "no_channel_noise"
@@ -475,7 +486,7 @@ def _finalAcc(exp):
     return float(acc[-1])
 
 
-def plotDatasetExperiments(dataset, attackKey, approach, experiments, split=None, plotSubdir=None):
+def plotDatasetExperiments(dataset, attackKey, approach, experiments, split=None, plotSubdir=None, skipExisting=False):
     # overlay all experiment curves on one axes and save the figure
     datasetTitles = {
         'mnist': 'MNIST',
@@ -483,9 +494,13 @@ def plotDatasetExperiments(dataset, attackKey, approach, experiments, split=None
         'nmnist': 'Neuromorphic MNIST'
     }
 
+    split = split or (experiments[0].get('split') if experiments else 'nonIID')
+    savePath = _plotPath(split, dataset, attackKey, approach, "experiments_avg.png", plotSubdir)
+    if _shouldSkipPlot(savePath, skipExisting):
+        return
+
     fig, ax = plt.subplots(figsize=(12, 6))
 
-    split = split or (experiments[0].get('split') if experiments else 'nonIID')
     cleanExperiments = loadCleanBaselines(dataset, approach, split=split) if attackKey != 'none' else []
     colors = getColors(len(experiments) + len(cleanExperiments))
     markers = getMarkers(len(experiments))
@@ -530,19 +545,22 @@ def plotDatasetExperiments(dataset, attackKey, approach, experiments, split=None
     ax.set_ylim([0, 1])
 
     plt.tight_layout()
-    savePath = os.path.join(_plotDir(split, dataset, attackKey, approach, plotSubdir), "experiments_avg.png")
     os.makedirs(os.path.dirname(savePath), exist_ok=True)
     plt.savefig(savePath, dpi=300, bbox_inches='tight')
     print(f"Saved: {savePath}")
     plt.close()
 
 
-def plotDatasetExperimentsZoom(dataset, attackKey, approach, experiments, split=None, plotSubdir=None):
+def plotDatasetExperimentsZoom(dataset, attackKey, approach, experiments, split=None, plotSubdir=None, skipExisting=False):
     """Zoomed line plot for comparing mitigation curves without the clean scale."""
     if len(experiments) <= 1:
         return
 
     split = split or (experiments[0].get('split') if experiments else 'nonIID')
+    savePath = _plotPath(split, dataset, attackKey, approach, "experiments_avg_zoom.png", plotSubdir)
+    if _shouldSkipPlot(savePath, skipExisting):
+        return
+
     fig, ax = plt.subplots(figsize=(12, 6))
 
     colors = getColors(len(experiments))
@@ -585,14 +603,13 @@ def plotDatasetExperimentsZoom(dataset, attackKey, approach, experiments, split=
     ax.set_ylim([yMin, yMax])
 
     plt.tight_layout()
-    savePath = os.path.join(_plotDir(split, dataset, attackKey, approach, plotSubdir), "experiments_avg_zoom.png")
     os.makedirs(os.path.dirname(savePath), exist_ok=True)
     plt.savefig(savePath, dpi=300, bbox_inches='tight')
     print(f"Saved: {savePath}")
     plt.close()
 
 
-def plotDatasetGrid(dataset, attackKey, approach, experiments, split=None, plotSubdir=None):
+def plotDatasetGrid(dataset, attackKey, approach, experiments, split=None, plotSubdir=None, skipExisting=False):
     # one subplot per experiment arranged in a grid layout
     if len(experiments) <= 1:
         return
@@ -602,6 +619,11 @@ def plotDatasetGrid(dataset, attackKey, approach, experiments, split=None, plotS
         'cifar10': 'CIFAR-10',
         'nmnist': 'Neuromorphic MNIST'
     }
+
+    split = split or (experiments[0].get('split') if experiments else 'nonIID')
+    savePath = _plotPath(split, dataset, attackKey, approach, "grid_avg.png", plotSubdir)
+    if _shouldSkipPlot(savePath, skipExisting):
+        return
 
     nExps = len(experiments)
     nCols = min(nExps, 3)
@@ -621,7 +643,6 @@ def plotDatasetGrid(dataset, attackKey, approach, experiments, split=None, plotS
     colors  = getColors(len(experiments))
     markers = getMarkers(len(experiments))
 
-    split = split or (experiments[0].get('split') if experiments else 'nonIID')
     cleanExperiments = loadCleanBaselines(dataset, approach, split=split) if attackKey != 'none' else []
 
     for idx, exp in enumerate(experiments):
@@ -670,16 +691,19 @@ def plotDatasetGrid(dataset, attackKey, approach, experiments, split=None, plotS
         axes[idx].set_visible(False)
 
     plt.tight_layout()
-    savePath = os.path.join(_plotDir(split, dataset, attackKey, approach, plotSubdir), "grid_avg.png")
     os.makedirs(os.path.dirname(savePath), exist_ok=True)
     plt.savefig(savePath, dpi=300, bbox_inches='tight')
     print(f"Saved: {savePath}")
     plt.close()
 
 
-def plotImprovementOverNoMitigation(dataset, attackKey, approach, experiments, split=None, plotSubdir=None):
+def plotImprovementOverNoMitigation(dataset, attackKey, approach, experiments, split=None, plotSubdir=None, skipExisting=False):
     """Final-accuracy gain relative to matching no-mitigation environment."""
     split = split or (experiments[0].get('split') if experiments else 'nonIID')
+    savePath = _plotPath(split, dataset, attackKey, approach, "improvement_over_no_mitigation_avg.png", plotSubdir)
+    if _shouldSkipPlot(savePath, skipExisting):
+        return
+
     baselines = {}
     rows = []
 
@@ -725,16 +749,19 @@ def plotImprovementOverNoMitigation(dataset, attackKey, approach, experiments, s
     ax.grid(True, alpha=0.3, axis='y')
 
     plt.tight_layout()
-    savePath = os.path.join(_plotDir(split, dataset, attackKey, approach, plotSubdir), "improvement_over_no_mitigation_avg.png")
     os.makedirs(os.path.dirname(savePath), exist_ok=True)
     plt.savefig(savePath, dpi=300, bbox_inches='tight')
     print(f"Saved: {savePath}")
     plt.close()
 
 
-def plotAblationGroups(dataset, attackKey, approach, experiments, split=None, plotSubdir=None):
+def plotAblationGroups(dataset, attackKey, approach, experiments, split=None, plotSubdir=None, skipExisting=False):
     """Grouped final-accuracy bars by environment and mitigation method."""
     split = split or (experiments[0].get('split') if experiments else 'nonIID')
+    savePath = _plotPath(split, dataset, attackKey, approach, "ablation_groups_avg.png", plotSubdir)
+    if _shouldSkipPlot(savePath, skipExisting):
+        return
+
     envOrder = ['Clean', 'Channel Noise Only', 'Byzantine Only', 'Byzantine + Channel Noise']
     methodOrder = ['No Mitigation', 'SS', 'EBM', 'SS + EBM']
     values = {}
@@ -779,15 +806,19 @@ def plotAblationGroups(dataset, attackKey, approach, experiments, split=None, pl
     ax.grid(True, alpha=0.3, axis='y')
 
     plt.tight_layout()
-    savePath = os.path.join(_plotDir(split, dataset, attackKey, approach, plotSubdir), "ablation_groups_avg.png")
     os.makedirs(os.path.dirname(savePath), exist_ok=True)
     plt.savefig(savePath, dpi=300, bbox_inches='tight')
     print(f"Saved: {savePath}")
     plt.close()
 
 
-def plotFinalAccuracyBar(dataset, attackKey, approach, experiments, split=None, plotSubdir=None):
+def plotFinalAccuracyBar(dataset, attackKey, approach, experiments, split=None, plotSubdir=None, skipExisting=False):
     # bar chart of each experiment's final accuracy value
+    split = split or (experiments[0].get('split') if experiments else 'nonIID')
+    savePath = _plotPath(split, dataset, attackKey, approach, "final_accuracy_avg.png", plotSubdir)
+    if _shouldSkipPlot(savePath, skipExisting):
+        return
+
     datasetTitles = {
         'mnist': 'MNIST',
         'cifar10': 'CIFAR-10',
@@ -817,7 +848,6 @@ def plotFinalAccuracyBar(dataset, attackKey, approach, experiments, split=None, 
                 f'{acc:.3f}', ha='center', va='bottom', fontsize=10, fontweight='bold')
 
     # Overlay each clean run's final accuracy from the 'none' folder.
-    split = split or (experiments[0].get('split') if experiments else 'nonIID')
     if attackKey != 'none':
         cleanExperiments = loadCleanBaselines(dataset, approach, split=split)
         for cleanIdx, cleanExp in enumerate(cleanExperiments):
@@ -848,21 +878,20 @@ def plotFinalAccuracyBar(dataset, attackKey, approach, experiments, split=None, 
     ax.grid(True, alpha=0.3, axis='y')
 
     plt.tight_layout()
-    savePath = os.path.join(_plotDir(split, dataset, attackKey, approach, plotSubdir), "final_accuracy_avg.png")
     os.makedirs(os.path.dirname(savePath), exist_ok=True)
     plt.savefig(savePath, dpi=300, bbox_inches='tight')
     print(f"Saved: {savePath}")
     plt.close()
 
 
-def plotExperimentSet(dataset, attackKey, approach, experiments, split=None, plotSubdir=None):
-    plotDatasetExperiments(dataset, attackKey, approach, experiments, split=split, plotSubdir=plotSubdir)
-    plotDatasetExperimentsZoom(dataset, attackKey, approach, experiments, split=split, plotSubdir=plotSubdir)
+def plotExperimentSet(dataset, attackKey, approach, experiments, split=None, plotSubdir=None, skipExisting=False):
+    plotDatasetExperiments(dataset, attackKey, approach, experiments, split=split, plotSubdir=plotSubdir, skipExisting=skipExisting)
+    plotDatasetExperimentsZoom(dataset, attackKey, approach, experiments, split=split, plotSubdir=plotSubdir, skipExisting=skipExisting)
     if len(experiments) > 1:
-        plotDatasetGrid(dataset, attackKey, approach, experiments, split=split, plotSubdir=plotSubdir)
-    plotFinalAccuracyBar(dataset, attackKey, approach, experiments, split=split, plotSubdir=plotSubdir)
-    plotImprovementOverNoMitigation(dataset, attackKey, approach, experiments, split=split, plotSubdir=plotSubdir)
-    plotAblationGroups(dataset, attackKey, approach, experiments, split=split, plotSubdir=plotSubdir)
+        plotDatasetGrid(dataset, attackKey, approach, experiments, split=split, plotSubdir=plotSubdir, skipExisting=skipExisting)
+    plotFinalAccuracyBar(dataset, attackKey, approach, experiments, split=split, plotSubdir=plotSubdir, skipExisting=skipExisting)
+    plotImprovementOverNoMitigation(dataset, attackKey, approach, experiments, split=split, plotSubdir=plotSubdir, skipExisting=skipExisting)
+    plotAblationGroups(dataset, attackKey, approach, experiments, split=split, plotSubdir=plotSubdir, skipExisting=skipExisting)
 
 
 def generateGuiPlots():

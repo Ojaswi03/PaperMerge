@@ -21,6 +21,7 @@ import sys
 import time
 import re
 import traceback
+import gc
 import tkinter as tk
 from tkinter import ttk, messagebox, scrolledtext, simpledialog, filedialog
 import threading
@@ -1038,6 +1039,14 @@ class ExperimentGUI:
         self.currentThread = threading.Thread(target=self.runExperimentThread)
         self.currentThread.start()
 
+    def _cleanupTensorflow(self):
+        try:
+            from tensorflow.keras import backend as keras_backend
+            keras_backend.clear_session()
+            gc.collect()
+        except Exception as e:
+            self.logMessage(f"WARNING: TensorFlow cleanup failed: {e}")
+
     def stopExperiment(self):
         self.isRunning = False
         self.logMessage("\n[STOP REQUESTED] Stopping experiment…")
@@ -1085,6 +1094,7 @@ class ExperimentGUI:
             sendNotification("Run FAILED", str(e), priority="urgent")
             self.root.after(0, self._setStatus, f"ERROR: {str(e)[:80]}")
         finally:
+            self._cleanupTensorflow()
             self.root.after(0, self._onRunFinished)
 
     def _onRunFinished(self):
@@ -1243,7 +1253,10 @@ class ExperimentGUI:
 
                 expName = config.get("experimentName", os.path.basename(filepath))
                 sendNotification("Run Started", f"[{idx}/{total}] {expName} has started.", priority="default")
-                self._executeExperiment(config)
+                try:
+                    self._executeExperiment(config)
+                finally:
+                    self._cleanupTensorflow()
                 completed += 1
 
                 if not self.isRunning:
@@ -1672,14 +1685,22 @@ class ExperimentGUI:
 
         avgPath    = f"{resultDir}/acc_{safeName}.npy"
         configPath = f"{resultDir}/config_{safeName}.json"
-        np.save(avgPath, np.array(avgAccHist))
-        with open(configPath, 'w') as f:
-            json.dump(config, f, indent=2)
 
-        self.logMessage(f"\nResults saved:")
-        self.logMessage(f"  {avgPath}")
-        self.logMessage(f"  {configPath}")
-        self.generatePlots(showDialog=False)
+        self.logMessage(f"\nResult files:")
+        if os.path.exists(avgPath):
+            self.logMessage(f"  exists, skipped: {avgPath}")
+        else:
+            np.save(avgPath, np.array(avgAccHist))
+            self.logMessage(f"  saved: {avgPath}")
+
+        if os.path.exists(configPath):
+            self.logMessage(f"  exists, skipped: {configPath}")
+        else:
+            with open(configPath, 'w') as f:
+                json.dump(config, f, indent=2)
+            self.logMessage(f"  saved: {configPath}")
+
+        self.generatePlots(showDialog=False, config=config, onlyMissing=True)
 
     # ── Config Queue ──────────────────────────────────────────────────────────
     def _saveQueueState(self):
@@ -2069,9 +2090,8 @@ class ExperimentGUI:
                 with self._queueLock:
                     if not self.configQueue:
                         break
-                    config = self.configQueue.pop(0)
-                    remaining = len(self.configQueue)
-                    self._saveQueueState()
+                    config = self.configQueue[0]
+                    remaining = max(0, len(self.configQueue) - 1)
                 self.root.after(0, self._updateQueueButton)
 
                 if not self.isRunning:
@@ -2097,14 +2117,31 @@ class ExperimentGUI:
 
                 sendNotification("Queue Started", f"{expName} has started.", priority="default")
                 config['aggregationMode'] = self.defaultAggregationMode(config)
-                self._executeExperiment(config)
-                completed += 1
+                try:
+                    self._executeExperiment(config)
+                finally:
+                    self._cleanupTensorflow()
 
                 if not self.isRunning:
+                    self.logMessage("\n[STOPPED] Current queue item was left in the queue.")
                     break
 
+                removedCompleted = False
+                with self._queueLock:
+                    for idx, queuedConfig in enumerate(self.configQueue):
+                        if queuedConfig is config:
+                            del self.configQueue[idx]
+                            removedCompleted = True
+                            self._saveQueueState()
+                            break
+                self.root.after(0, self._updateQueueButton)
+                completed += 1
+
                 sendNotification("Queue Step Done", f"{expName} finished.", priority="high")
-                self.logMessage(f"\n[{completed}] Done.\n")
+                if removedCompleted:
+                    self.logMessage(f"\n[{completed}] Done. Removed completed item from queue.\n")
+                else:
+                    self.logMessage(f"\n[{completed}] Done. Queue item was already removed manually.\n")
 
             self.logMessage("")
             self.logMessage("=" * 80)
@@ -2116,6 +2153,7 @@ class ExperimentGUI:
 
         except Exception as e:
             self.logMessage(f"\nQUEUE ERROR: {str(e)}")
+            self.logMessage("Current queue item was left in the queue.")
             self.logMessage(traceback.format_exc())
             sendNotification("Queue FAILED", str(e), priority="urgent")
         finally:
@@ -2310,15 +2348,58 @@ class ExperimentGUI:
     def plotResults(self):
         self.generatePlots(showDialog=True)
 
-    def generatePlots(self, showDialog=True):
+    def _attackKeyFromConfig(self, config):
+        attackParts = []
+        for k, s in [('attackGaussian','gaussian'),('attackSignFlip','signflip'),
+                     ('attackHidden','hidden'),('attackModelPoison','model_poison'),
+                     ('attackScaling','scaling'),('attackAlie','alie'),
+                     ('attackIpm','ipm'),('attackNoiseAmp','noise_amp')]:
+            if config.get(k):
+                attackParts.append(s)
+        return "_".join(attackParts) if attackParts else "none"
+
+    def generatePlots(self, showDialog=True, config=None, onlyMissing=False):
         try:
             from plotGui import (discoverDataSplits, discoverDatasets, discoverAttackTypes, discoverApproaches,
-                                 discoverExperiments, groupExperimentsByNoiseBucket,
+                                 discoverExperiments, groupExperimentsByNoiseBucket, noiseBucket,
                                  plotExperimentSet)
 
             self.logMessage("\n" + "=" * 60)
             self.logMessage("GENERATING PLOTS")
             self.logMessage("=" * 60)
+
+            if config is not None:
+                split = 'nonIID' if config.get('nonIID', True) else 'IID'
+                dataset = config.get('dataset')
+                attackKey = self._attackKeyFromConfig(config)
+                approach = config.get('approach', 'basil')
+                experiments = discoverExperiments(dataset, attackKey, approach, split=split)
+                if not experiments:
+                    self.logMessage(f"No saved experiments found for {split}/{dataset}/{attackKey}/{approach}")
+                    return
+
+                self.logMessage(
+                    f"Target: {split} | {dataset} | {attackKey} | {approach} "
+                    f"({len(experiments)} experiments)"
+                )
+                plotExperimentSet(
+                    dataset, attackKey, approach, experiments,
+                    split=split, skipExisting=onlyMissing
+                )
+
+                bucket = noiseBucket(config)
+                bucketExperiments = groupExperimentsByNoiseBucket(experiments).get(bucket, [])
+                if bucketExperiments:
+                    self.logMessage(f"  bucket: {bucket} ({len(bucketExperiments)} experiments)")
+                    plotExperimentSet(
+                        dataset, attackKey, approach, bucketExperiments,
+                        split=split, plotSubdir=bucket, skipExisting=onlyMissing
+                    )
+
+                self.logMessage("\nPlots checked for completed experiment.")
+                self.logMessage("=" * 60)
+                self._setStatus("Plots checked for completed experiment.")
+                return
 
             splits = discoverDataSplits()
             if not splits:

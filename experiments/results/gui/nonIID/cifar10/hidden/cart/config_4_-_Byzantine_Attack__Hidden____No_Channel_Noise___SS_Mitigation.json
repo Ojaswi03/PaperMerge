@@ -43,5 +43,6 @@
   "channelNoiseStart": 0,
   "channelNoiseSigma": 0.0,
   "experimentName": "4 - Byzantine Attack (Hidden) + No Channel Noise + SS Mitigation",
-  "cartAlgorithm": "cart"
+  "cartAlgorithm": "cart",
+  "aggregationMode": "handoff"
 }

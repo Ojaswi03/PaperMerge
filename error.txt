@@ -1,0 +1,151 @@
+[2026-05-20 05:38:31] Traceback (most recent call last):
+  File "/home/ojaswi/PaperMerge/gui/experimentGui.py", line 2100, in runQueueThread
+    self._executeExperiment(config)
+  File "/home/ojaswi/PaperMerge/gui/experimentGui.py", line 1464, in _executeExperiment
+    avgAccHist, worstAccHist = basilRingTrainingWithAttack(
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ojaswi/PaperMerge/basil_core/basil.py", line 359, in basilRingTrainingWithAttack
+    nd.localTrain(lr=lr, stepsPerEpoch=stepsPerEpoch)
+  File "/home/ojaswi/PaperMerge/basil_core/basil.py", line 221, in localTrain
+    self._compiledStep(
+  File "/home/ojaswi/PaperMerge/environment/basil-noise-env/lib/python3.12/site-packages/tensorflow/python/util/traceback_utils.py", line 153, in error_handler
+    raise e.with_traceback(filtered_tb) from None
+  File "/home/ojaswi/PaperMerge/environment/basil-noise-env/lib/python3.12/site-packages/tensorflow/python/eager/execute.py", line 59, in quick_execute
+    except TypeError as e:
+tensorflow.python.framework.errors_impl.ResourceExhaustedError: Graph execution error:
+
+Detected at node gradient_tape/sequential_250_1/conv2d_1501_1/convolution/Conv2DBackpropInput defined at (most recent call last):
+  File "/usr/lib/python3.12/threading.py", line 1030, in _bootstrap
+
+  File "/usr/lib/python3.12/threading.py", line 1073, in _bootstrap_inner
+
+  File "/usr/lib/python3.12/threading.py", line 1010, in run
+
+  File "/home/ojaswi/PaperMerge/gui/experimentGui.py", line 2100, in runQueueThread
+
+  File "/home/ojaswi/PaperMerge/gui/experimentGui.py", line 1464, in _executeExperiment
+
+  File "/home/ojaswi/PaperMerge/basil_core/basil.py", line 359, in basilRingTrainingWithAttack
+
+  File "/home/ojaswi/PaperMerge/basil_core/basil.py", line 221, in localTrain
+
+  File "/home/ojaswi/PaperMerge/basil_core/basil.py", line 164, in _step_fn
+
+OOM when allocating tensor with shape[512,32,32,64] and type float on /job:localhost/replica:0/task:0/device:GPU:0 by allocator GPU_0_bfc
+	 [[{{node gradient_tape/sequential_250_1/conv2d_1501_1/convolution/Conv2DBackpropInput}}]]
+Hint: If you want to see a list of allocated tensors when OOM happens, add report_tensor_allocations_upon_oom to RunOptions for current allocation info. This isn't available when running in Eager mode.
+ [Op:__inference__step_fn_6878592]
+
+
+=== Saved from log at 2026-05-20 09:10:24 ===
+Traceback (most recent call last):
+[2026-05-25 06:01:58] Traceback (most recent call last):
+  File "/home/ojaswi/PaperMerge/gui/experimentGui.py", line 2114, in runQueueThread
+    self._executeExperiment(config)
+  File "/home/ojaswi/PaperMerge/gui/experimentGui.py", line 1357, in _executeExperiment
+    avgAccHist, worstAccHist = cartRingTraining(
+                               ^^^^^^^^^^^^^^^^^
+  File "/home/ojaswi/PaperMerge/basil_core/cart.py", line 382, in cartRingTraining
+    nd.cartLocalTrain(lr=lr, trustWeights=trustWeights, stepsPerEpoch=stepsPerEpoch)
+  File "/home/ojaswi/PaperMerge/basil_core/cart.py", line 210, in cartLocalTrain
+    self._cartStep(
+  File "/home/ojaswi/PaperMerge/environment/basil-noise-env/lib/python3.12/site-packages/tensorflow/python/util/traceback_utils.py", line 153, in error_handler
+    raise e.with_traceback(filtered_tb) from None
+  File "/home/ojaswi/PaperMerge/environment/basil-noise-env/lib/python3.12/site-packages/tensorflow/python/eager/execute.py", line 59, in quick_execute
+    except TypeError as e:
+tensorflow.python.framework.errors_impl.UnknownError: Graph execution error:
+
+Detected at node gradient_tape/sequential_1_1/conv2d_11_1/convolution/Conv2DBackpropInput defined at (most recent call last):
+  File "/usr/lib/python3.12/threading.py", line 1030, in _bootstrap
+
+  File "/usr/lib/python3.12/threading.py", line 1073, in _bootstrap_inner
+
+  File "/usr/lib/python3.12/threading.py", line 1010, in run
+
+  File "/home/ojaswi/PaperMerge/gui/experimentGui.py", line 2114, in runQueueThread
+
+  File "/home/ojaswi/PaperMerge/gui/experimentGui.py", line 1357, in _executeExperiment
+
+  File "/home/ojaswi/PaperMerge/basil_core/cart.py", line 382, in cartRingTraining
+
+  File "/home/ojaswi/PaperMerge/basil_core/cart.py", line 210, in cartLocalTrain
+
+  File "/home/ojaswi/PaperMerge/basil_core/cart.py", line 152, in _cart_step
+
+CUDNN failed to allocate the scratch space for the runner or to find a working no-scratch runner.
+	 [[{{node gradient_tape/sequential_1_1/conv2d_11_1/convolution/Conv2DBackpropInput}}]] [Op:__inference__cart_step_5554139]
+
+[2026-05-25 14:09:34] Traceback (most recent call last):
+  File "/home/ojaswi/PaperMerge/gui/experimentGui.py", line 2114, in runQueueThread
+    self._executeExperiment(config)
+  File "/home/ojaswi/PaperMerge/gui/experimentGui.py", line 1357, in _executeExperiment
+    avgAccHist, worstAccHist = cartRingTraining(
+                               ^^^^^^^^^^^^^^^^^
+  File "/home/ojaswi/PaperMerge/basil_core/cart.py", line 382, in cartRingTraining
+    nd.cartLocalTrain(lr=lr, trustWeights=trustWeights, stepsPerEpoch=stepsPerEpoch)
+  File "/home/ojaswi/PaperMerge/basil_core/cart.py", line 210, in cartLocalTrain
+    self._cartStep(
+  File "/home/ojaswi/PaperMerge/environment/basil-noise-env/lib/python3.12/site-packages/tensorflow/python/util/traceback_utils.py", line 153, in error_handler
+    raise e.with_traceback(filtered_tb) from None
+  File "/home/ojaswi/PaperMerge/environment/basil-noise-env/lib/python3.12/site-packages/tensorflow/python/eager/execute.py", line 59, in quick_execute
+    except TypeError as e:
+tensorflow.python.framework.errors_impl.ResourceExhaustedError: Graph execution error:
+
+Detected at node sequential_1/conv2d_3_1/Relu defined at (most recent call last):
+  File "/usr/lib/python3.12/threading.py", line 1030, in _bootstrap
+
+  File "/usr/lib/python3.12/threading.py", line 1073, in _bootstrap_inner
+
+  File "/usr/lib/python3.12/threading.py", line 1010, in run
+
+  File "/home/ojaswi/PaperMerge/gui/experimentGui.py", line 2114, in runQueueThread
+
+  File "/home/ojaswi/PaperMerge/gui/experimentGui.py", line 1357, in _executeExperiment
+
+  File "/home/ojaswi/PaperMerge/basil_core/cart.py", line 382, in cartRingTraining
+
+  File "/home/ojaswi/PaperMerge/basil_core/cart.py", line 210, in cartLocalTrain
+
+  File "/home/ojaswi/PaperMerge/basil_core/cart.py", line 144, in _cart_step
+
+  File "/home/ojaswi/PaperMerge/environment/basil-noise-env/lib/python3.12/site-packages/keras/src/utils/traceback_utils.py", line 117, in error_handler
+
+  File "/home/ojaswi/PaperMerge/environment/basil-noise-env/lib/python3.12/site-packages/keras/src/layers/layer.py", line 941, in __call__
+
+  File "/home/ojaswi/PaperMerge/environment/basil-noise-env/lib/python3.12/site-packages/keras/src/utils/traceback_utils.py", line 117, in error_handler
+
+  File "/home/ojaswi/PaperMerge/environment/basil-noise-env/lib/python3.12/site-packages/keras/src/ops/operation.py", line 59, in __call__
+
+  File "/home/ojaswi/PaperMerge/environment/basil-noise-env/lib/python3.12/site-packages/keras/src/utils/traceback_utils.py", line 156, in error_handler
+
+  File "/home/ojaswi/PaperMerge/environment/basil-noise-env/lib/python3.12/site-packages/keras/src/models/sequential.py", line 220, in call
+
+  File "/home/ojaswi/PaperMerge/environment/basil-noise-env/lib/python3.12/site-packages/keras/src/models/functional.py", line 183, in call
+
+  File "/home/ojaswi/PaperMerge/environment/basil-noise-env/lib/python3.12/site-packages/keras/src/ops/function.py", line 206, in _run_through_graph
+
+  File "/home/ojaswi/PaperMerge/environment/basil-noise-env/lib/python3.12/site-packages/keras/src/models/functional.py", line 644, in call
+
+  File "/home/ojaswi/PaperMerge/environment/basil-noise-env/lib/python3.12/site-packages/keras/src/utils/traceback_utils.py", line 117, in error_handler
+
+  File "/home/ojaswi/PaperMerge/environment/basil-noise-env/lib/python3.12/site-packages/keras/src/layers/layer.py", line 941, in __call__
+
+  File "/home/ojaswi/PaperMerge/environment/basil-noise-env/lib/python3.12/site-packages/keras/src/utils/traceback_utils.py", line 117, in error_handler
+
+  File "/home/ojaswi/PaperMerge/environment/basil-noise-env/lib/python3.12/site-packages/keras/src/ops/operation.py", line 59, in __call__
+
+  File "/home/ojaswi/PaperMerge/environment/basil-noise-env/lib/python3.12/site-packages/keras/src/utils/traceback_utils.py", line 156, in error_handler
+
+  File "/home/ojaswi/PaperMerge/environment/basil-noise-env/lib/python3.12/site-packages/keras/src/layers/convolutional/base_conv.py", line 263, in call
+
+  File "/home/ojaswi/PaperMerge/environment/basil-noise-env/lib/python3.12/site-packages/keras/src/activations/activations.py", line 47, in relu
+
+  File "/home/ojaswi/PaperMerge/environment/basil-noise-env/lib/python3.12/site-packages/keras/src/activations/activations.py", line 101, in static_call
+
+  File "/home/ojaswi/PaperMerge/environment/basil-noise-env/lib/python3.12/site-packages/keras/src/backend/tensorflow/nn.py", line 15, in relu
+
+OOM when allocating tensor with shape[512,128,16,16] and type float on /job:localhost/replica:0/task:0/device:GPU:0 by allocator GPU_0_bfc
+	 [[{{node sequential_1/conv2d_3_1/Relu}}]]
+Hint: If you want to see a list of allocated tensors when OOM happens, add report_tensor_allocations_upon_oom to RunOptions for current allocation info. This isn't available when running in Eager mode.
+ [Op:__inference__cart_step_5559224]
+

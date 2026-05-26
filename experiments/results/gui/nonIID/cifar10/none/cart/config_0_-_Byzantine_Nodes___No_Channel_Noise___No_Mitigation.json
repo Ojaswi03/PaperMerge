@@ -43,5 +43,6 @@
   "channelNoiseStart": 0,
   "channelNoiseSigma": 0.0,
   "experimentName": "0 - Byzantine Nodes + No Channel Noise + No Mitigation",
-  "cartAlgorithm": "cart"
+  "cartAlgorithm": "cart",
+  "aggregationMode": "consensus"
 }
