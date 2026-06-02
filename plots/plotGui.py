@@ -727,39 +727,42 @@ def plotImprovementOverNoMitigation(dataset, attackKey, approach, experiments, s
 
     bestRows = {}
     for env, bucket, method, label, final, noiseLabel in rows:
-        if method == 'No Mitigation' or (env, bucket) not in baselines:
+        if (env, bucket) not in baselines:
             continue
         displayEnv = f"{env} ({noiseLabel})" if noiseLabel else env
         displayLabel = f"{displayEnv}\n{method}"
-        gain = final - baselines[(env, bucket)]
+        gain = 0.0 if method == 'No Mitigation' else final - baselines[(env, bucket)]
         key = (env, bucket, method)
         if key not in bestRows or gain > bestRows[key][1]:
-            bestRows[key] = (displayLabel, gain, noiseLabel)
+            bestRows[key] = (displayLabel, gain, noiseLabel, method)
 
     plotRows = list(bestRows.values())
 
     if not plotRows:
         return
 
-    labels, gains, noiseLabels = zip(*plotRows)
+    labels, gains, noiseLabels, methods = zip(*plotRows)
     fig, ax = plt.subplots(figsize=(max(8, len(labels) * 1.7), 6))
-    colors = ['#16a34a' if g >= 0 else '#dc2626' for g in gains]
+    colors = [
+        '#6b7280' if method == 'No Mitigation'
+        else '#16a34a' if gain >= 0
+        else '#dc2626'
+        for gain, method in zip(gains, methods)
+    ]
     bars = ax.bar(range(len(labels)), gains, color=colors, width=0.65)
     ax.axhline(0.0, color='#111827', linewidth=1.5)
 
-    for bar, gain, noiseLabel in zip(bars, gains, noiseLabels):
+    for bar, gain in zip(bars, gains):
         va = 'bottom' if gain >= 0 else 'top'
         offset = 0.005 if gain >= 0 else -0.005
         annotation = f'{gain:+.3f}'
-        if noiseLabel:
-            annotation += f'\n{noiseLabel}'
         ax.text(bar.get_x() + bar.get_width() / 2, gain + offset,
                 annotation, ha='center', va=va, fontsize=9, fontweight='bold')
 
     attackTitle = attackKey.replace("_", " + ").title()
     approachTitle = _approachTitle(approach)
-    ax.set_ylabel('Final Accuracy Gain', fontsize=12)
-    ax.set_title(f'Improvement Over No Mitigation | {datasetTitle(dataset)} | {attackTitle} | {approachTitle}',
+    ax.set_ylabel('Final Accuracy Gain vs Matched Baseline', fontsize=12)
+    ax.set_title(f'Mitigation Gain vs No-Mitigation Baseline | {datasetTitle(dataset)} | {attackTitle} | {approachTitle}',
                  fontsize=14, fontweight='bold')
     ax.set_xticks(range(len(labels)))
     ax.set_xticklabels(labels, rotation=25, ha='right', fontsize=9)
@@ -869,10 +872,8 @@ def plotFinalAccuracyBar(dataset, attackKey, approach, experiments, split=None, 
     colors = getColors(len(labels))
     bars   = ax.bar(range(len(labels)), finalAccs, color=colors, width=0.6)
 
-    for bar, acc, noiseLabel in zip(bars, finalAccs, noiseLabels):
+    for bar, acc in zip(bars, finalAccs):
         annotation = f'{acc:.3f}'
-        if noiseLabel:
-            annotation += f'\n{noiseLabel}'
         ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.01,
                 annotation, ha='center', va='bottom', fontsize=9, fontweight='bold')
 
