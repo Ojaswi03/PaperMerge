@@ -30,6 +30,44 @@ from .trainer import (
 )
 
 
+MAX_TRAIN_MICRO_BATCH_SIZE = 128
+
+
+def _batchGradients(model_inner, weights, x, y, microBatchSize=MAX_TRAIN_MICRO_BATCH_SIZE):
+    """Compute one effective full-batch gradient using smaller activation slices.
+
+    This keeps the configured batch size unchanged while reducing peak GPU
+    activation memory for CIFAR. The gradients are weighted by slice size, so
+    for loss functions that average over the batch this is equivalent to one
+    full-batch gradient update.
+    """
+    batchSize = x.shape[0]
+    if batchSize is None or batchSize <= microBatchSize:
+        with tf.GradientTape() as tape:
+            logits = model_inner(x, training=True)
+            loss = lossFn(y, logits)
+        grads = tape.gradient(loss, weights)
+        return [
+            tf.zeros_like(w) if g is None else g
+            for g, w in zip(grads, weights)
+        ]
+
+    gradSums = [tf.zeros_like(w) for w in weights]
+    total = float(batchSize)
+    for start in range(0, int(batchSize), int(microBatchSize)):
+        end = min(start + int(microBatchSize), int(batchSize))
+        with tf.GradientTape() as tape:
+            logits = model_inner(x[start:end], training=True)
+            loss = lossFn(y[start:end], logits)
+        grads = tape.gradient(loss, weights)
+        factor = float(end - start) / total
+        gradSums = [
+            acc + (tf.zeros_like(w) if g is None else g) * factor
+            for acc, g, w in zip(gradSums, grads, weights)
+        ]
+    return gradSums
+
+
 class _MutableLR(tf.keras.optimizers.schedules.LearningRateSchedule):
     """A LearningRateSchedule backed by a tf.Variable so we can update LR
     between rounds without triggering a @tf.function retrace."""
@@ -158,10 +196,8 @@ class BasilNode:
                 1.0 + self.ebmLambda * self.sigma * self.sigma, dtype=tf.float32
             )
             def _step_fn(x, y):
-                with tf.GradientTape() as tape:
-                    logits = model_inner(x, training=True)
-                    loss = lossFn(y, logits)
-                grads = tape.gradient(loss, model_inner.trainable_weights)
+                weights = model_inner.trainable_weights
+                grads = _batchGradients(model_inner, weights, x, y)
                 # Clip raw gradients first, then apply EBM scale.
                 # Clipping AFTER scaling was halving the effective clip threshold
                 # (clip=5 on 2x-scaled grads = clip=2.5 on real grads), which
@@ -169,15 +205,14 @@ class BasilNode:
                 clipped, _ = tf.clip_by_global_norm(grads, 5.0)
                 scaled = [g * scale for g in clipped]
                 opt.apply_gradients(
-                    zip(scaled, model_inner.trainable_weights)
+                    zip(scaled, weights)
                 )
         else:
             def _step_fn(x, y):
-                with tf.GradientTape() as tape:
-                    logits = model_inner(x, training=True)
-                    loss = lossFn(y, logits)
-                grads = tape.gradient(loss, model_inner.trainable_weights)
-                opt.apply_gradients(zip(grads, model_inner.trainable_weights))
+                weights = model_inner.trainable_weights
+                grads = _batchGradients(model_inner, weights, x, y)
+                grads, _ = tf.clip_by_global_norm(grads, 5.0)
+                opt.apply_gradients(zip(grads, weights))
 
         self._compiledStep = tf.function(_step_fn)
 
@@ -313,6 +348,14 @@ def basilRingTrainingWithAttack(
 
         # Determine current attack type (cycle through list)
         atk = attackTypes[r % len(attackTypes)]
+        cleanConsensusRound = (
+            aggregationMode == "consensus"
+            and not useSnapshots
+            and not attackers
+            and not channelNoiseActive
+            and mitigation == "none"
+            and atk in ("none", "clean")
+        )
 
         attackStr = f" | attack={atk}({len(attackers)} nodes)" if attackers and atk != "none" else ""
         print(f"[round {r}] lr={lr:.6f}{noiseStatus}{attackStr}...", flush=True)
@@ -328,7 +371,13 @@ def basilRingTrainingWithAttack(
         else:
             commSigma = sigma if channelNoiseActive else 0.0
 
-        if useSequential:
+        if cleanConsensusRound:
+            # Clean reference: no adversaries, no channel noise, no mitigation.
+            # Every communicated update is correct, so the consensus result is
+            # exactly the average of all locally trained node models.
+            for nd in nodes:
+                nd.localTrain(lr=lr, stepsPerEpoch=stepsPerEpoch)
+        elif useSequential:
             # ===== PAPER'S SEQUENTIAL ALGORITHM (Algorithm 1) =====
             # Process nodes one at a time around the ring
             for i in range(n):
@@ -425,6 +474,11 @@ def basilRingTrainingWithAttack(
                 for offset in range(1, fanout + 1):
                     j = (i + offset) % n
                     nodes[j].receiveModel(i, noisyParams)
+
+        if cleanConsensusRound and nodes:
+            consensusParams = averageParams([getParams(nd.model) for nd in nodes])
+            for nd in nodes:
+                setParams(nd.model, [p.copy() for p in consensusParams])
 
         # Evaluation - maxBatches=5 (~2500 samples) is fast enough for per-round tracking
         if testLoader is not None:

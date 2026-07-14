@@ -149,3 +149,49 @@ OOM when allocating tensor with shape[512,128,16,16] and type float on /job:loca
 Hint: If you want to see a list of allocated tensors when OOM happens, add report_tensor_allocations_upon_oom to RunOptions for current allocation info. This isn't available when running in Eager mode.
  [Op:__inference__cart_step_5559224]
 
+[2026-07-07 09:14:36] Traceback (most recent call last):
+  File "/home/ojaswi/PaperMerge/gui/experimentGui.py", line 2351, in runQueueThread
+    self._executeExperiment(config)
+  File "/home/ojaswi/PaperMerge/gui/experimentGui.py", line 1352, in _executeExperiment
+    return self._executeExperimentImpl(config)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ojaswi/PaperMerge/gui/experimentGui.py", line 1445, in _executeExperimentImpl
+    avgAccHist, worstAccHist = cartRingTraining(
+                               ^^^^^^^^^^^^^^^^^
+  File "/home/ojaswi/PaperMerge/basil_core/cart.py", line 406, in cartRingTraining
+    nd.cartLocalTrain(lr=lr, trustWeights=trustWeights, stepsPerEpoch=stepsPerEpoch)
+  File "/home/ojaswi/PaperMerge/basil_core/cart.py", line 225, in cartLocalTrain
+    self._cartStep(
+  File "/home/ojaswi/PaperMerge/environment/basil-noise-env/lib/python3.12/site-packages/tensorflow/python/util/traceback_utils.py", line 153, in error_handler
+    raise e.with_traceback(filtered_tb) from None
+  File "/home/ojaswi/PaperMerge/environment/basil-noise-env/lib/python3.12/site-packages/tensorflow/python/eager/execute.py", line 59, in quick_execute
+    except TypeError as e:
+tensorflow.python.framework.errors_impl.ResourceExhaustedError: Graph execution error:
+
+Detected at node gradient_tape/sequential_1/conv2d_1_2/convolution/Conv2DBackpropInput defined at (most recent call last):
+  File "/usr/lib/python3.12/threading.py", line 1030, in _bootstrap
+
+  File "/usr/lib/python3.12/threading.py", line 1073, in _bootstrap_inner
+
+  File "/usr/lib/python3.12/threading.py", line 1010, in run
+
+  File "/home/ojaswi/PaperMerge/gui/experimentGui.py", line 2351, in runQueueThread
+
+  File "/home/ojaswi/PaperMerge/gui/experimentGui.py", line 1352, in _executeExperiment
+
+  File "/home/ojaswi/PaperMerge/gui/experimentGui.py", line 1445, in _executeExperimentImpl
+
+  File "/home/ojaswi/PaperMerge/basil_core/cart.py", line 406, in cartRingTraining
+
+  File "/home/ojaswi/PaperMerge/basil_core/cart.py", line 225, in cartLocalTrain
+
+  File "/home/ojaswi/PaperMerge/basil_core/cart.py", line 147, in _cart_step
+
+OOM when allocating tensor with shape[512,32,32,64] and type float on /job:localhost/replica:0/task:0/device:GPU:0 by allocator GPU_0_bfc
+	 [[{{node gradient_tape/sequential_1/conv2d_1_2/convolution/Conv2DBackpropInput}}]]
+Hint: If you want to see a list of allocated tensors when OOM happens, add report_tensor_allocations_upon_oom to RunOptions for current allocation info. This isn't available when running in Eager mode.
+ [Op:__inference__cart_step_6257129]
+
+
+=== Saved from log at 2026-07-07 10:42:18 ===
+Traceback (most recent call last):

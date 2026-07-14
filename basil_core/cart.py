@@ -41,7 +41,7 @@ from .trainer import (
     lossFn,
     _iterLimited,
 )
-from .basil import BasilNode, _MutableLR
+from .basil import BasilNode, _MutableLR, _batchGradients
 
 
 # ---------------------------------------------------------------------------
@@ -140,22 +140,28 @@ class CARTNode(BasilNode):
             )
 
         def _cart_step(x, y):
-            with tf.GradientTape() as tape:
-                logits = model_inner(x, training=True)
-                ce_loss = lossFn(y, logits)
-                # Proximal term: (mu/2) * ||w - w_ref||²
-                prox = tf.add_n([
-                    tf.reduce_sum(tf.square(w - r))
-                    for w, r in zip(model_inner.trainable_weights, refParams)
-                ])
-                loss = ce_loss + (proxMu / 2.0) * prox
-            grads = tape.gradient(loss, model_inner.trainable_weights)
+            weights = model_inner.trainable_weights
+            ce_grads = _batchGradients(model_inner, weights, x, y)
+
+            # Proximal term gradient: d/dw [(mu/2) * ||w - w_ref||^2].
+            # Keep this CART regularizer separate from EBM. EBM is a channel
+            # noise mitigation, so it should amplify the learning signal, not
+            # double the class-memory pull that prevents non-IID forgetting.
+            prox_grads = [proxMu * (w - r) for w, r in zip(weights, refParams)]
+
             if ebmEnabled:
-                clipped, _ = tf.clip_by_global_norm(grads, 5.0)
-                grads = [g * scale for g in clipped]
+                clipped_ce, _ = tf.clip_by_global_norm(ce_grads, 5.0)
+                grads = [
+                    (g * scale) + p
+                    for g, p in zip(clipped_ce, prox_grads)
+                ]
             else:
+                grads = [
+                    g + p
+                    for g, p in zip(ce_grads, prox_grads)
+                ]
                 grads, _ = tf.clip_by_global_norm(grads, 5.0)
-            opt.apply_gradients(zip(grads, model_inner.trainable_weights))
+            opt.apply_gradients(zip(grads, weights))
 
         self._cartStep = tf.function(_cart_step)
 
@@ -329,14 +335,23 @@ def cartRingTraining(
         mitigationStr = f" {mitigation.upper()}" if mitigation != "none" else ""
         noiseStatus = f" channel_noise(σ={sigma})" if channelNoiseActive else ""
         atk = attackTypes[r % len(attackTypes)]
+        cleanConsensusRound = (
+            aggregationMode == "consensus"
+            and not useSnapshots
+            and not attackers
+            and not channelNoiseActive
+            and mitigation == "none"
+            and atk in ("none", "clean")
+        )
         attackStr = f" | attack={atk}({len(attackers)} nodes)" if attackers and atk != "none" else ""
         ssStr = " SS" if useSnapshots else ""
         print(f"[CART round {r}] lr={lr:.6f}{noiseStatus}{ssStr}{mitigationStr}{attackStr}...", flush=True)
 
-        # EBM uses a stricter per-hop budget so the effective round-level
-        # ring noise remains learnable.
+        # Match the BASIL/Merged EBM calibration: each model accumulates
+        # sqrt(n) independent ring-hop perturbations across a round, so use
+        # sigma / sqrt(n) per hop to keep the round-level budget at sigma.
         if channelNoiseActive and noiseModel == "ebm":
-            commSigma = sigma / n
+            commSigma = sigma / math.sqrt(n)
         else:
             commSigma = sigma if channelNoiseActive else 0.0
 
@@ -412,6 +427,11 @@ def cartRingTraining(
                 # Merge registry into the destination node's incoming registry
                 # (each node in the ring window gets the sender's best knowledge)
                 nodeRegistries[j].merge(outRegistry)
+
+        if cleanConsensusRound and nodes:
+            consensusParams = averageParams([getParams(nd.model) for nd in nodes])
+            for nd in nodes:
+                setParams(nd.model, [p.copy() for p in consensusParams])
 
         # ===== EVALUATION =====
         if testLoader is not None:

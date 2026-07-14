@@ -3,11 +3,13 @@
 Run a single JSON config for a quick check.
 Usage: python scripts/run_single_config.py <path_to_config.json> [--rounds N]
 """
+import atexit
 import sys, os, json, argparse
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from scripts.common import setupGpu
+from scripts.common import cleanupTensorflowMemory, setupGpu
 setupGpu()
+atexit.register(lambda: cleanupTensorflowMemory(logger=print, context="run_single_config exit"))
 
 import numpy as np
 from basil_core.data.cifar  import loadCifar10, makeLoaders as makeCifarLoaders
@@ -20,10 +22,41 @@ from basil_core.trainer     import getParams, setParams, evaluateAll
 parser = argparse.ArgumentParser()
 parser.add_argument("config", help="Path to JSON config file")
 parser.add_argument("--rounds", type=int, default=None, help="Override nRounds")
+parser.add_argument(
+    "--set",
+    action="append",
+    default=[],
+    metavar="KEY=VALUE",
+    help="Override a JSON config field for this run only. Supports bool/int/float/string values.",
+)
 args = parser.parse_args()
 
 with open(args.config) as f:
     cfg = json.load(f)
+
+def _parseOverrideValue(raw):
+    lower = raw.lower()
+    if lower == "true":
+        return True
+    if lower == "false":
+        return False
+    if lower == "none":
+        return None
+    try:
+        if any(ch in raw for ch in (".", "e", "E")):
+            return float(raw)
+        return int(raw)
+    except ValueError:
+        return raw
+
+for item in args.set:
+    if "=" not in item:
+        raise SystemExit(f"--set expects KEY=VALUE, got: {item}")
+    key, rawValue = item.split("=", 1)
+    key = key.strip()
+    if not key:
+        raise SystemExit(f"--set key cannot be empty: {item}")
+    cfg[key] = _parseOverrideValue(rawValue.strip())
 
 nRounds      = args.rounds if args.rounds else cfg.get("nRounds", 100)
 nNodes       = cfg.get("nNodes", 10)
@@ -124,8 +157,9 @@ elif approach == "noisy":
     for nd in nodes[1:]:
         setParams(nd.model, p0)
     avgAcc, _ = fedAvgTrainingWithNoise(
-        nodes=nodes, sigma=sigma, noiseModel=noiseModel,
-        channelNoiseStart=cfg.get("channelNoiseStart", 0), **commonKw)
+        nodes=nodes,
+        channelNoiseStart=cfg.get("channelNoiseStart", 0),
+        **commonKw)
 
 else:
     # basil / merged / cart (non-cart sub-algorithm)

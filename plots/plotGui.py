@@ -5,6 +5,7 @@ and generates comparison plots per data split / dataset / attack type / approach
 
 Folder structure (results):
   experiments/results/gui/{split}/{dataset}/{attackKey}/{approach}/
+  experiments/results2/gui/{split}/{dataset}/{attackKey}/{merged|cart}/
       acc_*.npy
       config_*.json
   Legacy results without split are still read from:
@@ -12,6 +13,8 @@ Folder structure (results):
 
 Folder structure (plots):
   plots/images/gui/{split}/{dataset}/{attackKey}/{approach}/
+  plots2/images/gui/{split}/{dataset}/{attackKey}/{merged|cart}/
+  plots2/images/gui/{split}/{dataset}/{attackKey}/mitigation_sweep_comparison_avg.png
       experiments_avg.png
       experiments_avg_zoom.png
       grid_avg.png
@@ -41,6 +44,11 @@ DATASETS_TO_PLOT = None
 # Which metric? Options: "avg" only (worst is no longer saved)
 METRIC = "avg"
 DATA_SPLITS = ("nonIID", "IID")
+PLOT_ROOT = "plots"
+PLOT_ROOT_MERGED_CART = "plots2"
+PLOTS2_APPROACHES = {"merged", "cart"}
+RESULT_ROOT = os.path.join("experiments", "results", "gui")
+RESULT_ROOT_MERGED_CART = os.path.join("experiments", "results2", "gui")
 
 # ============================================================================
 # END CONFIGURATION
@@ -75,6 +83,15 @@ _CLEAN_LINESTYLES = [
     (0, (2, 1)),
 ]
 
+ENV_ORDER = ['Clean', 'Channel Noise Only', 'Byzantine Only', 'Byzantine + Channel Noise']
+METHOD_ORDER = ['No Mitigation', 'SS', 'EBM', 'SS + EBM']
+METHOD_COLORS = {
+    'No Mitigation': '#6b7280',
+    'SS': '#2563eb',
+    'EBM': '#f97316',
+    'SS + EBM': '#16a34a',
+}
+
 
 def getColors(n):
     # pick colormap based on how many colors are needed
@@ -98,12 +115,40 @@ def splitFromConfig(config):
     return "nonIID" if config.get("nonIID", True) else "IID"
 
 
-def _resultRoot(split=None):
-    return os.path.join("experiments", "results", "gui", split) if split else os.path.join("experiments", "results", "gui")
+def _resultRoot(split=None, approach=None):
+    base = RESULT_ROOT_MERGED_CART if approach in PLOTS2_APPROACHES else RESULT_ROOT
+    return os.path.join(base, split) if split else base
+
+
+def _allResultRoots(split=None):
+    roots = []
+    for base in (RESULT_ROOT, RESULT_ROOT_MERGED_CART):
+        if split:
+            roots.append(os.path.join(base, split))
+        else:
+            roots.append(base)
+            roots.extend(os.path.join(base, sp) for sp in DATA_SPLITS)
+    return roots
+
+
+def _isUnder(path, root):
+    try:
+        return os.path.commonpath([os.path.abspath(path), os.path.abspath(root)]) == os.path.abspath(root)
+    except ValueError:
+        return False
+
+
+def _plotRootForApproach(approach):
+    return PLOT_ROOT_MERGED_CART if approach in PLOTS2_APPROACHES else PLOT_ROOT
+
+
+def _plotRootForComparison(approaches):
+    approaches = set(approaches or [])
+    return PLOT_ROOT_MERGED_CART if approaches & PLOTS2_APPROACHES else PLOT_ROOT
 
 
 def _plotDir(split, dataset, attackKey, approach, subdir=None):
-    parts = ["plots", "images", "gui", split, dataset, attackKey, approach]
+    parts = [_plotRootForApproach(approach), "images", "gui", split, dataset, attackKey, approach]
     if subdir:
         parts.append(subdir)
     return os.path.join(*parts)
@@ -113,8 +158,23 @@ def _plotPath(split, dataset, attackKey, approach, filename, subdir=None):
     return os.path.join(_plotDir(split, dataset, attackKey, approach, subdir), filename)
 
 
-def _shouldSkipPlot(savePath, skipExisting=False):
+def _experimentSourcePaths(experiments):
+    paths = []
+    for exp in experiments or []:
+        for key in ('avgPath', 'configPath'):
+            path = exp.get(key)
+            if path and os.path.exists(path):
+                paths.append(path)
+    return paths
+
+
+def _shouldSkipPlot(savePath, skipExisting=False, sourcePaths=None):
     if skipExisting and os.path.exists(savePath):
+        sourcePaths = [p for p in (sourcePaths or []) if os.path.exists(p)]
+        if sourcePaths:
+            newestSource = max(os.path.getmtime(p) for p in sourcePaths)
+            if newestSource > os.path.getmtime(savePath):
+                return False
         print(f"Exists, skipping: {savePath}")
         return True
     return False
@@ -130,7 +190,7 @@ def noiseBucket(config):
 def groupExperimentsByNoiseBucket(experiments):
     buckets = {}
     noNoise = [exp for exp in experiments if noiseBucket(exp['config']) == "no_channel_noise"]
-    for exp in experiments:
+    for exp in sorted(experiments, key=lambda exp: _noiseSortValue(exp['config'])):
         bucket = noiseBucket(exp['config'])
         if bucket == "no_channel_noise":
             continue
@@ -141,17 +201,15 @@ def groupExperimentsByNoiseBucket(experiments):
         for bucket in list(buckets):
             if bucket != "no_channel_noise":
                 buckets[bucket] = noNoise + buckets[bucket]
-    return buckets
+    return {
+        bucket: buckets[bucket]
+        for bucket in sorted(buckets, key=_noiseBucketSortValue)
+    }
 
 
 def _iterConfigFiles(split=None):
     """Yield config paths from split-aware and legacy GUI result layouts."""
-    roots = []
-    if split:
-        roots.append(_resultRoot(split))
-    else:
-        roots.extend(_resultRoot(sp) for sp in DATA_SPLITS)
-    roots.append(_resultRoot())
+    roots = _allResultRoots(split)
 
     seen = set()
     for root in roots:
@@ -166,14 +224,25 @@ def _iterConfigFiles(split=None):
                     config = json.load(f)
             except Exception:
                 continue
+            isResults2 = _isUnder(configPath, RESULT_ROOT_MERGED_CART)
+            if config.get('approach') in PLOTS2_APPROACHES:
+                if not isResults2:
+                    continue
+            elif isResults2:
+                continue
             if split and splitFromConfig(config) != split:
                 continue
             yield configPath, config
 
 
 def _pathPartsAfterGui(path):
-    root = os.path.normpath(_resultRoot())
-    rel = os.path.relpath(os.path.normpath(path), root)
+    normPath = os.path.normpath(path)
+    for root in (RESULT_ROOT_MERGED_CART, RESULT_ROOT):
+        normRoot = os.path.normpath(root)
+        if _isUnder(normPath, normRoot):
+            rel = os.path.relpath(normPath, normRoot)
+            return rel.split(os.sep)
+    rel = os.path.relpath(normPath, os.path.normpath(RESULT_ROOT))
     return rel.split(os.sep)
 
 
@@ -194,6 +263,8 @@ def discoverDataSplits():
     splits = set()
     for split in DATA_SPLITS:
         if os.path.isdir(_resultRoot(split)):
+            splits.add(split)
+        if os.path.isdir(_resultRoot(split, approach='cart')):
             splits.add(split)
     for _, config in _iterConfigFiles():
         splits.add(splitFromConfig(config))
@@ -282,6 +353,7 @@ def discoverExperiments(dataset, attackKey=None, approach=None, split=None):
         experiments.append({
             'name': name,
             'config': config,
+            'configPath': configPath,
             'avgPath': avgPath,
             'label': buildLabel(config),
             'split': splitFromConfig(config),
@@ -483,6 +555,49 @@ def methodLabel(config):
     return 'No Mitigation'
 
 
+def _envOrderIndex(env):
+    return ENV_ORDER.index(env) if env in ENV_ORDER else len(ENV_ORDER)
+
+
+def _methodOrderIndex(method):
+    return METHOD_ORDER.index(method) if method in METHOD_ORDER else len(METHOD_ORDER)
+
+
+def _noiseSortValue(config):
+    if not config.get('useChannelNoise', False):
+        return -1.0
+    return float(config.get('channelNoiseSigma', 0.0))
+
+
+def _noiseBucketSortValue(bucket):
+    if bucket == "no_channel_noise":
+        return -1.0
+    try:
+        return float(bucket.replace("sigma_", "").replace("_", "."))
+    except ValueError:
+        return 99.0
+
+
+def _envNoiseDisplay(config, attackKey):
+    env = environmentLabel(config, attackKey)
+    noiseLabel = noiseLevelLabel(config)
+    if noiseLabel:
+        return f"{env} ({noiseLabel})"
+    return env
+
+
+def experimentSortKey(exp, attackKey):
+    config = exp['config']
+    env = environmentLabel(config, attackKey)
+    method = methodLabel(config)
+    return (
+        _envOrderIndex(env),
+        _noiseSortValue(config),
+        _methodOrderIndex(method),
+        exp['label'],
+    )
+
+
 def _finalAcc(exp):
     if not os.path.exists(exp['avgPath']):
         return None
@@ -494,6 +609,7 @@ def _finalAcc(exp):
 
 def plotDatasetExperiments(dataset, attackKey, approach, experiments, split=None, plotSubdir=None, skipExisting=False):
     # overlay all experiment curves on one axes and save the figure
+    experiments = sorted(experiments, key=lambda exp: experimentSortKey(exp, attackKey))
     datasetTitles = {
         'mnist': 'MNIST',
         'cifar10': 'CIFAR-10',
@@ -502,7 +618,7 @@ def plotDatasetExperiments(dataset, attackKey, approach, experiments, split=None
 
     split = split or (experiments[0].get('split') if experiments else 'nonIID')
     savePath = _plotPath(split, dataset, attackKey, approach, "experiments_avg.png", plotSubdir)
-    if _shouldSkipPlot(savePath, skipExisting):
+    if _shouldSkipPlot(savePath, skipExisting, _experimentSourcePaths(experiments)):
         return
 
     fig, ax = plt.subplots(figsize=(12, 6))
@@ -559,12 +675,13 @@ def plotDatasetExperiments(dataset, attackKey, approach, experiments, split=None
 
 def plotDatasetExperimentsZoom(dataset, attackKey, approach, experiments, split=None, plotSubdir=None, skipExisting=False):
     """Zoomed line plot for comparing mitigation curves without the clean scale."""
+    experiments = sorted(experiments, key=lambda exp: experimentSortKey(exp, attackKey))
     if len(experiments) <= 1:
         return
 
     split = split or (experiments[0].get('split') if experiments else 'nonIID')
     savePath = _plotPath(split, dataset, attackKey, approach, "experiments_avg_zoom.png", plotSubdir)
-    if _shouldSkipPlot(savePath, skipExisting):
+    if _shouldSkipPlot(savePath, skipExisting, _experimentSourcePaths(experiments)):
         return
 
     fig, ax = plt.subplots(figsize=(12, 6))
@@ -617,6 +734,7 @@ def plotDatasetExperimentsZoom(dataset, attackKey, approach, experiments, split=
 
 def plotDatasetGrid(dataset, attackKey, approach, experiments, split=None, plotSubdir=None, skipExisting=False):
     # one subplot per experiment arranged in a grid layout
+    experiments = sorted(experiments, key=lambda exp: experimentSortKey(exp, attackKey))
     if len(experiments) <= 1:
         return
 
@@ -628,7 +746,7 @@ def plotDatasetGrid(dataset, attackKey, approach, experiments, split=None, plotS
 
     split = split or (experiments[0].get('split') if experiments else 'nonIID')
     savePath = _plotPath(split, dataset, attackKey, approach, "grid_avg.png", plotSubdir)
-    if _shouldSkipPlot(savePath, skipExisting):
+    if _shouldSkipPlot(savePath, skipExisting, _experimentSourcePaths(experiments)):
         return
 
     nExps = len(experiments)
@@ -705,9 +823,10 @@ def plotDatasetGrid(dataset, attackKey, approach, experiments, split=None, plotS
 
 def plotImprovementOverNoMitigation(dataset, attackKey, approach, experiments, split=None, plotSubdir=None, skipExisting=False):
     """Final-accuracy gain relative to matching no-mitigation environment."""
+    experiments = sorted(experiments, key=lambda exp: experimentSortKey(exp, attackKey))
     split = split or (experiments[0].get('split') if experiments else 'nonIID')
     savePath = _plotPath(split, dataset, attackKey, approach, "improvement_over_no_mitigation_avg.png", plotSubdir)
-    if _shouldSkipPlot(savePath, skipExisting):
+    if _shouldSkipPlot(savePath, skipExisting, _experimentSourcePaths(experiments)):
         return
 
     baselines = {}
@@ -723,49 +842,56 @@ def plotImprovementOverNoMitigation(dataset, attackKey, approach, experiments, s
         method = methodLabel(config)
         if method == 'No Mitigation':
             baselines[(env, bucket)] = max(final, baselines.get((env, bucket), -1.0))
-        rows.append((env, bucket, method, exp['label'], final, noiseLevelLabel(config)))
+        rows.append((env, bucket, method, exp['label'], final, config))
 
     bestRows = {}
-    for env, bucket, method, label, final, noiseLabel in rows:
+    for env, bucket, method, label, final, config in rows:
         if (env, bucket) not in baselines:
             continue
-        displayEnv = f"{env} ({noiseLabel})" if noiseLabel else env
-        displayLabel = f"{displayEnv}\n{method}"
-        gain = 0.0 if method == 'No Mitigation' else final - baselines[(env, bucket)]
+        baseline = baselines[(env, bucket)]
+        displayEnv = _envNoiseDisplay(config, attackKey)
+        displayLabel = f"{displayEnv}\n{method}\nbase {baseline:.3f}"
+        rawGain = 0.0 if method == 'No Mitigation' else final - baseline
+        gain = max(0.0, rawGain)
         key = (env, bucket, method)
-        if key not in bestRows or gain > bestRows[key][1]:
-            bestRows[key] = (displayLabel, gain, noiseLabel, method)
+        sortKey = (
+            _envOrderIndex(env),
+            _noiseSortValue(config),
+            _methodOrderIndex(method),
+        )
+        if key not in bestRows or final > bestRows[key][5]:
+            bestRows[key] = (sortKey, displayLabel, gain, rawGain, method, final)
 
-    plotRows = list(bestRows.values())
+    plotRows = sorted(bestRows.values(), key=lambda row: row[0])
 
     if not plotRows:
         return
 
-    labels, gains, noiseLabels, methods = zip(*plotRows)
+    _, labels, gains, rawGains, methods, finals = zip(*plotRows)
     fig, ax = plt.subplots(figsize=(max(8, len(labels) * 1.7), 6))
-    colors = [
-        '#6b7280' if method == 'No Mitigation'
-        else '#16a34a' if gain >= 0
-        else '#dc2626'
-        for gain, method in zip(gains, methods)
-    ]
+    colors = [METHOD_COLORS.get(method, '#6b7280') for method in methods]
     bars = ax.bar(range(len(labels)), gains, color=colors, width=0.65)
     ax.axhline(0.0, color='#111827', linewidth=1.5)
 
     for bar, gain in zip(bars, gains):
-        va = 'bottom' if gain >= 0 else 'top'
-        offset = 0.005 if gain >= 0 else -0.005
-        annotation = f'{gain:+.3f}'
+        offset = 0.005
+        annotation = f'{gain:.3f}'
         ax.text(bar.get_x() + bar.get_width() / 2, gain + offset,
-                annotation, ha='center', va=va, fontsize=9, fontweight='bold')
+                annotation, ha='center', va='bottom', fontsize=9, fontweight='bold')
 
     attackTitle = attackKey.replace("_", " + ").title()
     approachTitle = _approachTitle(approach)
-    ax.set_ylabel('Final Accuracy Gain vs Matched Baseline', fontsize=12)
-    ax.set_title(f'Mitigation Gain vs No-Mitigation Baseline | {datasetTitle(dataset)} | {attackTitle} | {approachTitle}',
+    ax.set_ylabel('Final Accuracy Gain Over Matched Baseline', fontsize=12)
+    ax.set_title(f'Mitigation Gain (negative gains shown as 0) | {datasetTitle(dataset)} | {attackTitle} | {approachTitle}',
                  fontsize=14, fontweight='bold')
     ax.set_xticks(range(len(labels)))
     ax.set_xticklabels(labels, rotation=25, ha='right', fontsize=9)
+    ax.text(0.01, 0.97,
+            'Matched baseline: No Mitigation with the same attack/noise setting',
+            transform=ax.transAxes, ha='left', va='top', fontsize=9,
+            bbox=dict(facecolor='white', edgecolor='#d1d5db', alpha=0.85, boxstyle='round,pad=0.3'))
+    yMax = max(gains) if gains else 0.0
+    ax.set_ylim([0, max(0.05, yMax + 0.04)])
     ax.grid(True, alpha=0.3, axis='y')
 
     plt.tight_layout()
@@ -777,46 +903,46 @@ def plotImprovementOverNoMitigation(dataset, attackKey, approach, experiments, s
 
 def plotAblationGroups(dataset, attackKey, approach, experiments, split=None, plotSubdir=None, skipExisting=False):
     """Grouped final-accuracy bars by environment and mitigation method."""
+    experiments = sorted(experiments, key=lambda exp: experimentSortKey(exp, attackKey))
     split = split or (experiments[0].get('split') if experiments else 'nonIID')
     savePath = _plotPath(split, dataset, attackKey, approach, "ablation_groups_avg.png", plotSubdir)
-    if _shouldSkipPlot(savePath, skipExisting):
+    if _shouldSkipPlot(savePath, skipExisting, _experimentSourcePaths(experiments)):
         return
 
-    envOrder = ['Clean', 'Channel Noise Only', 'Byzantine Only', 'Byzantine + Channel Noise']
-    methodOrder = ['No Mitigation', 'SS', 'EBM', 'SS + EBM']
     values = {}
+    groupSort = {}
 
     for exp in experiments:
         final = _finalAcc(exp)
         if final is None:
             continue
-        env = environmentLabel(exp['config'], attackKey)
-        method = methodLabel(exp['config'])
-        key = (env, method)
+        config = exp['config']
+        env = environmentLabel(config, attackKey)
+        method = methodLabel(config)
+        group = _envNoiseDisplay(config, attackKey)
+        groupSort[group] = (_envOrderIndex(env), _noiseSortValue(config), group)
+        key = (group, method)
         if key not in values or final > values[key][0]:
-            values[key] = (final, noiseLevelLabel(exp['config']))
+            values[key] = final
 
-    envs = [env for env in envOrder if any((env, m) in values for m in methodOrder)]
-    methods = [m for m in methodOrder if any((env, m) in values for env in envs)]
-    if not envs or not methods:
+    groups = sorted(groupSort, key=lambda group: groupSort[group])
+    methods = [m for m in METHOD_ORDER if any((group, m) in values for group in groups)]
+    if not groups or not methods:
         return
 
-    x = np.arange(len(envs))
+    x = np.arange(len(groups))
     width = min(0.18, 0.8 / max(1, len(methods)))
-    fig, ax = plt.subplots(figsize=(max(9, len(envs) * 2.5), 6))
-    colors = getColors(len(methods))
+    fig, ax = plt.subplots(figsize=(max(9, len(groups) * 2.4), 6))
+    colors = [METHOD_COLORS.get(method, '#6b7280') for method in methods]
 
     for idx, method in enumerate(methods):
         offsets = x + (idx - (len(methods) - 1) / 2) * width
-        heights = [values.get((env, method), (0.0, ''))[0] for env in envs]
-        noiseLabels = [values.get((env, method), (0.0, ''))[1] for env in envs]
+        heights = [values.get((group, method), 0.0) for group in groups]
         bars = ax.bar(offsets, heights, width=width, label=method, color=colors[idx])
-        for bar, height, noiseLabel in zip(bars, heights, noiseLabels):
+        for bar, height in zip(bars, heights):
             if height <= 0:
                 continue
             annotation = f'{height:.3f}'
-            if noiseLabel:
-                annotation += f'\n{noiseLabel}'
             ax.text(bar.get_x() + bar.get_width() / 2, height + 0.008,
                     annotation, ha='center', va='bottom', fontsize=8, rotation=90)
 
@@ -826,8 +952,8 @@ def plotAblationGroups(dataset, attackKey, approach, experiments, split=None, pl
     ax.set_title(f'Ablation Groups | {datasetTitle(dataset)} | {attackTitle} | {approachTitle}',
                  fontsize=14, fontweight='bold')
     ax.set_xticks(x)
-    ax.set_xticklabels(envs, fontsize=10)
-    maxValue = max(value for value, _ in values.values())
+    ax.set_xticklabels(groups, fontsize=10, rotation=15, ha='right')
+    maxValue = max(values.values())
     ax.set_ylim([0, min(1.0, maxValue + 0.12)])
     ax.legend(fontsize=9, loc='upper left', bbox_to_anchor=(1.01, 1), borderaxespad=0)
     ax.grid(True, alpha=0.3, axis='y')
@@ -841,9 +967,10 @@ def plotAblationGroups(dataset, attackKey, approach, experiments, split=None, pl
 
 def plotFinalAccuracyBar(dataset, attackKey, approach, experiments, split=None, plotSubdir=None, skipExisting=False):
     # bar chart of each experiment's final accuracy value
+    experiments = sorted(experiments, key=lambda exp: experimentSortKey(exp, attackKey))
     split = split or (experiments[0].get('split') if experiments else 'nonIID')
     savePath = _plotPath(split, dataset, attackKey, approach, "final_accuracy_avg.png", plotSubdir)
-    if _shouldSkipPlot(savePath, skipExisting):
+    if _shouldSkipPlot(savePath, skipExisting, _experimentSourcePaths(experiments)):
         return
 
     datasetTitles = {
@@ -924,6 +1051,139 @@ def plotExperimentSet(dataset, attackKey, approach, experiments, split=None, plo
     plotAblationGroups(dataset, attackKey, approach, experiments, split=split, plotSubdir=plotSubdir, skipExisting=skipExisting)
 
 
+def plotMitigationSweepComparison(dataset, attackKey, split=None, skipExisting=False):
+    """Compare approaches/methods on one sigma sweep for the same attack."""
+    split = split or 'nonIID'
+    approaches = [
+        approach for approach in discoverApproaches(dataset, attackKey, split=split)
+        if approach not in ('_legacy',)
+    ]
+    preferred = [approach for approach in ('merged', 'cart') if approach in approaches]
+    others = [approach for approach in approaches if approach not in preferred]
+    approaches = preferred + others
+    if len(approaches) < 2:
+        return
+
+    saveDir = os.path.join(_plotRootForComparison(approaches), "images", "gui", split, dataset, attackKey)
+    savePath = os.path.join(saveDir, "mitigation_sweep_comparison_avg.png")
+
+    values = {}
+    sigmas = set()
+    sourcePaths = []
+    for approach in approaches:
+        for exp in discoverExperiments(dataset, attackKey, approach, split=split):
+            final = _finalAcc(exp)
+            if final is None:
+                continue
+            sourcePaths.extend(_experimentSourcePaths([exp]))
+            config = exp['config']
+            sigma = _noiseSortValue(config)
+            if sigma < 0:
+                sigma = 0.0
+            method = methodLabel(config)
+            key = (approach, method, sigma)
+            values[key] = max(final, values.get(key, -1.0))
+            sigmas.add(sigma)
+
+    if not values or not sigmas:
+        return
+    if _shouldSkipPlot(savePath, skipExisting, sourcePaths):
+        return
+
+    xVals = sorted(sigmas)
+    approachStyles = {
+        'cart': '-',
+        'merged': '--',
+        'basil': ':',
+        'noisy': '-.',
+    }
+    methodMarkers = {
+        'No Mitigation': 'o',
+        'SS': 's',
+        'EBM': '^',
+        'SS + EBM': 'D',
+    }
+
+    fig, ax = plt.subplots(figsize=(max(10, len(xVals) * 1.9), 6))
+
+    for approach in approaches:
+        for method in METHOD_ORDER:
+            yVals = [
+                values.get((approach, method, sigma), np.nan)
+                for sigma in xVals
+            ]
+            if all(np.isnan(y) for y in yVals):
+                continue
+            isTarget = approach == 'cart' and method == 'SS + EBM'
+            label = f"{_approachTitle(approach)} | {method}"
+            ax.plot(
+                xVals, yVals,
+                label=label,
+                color=METHOD_COLORS.get(method, '#6b7280'),
+                linestyle=approachStyles.get(approach, '-'),
+                marker=methodMarkers.get(method, 'o'),
+                linewidth=3.4 if isTarget else 2.0,
+                markersize=7 if isTarget else 5,
+                alpha=1.0 if isTarget else 0.78,
+                zorder=5 if isTarget else 3,
+            )
+
+    for approach in approaches:
+        cleanExperiments = loadCleanBaselines(dataset, approach, split=split)
+        if not cleanExperiments:
+            continue
+        cleanFinals = [
+            _finalAcc(exp) for exp in cleanExperiments
+            if _finalAcc(exp) is not None
+        ]
+        if not cleanFinals:
+            continue
+        cleanFinal = max(cleanFinals)
+        ax.axhline(
+            cleanFinal,
+            color='#111827',
+            linestyle=approachStyles.get(approach, ':'),
+            linewidth=1.4,
+            alpha=0.45,
+            label=f"Clean reference | {_approachTitle(approach)} {cleanFinal:.3f}",
+        )
+
+    targetPoints = [
+        (sigma, values[('cart', 'SS + EBM', sigma)])
+        for sigma in xVals
+        if ('cart', 'SS + EBM', sigma) in values
+    ]
+    if targetPoints:
+        bestSigma, bestAcc = max(targetPoints, key=lambda item: item[1])
+        ax.annotate(
+            f"CART SS+EBM peak: σ={bestSigma:.1f}, {bestAcc:.3f}",
+            xy=(bestSigma, bestAcc),
+            xytext=(10, 14),
+            textcoords='offset points',
+            fontsize=9,
+            fontweight='bold',
+            bbox=dict(facecolor='white', edgecolor='#d1d5db', alpha=0.9, boxstyle='round,pad=0.3'),
+            arrowprops=dict(arrowstyle='->', color='#111827', linewidth=1.0),
+        )
+
+    attackTitle = attackKey.replace("_", " + ").title()
+    ax.set_xlabel('Channel Noise σ (0.0 = no channel noise)', fontsize=12)
+    ax.set_ylabel('Final Average Accuracy', fontsize=12)
+    ax.set_title(f'Approach Sweep Comparison | {datasetTitle(dataset)} | {attackTitle}',
+                 fontsize=14, fontweight='bold')
+    ax.set_xticks(xVals)
+    ax.set_xticklabels([f"{sigma:.1f}" for sigma in xVals])
+    ax.set_ylim([0, 1.0])
+    ax.grid(True, alpha=0.3)
+    ax.legend(fontsize=8, loc='upper left', bbox_to_anchor=(1.01, 1), borderaxespad=0)
+
+    plt.tight_layout()
+    os.makedirs(saveDir, exist_ok=True)
+    plt.savefig(savePath, dpi=300, bbox_inches='tight')
+    print(f"Saved: {savePath}")
+    plt.close()
+
+
 def generateGuiPlots():
     # discover datasets → attack types → approaches, then generate plots per combination
     print("\n" + "=" * 80)
@@ -977,8 +1237,10 @@ def generateGuiPlots():
                         plotExperimentSet(dataset, attackKey, approach, bucketExperiments,
                                           split=split, plotSubdir=bucket)
 
+                plotMitigationSweepComparison(dataset, attackKey, split=split)
+
     print("\nAll GUI plots generated!")
-    print("Plots saved to: plots/images/gui/")
+    print("Plots saved to: plots/images/gui/ and plots2/images/gui/ for merged/cart")
 
 
 if __name__ == "__main__":

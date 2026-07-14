@@ -40,7 +40,7 @@ from basil_core.models import MNISTModel, CIFARModel, NMNISTModel
 from basil_core.basil import BasilNode, basilRingTrainingWithAttack, fedAvgTrainingWithNoise
 from basil_core.cart import CARTNode, cartRingTraining
 from basil_core.trainer import evaluateAll, getParams, setParams
-from scripts.common import setupGpu, sendNotification
+from scripts.common import cleanupTensorflowMemory, setupGpu, sendNotification
 from plotGui import discoverDatasets, discoverExperiments, getColors, getMarkers
 
 # ─── Colour palette ──────────────────────────────────────────────────────────
@@ -57,6 +57,7 @@ HEADER    = '#1e293b'
 MUTED     = '#64748b'
 BORDER    = '#e2e8f0'
 CHART_BG  = '#f8fafc'
+SURFACE   = '#f1f5f9'
 
 # ─── Quick presets ───────────────────────────────────────────────────────────
 PRESETS = {
@@ -97,19 +98,23 @@ class ExperimentGUI:
     def __init__(self, root):
         self.root = root
         self.root.title("BASIL + Noisy Channel Experiment GUI")
-        self.root.geometry("1200x900")
+        self.root.geometry("1280x900")
         self.root.minsize(1000, 720)
         self.root.configure(bg=BG)
 
         # Running state
         self.isRunning = False
         self.currentThread = None
+        self._activeExperimentObjects = {}
 
         # Config queue (list of config dicts; same config may appear multiple times)
         self.configQueue = []
         self._queueLock = threading.Lock()
         self._queueStatePath = os.path.join(
             os.path.dirname(os.path.abspath(__file__)), "queue_state.json"
+        )
+        self._queuePreset1Path = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), "presets", "preset1_queue.json"
         )
         self.queueButton = None   # set when toolbar is built
 
@@ -142,45 +147,48 @@ class ExperimentGUI:
         s.configure('TLabelframe',     background=BG,     bordercolor=BORDER)
         s.configure('TLabelframe.Label', font=('Segoe UI', 9, 'bold'), foreground=HEADER, background=BG)
         s.configure('TLabel',          background=BG,     foreground=HEADER)
-        s.configure('TEntry',          fieldbackground=PANEL_BG, foreground=HEADER)
+        s.configure('TEntry',          fieldbackground=PANEL_BG, foreground=HEADER, padding=(3, 2))
         s.configure('TRadiobutton',    background=BG,     foreground=HEADER)
         s.configure('TCheckbutton',    background=BG,     foreground=HEADER)
         s.configure('TSeparator',      background=BORDER)
         s.configure('TNotebook',       background=BG,     tabmargins=[2, 2, 2, 0])
-        s.configure('TNotebook.Tab',   background='#e2e8f0', foreground=MUTED,
-                    padding=[12, 5], font=('Segoe UI', 9))
+        s.configure('TNotebook.Tab',   background=SURFACE, foreground=MUTED,
+                    padding=[16, 8], font=('Segoe UI', 9, 'bold'))
         s.map('TNotebook.Tab',
               background=[('selected', PANEL_BG)],
               foreground=[('selected', ACCENT)])
 
         # Buttons
-        s.configure('TButton',         padding=(8, 4),    font=('Segoe UI', 9))
+        s.configure('TButton',         padding=(10, 6),    font=('Segoe UI', 9))
         s.configure('Run.TButton',     background=ACCENT, foreground='white',
-                    font=('Segoe UI', 10, 'bold'), padding=(14, 6))
+                    font=('Segoe UI', 10, 'bold'), padding=(16, 8), borderwidth=0)
         s.map('Run.TButton',           background=[('active', ACCENT_DK), ('disabled', '#93c5fd')])
         s.configure('RunAll.TButton',  background='#0891b2', foreground='white',
-                    font=('Segoe UI', 10, 'bold'), padding=(14, 6))
+                    font=('Segoe UI', 10, 'bold'), padding=(16, 8), borderwidth=0)
         s.map('RunAll.TButton',        background=[('active', '#0e7490'), ('disabled', '#67e8f9')])
         s.configure('Stop.TButton',    background=DANGER, foreground='white',
-                    font=('Segoe UI', 10, 'bold'), padding=(14, 6))
+                    font=('Segoe UI', 10, 'bold'), padding=(16, 8), borderwidth=0)
         s.map('Stop.TButton',          background=[('active', DANGER_DK), ('disabled', '#fca5a5')])
         s.configure('Queue.TButton',   background='#7c3aed', foreground='white',
-                    font=('Segoe UI', 10, 'bold'), padding=(14, 6))
+                    font=('Segoe UI', 10, 'bold'), padding=(16, 8), borderwidth=0)
         s.map('Queue.TButton',         background=[('active', '#6d28d9'), ('disabled', '#c4b5fd')])
         s.configure('Preset.TButton',  background='#f1f5f9', foreground=HEADER,
-                    font=('Segoe UI', 8), padding=(6, 3))
+                    font=('Segoe UI', 8), padding=(8, 5))
         s.map('Preset.TButton',        background=[('active', '#e2e8f0')])
         s.configure('Link.TButton',    background=BG, foreground=ACCENT,
                     font=('Segoe UI', 9), relief='flat', padding=(4, 2))
         s.map('Link.TButton',          foreground=[('active', ACCENT_DK)])
+        s.configure('More.TMenubutton', background=SURFACE, foreground=HEADER,
+                    font=('Segoe UI', 9, 'bold'), padding=(12, 7))
+        s.map('More.TMenubutton',       background=[('active', '#e2e8f0')])
 
         # Progress bar
         s.configure('Blue.Horizontal.TProgressbar',
-                    background=ACCENT, troughcolor=BORDER, thickness=8)
+                    background=ACCENT, troughcolor=BORDER, thickness=10)
 
         # Status bar
         s.configure('Status.TLabel', background='#e8ecf4', foreground=MUTED,
-                    font=('Segoe UI', 8), padding=(6, 3), relief='flat')
+                    font=('Segoe UI', 8), padding=(8, 4), relief='flat')
 
     # ── variables ─────────────────────────────────────────────────────────────
     def setupVariables(self):
@@ -233,9 +241,6 @@ class ExperimentGUI:
 
     # ── UI construction ───────────────────────────────────────────────────────
     def createUI(self):
-        # Bottom-anchored widgets must be packed BEFORE the expanding notebook
-        # so they are always visible regardless of window height.
-
         # ---- status bar (very bottom) --------------------------------------
         self._statusVar = tk.StringVar(value="")
         ttk.Label(self.root, textvariable=self._statusVar,
@@ -245,12 +250,12 @@ class ExperimentGUI:
         # ---- progress bar (above status) -----------------------------------
         self._createProgressFrame()
 
-        # ---- button bar (above progress) -----------------------------------
+        # ---- command header (top) ------------------------------------------
         self.createButtons()
 
         # ---- notebook (fills all remaining space) --------------------------
         self.notebook = ttk.Notebook(self.root)
-        self.notebook.pack(fill=tk.BOTH, expand=True, padx=8, pady=(8, 0))
+        self.notebook.pack(fill=tk.BOTH, expand=True, padx=12, pady=(0, 8))
 
         basicTab    = ttk.Frame(self.notebook)
         advancedTab = ttk.Frame(self.notebook)
@@ -268,24 +273,27 @@ class ExperimentGUI:
         self.createOutputTab(outputTab)
 
     def _createProgressFrame(self):
-        pf = ttk.Frame(self.root)
-        pf.pack(side=tk.BOTTOM, fill=tk.X, padx=8, pady=(4, 2))
+        pf = tk.Frame(self.root, bg=PANEL_BG, highlightthickness=1,
+                      highlightbackground=BORDER, highlightcolor=BORDER)
+        pf.pack(side=tk.BOTTOM, fill=tk.X, padx=12, pady=(6, 6))
 
         self._progressBar = ttk.Progressbar(pf, variable=self._progressVar,
                                             maximum=100, length=400,
                                             style='Blue.Horizontal.TProgressbar')
-        self._progressBar.pack(side=tk.LEFT, padx=(0, 10), pady=3)
+        self._progressBar.pack(side=tk.LEFT, padx=(12, 12), pady=10)
 
         self._roundLabel = ttk.Label(pf, text="Round –/–",
-                                     font=('Segoe UI', 9, 'bold'), foreground=ACCENT)
+                                     font=('Segoe UI', 9, 'bold'), foreground=ACCENT,
+                                     background=PANEL_BG)
         self._roundLabel.pack(side=tk.LEFT, padx=(0, 16))
 
-        self._etaLabel = ttk.Label(pf, text="", foreground=MUTED, font=('Segoe UI', 8))
+        self._etaLabel = ttk.Label(pf, text="", foreground=MUTED, font=('Segoe UI', 8),
+                                   background=PANEL_BG)
         self._etaLabel.pack(side=tk.LEFT)
 
         self._accLabel = ttk.Label(pf, text="", foreground=SUCCESS,
-                                   font=('Segoe UI', 9, 'bold'))
-        self._accLabel.pack(side=tk.RIGHT, padx=6)
+                                   font=('Segoe UI', 9, 'bold'), background=PANEL_BG)
+        self._accLabel.pack(side=tk.RIGHT, padx=12)
 
     # ── Basic tab ─────────────────────────────────────────────────────────────
     def createBasicTab(self, parent):
@@ -669,45 +677,64 @@ class ExperimentGUI:
 
     # ── Buttons ───────────────────────────────────────────────────────────────
     def createButtons(self):
-        bf = ttk.Frame(self.root)
-        bf.pack(side=tk.BOTTOM, fill=tk.X, padx=8, pady=6)
+        shell = tk.Frame(self.root, bg=PANEL_BG, highlightthickness=1,
+                         highlightbackground=BORDER, highlightcolor=BORDER)
+        shell.pack(side=tk.TOP, fill=tk.X, padx=12, pady=(12, 8))
+
+        titleBlock = tk.Frame(shell, bg=PANEL_BG)
+        titleBlock.pack(side=tk.LEFT, fill=tk.Y, padx=(14, 10), pady=10)
+        tk.Label(titleBlock, text="BASIL + Noisy Channel Lab",
+                 bg=PANEL_BG, fg=HEADER, font=('Segoe UI', 14, 'bold')
+                 ).pack(anchor=tk.W)
+        tk.Label(titleBlock,
+                 text="Configure experiments, manage queues, and monitor training",
+                 bg=PANEL_BG, fg=MUTED, font=('Segoe UI', 9)
+                 ).pack(anchor=tk.W, pady=(2, 0))
+
+        actions = tk.Frame(shell, bg=PANEL_BG)
+        actions.pack(side=tk.RIGHT, padx=12, pady=10)
 
         self.runButton = ttk.Button(
-            bf, text="▶  Run Experiment", style='Run.TButton',
+            actions, text="Run", style='Run.TButton',
             command=self.runExperiment)
-        self.runButton.pack(side=tk.LEFT, padx=(0, 4))
+        self.runButton.pack(side=tk.LEFT, padx=(0, 6))
 
         self.runAllButton = ttk.Button(
-            bf, text="▶▶  Run All Configs", style='RunAll.TButton',
+            actions, text="Run All", style='RunAll.TButton',
             command=self.runAll)
-        self.runAllButton.pack(side=tk.LEFT, padx=4)
+        self.runAllButton.pack(side=tk.LEFT, padx=6)
 
         self.queueButton = ttk.Button(
-            bf, text="≡  Queue (0)", style='Queue.TButton',
+            actions, text="Queue (0)", style='Queue.TButton',
             command=self.openQueueManager)
-        self.queueButton.pack(side=tk.LEFT, padx=4)
+        self.queueButton.pack(side=tk.LEFT, padx=6)
 
         self.stopButton = ttk.Button(
-            bf, text="■  Stop", style='Stop.TButton',
+            actions, text="Stop", style='Stop.TButton',
             command=self.stopExperiment, state=tk.DISABLED)
-        self.stopButton.pack(side=tk.LEFT, padx=4)
+        self.stopButton.pack(side=tk.LEFT, padx=6)
 
-        ttk.Separator(bf, orient='vertical').pack(side=tk.LEFT, fill=tk.Y,
-                                                   padx=6, pady=2)
+        moreMenu = tk.Menu(shell, tearoff=0)
+        moreMenu.add_command(label="Save Config", accelerator="Ctrl+S",
+                             command=self.saveConfig)
+        moreMenu.add_command(label="Load Config", accelerator="Ctrl+L",
+                             command=self.loadConfig)
+        moreMenu.add_separator()
+        moreMenu.add_command(label="Plot Results", command=self.plotResults)
+        moreMenu.add_command(label="Clear Log", command=self.clearOutput)
+        moreMenu.add_separator()
+        moreMenu.add_command(label="Reload GUI", accelerator="Ctrl+Shift+R",
+                             command=self.reloadGui)
+        moreMenu.add_command(label="Exit", command=self.onClosing)
 
-        ttk.Button(bf, text="Clear Log",       command=self.clearOutput).pack(side=tk.LEFT, padx=2)
-        ttk.Button(bf, text="Plot Results",    command=self.plotResults).pack(side=tk.LEFT, padx=2)
-        ttk.Button(bf, text="Save Config",     command=self.saveConfig).pack(side=tk.LEFT, padx=2)
-        ttk.Button(bf, text="Load Config",     command=self.loadConfig).pack(side=tk.LEFT, padx=2)
+        self.moreButton = ttk.Menubutton(
+            actions, text="More", style='More.TMenubutton')
+        self.moreButton["menu"] = moreMenu
+        self.moreButton.pack(side=tk.LEFT, padx=(10, 0))
 
-        ttk.Button(bf, text="Reload",          command=self.reloadGui).pack(side=tk.RIGHT, padx=2)
-        ttk.Button(bf, text="Exit",            command=self.onClosing).pack(side=tk.RIGHT, padx=2)
-
-        # Keyboard hint labels
-        hints = [("Ctrl+R", "Run"), ("Ctrl+S", "Save"), ("Ctrl+L", "Load"), ("Esc", "Stop")]
-        for key, label in reversed(hints):
-            ttk.Label(bf, text=f"{key}={label}",
-                      foreground=MUTED, font=('Segoe UI', 7)).pack(side=tk.RIGHT, padx=2)
+        hint = tk.Label(actions, text="Ctrl+R run  Ctrl+S save  Esc stop",
+                        bg=PANEL_BG, fg=MUTED, font=('Segoe UI', 8))
+        hint.pack(side=tk.LEFT, padx=(12, 0))
 
     # ── Keyboard shortcuts ────────────────────────────────────────────────────
     def _setupKeyboardShortcuts(self):
@@ -1039,13 +1066,49 @@ class ExperimentGUI:
         self.currentThread = threading.Thread(target=self.runExperimentThread)
         self.currentThread.start()
 
-    def _cleanupTensorflow(self):
-        try:
-            from tensorflow.keras import backend as keras_backend
-            keras_backend.clear_session()
-            gc.collect()
-        except Exception as e:
-            self.logMessage(f"WARNING: TensorFlow cleanup failed: {e}")
+    def _cleanupTensorflow(self, context="experiment boundary"):
+        cleanupTensorflowMemory(
+            logger=self.logMessage,
+            context=context,
+            collectCycles=3,
+        )
+
+    def _releaseExperimentObjects(self, nodes=None, trainLoaders=None, testLoader=None,
+                                  train=None, test=None):
+        if nodes:
+            for nd in nodes:
+                try:
+                    nd.neighborMemory.clear()
+                except Exception:
+                    pass
+                try:
+                    nd.classRegistry = None
+                except Exception:
+                    pass
+                try:
+                    nd._cartStep = None
+                    nd._compiledStep = None
+                    nd._opt = None
+                    nd._refParams = None
+                except Exception:
+                    pass
+                try:
+                    nd.model = None
+                except Exception:
+                    pass
+                try:
+                    nd.dataLoader = None
+                except Exception:
+                    pass
+        if trainLoaders:
+            try:
+                trainLoaders.clear()
+            except Exception:
+                pass
+        testLoader = None
+        train = None
+        test = None
+        gc.collect()
 
     def stopExperiment(self):
         self.isRunning = False
@@ -1094,7 +1157,6 @@ class ExperimentGUI:
             sendNotification("Run FAILED", str(e), priority="urgent")
             self.root.after(0, self._setStatus, f"ERROR: {str(e)[:80]}")
         finally:
-            self._cleanupTensorflow()
             self.root.after(0, self._onRunFinished)
 
     def _onRunFinished(self):
@@ -1130,7 +1192,8 @@ class ExperimentGUI:
         return f"{resultDir}/acc_{safeName}.npy", f"{resultDir}/config_{safeName}.json"
 
     def _resultDir(self, config, split, dataset, attackKey, approach):
-        parts = ["experiments", "results", "gui", split, dataset, attackKey, approach]
+        resultRoot = "results2" if approach in ("merged", "cart") else "results"
+        parts = ["experiments", resultRoot, "gui", split, dataset, attackKey, approach]
         if config.get('useChannelNoise', False):
             sigma = float(config.get('channelNoiseSigma', 0.0))
             sigmaLabel = f"sigma_{sigma:.1f}".replace('.', '_')
@@ -1253,10 +1316,7 @@ class ExperimentGUI:
 
                 expName = config.get("experimentName", os.path.basename(filepath))
                 sendNotification("Run Started", f"[{idx}/{total}] {expName} has started.", priority="default")
-                try:
-                    self._executeExperiment(config)
-                finally:
-                    self._cleanupTensorflow()
+                self._executeExperiment(config)
                 completed += 1
 
                 if not self.isRunning:
@@ -1280,6 +1340,29 @@ class ExperimentGUI:
 
     # ── _executeExperiment ────────────────────────────────────────────────────
     def _executeExperiment(self, config):
+        cleanAdjusted = self._applyCleanReferenceSemantics(config)
+        tuned = self._applyCartTargetTuning(config)
+        self._cleanupTensorflow("before experiment")
+        self._activeExperimentObjects = {}
+        try:
+            if cleanAdjusted and config.get('_cleanReferenceNote'):
+                self.logMessage(config['_cleanReferenceNote'])
+            if tuned and config.get('_autoTuningNote'):
+                self.logMessage(config['_autoTuningNote'])
+            return self._executeExperimentImpl(config)
+        finally:
+            activeObjects = self._activeExperimentObjects
+            self._releaseExperimentObjects(
+                nodes=activeObjects.get("nodes"),
+                trainLoaders=activeObjects.get("trainLoaders"),
+                testLoader=activeObjects.get("testLoader"),
+                train=activeObjects.get("train"),
+                test=activeObjects.get("test"),
+            )
+            self._activeExperimentObjects = {}
+            self._cleanupTensorflow("after experiment")
+
+    def _executeExperimentImpl(self, config):
         self.logMessage("=" * 80)
         self.logMessage("STARTING EXPERIMENT")
         self.logMessage("=" * 80)
@@ -1324,11 +1407,15 @@ class ExperimentGUI:
 
         self.logMessage(f"Loading {config['dataset'].upper()} dataset…")
         train, test = self.loadDataset(config['dataset'])
+        self._activeExperimentObjects["train"] = train
+        self._activeExperimentObjects["test"] = test
         iid = not config.get('nonIID', True)
         alpha = config.get('dirichletAlpha', 0.2)
         trainLoaders, testLoader = self.makeLoaders(
             config['dataset'], train, test, config['batchSize'], config['nNodes'],
             iid=iid, dirichletAlpha=alpha)
+        self._activeExperimentObjects["trainLoaders"] = trainLoaders
+        self._activeExperimentObjects["testLoader"] = testLoader
         self.logMessage(f"  Training samples: {len(train)}")
         self.logMessage(f"  Test samples:     {len(test)}")
         if config.get('nonIID', True):
@@ -1339,6 +1426,7 @@ class ExperimentGUI:
 
         self.logMessage(f"Creating {config['nNodes']} nodes…")
         nodes = self.createNodes(config, trainLoaders)
+        self._activeExperimentObjects["nodes"] = nodes
         self.logMessage("")
 
         attackTypes, attackerIds = self.prepareAttacks(config)
@@ -1533,8 +1621,97 @@ class ExperimentGUI:
         except Exception as e:
             messagebox.showerror("Error", f"Invalid configuration: {e}"); return False
 
+    def _hasByzantineAttack(self, config):
+        if not str(config.get('attackerIds', '')).strip():
+            return False
+        attackKeys = (
+            'attackGaussian', 'attackSignFlip', 'attackHidden',
+            'attackModelPoison', 'attackScaling', 'attackAlie',
+            'attackIpm', 'attackNoiseAmp',
+        )
+        return any(bool(config.get(key)) for key in attackKeys)
+
+    def _isCartTwoAttackTwoMitigation(self, config):
+        return (
+            config.get('approach') == 'cart'
+            and config.get('cartAlgorithm', 'cart') == 'cart'
+            and bool(config.get('useBasil', False))
+            and bool(config.get('useChannelNoise', False))
+            and config.get('noiseMitigation', 'none') == 'ebm'
+            and self._hasByzantineAttack(config)
+        )
+
+    def _isNamedCleanReference(self, config):
+        return (
+            config.get('experimentName', '').strip()
+            == '0 - Byzantine Nodes + No Channel Noise + No Mitigation'
+        )
+
+    def _applyCleanReferenceSemantics(self, config):
+        """The named clean reference must stay attack-free, noiseless, and unmitigated."""
+        if not self._isNamedCleanReference(config):
+            return False
+
+        changed = False
+        cleanValues = {
+            'useBasil': False,
+            'useChannelNoise': False,
+            'channelNoiseSigma': 0.0,
+            'noiseMitigation': 'none',
+            'attackerIds': '',
+            'attackGaussian': False,
+            'attackSignFlip': False,
+            'attackHidden': False,
+            'attackModelPoison': False,
+            'attackScaling': False,
+            'attackAlie': False,
+            'attackIpm': False,
+            'attackNoiseAmp': False,
+        }
+        for key, value in cleanValues.items():
+            if config.get(key) != value:
+                config[key] = value
+                changed = True
+
+        if config.get('approach') in ('basil', 'merged', 'cart'):
+            if config.get('aggregationMode') != 'consensus':
+                config['aggregationMode'] = 'consensus'
+                changed = True
+
+        if changed:
+            config['_cleanReferenceNote'] = (
+                "Applied clean reference semantics: no Byzantine attack, no channel "
+                "noise, no SS/EBM, consensus over correct updates."
+            )
+        return changed
+
+    def _applyCartTargetTuning(self, config):
+        """Keep the target CART SS+EBM experiment on the tuned training path."""
+        if not self._isCartTwoAttackTwoMitigation(config):
+            return False
+
+        changed = False
+        try:
+            lr = float(config.get('learningRate', 0.05))
+        except (TypeError, ValueError):
+            lr = 0.05
+        if abs(lr - 0.05) < 1e-12:
+            config['learningRate'] = 0.025
+            changed = True
+
+        if not bool(config.get('usePlateauLr', False)):
+            config['usePlateauLr'] = True
+            changed = True
+
+        if changed:
+            config['_autoTuningNote'] = (
+                "Applied CART target tuning: LR=0.025 with plateau LR for "
+                "Byzantine + channel noise + SS+EBM."
+            )
+        return changed
+
     def getConfig(self):
-        return {
+        config = {
             'experimentName':        self.experimentNameVar.get(),
             'dataset':               self.datasetVar.get(),
             'approach':              self.approachVar.get(),
@@ -1581,6 +1758,24 @@ class ExperimentGUI:
             'plateauMinLr':          self.plateauMinLrVar.get(),
             'plateauThreshold':      self.plateauThresholdVar.get(),
         }
+        if self._applyCleanReferenceSemantics(config):
+            self.useBasilVar.set(config['useBasil'])
+            self.useChannelNoiseVar.set(config['useChannelNoise'])
+            self.channelNoiseSigmaVar.set(config['channelNoiseSigma'])
+            self.noiseMitigationVar.set(config['noiseMitigation'])
+            self.attackerIdsVar.set(config['attackerIds'])
+            self.attackGaussianVar.set(config['attackGaussian'])
+            self.attackSignFlipVar.set(config['attackSignFlip'])
+            self.attackHiddenVar.set(config['attackHidden'])
+            self.attackModelPoisonVar.set(config['attackModelPoison'])
+            self.attackScalingVar.set(config['attackScaling'])
+            self.attackAlieVar.set(config['attackAlie'])
+            self.attackIpmVar.set(config['attackIpm'])
+            self.attackNoiseAmpVar.set(config['attackNoiseAmp'])
+        if self._applyCartTargetTuning(config):
+            self.learningRateVar.set(config['learningRate'])
+            self.usePlateauLrVar.set(config['usePlateauLr'])
+        return config
 
     # ── Data / Node helpers ───────────────────────────────────────────────────
     def loadDataset(self, dataset):
@@ -1725,7 +1920,7 @@ class ExperimentGUI:
     def _updateQueueButton(self):
         n = len(self.configQueue)
         if self.queueButton is not None:
-            self.queueButton.config(text=f"≡  Queue ({n})")
+            self.queueButton.config(text=f"Queue ({n})")
 
     def openQueueManager(self):
         configDir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "configs")
@@ -1746,6 +1941,8 @@ class ExperimentGUI:
                    command=lambda: addFromFile()).pack(side=tk.LEFT, padx=4)
         ttk.Button(topFrame, text="+ Add All…",
                    command=lambda: addAllDialog()).pack(side=tk.LEFT, padx=4)
+        ttk.Button(topFrame, text="Preset1",
+                   command=lambda: loadPreset1()).pack(side=tk.LEFT, padx=(12, 4))
 
         tk.Label(topFrame, text="Repeat:", bg=BG, fg=HEADER,
                  font=('Segoe UI', 9)).pack(side=tk.LEFT, padx=(16, 4))
@@ -1761,7 +1958,7 @@ class ExperimentGUI:
 
         cols = ('#', 'Experiment Name', 'Approach', 'Attack', 'Noise')
         tree = ttk.Treeview(treeFrame, columns=cols, show='headings',
-                            selectmode='browse', height=16)
+                            selectmode='extended', height=16)
         tree.heading('#',               text='#',            anchor=tk.CENTER)
         tree.heading('Experiment Name', text='Experiment Name')
         tree.heading('Approach',        text='Approach',     anchor=tk.CENTER)
@@ -1784,7 +1981,7 @@ class ExperimentGUI:
 
         ttk.Button(botFrame, text="↑ Move Up",   command=lambda: moveUp()).pack(side=tk.LEFT, padx=(0, 2))
         ttk.Button(botFrame, text="↓ Move Down", command=lambda: moveDown()).pack(side=tk.LEFT, padx=2)
-        ttk.Button(botFrame, text="✕ Remove",    command=lambda: removeSelected()).pack(side=tk.LEFT, padx=2)
+        ttk.Button(botFrame, text="✕ Remove Selected", command=lambda: removeSelected()).pack(side=tk.LEFT, padx=2)
         ttk.Button(botFrame, text="Clear All",   command=lambda: clearAll()).pack(side=tk.LEFT, padx=(12, 2))
 
         countLabel = tk.Label(botFrame, text="0 items", bg=BG, fg=MUTED,
@@ -1825,6 +2022,34 @@ class ExperimentGUI:
                     self.configQueue.append(dict(cfg))
                 self._saveQueueState()
             refreshTree()
+
+        def loadPreset1():
+            try:
+                with open(self._queuePreset1Path, 'r') as f:
+                    loaded = json.load(f)
+                if not isinstance(loaded, list):
+                    raise ValueError("Preset1 must contain a list of configs.")
+                preset = [dict(cfg) for cfg in loaded if isinstance(cfg, dict)]
+            except Exception as e:
+                messagebox.showerror("Preset1", f"Could not load Preset1:\n{e}", parent=dlg)
+                return
+
+            with self._queueLock:
+                existingCount = len(self.configQueue)
+            if existingCount:
+                ok = messagebox.askyesno(
+                    "Load Preset1",
+                    f"Replace the current {existingCount}-item queue with {len(preset)} Preset1 configs?",
+                    parent=dlg,
+                )
+                if not ok:
+                    return
+
+            with self._queueLock:
+                self.configQueue = preset
+                self._saveQueueState()
+            refreshTree()
+            self._setStatus(f"Preset1 loaded: {len(preset)} configs")
 
         def addFromFile():
             currentApproach = self.approachVar.get() if hasattr(self, 'approachVar') else 'basil'
@@ -1997,8 +2222,11 @@ class ExperimentGUI:
             adlg.wait_window()
 
         def _selectedIdx():
-            sel = tree.selection()
-            return int(sel[0]) if sel else None
+            idxs = _selectedIdxs()
+            return idxs[0] if idxs else None
+
+        def _selectedIdxs():
+            return sorted(int(iid) for iid in tree.selection())
 
         def moveUp():
             idx = _selectedIdx()
@@ -2023,11 +2251,13 @@ class ExperimentGUI:
             tree.selection_set(str(idx+1))
 
         def removeSelected():
-            idx = _selectedIdx()
-            if idx is None:
+            idxs = _selectedIdxs()
+            if not idxs:
                 return
             with self._queueLock:
-                del self.configQueue[idx]
+                for idx in reversed(idxs):
+                    if 0 <= idx < len(self.configQueue):
+                        del self.configQueue[idx]
                 self._saveQueueState()
             refreshTree()
 
@@ -2054,6 +2284,7 @@ class ExperimentGUI:
         y = self.root.winfo_y() + (self.root.winfo_height() - h) // 2
         dlg.geometry(f"{w}x{h}+{x}+{y}")
         refreshTree()
+        tree.bind('<Delete>', lambda e: removeSelected())
 
     def runQueue(self):
         if self.isRunning:
@@ -2117,10 +2348,7 @@ class ExperimentGUI:
 
                 sendNotification("Queue Started", f"{expName} has started.", priority="default")
                 config['aggregationMode'] = self.defaultAggregationMode(config)
-                try:
-                    self._executeExperiment(config)
-                finally:
-                    self._cleanupTensorflow()
+                self._executeExperiment(config)
 
                 if not self.isRunning:
                     self.logMessage("\n[STOPPED] Current queue item was left in the queue.")
@@ -2362,7 +2590,7 @@ class ExperimentGUI:
         try:
             from plotGui import (discoverDataSplits, discoverDatasets, discoverAttackTypes, discoverApproaches,
                                  discoverExperiments, groupExperimentsByNoiseBucket, noiseBucket,
-                                 plotExperimentSet)
+                                 plotExperimentSet, plotMitigationSweepComparison)
 
             self.logMessage("\n" + "=" * 60)
             self.logMessage("GENERATING PLOTS")
@@ -2394,6 +2622,10 @@ class ExperimentGUI:
                     plotExperimentSet(
                         dataset, attackKey, approach, bucketExperiments,
                         split=split, plotSubdir=bucket, skipExisting=onlyMissing
+                    )
+                if approach in ('merged', 'cart'):
+                    plotMitigationSweepComparison(
+                        dataset, attackKey, split=split, skipExisting=onlyMissing
                     )
 
                 self.logMessage("\nPlots checked for completed experiment.")
@@ -2433,12 +2665,17 @@ class ExperimentGUI:
                                 self.logMessage(f"    bucket: {bucket} ({len(bucketExperiments)} experiments)")
                                 plotExperimentSet(dataset, attackKey, approach, bucketExperiments,
                                                   split=split, plotSubdir=bucket)
+                        plotMitigationSweepComparison(dataset, attackKey, split=split)
 
             self.logMessage("\nAll plots saved to: plots/images/gui/{split}/")
+            self.logMessage("Merged/CART plots saved to: plots2/images/gui/{split}/")
             self.logMessage("=" * 60)
             if showDialog:
-                messagebox.showinfo("Success", "Plots saved to plots/images/gui/{IID|nonIID}/")
-            self._setStatus("Plots saved to plots/images/gui/{IID|nonIID}/")
+                messagebox.showinfo(
+                    "Success",
+                    "Plots saved.\nMerged/CART plots are in plots2/images/gui/{IID|nonIID}/"
+                )
+            self._setStatus("Plots saved. Merged/CART output: plots2/images/gui/{IID|nonIID}/")
         except Exception as e:
             self.logMessage(f"\nERROR generating plots: {e}")
             self.logMessage(traceback.format_exc())

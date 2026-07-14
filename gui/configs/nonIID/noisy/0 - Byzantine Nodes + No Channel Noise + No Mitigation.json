@@ -40,5 +40,6 @@
   "noiseMitigation": "none",
   "attackerIds": "",
   "nonIID": true,
-  "dirichletAlpha": 0.2
+  "dirichletAlpha": 0.2,
+  "aggregationMode": "consensus"
 }

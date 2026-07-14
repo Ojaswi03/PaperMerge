@@ -40,5 +40,6 @@
   "plateauMinLr": 0.001,
   "plateauThreshold": 0.01,
   "nonIID": true,
-  "dirichletAlpha": 0.2
+  "dirichletAlpha": 0.2,
+  "aggregationMode": "consensus"
 }

@@ -1,4 +1,5 @@
 # scripts/common.py
+import gc
 import os
 import urllib.request
 import numpy as np
@@ -52,6 +53,44 @@ def setupGpu():
         print(f"[CPU] Error during GPU setup: {e}")
         print("[CPU] Using CPU (training will be slower)")
         return {"device": "CPU", "gpus": [], "count": 0}
+
+
+def cleanupTensorflowMemory(logger=None, context="cleanup", collectCycles=3):
+    """Explicitly release TensorFlow/Keras graph state and run Python GC.
+
+    This is meant for experiment boundaries, after models/loaders/results from
+    one run are no longer needed. It should not be called mid-training.
+    """
+    collected = 0
+    tfError = None
+
+    try:
+        import tensorflow as tf
+        from tensorflow.keras import backend as keras_backend
+
+        try:
+            keras_backend.clear_session(free_memory=True)
+        except TypeError:
+            keras_backend.clear_session()
+
+        for device in tf.config.list_logical_devices("GPU"):
+            try:
+                tf.config.experimental.reset_memory_stats(device.name)
+            except Exception:
+                pass
+    except Exception as e:
+        tfError = e
+
+    for _ in range(max(1, int(collectCycles))):
+        collected += gc.collect()
+
+    if logger:
+        if tfError is None:
+            logger(f"[GC] {context}: cleared TensorFlow/Keras state; collected {collected} Python objects.")
+        else:
+            logger(f"[GC] {context}: Python GC collected {collected} objects; TensorFlow cleanup warning: {tfError}")
+
+    return collected
 
 
 def ensureDirs():
