@@ -151,32 +151,39 @@ class BasilNode:
             del self.neighborMemory[oldest]
 
     def selectBestModel(self, verbose=False):
-        # evaluate own model as the starting candidate
-        # Candidates: current model + all received neighbor models
-        currentParams = getParams(self.model)
-        currentLoss = evaluateBatchLoss(self.model, self.dataLoader)
+        """Select only among predecessor snapshots using one shared mini-batch."""
+        if not self.neighborMemory:
+            return "self"
 
-        bestParams = currentParams
-        bestLoss = currentLoss
-        bestSource = "self"
+        for xBatch, yBatch in _iterLimited(self.dataLoader, maxBatches=1):
+            selectionBatch = (
+                tf.cast(xBatch, tf.float32),
+                tf.cast(yBatch, tf.int32),
+            )
+            break
+        else:
+            return "self"
 
-        allLosses = {"self": currentLoss}
-
+        bestParams = None
+        bestLoss = float("inf")
+        bestSource = None
+        allLosses = {}
         for senderId, params in self.neighborMemory.items():
-            # Temporarily set params to evaluate
             setParams(self.model, params)
-            loss = evaluateBatchLoss(self.model, self.dataLoader)
+            logits = self.model(selectionBatch[0], training=False)
+            loss = float(lossFn(selectionBatch[1], logits).numpy())
             allLosses[f"node_{senderId}"] = loss
             if loss < bestLoss:
                 bestLoss = loss
                 bestParams = [p.copy() for p in params]
                 bestSource = f"node_{senderId}"
 
-        # Restore to best params
-        setParams(self.model, bestParams)
+        if bestParams is not None:
+            setParams(self.model, bestParams)
 
         if verbose:
             print(f"    [Node {self.nodeId}] Losses: {', '.join(f'{k}={v:.4f}' for k,v in allLosses.items())} → selected {bestSource}")
+        return bestSource
 
 
     def _ensureCompiled(self):
@@ -360,16 +367,8 @@ def basilRingTrainingWithAttack(
         attackStr = f" | attack={atk}({len(attackers)} nodes)" if attackers and atk != "none" else ""
         print(f"[round {r}] lr={lr:.6f}{noiseStatus}{attackStr}...", flush=True)
 
-        # Communication sigma.
-        # EBM calibration fix: EBM trains for noise σ applied once, but in ring topology
-        # each model passes through N hops per round, accumulating √N × σ_hop total noise.
-        # Scale per-hop noise down so accumulated noise = σ (what EBM trained for):
-        #   σ_hop = σ / √N  →  accumulated = √N × σ/√N = σ  ✓
-        # Non-EBM configs keep full σ per hop to show unmitigated degradation.
-        if channelNoiseActive and noiseModel == "ebm":
-            commSigma = sigma / math.sqrt(n)
-        else:
-            commSigma = sigma if channelNoiseActive else 0.0
+        # Every mitigation arm is exposed to the same configured link noise.
+        commSigma = sigma if channelNoiseActive else 0.0
 
         if cleanConsensusRound:
             # Clean reference: no adversaries, no channel noise, no mitigation.

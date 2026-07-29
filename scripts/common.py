@@ -11,6 +11,23 @@ import numpy as np
 NTFY_TOPIC = "papermerge-ojaswi"   # <-- change this to your own unique topic
 
 
+def setExperimentSeed(seed):
+    """Seed Python, NumPy, and TensorFlow for selectable standalone configs."""
+    if seed is None:
+        return
+    import random
+    import tensorflow as tf
+
+    seed = int(seed)
+    random.seed(seed)
+    np.random.seed(seed)
+    tf.keras.utils.set_random_seed(seed)
+    try:
+        tf.config.experimental.enable_op_determinism()
+    except (AttributeError, RuntimeError):
+        pass
+
+
 def sendNotification(title, message, priority="default"):
     # send POST to ntfy.sh topic; silently ignore any network errors
     try:

@@ -1,0 +1,13 @@
+{
+  "counts": {
+    "IID/basil": 54,
+    "IID/cart": 99,
+    "IID/merged": 99,
+    "IID/noisy": 66,
+    "nonIID/basil": 54,
+    "nonIID/cart": 99,
+    "nonIID/merged": 99,
+    "nonIID/noisy": 66
+  },
+  "libraryVersion": "hidden-cifar10-current-2026-07-26"
+}

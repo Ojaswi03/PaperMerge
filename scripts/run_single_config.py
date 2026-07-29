@@ -17,10 +17,18 @@ from basil_core.data.mnist  import loadMnist,   makeLoaders as makeMnistLoaders
 from basil_core.models      import CIFARModel, MNISTModel
 from basil_core.basil       import BasilNode, basilRingTrainingWithAttack, fedAvgTrainingWithNoise
 from basil_core.cart        import CARTNode, cartRingTraining
+from basil_core.campaign_engine import run_campaign_three
 from basil_core.trainer     import getParams, setParams, evaluateAll
+from gui.campaign3 import make_config as makeCampaign3Config
 
 parser = argparse.ArgumentParser()
-parser.add_argument("config", help="Path to JSON config file")
+parser.add_argument(
+    "config",
+    help=(
+        "Path to a JSON config, or "
+        "campaign3:<merged|cart>:<environment>:<mitigation>[:sigma]"
+    ),
+)
 parser.add_argument("--rounds", type=int, default=None, help="Override nRounds")
 parser.add_argument(
     "--set",
@@ -31,8 +39,29 @@ parser.add_argument(
 )
 args = parser.parse_args()
 
-with open(args.config) as f:
-    cfg = json.load(f)
+if args.config.startswith("campaign3:"):
+    parts = args.config.split(":")
+    if len(parts) not in (4, 5):
+        raise SystemExit(
+            "Campaign spec must be "
+            "campaign3:<merged|cart>:<environment>:<mitigation>[:sigma]"
+        )
+    _, campaignApproach, campaignEnvironment, campaignMitigation, *sigmaPart = parts
+    campaignSigma = float(sigmaPart[0]) if sigmaPart else 0.0
+    cfg = makeCampaign3Config(
+        split="nonIID",
+        approach=campaignApproach,
+        environment=campaignEnvironment,
+        mitigation=campaignMitigation,
+        sigma=campaignSigma,
+        seed=2025,
+        rounds=args.rounds or 5,
+        phase="pilot",
+        gamma=0.2,
+    )
+else:
+    with open(args.config) as f:
+        cfg = json.load(f)
 
 def _parseOverrideValue(raw):
     lower = raw.lower()
@@ -59,6 +88,7 @@ for item in args.set:
     cfg[key] = _parseOverrideValue(rawValue.strip())
 
 nRounds      = args.rounds if args.rounds else cfg.get("nRounds", 100)
+cfg["nRounds"] = nRounds
 nNodes       = cfg.get("nNodes", 10)
 lr           = cfg.get("learningRate", 0.05)
 batchSize    = cfg.get("batchSize", 512)
@@ -104,14 +134,36 @@ if not attackTypes:
 print(f"\nConfig: {cfg.get('experimentName','?')}")
 print(f"  approach={approach}, cartAlgo={cartAlgo}, nonIID={nonIID}")
 print(f"  sigma={sigma}, noiseModel={noiseModel}, useBasil={useBasil}, aggregationMode={aggregationMode}")
+print(
+    f"  effective gamma={distillStr:g}, ebmLambda={ebmLambda:g}, "
+    f"lambda*sigma^2={float(ebmLambda) * float(sigma) * float(sigma):g}"
+)
 print(f"  S={S}, attackers={attackerIds}, attacks={attackTypes}, rounds={nRounds}\n")
 
 # Load data
 if dataset == "cifar10":
     train, test = loadCifar10()
-    loaders, testLoader = makeCifarLoaders(train, test, nClients=nNodes,
-                                           batchSize=batchSize, iid=(not nonIID),
-                                           dirichletAlpha=alpha)
+    if int(cfg.get("campaignVersion", 0)) == 3:
+        loaders, testLoader, dataMetadata = makeCifarLoaders(
+            train,
+            test,
+            nClients=nNodes,
+            batchSize=batchSize,
+            iid=(not nonIID),
+            dirichletAlpha=alpha,
+            seed=int(cfg["seed"]),
+            returnMetadata=True,
+        )
+    else:
+        loaders, testLoader = makeCifarLoaders(
+            train,
+            test,
+            nClients=nNodes,
+            batchSize=batchSize,
+            iid=(not nonIID),
+            dirichletAlpha=alpha,
+        )
+        dataMetadata = None
     ModelClass = CIFARModel
 else:
     train, test = loadMnist()
@@ -121,6 +173,68 @@ else:
     ModelClass = MNISTModel
 
 print(f"Data split: {'non-IID (Dirichlet α=' + str(alpha) + ')' if nonIID else 'IID'}")
+
+if int(cfg.get("campaignVersion", 0)) == 3:
+    if dataset != "cifar10":
+        raise SystemExit("Campaign 3 currently supports CIFAR-10 only.")
+    result = run_campaign_three(
+        config=cfg,
+        model_class=ModelClass,
+        train_loaders=loaders,
+        test_loader=testLoader,
+        data_metadata=dataMetadata,
+    )
+    if result.get("stopped"):
+        raise SystemExit("Campaign run stopped before completion.")
+    avgAcc = np.asarray(result["avg_history"], dtype=np.float64)
+    print("\n=== CAMPAIGN 3 PILOT ACCURACY ===")
+    print(
+        f"  Final full-test average={float(result['final_avg']):.4f} "
+        f"({float(result['final_avg']) * 100:.1f}%)"
+    )
+    print(
+        f"  Final full-test worst={float(result['final_worst']):.4f} "
+        f"({float(result['final_worst']) * 100:.1f}%)"
+    )
+    print(
+        f"  Tracked best={float(np.max(avgAcc)):.4f} "
+        f"({float(np.max(avgAcc)) * 100:.1f}%) at round "
+        f"{int(np.argmax(avgAcc)) + 1}"
+    )
+    if approach == "cart":
+        print(
+            f"  Mean CART mu={float(np.mean(result['mu_history'])):.6f}, "
+            f"final registry coverage={float(result['registry_coverage'][-1]):.1%}"
+        )
+    if cfg.get("snapshotSelection"):
+        sources = np.asarray(result["selected_sources"], dtype=np.int32)
+        allReceivers = np.arange(sources.shape[1])[None, :]
+        allSelfSelections = sources == allReceivers
+        print(
+            f"  All-round selected self="
+            f"{float(np.mean(allSelfSelections)):.1%}, "
+            f"selected neighbor={float(np.mean(~allSelfSelections)):.1%}"
+        )
+        active = sources[int(cfg.get("attackHiddenStart", 0)) :]
+        attackerSet = {
+            int(value)
+            for value in str(cfg.get("attackerIds", "")).split(",")
+            if value.strip()
+        }
+        if active.size and attackerSet:
+            receivers = np.arange(active.shape[1])[None, :]
+            selfSelections = active == receivers
+            maliciousSelections = (
+                np.isin(active, sorted(attackerSet))
+                & ~selfSelections
+            )
+            print(
+                f"  Post-activation selected external attackers="
+                f"{float(np.mean(maliciousSelections)):.1%}, "
+                f"selected self={float(np.mean(selfSelections)):.1%}"
+            )
+    print(f"  Runtime={float(result['runtime_seconds']):.1f}s")
+    raise SystemExit(0)
 
 commonKw = dict(
     rounds=nRounds, testLoader=testLoader,

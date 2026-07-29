@@ -17,16 +17,19 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 import os
+import signal
 import sys
 import time
 import re
+import subprocess
 import traceback
 import gc
 import tkinter as tk
 from tkinter import ttk, messagebox, scrolledtext, simpledialog, filedialog
 import threading
 import json
-from datetime import datetime
+import hashlib
+from datetime import datetime, timedelta
 import numpy as np
 
 # Add project root to path
@@ -39,30 +42,64 @@ from basil_core.data.nMnist import loadNMnist, makeLoaders as makeNMnistLoaders
 from basil_core.models import MNISTModel, CIFARModel, NMNISTModel
 from basil_core.basil import BasilNode, basilRingTrainingWithAttack, fedAvgTrainingWithNoise
 from basil_core.cart import CARTNode, cartRingTraining
+from basil_core.campaign_engine import run_campaign_three
 from basil_core.trainer import evaluateAll, getParams, setParams
-from scripts.common import cleanupTensorflowMemory, setupGpu, sendNotification
+from gui.campaign3 import (
+    PLOT_ROOT as CAMPAIGN3_PLOT_ROOT,
+    PRESET_LABELS as CAMPAIGN3_PRESET_LABELS,
+    RESULT_ROOT as CAMPAIGN3_RESULT_ROOT,
+    build_preset as buildCampaign3Preset,
+    config_hash as campaign3ConfigHash,
+    freeze_calibration_if_ready,
+    is_completed as isCampaign3Completed,
+    result_paths as campaign3ResultPaths,
+    write_json_atomic,
+    write_npz_atomic,
+)
+from gui.campaign_workers import CampaignWorkerPool
+from gui.runtime_estimator import (
+    RuntimeEstimator,
+    format_duration,
+    load_worker_profile,
+)
+from scripts.common import (
+    cleanupTensorflowMemory,
+    sendNotification,
+    setExperimentSeed,
+    setupGpu,
+)
 from plotGui import discoverDatasets, discoverExperiments, getColors, getMarkers
 
-# ─── Colour palette ──────────────────────────────────────────────────────────
-BG        = '#f7f8fc'
-PANEL_BG  = '#ffffff'
-ACCENT    = '#2563eb'
-ACCENT_DK = '#1d4ed8'
-DANGER    = '#dc2626'
-DANGER_DK = '#b91c1c'
-SUCCESS   = '#16a34a'
-INFO_CLR  = '#0369a1'
-WARN_CLR  = '#d97706'
-HEADER    = '#1e293b'
-MUTED     = '#64748b'
-BORDER    = '#e2e8f0'
-CHART_BG  = '#f8fafc'
-SURFACE   = '#f1f5f9'
+# ─── Dark colour palette ─────────────────────────────────────────────────────
+BG             = '#080d14'
+PANEL_BG       = '#101823'
+SURFACE        = '#172231'
+SURFACE_ACTIVE = '#223044'
+INPUT_BG       = '#0c141f'
+BORDER         = '#2b3a4d'
+CHART_BG       = '#0d1520'
+HEADER         = '#e6edf7'
+MUTED          = '#91a0b5'
+ACCENT         = '#4f8cff'
+ACCENT_DK      = '#3975df'
+DANGER         = '#ef5b67'
+DANGER_DK      = '#c94753'
+SUCCESS        = '#3ecf8e'
+INFO_CLR       = '#54b8e8'
+WARN_CLR       = '#f0ad4e'
+QUEUE_CLR      = '#16a3a5'
+QUEUE_DK       = '#118486'
+RUN_ALL_CLR    = '#d88932'
+RUN_ALL_DK     = '#b56d23'
+DISABLED_BG    = '#293546'
+DISABLED_FG    = '#718096'
+SELECTION_BG   = '#315f9f'
+LOG_BG         = '#070c12'
 
 # ─── Quick presets ───────────────────────────────────────────────────────────
 PRESETS = {
     "Clean Baseline": {
-        'dataset': 'cifar10', 'approach': 'basil', 'useBasil': True,
+        'dataset': 'cifar10', 'approach': 'merged', 'useBasil': False,
         'useChannelNoise': False, 'noiseMitigation': 'none',
         'attackGaussian': False, 'attackSignFlip': False, 'attackHidden': False,
         'attackerIds': '', 'nNodes': 10, 'nRounds': 100, 'localEpochs': 5,
@@ -83,8 +120,8 @@ PRESETS = {
         'localEpochs': 5, 'learningRate': 0.05, 'batchSize': 512,
         'momentum': 0.9, 'useLrDecay': True,
     },
-    "Merged (Best)": {
-        'dataset': 'cifar10', 'approach': 'merged', 'useBasil': True,
+    "Merged Noisy + EBM": {
+        'dataset': 'cifar10', 'approach': 'merged', 'useBasil': False,
         'useChannelNoise': True, 'channelNoiseSigma': 0.2, 'noiseMitigation': 'ebm',
         'ebmLambda': 25.0, 'attackGaussian': False, 'attackerIds': '',
         'nNodes': 10, 'nRounds': 100, 'localEpochs': 5, 'learningRate': 0.05,
@@ -117,10 +154,20 @@ class ExperimentGUI:
             os.path.dirname(os.path.abspath(__file__)), "presets", "preset1_queue.json"
         )
         self.queueButton = None   # set when toolbar is built
+        self._runtimeEstimator = RuntimeEstimator()
+        self._workerProfile = load_worker_profile()
+        self._campaignWorkerPool = None
+        self._benchmarkProcess = None
+        self._queueLastEstimateRefresh = 0.0
+        self._queueBatchNeedsPlot = False
+        self._campaignPlotCondition = threading.Condition()
+        self._campaignPlotPendingSplits = set()
+        self._campaignPlotThread = None
 
         # Live-chart / progress tracking
         self._liveAccData    = []
         self._liveWorstData  = []
+        self._campaignLiveData = {}
         self._trainStartTime = None
         self._lastRoundEndTime = None
         self._totalRounds    = 0
@@ -142,52 +189,126 @@ class ExperimentGUI:
         s = ttk.Style()
         s.theme_use('clam')
 
-        s.configure('.',               background=BG,     font=('Segoe UI', 9))
+        self.root.option_add('*Menu.background', PANEL_BG)
+        self.root.option_add('*Menu.foreground', HEADER)
+        self.root.option_add('*Menu.activeBackground', SURFACE_ACTIVE)
+        self.root.option_add('*Menu.activeForeground', HEADER)
+        self.root.option_add('*Menu.selectColor', ACCENT)
+        self.root.option_add('*Menu.borderWidth', 1)
+
+        s.configure('.',               background=BG, foreground=HEADER,
+                    font=('Segoe UI', 9))
         s.configure('TFrame',          background=BG)
-        s.configure('TLabelframe',     background=BG,     bordercolor=BORDER)
+        s.configure('TLabelframe',     background=BG, bordercolor=BORDER,
+                    lightcolor=BORDER, darkcolor=BORDER)
         s.configure('TLabelframe.Label', font=('Segoe UI', 9, 'bold'), foreground=HEADER, background=BG)
         s.configure('TLabel',          background=BG,     foreground=HEADER)
-        s.configure('TEntry',          fieldbackground=PANEL_BG, foreground=HEADER, padding=(3, 2))
+        s.configure('TEntry',          fieldbackground=INPUT_BG, foreground=HEADER,
+                    insertcolor=HEADER, bordercolor=BORDER, lightcolor=BORDER,
+                    darkcolor=BORDER, padding=(4, 3))
+        s.map('TEntry',
+              fieldbackground=[('disabled', DISABLED_BG), ('readonly', INPUT_BG)],
+              foreground=[('disabled', DISABLED_FG)],
+              bordercolor=[('focus', ACCENT)])
+        s.configure('TSpinbox',        fieldbackground=INPUT_BG, foreground=HEADER,
+                    arrowcolor=MUTED, insertcolor=HEADER, bordercolor=BORDER,
+                    lightcolor=BORDER, darkcolor=BORDER, padding=(4, 3))
+        s.map('TSpinbox',
+              fieldbackground=[('disabled', DISABLED_BG), ('readonly', INPUT_BG)],
+              foreground=[('disabled', DISABLED_FG)],
+              bordercolor=[('focus', ACCENT)],
+              arrowcolor=[('active', HEADER)])
+        s.configure('TCombobox',       fieldbackground=INPUT_BG, foreground=HEADER,
+                    background=SURFACE, arrowcolor=MUTED, bordercolor=BORDER,
+                    lightcolor=BORDER, darkcolor=BORDER, padding=(4, 3))
+        s.map('TCombobox',
+              fieldbackground=[('readonly', INPUT_BG), ('disabled', DISABLED_BG)],
+              foreground=[('readonly', HEADER), ('disabled', DISABLED_FG)],
+              selectbackground=[('readonly', INPUT_BG)],
+              selectforeground=[('readonly', HEADER)],
+              arrowcolor=[('active', HEADER)])
         s.configure('TRadiobutton',    background=BG,     foreground=HEADER)
+        s.map('TRadiobutton',
+              background=[('active', BG)],
+              foreground=[('disabled', DISABLED_FG), ('active', HEADER)],
+              indicatorcolor=[('selected', ACCENT), ('!selected', INPUT_BG)])
         s.configure('TCheckbutton',    background=BG,     foreground=HEADER)
+        s.map('TCheckbutton',
+              background=[('active', BG)],
+              foreground=[('disabled', DISABLED_FG), ('active', HEADER)],
+              indicatorcolor=[('selected', ACCENT), ('!selected', INPUT_BG)])
         s.configure('TSeparator',      background=BORDER)
         s.configure('TNotebook',       background=BG,     tabmargins=[2, 2, 2, 0])
         s.configure('TNotebook.Tab',   background=SURFACE, foreground=MUTED,
                     padding=[16, 8], font=('Segoe UI', 9, 'bold'))
         s.map('TNotebook.Tab',
               background=[('selected', PANEL_BG)],
-              foreground=[('selected', ACCENT)])
+              foreground=[('selected', ACCENT), ('active', HEADER)])
+        s.configure('TPanedwindow',    background=BORDER, sashwidth=4)
 
         # Buttons
-        s.configure('TButton',         padding=(10, 6),    font=('Segoe UI', 9))
+        s.configure('TButton',         background=SURFACE, foreground=HEADER,
+                    bordercolor=BORDER, lightcolor=BORDER, darkcolor=BORDER,
+                    padding=(10, 6), font=('Segoe UI', 9))
+        s.map('TButton',
+              background=[('disabled', DISABLED_BG), ('active', SURFACE_ACTIVE)],
+              foreground=[('disabled', DISABLED_FG), ('active', HEADER)],
+              bordercolor=[('focus', ACCENT)])
         s.configure('Run.TButton',     background=ACCENT, foreground='white',
                     font=('Segoe UI', 10, 'bold'), padding=(16, 8), borderwidth=0)
-        s.map('Run.TButton',           background=[('active', ACCENT_DK), ('disabled', '#93c5fd')])
-        s.configure('RunAll.TButton',  background='#0891b2', foreground='white',
+        s.map('Run.TButton',           background=[('active', ACCENT_DK), ('disabled', DISABLED_BG)],
+                    foreground=[('disabled', DISABLED_FG)])
+        s.configure('RunAll.TButton',  background=RUN_ALL_CLR, foreground='#101820',
                     font=('Segoe UI', 10, 'bold'), padding=(16, 8), borderwidth=0)
-        s.map('RunAll.TButton',        background=[('active', '#0e7490'), ('disabled', '#67e8f9')])
+        s.map('RunAll.TButton',        background=[('active', RUN_ALL_DK), ('disabled', DISABLED_BG)],
+                    foreground=[('disabled', DISABLED_FG)])
         s.configure('Stop.TButton',    background=DANGER, foreground='white',
                     font=('Segoe UI', 10, 'bold'), padding=(16, 8), borderwidth=0)
-        s.map('Stop.TButton',          background=[('active', DANGER_DK), ('disabled', '#fca5a5')])
-        s.configure('Queue.TButton',   background='#7c3aed', foreground='white',
+        s.map('Stop.TButton',          background=[('active', DANGER_DK), ('disabled', DISABLED_BG)],
+                    foreground=[('disabled', DISABLED_FG)])
+        s.configure('Queue.TButton',   background=QUEUE_CLR, foreground='#071416',
                     font=('Segoe UI', 10, 'bold'), padding=(16, 8), borderwidth=0)
-        s.map('Queue.TButton',         background=[('active', '#6d28d9'), ('disabled', '#c4b5fd')])
-        s.configure('Preset.TButton',  background='#f1f5f9', foreground=HEADER,
+        s.map('Queue.TButton',         background=[('active', QUEUE_DK), ('disabled', DISABLED_BG)],
+                    foreground=[('disabled', DISABLED_FG)])
+        s.configure('Preset.TButton',  background=SURFACE, foreground=HEADER,
                     font=('Segoe UI', 8), padding=(8, 5))
-        s.map('Preset.TButton',        background=[('active', '#e2e8f0')])
+        s.map('Preset.TButton',        background=[('active', SURFACE_ACTIVE)])
         s.configure('Link.TButton',    background=BG, foreground=ACCENT,
                     font=('Segoe UI', 9), relief='flat', padding=(4, 2))
-        s.map('Link.TButton',          foreground=[('active', ACCENT_DK)])
+        s.map('Link.TButton',
+              background=[('active', BG)],
+              foreground=[('active', INFO_CLR)])
         s.configure('More.TMenubutton', background=SURFACE, foreground=HEADER,
                     font=('Segoe UI', 9, 'bold'), padding=(12, 7))
-        s.map('More.TMenubutton',       background=[('active', '#e2e8f0')])
+        s.map('More.TMenubutton',       background=[('active', SURFACE_ACTIVE)])
 
         # Progress bar
         s.configure('Blue.Horizontal.TProgressbar',
-                    background=ACCENT, troughcolor=BORDER, thickness=10)
+                    background=ACCENT, troughcolor=INPUT_BG,
+                    bordercolor=BORDER, lightcolor=ACCENT,
+                    darkcolor=ACCENT_DK, thickness=10)
+
+        # Queue tables and scrollbars
+        s.configure('Treeview', background=INPUT_BG, fieldbackground=INPUT_BG,
+                    foreground=HEADER, bordercolor=BORDER, lightcolor=BORDER,
+                    darkcolor=BORDER, rowheight=28)
+        s.map('Treeview',
+              background=[('selected', SELECTION_BG)],
+              foreground=[('selected', '#ffffff')])
+        s.configure('Treeview.Heading', background=SURFACE, foreground=HEADER,
+                    bordercolor=BORDER, lightcolor=BORDER, darkcolor=BORDER,
+                    font=('Segoe UI', 9, 'bold'), padding=(6, 7))
+        s.map('Treeview.Heading',
+              background=[('active', SURFACE_ACTIVE)])
+        s.configure('Vertical.TScrollbar', background=SURFACE,
+                    troughcolor=INPUT_BG, bordercolor=BORDER,
+                    arrowcolor=MUTED, lightcolor=BORDER, darkcolor=BORDER)
+        s.map('Vertical.TScrollbar',
+              background=[('active', SURFACE_ACTIVE)],
+              arrowcolor=[('active', HEADER)])
 
         # Status bar
-        s.configure('Status.TLabel', background='#e8ecf4', foreground=MUTED,
+        s.configure('Status.TLabel', background=PANEL_BG, foreground=MUTED,
                     font=('Segoe UI', 8), padding=(8, 4), relief='flat')
 
     # ── variables ─────────────────────────────────────────────────────────────
@@ -196,7 +317,7 @@ class ExperimentGUI:
         self.datasetVar           = tk.StringVar(value="cifar10")
         self.approachVar          = tk.StringVar(value="basil")
         self.useBasilVar          = tk.BooleanVar(value=False)
-        self.basilMemorySizeVar   = tk.IntVar(value=4)
+        self.basilMemorySizeVar   = tk.IntVar(value=5)
         self.useChannelNoiseVar   = tk.BooleanVar(value=False)
         self.channelNoiseStartVar = tk.IntVar(value=0)
         self.channelNoiseSigmaVar = tk.DoubleVar(value=0.2)
@@ -236,6 +357,8 @@ class ExperimentGUI:
         self.localEpochsVar   = tk.IntVar(value=5)
         self.learningRateVar  = tk.DoubleVar(value=0.05)
         self.batchSizeVar     = tk.IntVar(value=512)
+        self._queueEtaVar = tk.StringVar(value="Queue estimate: empty")
+        self._workerProfileVar = tk.StringVar(value="")
         # progress / status (not user-facing inputs)
         self._progressVar     = tk.DoubleVar(value=0.0)
 
@@ -303,11 +426,6 @@ class ExperimentGUI:
         # ---- Quick presets -------------------------------------------------
         presetFrame = ttk.LabelFrame(outer, text="Quick Presets", padding=8)
         presetFrame.pack(fill=tk.X, pady=(0, 8))
-
-        desc = ttk.Label(presetFrame,
-                         text="Click a preset to auto-fill all settings:",
-                         foreground=MUTED, font=('Segoe UI', 8))
-        desc.pack(anchor=tk.W, pady=(0, 4))
 
         btnRow = ttk.Frame(presetFrame)
         btnRow.pack(fill=tk.X)
@@ -616,8 +734,8 @@ class ExperimentGUI:
 
         self.outputText = scrolledtext.ScrolledText(
             leftFrame, wrap=tk.WORD, width=60, height=30,
-            font=('Consolas', 9), bg='#0f172a', fg='#e2e8f0',
-            insertbackground='white', selectbackground='#4a5568',
+            font=('Consolas', 9), bg=LOG_BG, fg=HEADER,
+            insertbackground=HEADER, selectbackground=SELECTION_BG,
             selectforeground='white', state='normal')
         self.outputText.pack(fill=tk.BOTH, expand=True, pady=(4, 0))
 
@@ -636,13 +754,13 @@ class ExperimentGUI:
         self.outputText.bind('<Control-C>', lambda e: self._copySelection())
 
         # Configure log colour tags
-        self.outputText.tag_configure('header',  foreground='#93c5fd', font=('Consolas', 9, 'bold'))
-        self.outputText.tag_configure('success', foreground='#4ade80')
-        self.outputText.tag_configure('error',   foreground='#f87171')
-        self.outputText.tag_configure('warn',    foreground='#fbbf24')
-        self.outputText.tag_configure('info',    foreground='#67e8f9')
-        self.outputText.tag_configure('muted',   foreground='#94a3b8')
-        self.outputText.tag_configure('normal',  foreground='#e2e8f0')
+        self.outputText.tag_configure('header',  foreground='#8eb7ff', font=('Consolas', 9, 'bold'))
+        self.outputText.tag_configure('success', foreground=SUCCESS)
+        self.outputText.tag_configure('error',   foreground='#ff7b86')
+        self.outputText.tag_configure('warn',    foreground=WARN_CLR)
+        self.outputText.tag_configure('info',    foreground=INFO_CLR)
+        self.outputText.tag_configure('muted',   foreground=MUTED)
+        self.outputText.tag_configure('normal',  foreground=HEADER)
 
         # ---- Right: live chart ---------------------------------------------
         rightFrame = ttk.Frame(paned)
@@ -681,17 +799,16 @@ class ExperimentGUI:
                          highlightbackground=BORDER, highlightcolor=BORDER)
         shell.pack(side=tk.TOP, fill=tk.X, padx=12, pady=(12, 8))
 
-        titleBlock = tk.Frame(shell, bg=PANEL_BG)
+        headerRow = tk.Frame(shell, bg=PANEL_BG)
+        headerRow.pack(fill=tk.X)
+
+        titleBlock = tk.Frame(headerRow, bg=PANEL_BG)
         titleBlock.pack(side=tk.LEFT, fill=tk.Y, padx=(14, 10), pady=10)
         tk.Label(titleBlock, text="BASIL + Noisy Channel Lab",
                  bg=PANEL_BG, fg=HEADER, font=('Segoe UI', 14, 'bold')
                  ).pack(anchor=tk.W)
-        tk.Label(titleBlock,
-                 text="Configure experiments, manage queues, and monitor training",
-                 bg=PANEL_BG, fg=MUTED, font=('Segoe UI', 9)
-                 ).pack(anchor=tk.W, pady=(2, 0))
 
-        actions = tk.Frame(shell, bg=PANEL_BG)
+        actions = tk.Frame(headerRow, bg=PANEL_BG)
         actions.pack(side=tk.RIGHT, padx=12, pady=10)
 
         self.runButton = ttk.Button(
@@ -732,9 +849,15 @@ class ExperimentGUI:
         self.moreButton["menu"] = moreMenu
         self.moreButton.pack(side=tk.LEFT, padx=(10, 0))
 
-        hint = tk.Label(actions, text="Ctrl+R run  Ctrl+S save  Esc stop",
-                        bg=PANEL_BG, fg=MUTED, font=('Segoe UI', 8))
-        hint.pack(side=tk.LEFT, padx=(12, 0))
+        tk.Label(
+            shell,
+            textvariable=self._queueEtaVar,
+            bg=PANEL_BG,
+            fg=INFO_CLR,
+            font=('Segoe UI', 8),
+            anchor=tk.W,
+            justify=tk.LEFT,
+        ).pack(fill=tk.X, padx=14, pady=(0, 8))
 
     # ── Keyboard shortcuts ────────────────────────────────────────────────────
     def _setupKeyboardShortcuts(self):
@@ -848,7 +971,58 @@ class ExperimentGUI:
         ax.set_ylabel('Accuracy', fontsize=7, color=MUTED)
         ax.set_ylim(0, 1)
 
-        if self._liveAccData:
+        campaignSeries = [
+            (lane, series)
+            for lane, series in sorted(self._campaignLiveData.items())
+            if series.get("avg")
+        ]
+        if campaignSeries:
+            laneColors = (ACCENT, RUN_ALL_CLR, SUCCESS, INFO_CLR)
+            latest = None
+            multipleLanes = len(campaignSeries) > 1
+            for lane, series in campaignSeries:
+                color = laneColors[lane % len(laneColors)]
+                prefix = f"L{lane + 1} " if multipleLanes else ""
+                rounds = series["rounds"]
+                avgValues = series["avg"]
+                worstValues = series["worst"]
+                ax.plot(
+                    rounds,
+                    avgValues,
+                    color=color,
+                    linewidth=1.6,
+                    marker='o',
+                    markersize=2,
+                    label=f"{prefix}Avg",
+                )
+                if any(
+                    abs(worst - avg) > 1e-12
+                    for worst, avg in zip(worstValues, avgValues)
+                ):
+                    ax.plot(
+                        rounds,
+                        worstValues,
+                        color=color,
+                        linewidth=1.0,
+                        linestyle='--',
+                        alpha=0.78,
+                        label=f"{prefix}Worst",
+                    )
+                if latest is None or series["updated"] > latest["updated"]:
+                    latest = series
+            ax.legend(fontsize=7, framealpha=0.5)
+            ax.set_title(
+                f"Live Accuracy  (latest {latest['avg'][-1]:.1%})",
+                fontsize=8,
+                color=HEADER,
+            )
+        elif self._campaignLiveData:
+            ax.set_title(
+                "Worker started; waiting for first completed round...",
+                fontsize=8,
+                color=MUTED,
+            )
+        elif self._liveAccData:
             rounds = list(range(len(self._liveAccData)))
             ax.plot(rounds, self._liveAccData, color=ACCENT, linewidth=1.5,
                     marker='o', markersize=2, label='Avg')
@@ -867,6 +1041,7 @@ class ExperimentGUI:
     def _clearLiveChart(self):
         self._liveAccData.clear()
         self._liveWorstData.clear()
+        self._campaignLiveData.clear()
         self._refreshLiveChart()
 
     # ── Preset & auto-name helpers ─────────────────────────────────────────────
@@ -876,6 +1051,17 @@ class ExperimentGUI:
 
     def _applyPreset(self, name):
         cfg = PRESETS[name]
+        for variable in (
+            self.attackGaussianVar,
+            self.attackSignFlipVar,
+            self.attackHiddenVar,
+            self.attackModelPoisonVar,
+            self.attackScalingVar,
+            self.attackAlieVar,
+            self.attackIpmVar,
+            self.attackNoiseAmpVar,
+        ):
+            variable.set(False)
         mapping = {
             'dataset':           self.datasetVar,
             'approach':          self.approachVar,
@@ -887,6 +1073,11 @@ class ExperimentGUI:
             'attackGaussian':    self.attackGaussianVar,
             'attackSignFlip':    self.attackSignFlipVar,
             'attackHidden':      self.attackHiddenVar,
+            'attackModelPoison': self.attackModelPoisonVar,
+            'attackScaling':     self.attackScalingVar,
+            'attackAlie':        self.attackAlieVar,
+            'attackIpm':         self.attackIpmVar,
+            'attackNoiseAmp':    self.attackNoiseAmpVar,
             'attackerIds':       self.attackerIdsVar,
             'nNodes':            self.nNodesVar,
             'nRounds':           self.nRoundsVar,
@@ -952,6 +1143,7 @@ class ExperimentGUI:
         # Live chart and its backing data
         self._liveAccData.clear()
         self._liveWorstData.clear()
+        self._campaignLiveData.clear()
         self._refreshLiveChart()
 
         # Progress bar, round/ETA/accuracy labels
@@ -1031,9 +1223,9 @@ class ExperimentGUI:
         elif approach == "noisy":
             self.useBasilVar.set(False); self.useChannelNoiseVar.set(True)
         elif approach == "merged":
-            self.useBasilVar.set(True);  self.useChannelNoiseVar.set(True)
+            self.useBasilVar.set(False); self.useChannelNoiseVar.set(False)
         elif approach == "cart":
-            self.useBasilVar.set(True);  self.useChannelNoiseVar.set(False)
+            self.useBasilVar.set(False); self.useChannelNoiseVar.set(False)
 
     # ── Run / Stop ────────────────────────────────────────────────────────────
     def runExperiment(self):
@@ -1112,6 +1304,13 @@ class ExperimentGUI:
 
     def stopExperiment(self):
         self.isRunning = False
+        if self._campaignWorkerPool is not None:
+            self._campaignWorkerPool.request_stop()
+        if self._benchmarkProcess is not None and self._benchmarkProcess.poll() is None:
+            try:
+                os.killpg(os.getpgid(self._benchmarkProcess.pid), signal.SIGTERM)
+            except (OSError, ProcessLookupError):
+                self._benchmarkProcess.terminate()
         self.logMessage("\n[STOP REQUESTED] Stopping experiment…")
         self._setStatus("Stop requested - waiting for current round to finish…")
 
@@ -1121,8 +1320,19 @@ class ExperimentGUI:
                                        "An experiment is running. Stop it and exit?"):
                 return
             self.isRunning = False
+            if self._campaignWorkerPool is not None:
+                self._campaignWorkerPool.request_stop()
             if self.currentThread and self.currentThread.is_alive():
                 self.currentThread.join(timeout=5.0)
+            if self._campaignWorkerPool is not None:
+                self._campaignWorkerPool.kill_remaining()
+            if self._benchmarkProcess is not None and self._benchmarkProcess.poll() is None:
+                try:
+                    os.killpg(os.getpgid(self._benchmarkProcess.pid), signal.SIGTERM)
+                except (OSError, ProcessLookupError):
+                    self._benchmarkProcess.terminate()
+        with self._queueLock:
+            self._saveQueueState()
         self.root.destroy()
 
     def reloadGui(self):
@@ -1132,8 +1342,19 @@ class ExperimentGUI:
                                        "An experiment is running. Stop it and reload?"):
                 return
             self.isRunning = False
+            if self._campaignWorkerPool is not None:
+                self._campaignWorkerPool.request_stop()
             if self.currentThread and self.currentThread.is_alive():
                 self.currentThread.join(timeout=5.0)
+            if self._campaignWorkerPool is not None:
+                self._campaignWorkerPool.kill_remaining()
+            if self._benchmarkProcess is not None and self._benchmarkProcess.poll() is None:
+                try:
+                    os.killpg(os.getpgid(self._benchmarkProcess.pid), signal.SIGTERM)
+                except (OSError, ProcessLookupError):
+                    self._benchmarkProcess.terminate()
+        with self._queueLock:
+            self._saveQueueState()
         self.root.destroy()
         import sys
         sys.exit(42)
@@ -1149,6 +1370,16 @@ class ExperimentGUI:
             self.root.after(1000, self._etaTicker)
             sendNotification("Run Started", f"{name} has started.", priority="default")
             self._executeExperiment(config)
+            if (
+                int(config.get("campaignVersion", 0)) == 3
+                and isCampaign3Completed(config)
+                and config.get("autoPlotCampaign3", True)
+            ):
+                self.generatePlots(
+                    showDialog=False,
+                    config=config,
+                    onlyMissing=True,
+                )
             name = config.get("experimentName", "Experiment")
             sendNotification("Run Complete", f"{name} finished successfully.", priority="high")
         except Exception as e:
@@ -1165,11 +1396,24 @@ class ExperimentGUI:
         self.queueButton.config(state=tk.NORMAL)
         self.stopButton.config(state=tk.DISABLED)
         self.isRunning = False
-        self._progressVar.set(100 if self._liveAccData else 0)
+        hasLiveData = bool(
+            self._liveAccData
+            or any(
+                series.get("avg")
+                for series in self._campaignLiveData.values()
+            )
+        )
+        self._progressVar.set(100 if hasLiveData else 0)
+        self._runtimeEstimator.reload()
+        self._refreshQueueEstimate()
         self._setStatus("Idle  ·  Experiment finished.")
 
     # ── _getResultPaths / _isAlreadyRun ───────────────────────────────────────
     def _getResultPaths(self, config):
+        if int(config.get('campaignVersion', 0)) == 3:
+            metricsPath, runPath = campaign3ResultPaths(config)
+            return str(metricsPath), str(runPath)
+
         dataset = config.get('dataset', '')
         attackParts = []
         if config.get('attackGaussian'):    attackParts.append('gaussian')
@@ -1201,6 +1445,9 @@ class ExperimentGUI:
         return os.path.join(*parts)
 
     def _isAlreadyRun(self, config):
+        if int(config.get('campaignVersion', 0)) == 3:
+            return isCampaign3Completed(config)
+
         accPath, configPath = self._getResultPaths(config)
         if accPath is None or not os.path.exists(accPath):
             return False
@@ -1219,7 +1466,7 @@ class ExperimentGUI:
     def defaultAggregationMode(self, config):
         if config.get('aggregationMode'):
             return config['aggregationMode']
-        if config.get('useBasil', False):
+        if config.get('snapshotSelection', config.get('useBasil', False)):
             return 'handoff'
         if config.get('approach') in ('merged', 'cart'):
             return 'consensus'
@@ -1269,6 +1516,8 @@ class ExperimentGUI:
         self.queueButton.config(state=tk.NORMAL)
         self.stopButton.config(state=tk.NORMAL)
         self.isRunning = True
+        self._queueBatchNeedsPlot = False
+        self._queueLastEstimateRefresh = 0.0
         self.clearOutput()
         self._liveAccData.clear()
         self._liveWorstData.clear()
@@ -1280,6 +1529,7 @@ class ExperimentGUI:
 
     def runAllThread(self, configFiles, nSkipped=0):
         total, completed = len(configFiles), 0
+        campaignPlotConfig = None
         try:
             self.logMessage("=" * 80)
             self.logMessage(f"RUN ALL: {total} experiments queued  ({nSkipped} already done, skipped)")
@@ -1318,6 +1568,13 @@ class ExperimentGUI:
                 sendNotification("Run Started", f"[{idx}/{total}] {expName} has started.", priority="default")
                 self._executeExperiment(config)
                 completed += 1
+                if (
+                    int(config.get("campaignVersion", 0)) == 3
+                    and isCampaign3Completed(config)
+                ):
+                    campaignPlotConfig = config
+                    if config.get("autoPlotCampaign3", True):
+                        self._scheduleCampaign3PlotRefresh(config)
 
                 if not self.isRunning:
                     break
@@ -1336,19 +1593,24 @@ class ExperimentGUI:
             self.logMessage(traceback.format_exc())
             sendNotification("Run All FAILED", str(e), priority="urgent")
         finally:
+            if campaignPlotConfig is not None:
+                self._waitForCampaign3PlotRefresh()
+                self.generatePlots(
+                    showDialog=False,
+                    config=campaignPlotConfig,
+                    onlyMissing=True,
+                )
             self.root.after(0, self._onRunFinished)
 
     # ── _executeExperiment ────────────────────────────────────────────────────
     def _executeExperiment(self, config):
         cleanAdjusted = self._applyCleanReferenceSemantics(config)
-        tuned = self._applyCartTargetTuning(config)
+        self._validateMitigationSemantics(config)
         self._cleanupTensorflow("before experiment")
         self._activeExperimentObjects = {}
         try:
             if cleanAdjusted and config.get('_cleanReferenceNote'):
                 self.logMessage(config['_cleanReferenceNote'])
-            if tuned and config.get('_autoTuningNote'):
-                self.logMessage(config['_autoTuningNote'])
             return self._executeExperimentImpl(config)
         finally:
             activeObjects = self._activeExperimentObjects
@@ -1363,6 +1625,7 @@ class ExperimentGUI:
             self._cleanupTensorflow("after experiment")
 
     def _executeExperimentImpl(self, config):
+        setExperimentSeed(config.get("seed"))
         self.logMessage("=" * 80)
         self.logMessage("STARTING EXPERIMENT")
         self.logMessage("=" * 80)
@@ -1391,8 +1654,19 @@ class ExperimentGUI:
         if config['useChannelNoise']:
             self.logMessage(f"  Noise σ: {config['channelNoiseSigma']},  Mitigation: {config['noiseMitigation']}")
             if config['noiseMitigation'] == 'ebm':
-                scale = 1.0 + config['ebmLambda'] * config['channelNoiseSigma'] ** 2
-                self.logMessage(f"  EBM λ: {config['ebmLambda']} (scale={scale:.2f})")
+                coefficient = (
+                    config['ebmLambda'] * config['channelNoiseSigma'] ** 2
+                )
+                if int(config.get('campaignVersion', 0)) == 3:
+                    self.logMessage(
+                        f"  EBM λ: {config['ebmLambda']} "
+                        f"(λσ² objective coefficient={coefficient:.6g})"
+                    )
+                else:
+                    self.logMessage(
+                        f"  EBM λ: {config['ebmLambda']} "
+                        f"(legacy scale={1.0 + coefficient:.2f})"
+                    )
         self.logMessage("")
 
         deviceInfo = setupGpu()
@@ -1411,9 +1685,19 @@ class ExperimentGUI:
         self._activeExperimentObjects["test"] = test
         iid = not config.get('nonIID', True)
         alpha = config.get('dirichletAlpha', 0.2)
-        trainLoaders, testLoader = self.makeLoaders(
+        isCampaign3 = int(config.get('campaignVersion', 0)) == 3
+        loaderResult = self.makeLoaders(
             config['dataset'], train, test, config['batchSize'], config['nNodes'],
-            iid=iid, dirichletAlpha=alpha)
+            iid=iid,
+            dirichletAlpha=alpha,
+            seed=config.get('seed'),
+            returnMetadata=isCampaign3,
+        )
+        if isCampaign3:
+            trainLoaders, testLoader, dataMetadata = loaderResult
+        else:
+            trainLoaders, testLoader = loaderResult
+            dataMetadata = None
         self._activeExperimentObjects["trainLoaders"] = trainLoaders
         self._activeExperimentObjects["testLoader"] = testLoader
         self.logMessage(f"  Training samples: {len(train)}")
@@ -1422,7 +1706,18 @@ class ExperimentGUI:
             self.logMessage(f"  Data split:       Non-IID (Dirichlet α={alpha})")
         else:
             self.logMessage(f"  Data split:       IID (uniform random)")
+        if config.get("seed") is not None:
+            self.logMessage(f"  Experiment seed:  {config['seed']}")
         self.logMessage("")
+
+        if isCampaign3:
+            self._executeCampaignThree(
+                config,
+                trainLoaders=trainLoaders,
+                testLoader=testLoader,
+                dataMetadata=dataMetadata,
+            )
+            return
 
         self.logMessage(f"Creating {config['nNodes']} nodes…")
         nodes = self.createNodes(config, trainLoaders)
@@ -1607,6 +1902,124 @@ class ExperimentGUI:
         self.root.after(0, self._setStatus,
                         f"Done  ·  Avg acc {finalAvg:.1%}  ·  Worst {finalWorst:.1%}")
 
+    def _partitionHash(self, dataMetadata):
+        digest = hashlib.sha256()
+        for indices in dataMetadata.get("clientIndices", []):
+            array = np.asarray(indices, dtype=np.int64)
+            digest.update(array.tobytes(order="C"))
+        return digest.hexdigest()
+
+    def _codeRevision(self):
+        gitDir = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+            ".git",
+        )
+        try:
+            with open(os.path.join(gitDir, "HEAD"), "r", encoding="utf-8") as handle:
+                head = handle.read().strip()
+            if head.startswith("ref: "):
+                refPath = os.path.join(gitDir, *head[5:].split("/"))
+                with open(refPath, "r", encoding="utf-8") as handle:
+                    return handle.read().strip()
+            return head
+        except OSError:
+            return "unknown"
+
+    def _executeCampaignThree(self, config, trainLoaders, testLoader, dataMetadata):
+        metricsPath, runPath = campaign3ResultPaths(config)
+        startedAt = datetime.now().astimezone().isoformat()
+        partitionHash = self._partitionHash(dataMetadata)
+        runMetadata = {
+            "schemaVersion": 3,
+            "campaignId": config.get("campaignId"),
+            "runId": config.get("runId"),
+            "status": "running",
+            "configHash": campaign3ConfigHash(config),
+            "partitionHash": partitionHash,
+            "codeRevision": self._codeRevision(),
+            "startedAt": startedAt,
+            "config": dict(config),
+        }
+        write_json_atomic(runPath, runMetadata)
+
+        self.logMessage("Starting Campaign 3 shared-worker ring training…")
+        self.logMessage(
+            "Mode: one compiled GPU worker; deterministic logical-node state"
+        )
+        self.logMessage("-" * 80)
+        try:
+            result = run_campaign_three(
+                config=config,
+                model_class=self.getModelClass(config["dataset"]),
+                train_loaders=trainLoaders,
+                test_loader=testLoader,
+                data_metadata=dataMetadata,
+                stop_callback=lambda: not self.isRunning,
+                round_callback=self._onRoundComplete,
+            )
+        except Exception as error:
+            runMetadata["status"] = "failed"
+            runMetadata["failedAt"] = datetime.now().astimezone().isoformat()
+            runMetadata["error"] = str(error)
+            write_json_atomic(runPath, runMetadata)
+            raise
+
+        if result.get("stopped") or not self.isRunning:
+            runMetadata["status"] = "stopped"
+            runMetadata["completedRounds"] = int(len(result.get("avg_history", [])))
+            runMetadata["stoppedAt"] = datetime.now().astimezone().isoformat()
+            write_json_atomic(runPath, runMetadata)
+            self.logMessage("\nCampaign 3 run stopped; queue item and metadata retained.")
+            return
+
+        initializationHash = result.pop("initialization_hash")
+        result.pop("stopped", None)
+        write_npz_atomic(metricsPath, **result)
+
+        runMetadata.update({
+            "status": "completed",
+            "completedAt": datetime.now().astimezone().isoformat(),
+            "initializationHash": initializationHash,
+            "finalAverageAccuracy": float(result["final_avg"]),
+            "finalWorstAccuracy": float(result["final_worst"]),
+            "runtimeSeconds": float(result["runtime_seconds"]),
+            "peakGpuBytes": int(result["peak_gpu_bytes"]),
+        })
+        write_json_atomic(runPath, runMetadata)
+
+        finalAvg = float(result["final_avg"])
+        finalWorst = float(result["final_worst"])
+        finalNodes = np.asarray(result["final_node_accuracy"])
+        self.logMessage("")
+        self.logMessage("=" * 80)
+        self.logMessage("FINAL CAMPAIGN 3 RESULTS:")
+        self.logMessage(f"  Average Accuracy:      {finalAvg:.4f}  ({finalAvg:.1%})")
+        self.logMessage(f"  Worst Node Accuracy:   {finalWorst:.4f}  ({finalWorst:.1%})")
+        self.logMessage(f"  Per-node: {[f'{value:.3f}' for value in finalNodes]}")
+        self.logMessage(f"  Runtime: {float(result['runtime_seconds']):.1f} seconds")
+        self.logMessage("=" * 80)
+        self.logMessage("\nResult files:")
+        self.logMessage(f"  saved: {metricsPath}")
+        self.logMessage(f"  saved: {runPath}")
+        calibrationState = freeze_calibration_if_ready()
+        if calibrationState is not None:
+            if calibrationState.get("status") == "frozen":
+                gammaSchedule = calibrationState.get("cartGammaBySigma", {})
+                self.logMessage(
+                    "  calibration frozen: CART gamma schedule="
+                    f"{gammaSchedule}"
+                )
+            else:
+                self.logMessage(
+                    "  calibration completed but no non-zero CART gamma passed "
+                    "the predeclared selection rule."
+                )
+        self.root.after(
+            0,
+            self._setStatus,
+            f"Done  ·  Avg acc {finalAvg:.1%}  ·  Worst {finalWorst:.1%}",
+        )
+
     # ── Validation / Config ───────────────────────────────────────────────────
     def validateConfig(self):
         try:
@@ -1617,7 +2030,10 @@ class ExperimentGUI:
             cns = self.channelNoiseStartVar.get()
             if cns < 0 or cns >= self.nRoundsVar.get():
                 messagebox.showerror("Error", f"Channel noise start must be 0 … {self.nRoundsVar.get()-1}"); return False
+            self._validateMitigationSemantics(self.getConfig())
             return True
+        except ValueError as e:
+            messagebox.showerror("Invalid Mitigation", str(e)); return False
         except Exception as e:
             messagebox.showerror("Error", f"Invalid configuration: {e}"); return False
 
@@ -1630,6 +2046,25 @@ class ExperimentGUI:
             'attackIpm', 'attackNoiseAmp',
         )
         return any(bool(config.get(key)) for key in attackKeys)
+
+    def _validateMitigationSemantics(self, config):
+        """Reject defense combinations that do not match an active failure mode."""
+        hasAttack = self._hasByzantineAttack(config)
+        hasNoise = bool(config.get("useChannelNoise", False))
+        usesSnapshots = bool(
+            config.get("snapshotSelection", False) or config.get("useBasil", False)
+        )
+        usesEbm = config.get("noiseMitigation", "none") == "ebm"
+
+        if usesSnapshots and not hasAttack:
+            raise ValueError(
+                "Snapshot Selection requires an active Byzantine attack and "
+                "at least one attacker ID."
+            )
+        if usesEbm and not hasNoise:
+            raise ValueError("EBM requires active channel noise.")
+        if hasNoise and float(config.get("channelNoiseSigma", 0.0)) <= 0.0:
+            raise ValueError("Active channel noise requires sigma > 0.")
 
     def _isCartTwoAttackTwoMitigation(self, config):
         return (
@@ -1649,6 +2084,8 @@ class ExperimentGUI:
 
     def _applyCleanReferenceSemantics(self, config):
         """The named clean reference must stay attack-free, noiseless, and unmitigated."""
+        if int(config.get("campaignVersion", 0)) == 3:
+            return False
         if not self._isNamedCleanReference(config):
             return False
 
@@ -1686,29 +2123,8 @@ class ExperimentGUI:
         return changed
 
     def _applyCartTargetTuning(self, config):
-        """Keep the target CART SS+EBM experiment on the tuned training path."""
-        if not self._isCartTwoAttackTwoMitigation(config):
-            return False
-
-        changed = False
-        try:
-            lr = float(config.get('learningRate', 0.05))
-        except (TypeError, ValueError):
-            lr = 0.05
-        if abs(lr - 0.05) < 1e-12:
-            config['learningRate'] = 0.025
-            changed = True
-
-        if not bool(config.get('usePlateauLr', False)):
-            config['usePlateauLr'] = True
-            changed = True
-
-        if changed:
-            config['_autoTuningNote'] = (
-                "Applied CART target tuning: LR=0.025 with plateau LR for "
-                "Byzantine + channel noise + SS+EBM."
-            )
-        return changed
+        """Legacy compatibility hook; campaign runs never receive hidden tuning."""
+        return False
 
     def getConfig(self):
         config = {
@@ -1716,6 +2132,7 @@ class ExperimentGUI:
             'dataset':               self.datasetVar.get(),
             'approach':              self.approachVar.get(),
             'useBasil':              self.useBasilVar.get(),
+            'snapshotSelection':     self.useBasilVar.get(),
             'basilMemorySize':       self.basilMemorySizeVar.get(),
             'useChannelNoise':       self.useChannelNoiseVar.get(),
             'channelNoiseStart':     self.channelNoiseStartVar.get(),
@@ -1772,9 +2189,6 @@ class ExperimentGUI:
             self.attackAlieVar.set(config['attackAlie'])
             self.attackIpmVar.set(config['attackIpm'])
             self.attackNoiseAmpVar.set(config['attackNoiseAmp'])
-        if self._applyCartTargetTuning(config):
-            self.learningRateVar.set(config['learningRate'])
-            self.usePlateauLrVar.set(config['usePlateauLr'])
         return config
 
     # ── Data / Node helpers ───────────────────────────────────────────────────
@@ -1784,8 +2198,26 @@ class ExperimentGUI:
         if dataset == "nmnist":   return loadNMnist()
         raise ValueError(f"Unknown dataset: {dataset}")
 
-    def makeLoaders(self, dataset, train, test, batchSize, nClients, iid=True, dirichletAlpha=0.2):
-        kwargs = dict(batchSize=batchSize, nClients=nClients, iid=iid, dirichletAlpha=dirichletAlpha)
+    def makeLoaders(
+        self,
+        dataset,
+        train,
+        test,
+        batchSize,
+        nClients,
+        iid=True,
+        dirichletAlpha=0.2,
+        seed=None,
+        returnMetadata=False,
+    ):
+        kwargs = dict(
+            batchSize=batchSize,
+            nClients=nClients,
+            iid=iid,
+            dirichletAlpha=dirichletAlpha,
+        )
+        if dataset == "cifar10":
+            kwargs.update(seed=seed, returnMetadata=returnMetadata)
         if dataset == "mnist":   return makeMnistLoaders(train, test, **kwargs)
         if dataset == "cifar10": return makeCifarLoaders(train, test, **kwargs)
         if dataset == "nmnist":  return makeNMnistLoaders(train, test, **kwargs)
@@ -1898,11 +2330,103 @@ class ExperimentGUI:
         self.generatePlots(showDialog=False, config=config, onlyMissing=True)
 
     # ── Config Queue ──────────────────────────────────────────────────────────
+    def _workerSettings(self):
+        profile = self._workerProfile or {}
+        validated = (
+            profile.get("status") == "validated"
+            and int(profile.get("recommendedLanes", 1)) == 2
+        )
+        lanes = 2 if validated else 1
+        return {
+            "lanes": lanes,
+            "gpuMemoryLimitMb": int(profile.get("gpuMemoryLimitMb", 4200)),
+            "concurrencySlowdown": (
+                float(profile.get("concurrencySlowdown", 1.0))
+                if lanes > 1
+                else 1.0
+            ),
+            "status": str(profile.get("status", "not_benchmarked")),
+        }
+
+    def _queueEstimateText(self):
+        with self._queueLock:
+            queueSnapshot = list(self.configQueue)
+        settings = self._workerSettings()
+        activeElapsed = (
+            self._campaignWorkerPool.active_elapsed_by_run_id()
+            if self._campaignWorkerPool is not None
+            else {}
+        )
+        estimate = self._runtimeEstimator.estimate_queue(
+            queueSnapshot,
+            lanes=settings["lanes"],
+            active_elapsed=activeElapsed,
+            concurrency_slowdown=settings["concurrencySlowdown"],
+        )
+        if not queueSnapshot:
+            return "Queue estimate: empty"
+        finish = datetime.now().astimezone() + timedelta(seconds=estimate.seconds)
+        wallText = (
+            f"{format_duration(estimate.seconds)} "
+            f"({format_duration(estimate.low_seconds)}–"
+            f"{format_duration(estimate.high_seconds)})"
+        )
+        if estimate.lanes == 1:
+            durationText = f"Total remaining: {wallText}"
+        else:
+            durationText = (
+                f"Wall-clock remaining: {wallText} · "
+                f"total config work: {format_duration(estimate.work_seconds)} "
+                f"({format_duration(estimate.low_work_seconds)}–"
+                f"{format_duration(estimate.high_work_seconds)})"
+            )
+        return (
+            f"{durationText} · {estimate.item_count} config"
+            f"{'s' if estimate.item_count != 1 else ''} · "
+            f"{estimate.lanes} GPU lane{'s' if estimate.lanes != 1 else ''} · "
+            f"{estimate.historical_samples} recorded runtimes · "
+            f"finish about {finish.strftime('%a %b %d, %I:%M %p')}"
+        )
+
+    def _refreshQueueEstimate(self):
+        self._queueEtaVar.set(self._queueEstimateText())
+        settings = self._workerSettings()
+        profile = self._workerProfile or {}
+        if settings["lanes"] == 2:
+            profileText = (
+                f"Execution: validated 2-lane mode · "
+                f"{float(profile.get('measuredSpeedup', 0.0)):.2f}x benchmark speedup · "
+                f"{settings['gpuMemoryLimitMb']} MB per worker"
+            )
+        elif profile.get("status") == "single_lane_required":
+            profileText = (
+                "Execution: 1 isolated GPU worker · two-lane benchmark did not "
+                "meet the safety/throughput gate"
+            )
+        else:
+            profileText = (
+                "Execution: 1 isolated GPU worker · benchmark 2 lanes before "
+                "enabling concurrency"
+            )
+        self._workerProfileVar.set(profileText)
+
+    def _scheduleQueueEstimateRefresh(self):
+        try:
+            text = self._queueEstimateText()
+        except Exception as error:
+            text = f"Queue estimate unavailable: {error}"
+        self.root.after(0, self._queueEtaVar.set, text)
+
+    def _configsByEstimatedDuration(self, configs):
+        """Return a stable shortest-estimated-runtime-first config list."""
+        return sorted(
+            list(configs),
+            key=lambda config: self._runtimeEstimator.estimate(config).seconds,
+        )
+
     def _saveQueueState(self):
         try:
-            os.makedirs(os.path.dirname(self._queueStatePath), exist_ok=True)
-            with open(self._queueStatePath, 'w') as f:
-                json.dump(self.configQueue, f, indent=2)
+            write_json_atomic(self._queueStatePath, self.configQueue)
         except Exception as e:
             self.logMessage(f"WARNING: could not save queue state: {e}")
 
@@ -1921,14 +2445,207 @@ class ExperimentGUI:
         n = len(self.configQueue)
         if self.queueButton is not None:
             self.queueButton.config(text=f"Queue ({n})")
+        self._refreshQueueEstimate()
+
+    def _appendCampaign3Preset(self, presetKey, parent=None, refreshCallback=None):
+        try:
+            configs = buildCampaign3Preset(presetKey)
+        except Exception as error:
+            messagebox.showerror(
+                "Campaign 3",
+                str(error),
+                parent=parent,
+            )
+            return 0
+
+        with self._queueLock:
+            queuedRunIds = {
+                config.get("runId")
+                for config in self.configQueue
+                if config.get("runId")
+            }
+            added = 0
+            skippedQueued = 0
+            skippedCompleted = 0
+            for config in configs:
+                runId = config["runId"]
+                if runId in queuedRunIds:
+                    skippedQueued += 1
+                    continue
+                if isCampaign3Completed(config):
+                    skippedCompleted += 1
+                    continue
+                self.configQueue.append(dict(config))
+                queuedRunIds.add(runId)
+                added += 1
+            self._saveQueueState()
+
+        if refreshCallback is not None:
+            refreshCallback()
+        self._updateQueueButton()
+        label = CAMPAIGN3_PRESET_LABELS.get(presetKey, presetKey)
+        self._setStatus(
+            f"{label}: added {added}; skipped {skippedQueued} queued and "
+            f"{skippedCompleted} completed."
+        )
+        if parent is not None:
+            messagebox.showinfo(
+                "Campaign 3",
+                f"{label}\n\nAdded: {added}\n"
+                f"Already queued: {skippedQueued}\n"
+                f"Already completed: {skippedCompleted}",
+                parent=parent,
+            )
+        return added
+
+    def _replaceWithCampaign3Preset(
+        self,
+        presetKey,
+        parent=None,
+        refreshCallback=None,
+    ):
+        if self.isRunning:
+            messagebox.showwarning(
+                "Queue Running",
+                "Stop the active queue before replacing it.",
+                parent=parent,
+            )
+            return 0
+        try:
+            configs = buildCampaign3Preset(presetKey)
+        except Exception as error:
+            messagebox.showerror("Campaign 3", str(error), parent=parent)
+            return 0
+
+        pending = [config for config in configs if not isCampaign3Completed(config)]
+        completed = len(configs) - len(pending)
+        with self._queueLock:
+            existingCount = len(self.configQueue)
+        prompt = (
+            f"Replace the current {existingCount}-item queue with the missing "
+            f"runs from {CAMPAIGN3_PRESET_LABELS.get(presetKey, presetKey)}?\n\n"
+            f"Preset total: {len(configs)}\n"
+            f"Already completed: {completed}\n"
+            f"Will be queued: {len(pending)}\n\n"
+            "Existing result files are not changed."
+        )
+        if existingCount and not messagebox.askyesno(
+            "Replace Queue",
+            prompt,
+            parent=parent,
+        ):
+            return 0
+
+        with self._queueLock:
+            self.configQueue = [dict(config) for config in pending]
+            self._saveQueueState()
+        if refreshCallback is not None:
+            refreshCallback()
+        self._updateQueueButton()
+        self._setStatus(
+            f"Core confirmation queue loaded: {len(pending)} pending, "
+            f"{completed} completed."
+        )
+        messagebox.showinfo(
+            "Campaign 3",
+            f"Loaded {len(pending)} pending runs.\n"
+            f"Reused {completed} completed results.\n\n"
+            f"{self._queueEtaVar.get()}",
+            parent=parent,
+        )
+        return len(pending)
+
+    def _benchmarkCampaignWorkers(self, parent=None):
+        if self.isRunning:
+            messagebox.showwarning(
+                "Busy",
+                "Stop the current experiment or queue before benchmarking.",
+                parent=parent,
+            )
+            return
+        if not messagebox.askyesno(
+            "Benchmark GPU Lanes",
+            "Run one warm-up, two sequential pilots, and two concurrent pilots?\n\n"
+            "The pilots use the existing EBM equation, batch size 512, and two "
+            "rounds. They are not saved as experiment results. The GUI enables "
+            "two lanes only if outputs match and throughput improves by at least 1.4x.",
+            parent=parent,
+        ):
+            return
+
+        self.isRunning = True
+        self.runButton.config(state=tk.DISABLED)
+        self.runAllButton.config(state=tk.DISABLED)
+        self.stopButton.config(state=tk.NORMAL)
+        self._setStatus("Benchmarking isolated GPU workers…")
+        self.currentThread = threading.Thread(
+            target=self._runWorkerBenchmarkThread,
+            daemon=True,
+        )
+        self.currentThread.start()
+
+    def _runWorkerBenchmarkThread(self):
+        try:
+            command = [
+                sys.executable,
+                os.path.join(
+                    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                    "scripts",
+                    "benchmark_campaign_workers.py",
+                ),
+            ]
+            self._benchmarkProcess = subprocess.Popen(
+                command,
+                cwd=os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                start_new_session=True,
+            )
+            if self._benchmarkProcess.stdout is not None:
+                for line in self._benchmarkProcess.stdout:
+                    self.root.after(0, self.logMessage, line.rstrip())
+            returnCode = self._benchmarkProcess.wait()
+            self._workerProfile = load_worker_profile()
+            self._runtimeEstimator.reload()
+            self.root.after(0, self._refreshQueueEstimate)
+            if returnCode != 0:
+                raise RuntimeError(
+                    f"GPU worker benchmark exited with code {returnCode}."
+                )
+            settings = self._workerSettings()
+            message = (
+                f"Benchmark complete. The queue will use "
+                f"{settings['lanes']} isolated GPU lane"
+                f"{'s' if settings['lanes'] != 1 else ''}."
+            )
+            self.root.after(
+                0,
+                messagebox.showinfo,
+                "GPU Worker Benchmark",
+                message,
+            )
+        except Exception as error:
+            self.root.after(0, self.logMessage, f"WORKER BENCHMARK ERROR: {error}")
+            self.root.after(
+                0,
+                messagebox.showerror,
+                "GPU Worker Benchmark",
+                str(error),
+            )
+        finally:
+            self._benchmarkProcess = None
+            self.root.after(0, self._onRunFinished)
 
     def openQueueManager(self):
         configDir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "configs")
+        currentConfigDir = os.path.join(configDir, "current")
 
         dlg = tk.Toplevel(self.root)
         dlg.title("Config Queue")
         dlg.configure(bg=BG)
         dlg.resizable(True, True)
+        dlg.minsize(920, 620)
         dlg.transient(self.root)
 
         # ── Top controls ──
@@ -1952,23 +2669,140 @@ class ExperimentGUI:
         tk.Label(topFrame, text="times", bg=BG, fg=MUTED,
                  font=('Segoe UI', 9)).pack(side=tk.LEFT, padx=(4, 0))
 
+        # ── Campaign-three presets ──
+        campaignFrame = ttk.LabelFrame(
+            dlg,
+            text="Campaign 3 R2 · Hidden attack study",
+            padding=8,
+        )
+        campaignFrame.pack(fill=tk.X, padx=12, pady=(2, 6))
+        ttk.Button(
+            campaignFrame,
+            text="Paper Core 101 · Add / Restore Missing",
+            style="Queue.TButton",
+            command=lambda: self._appendCampaign3Preset(
+                "core_confirmation",
+                parent=dlg,
+                refreshCallback=refreshTree,
+            ),
+        ).grid(
+            row=0,
+            column=0,
+            columnspan=2,
+            sticky=tk.EW,
+            padx=3,
+            pady=3,
+        )
+        ttk.Button(
+            campaignFrame,
+            text="Replace with Paper Core",
+            command=lambda: self._replaceWithCampaign3Preset(
+                "core_confirmation",
+                parent=dlg,
+                refreshCallback=refreshTree,
+            ),
+        ).grid(
+            row=0,
+            column=2,
+            sticky=tk.EW,
+            padx=3,
+            pady=3,
+        )
+        campaignButtons = (
+            ("CART σ0.2 Refinement R2 · 6", "cart_low_noise_refinement"),
+            ("Low-Noise Repair R2 · 6", "repair"),
+            ("Calibration R2 · 49", "calibration"),
+            ("Merged Core R2 · 99", "merged_core"),
+            ("CART Add-on R2 · 99", "cart_addon"),
+            ("CART Non-IID Controls R2 · 9", "cart_controls"),
+            ("IID Controls R2 · 48", "iid_controls"),
+            ("Full Campaign R2 · 246", "full_campaign"),
+        )
+        for index, (text, presetKey) in enumerate(campaignButtons):
+            ttk.Button(
+                campaignFrame,
+                text=text,
+                style="Preset.TButton",
+                command=lambda key=presetKey: self._appendCampaign3Preset(
+                    key,
+                    parent=dlg,
+                    refreshCallback=refreshTree,
+                ),
+            ).grid(
+                row=1 + index // 3,
+                column=index % 3,
+                sticky=tk.EW,
+                padx=3,
+                pady=3,
+            )
+        for column in range(3):
+            campaignFrame.columnconfigure(column, weight=1)
+        buttonRows = 1 + (len(campaignButtons) + 2) // 3
+
+        ttk.Label(
+            campaignFrame,
+            textvariable=self._workerProfileVar,
+            foreground=MUTED,
+            font=("Segoe UI", 8),
+        ).grid(
+            row=buttonRows,
+            column=0,
+            columnspan=2,
+            sticky=tk.W,
+            padx=3,
+            pady=(4, 0),
+        )
+        ttk.Button(
+            campaignFrame,
+            text="Benchmark 1 vs 2 GPU lanes",
+            command=lambda: self._benchmarkCampaignWorkers(parent=dlg),
+        ).grid(
+            row=buttonRows,
+            column=2,
+            sticky=tk.E,
+            padx=3,
+            pady=(4, 0),
+        )
+        ttk.Label(
+            campaignFrame,
+            textvariable=self._queueEtaVar,
+            foreground=INFO_CLR,
+            font=("Segoe UI", 8, "bold"),
+            wraplength=930,
+        ).grid(
+            row=buttonRows + 1,
+            column=0,
+            columnspan=3,
+            sticky=tk.W,
+            padx=3,
+            pady=(5, 0),
+        )
+
         # ── Queue treeview ──
         treeFrame = tk.Frame(dlg, bg=BG)
-        treeFrame.pack(fill=tk.BOTH, expand=True, padx=12, pady=6)
 
-        cols = ('#', 'Experiment Name', 'Approach', 'Attack', 'Noise')
+        cols = (
+            '#',
+            'Experiment Name',
+            'Approach',
+            'Attack',
+            'Noise',
+            'Estimated Time',
+        )
         tree = ttk.Treeview(treeFrame, columns=cols, show='headings',
-                            selectmode='extended', height=16)
+                            selectmode='extended', height=10)
         tree.heading('#',               text='#',            anchor=tk.CENTER)
         tree.heading('Experiment Name', text='Experiment Name')
         tree.heading('Approach',        text='Approach',     anchor=tk.CENTER)
         tree.heading('Attack',          text='Attack',       anchor=tk.CENTER)
         tree.heading('Noise',           text='Noise',        anchor=tk.CENTER)
+        tree.heading('Estimated Time',  text='Estimated Time', anchor=tk.CENTER)
         tree.column('#',               width=35,  stretch=False, anchor=tk.CENTER)
         tree.column('Experiment Name', width=380, stretch=True)
-        tree.column('Approach',        width=70,  stretch=False, anchor=tk.CENTER)
+        tree.column('Approach',        width=85,  stretch=False, anchor=tk.CENTER)
         tree.column('Attack',          width=80,  stretch=False, anchor=tk.CENTER)
         tree.column('Noise',           width=60,  stretch=False, anchor=tk.CENTER)
+        tree.column('Estimated Time',  width=190, stretch=False, anchor=tk.CENTER)
 
         sb = ttk.Scrollbar(treeFrame, orient=tk.VERTICAL, command=tree.yview)
         tree.configure(yscrollcommand=sb.set)
@@ -1981,6 +2815,16 @@ class ExperimentGUI:
 
         ttk.Button(botFrame, text="↑ Move Up",   command=lambda: moveUp()).pack(side=tk.LEFT, padx=(0, 2))
         ttk.Button(botFrame, text="↓ Move Down", command=lambda: moveDown()).pack(side=tk.LEFT, padx=2)
+        ttk.Button(
+            botFrame,
+            text="Move Selected to Top",
+            command=lambda: moveSelectedToTop(),
+        ).pack(side=tk.LEFT, padx=2)
+        ttk.Button(
+            botFrame,
+            text="Shortest First",
+            command=lambda: sortShortestFirst(),
+        ).pack(side=tk.LEFT, padx=2)
         ttk.Button(botFrame, text="✕ Remove Selected", command=lambda: removeSelected()).pack(side=tk.LEFT, padx=2)
         ttk.Button(botFrame, text="Clear All",   command=lambda: clearAll()).pack(side=tk.LEFT, padx=(12, 2))
 
@@ -1990,6 +2834,11 @@ class ExperimentGUI:
 
         ttk.Button(botFrame, text="Run Queue", style='Queue.TButton',
                    command=lambda: runQueueAndClose()).pack(side=tk.RIGHT)
+
+        # Reserve the action bar before the resizable table receives space.
+        botFrame.pack_forget()
+        botFrame.pack(side=tk.BOTTOM, fill=tk.X, padx=12, pady=(0, 12))
+        treeFrame.pack(fill=tk.BOTH, expand=True, padx=12, pady=6)
 
         # ── Helpers ──
         def _attackSummary(cfg):
@@ -2011,8 +2860,32 @@ class ExperimentGUI:
                 approach = cfg.get('approach', '?')
                 attack   = _attackSummary(cfg)
                 noise    = 'Yes' if cfg.get('useChannelNoise') else 'No'
-                tree.insert('', tk.END, iid=str(i-1), values=(i, name, approach, attack, noise))
-            countLabel.config(text=f"{len(queueSnapshot)} item{'s' if len(queueSnapshot) != 1 else ''}")
+                estimate = self._runtimeEstimator.estimate(cfg)
+                estimatedTime = (
+                    f"{format_duration(estimate.seconds)} "
+                    f"({format_duration(estimate.low_seconds)}–"
+                    f"{format_duration(estimate.high_seconds)})"
+                )
+                tree.insert(
+                    '',
+                    tk.END,
+                    iid=str(i-1),
+                    values=(
+                        i,
+                        name,
+                        approach,
+                        attack,
+                        noise,
+                        estimatedTime,
+                    ),
+                )
+            countLabel.config(
+                text=(
+                    f"{len(queueSnapshot)} item"
+                    f"{'s' if len(queueSnapshot) != 1 else ''}"
+                )
+            )
+            self._refreshQueueEstimate()
             self._updateQueueButton()
 
         def addCurrent():
@@ -2020,6 +2893,10 @@ class ExperimentGUI:
             with self._queueLock:
                 for _ in range(repeatVar.get()):
                     self.configQueue.append(dict(cfg))
+                if not self.isRunning:
+                    self.configQueue = self._configsByEstimatedDuration(
+                        self.configQueue
+                    )
                 self._saveQueueState()
             refreshTree()
 
@@ -2062,10 +2939,40 @@ class ExperimentGUI:
 
             splitVar2    = tk.StringVar(value='nonIID')
             approachVar2 = tk.StringVar(value=currentApproach)
+            sourceVar2   = tk.StringVar(value='current')
+
+            sourceFrame2 = tk.Frame(pickerDlg, bg=BG)
+            sourceFrame2.pack(fill=tk.X, padx=12, pady=(12, 0))
+            tk.Label(
+                sourceFrame2,
+                text="Library:",
+                bg=BG,
+                fg=HEADER,
+                font=('Segoe UI', 9, 'bold'),
+            ).pack(side=tk.LEFT, padx=(0, 8))
+            for label, value in (
+                ("Current", "current"),
+                ("Legacy / Custom", "legacy"),
+            ):
+                ttk.Radiobutton(
+                    sourceFrame2,
+                    text=label,
+                    variable=sourceVar2,
+                    value=value,
+                    command=lambda: refreshPicker(),
+                ).pack(side=tk.LEFT, padx=6)
+            sourceNotice2 = tk.Label(
+                pickerDlg,
+                text="Current reproducible hidden/noise study configs.",
+                bg=BG,
+                fg=SUCCESS,
+                font=('Segoe UI', 8, 'bold'),
+            )
+            sourceNotice2.pack(fill=tk.X, padx=12, pady=(4, 0))
 
             # ── Data split selector ──
             splitFrame2 = tk.Frame(pickerDlg, bg=BG)
-            splitFrame2.pack(fill=tk.X, padx=12, pady=(12, 0))
+            splitFrame2.pack(fill=tk.X, padx=12, pady=(8, 0))
             tk.Label(splitFrame2, text="Data Split:", bg=BG, fg=HEADER,
                      font=('Segoe UI', 9, 'bold')).pack(side=tk.LEFT, padx=(0, 8))
             for sp in ('nonIID', 'IID'):
@@ -2112,12 +3019,33 @@ class ExperimentGUI:
             def refreshPicker():
                 sp = splitVar2.get()
                 ap = approachVar2.get()
+                rootDir = (
+                    currentConfigDir
+                    if sourceVar2.get() == 'current'
+                    else configDir
+                )
+                if sourceVar2.get() == 'current':
+                    sourceNotice2.config(
+                        text=(
+                            "Current reproducible hidden/noise study configs "
+                            "with explicit seeds."
+                        ),
+                        fg=SUCCESS,
+                    )
+                else:
+                    sourceNotice2.config(
+                        text=(
+                            "Legacy/custom archive; values may not match the "
+                            "current R2 protocol."
+                        ),
+                        fg=DANGER,
+                    )
                 # Update counts on all approach labels
                 for _ap, lv in apCountLabels2.items():
-                    _f = os.path.join(configDir, sp, _ap)
+                    _f = os.path.join(rootDir, sp, _ap)
                     _n = len([x for x in os.listdir(_f) if x.endswith('.json')]) if os.path.isdir(_f) else 0
                     lv.set(f"{_ap.capitalize()}  ({_n})")
-                folder = os.path.join(configDir, sp, ap)
+                folder = os.path.join(rootDir, sp, ap)
                 files = sorted([f for f in os.listdir(folder) if f.endswith('.json')]) \
                         if os.path.isdir(folder) else []
                 listbox2.delete(0, tk.END)
@@ -2129,19 +3057,38 @@ class ExperimentGUI:
                 sel = listbox2.curselection()
                 if not sel:
                     return
+                selectedConfigs = []
                 for idx in sel:
                     name = listbox2.get(idx) + '.json'
-                    path = os.path.join(configDir, splitVar2.get(), approachVar2.get(), name)
+                    rootDir = (
+                        currentConfigDir
+                        if sourceVar2.get() == 'current'
+                        else configDir
+                    )
+                    path = os.path.join(
+                        rootDir,
+                        splitVar2.get(),
+                        approachVar2.get(),
+                        name,
+                    )
                     try:
                         with open(path) as f:
                             cfg = json.load(f)
-                        with self._queueLock:
-                            for _ in range(repeatVar.get()):
-                                self.configQueue.append(dict(cfg))
-                            self._saveQueueState()
+                        for _ in range(repeatVar.get()):
+                            selectedConfigs.append(dict(cfg))
                     except Exception as e:
                         messagebox.showerror("Error", str(e), parent=pickerDlg)
                         return
+                selectedConfigs = self._configsByEstimatedDuration(
+                    selectedConfigs
+                )
+                with self._queueLock:
+                    self.configQueue.extend(selectedConfigs)
+                    if not self.isRunning:
+                        self.configQueue = self._configsByEstimatedDuration(
+                            self.configQueue
+                        )
+                    self._saveQueueState()
                 refreshTree()
                 pickerDlg.destroy()
 
@@ -2167,23 +3114,39 @@ class ExperimentGUI:
 
             splitVarA = tk.StringVar(value='nonIID')
             apVarA    = tk.StringVar(value='cart')
+            sourceVarA = tk.StringVar(value='current')
+
+            tk.Label(adlg, text="Library:", bg=BG, fg=HEADER,
+                     font=('Segoe UI', 9, 'bold')).grid(row=0, column=0, sticky=tk.W, padx=12, pady=(14, 4))
+            sourceFA = tk.Frame(adlg, bg=BG)
+            sourceFA.grid(row=0, column=1, sticky=tk.W, padx=4, pady=(14, 4))
+            for label, value in (
+                ("Current", "current"),
+                ("Legacy / Custom", "legacy"),
+            ):
+                ttk.Radiobutton(
+                    sourceFA,
+                    text=label,
+                    variable=sourceVarA,
+                    value=value,
+                ).pack(side=tk.LEFT, padx=6)
 
             tk.Label(adlg, text="Data Split:", bg=BG, fg=HEADER,
-                     font=('Segoe UI', 9, 'bold')).grid(row=0, column=0, sticky=tk.W, padx=12, pady=(14, 4))
+                     font=('Segoe UI', 9, 'bold')).grid(row=1, column=0, sticky=tk.W, padx=12, pady=4)
             splitF = tk.Frame(adlg, bg=BG)
-            splitF.grid(row=0, column=1, sticky=tk.W, padx=4, pady=(14, 4))
+            splitF.grid(row=1, column=1, sticky=tk.W, padx=4, pady=4)
             for sp in ('nonIID', 'IID'):
                 ttk.Radiobutton(splitF, text=sp, variable=splitVarA, value=sp).pack(side=tk.LEFT, padx=6)
 
             tk.Label(adlg, text="Approach:", bg=BG, fg=HEADER,
-                     font=('Segoe UI', 9, 'bold')).grid(row=1, column=0, sticky=tk.W, padx=12, pady=4)
+                     font=('Segoe UI', 9, 'bold')).grid(row=2, column=0, sticky=tk.W, padx=12, pady=4)
             apF = tk.Frame(adlg, bg=BG)
-            apF.grid(row=1, column=1, sticky=tk.W, padx=4, pady=4)
+            apF.grid(row=2, column=1, sticky=tk.W, padx=4, pady=4)
             for ap in ('basil', 'noisy', 'merged', 'cart'):
                 ttk.Radiobutton(apF, text=ap.capitalize(), variable=apVarA, value=ap).pack(side=tk.LEFT, padx=6)
 
             btnF = tk.Frame(adlg, bg=BG)
-            btnF.grid(row=2, column=0, columnspan=2, pady=(8, 14), padx=12)
+            btnF.grid(row=3, column=0, columnspan=2, pady=(8, 14), padx=12)
             ttk.Button(btnF, text="Cancel", command=adlg.destroy).pack(side=tk.RIGHT, padx=(4, 0))
             ttk.Button(btnF, text="Add All to Queue", style='Run.TButton',
                        command=lambda: doAddAll()).pack(side=tk.RIGHT)
@@ -2191,7 +3154,12 @@ class ExperimentGUI:
             def doAddAll():
                 sp = splitVarA.get()
                 ap = apVarA.get()
-                folder = os.path.join(configDir, sp, ap)
+                rootDir = (
+                    currentConfigDir
+                    if sourceVarA.get() == 'current'
+                    else configDir
+                )
+                folder = os.path.join(rootDir, sp, ap)
                 if not os.path.isdir(folder):
                     messagebox.showerror("Error", f"Folder not found: {sp}/{ap}", parent=adlg)
                     return
@@ -2200,20 +3168,36 @@ class ExperimentGUI:
                     messagebox.showwarning("No Configs", f"No JSON configs in {sp}/{ap}/", parent=adlg)
                     return
                 added = 0
+                selectedConfigs = []
+                errors = []
+                for fname in files:
+                    try:
+                        with open(os.path.join(folder, fname)) as f:
+                            cfg = json.load(f)
+                        for _ in range(repeatVar.get()):
+                            selectedConfigs.append(dict(cfg))
+                        added += 1
+                    except Exception as error:
+                        errors.append(f"{fname}: {error}")
+                selectedConfigs = self._configsByEstimatedDuration(
+                    selectedConfigs
+                )
                 with self._queueLock:
-                    for fname in files:
-                        try:
-                            with open(os.path.join(folder, fname)) as f:
-                                cfg = json.load(f)
-                            for _ in range(repeatVar.get()):
-                                self.configQueue.append(dict(cfg))
-                            added += 1
-                        except Exception:
-                            pass
+                    self.configQueue.extend(selectedConfigs)
+                    if not self.isRunning:
+                        self.configQueue = self._configsByEstimatedDuration(
+                            self.configQueue
+                        )
                     self._saveQueueState()
                 adlg.destroy()
                 refreshTree()
-                messagebox.showinfo("Added", f"Added {added} {sp}/{ap.upper()} configs to queue.", parent=dlg)
+                message = (
+                    f"Added {added} {sp}/{ap.upper()} config files "
+                    "shortest-first."
+                )
+                if errors:
+                    message += f"\n\nSkipped {len(errors)} unreadable files."
+                messagebox.showinfo("Added", message, parent=dlg)
 
             adlg.update_idletasks()
             x = dlg.winfo_x() + (dlg.winfo_width()  - adlg.winfo_width())  // 2
@@ -2250,6 +3234,43 @@ class ExperimentGUI:
             refreshTree()
             tree.selection_set(str(idx+1))
 
+        def moveSelectedToTop():
+            idxs = _selectedIdxs()
+            if not idxs:
+                return
+            selectedSet = set(idxs)
+            with self._queueLock:
+                selected = [
+                    config
+                    for index, config in enumerate(self.configQueue)
+                    if index in selectedSet
+                ]
+                remaining = [
+                    config
+                    for index, config in enumerate(self.configQueue)
+                    if index not in selectedSet
+                ]
+                self.configQueue = selected + remaining
+                self._saveQueueState()
+            refreshTree()
+            tree.selection_set(*(str(index) for index in range(len(selected))))
+
+        def sortShortestFirst():
+            if self.isRunning:
+                messagebox.showwarning(
+                    "Queue Running",
+                    "Stop the active queue before sorting all remaining items.",
+                    parent=dlg,
+                )
+                return
+            with self._queueLock:
+                self.configQueue = self._configsByEstimatedDuration(
+                    self.configQueue
+                )
+                self._saveQueueState()
+            refreshTree()
+            self._setStatus("Queue sorted by estimated duration, shortest first")
+
         def removeSelected():
             idxs = _selectedIdxs()
             if not idxs:
@@ -2279,12 +3300,460 @@ class ExperimentGUI:
 
         # Center and populate
         dlg.update_idletasks()
-        w, h = 700, 520
+        w, h = 1120, 760
         x = self.root.winfo_x() + (self.root.winfo_width()  - w) // 2
         y = self.root.winfo_y() + (self.root.winfo_height() - h) // 2
         dlg.geometry(f"{w}x{h}+{x}+{y}")
         refreshTree()
         tree.bind('<Delete>', lambda e: removeSelected())
+
+        dragState = {"iid": None, "moved": False}
+
+        def beginDrag(event):
+            if self.isRunning or tree.identify_region(event.x, event.y) != "cell":
+                dragState["iid"] = None
+                return
+            iid = tree.identify_row(event.y)
+            dragState["iid"] = iid or None
+            dragState["moved"] = False
+
+        def dragRow(event):
+            source = dragState["iid"]
+            if source is None or self.isRunning:
+                return
+            target = tree.identify_row(event.y)
+            if not target or target == source:
+                return
+            tree.move(source, "", tree.index(target))
+            tree.configure(cursor="fleur")
+            dragState["moved"] = True
+
+        def endDrag(_event):
+            source = dragState["iid"]
+            moved = dragState["moved"]
+            dragState["iid"] = None
+            dragState["moved"] = False
+            tree.configure(cursor="")
+            if source is None or not moved or self.isRunning:
+                return
+            order = [int(iid) for iid in tree.get_children("")]
+            with self._queueLock:
+                previous = list(self.configQueue)
+                if len(previous) != len(order):
+                    refreshTree()
+                    return
+                self.configQueue = [previous[index] for index in order]
+                self._saveQueueState()
+            newIndex = order.index(int(source))
+            refreshTree()
+            tree.selection_set(str(newIndex))
+            tree.see(str(newIndex))
+            self._setStatus("Queue order changed by drag and drop")
+
+        tree.bind('<ButtonPress-1>', beginDrag, add='+')
+        tree.bind('<B1-Motion>', dragRow, add='+')
+        tree.bind('<ButtonRelease-1>', endDrag, add='+')
+
+    def _removeQueuedConfig(self, target):
+        removed = False
+        with self._queueLock:
+            for index, config in enumerate(self.configQueue):
+                if config is target:
+                    del self.configQueue[index]
+                    removed = True
+                    self._saveQueueState()
+                    break
+        self.root.after(0, self._updateQueueButton)
+        return removed
+
+    def _nextCampaignConfig(self, activeObjectIds, activeRunIds):
+        with self._queueLock:
+            for config in self.configQueue:
+                if id(config) in activeObjectIds:
+                    continue
+                if (
+                    config.get("runId")
+                    and config.get("runId") in activeRunIds
+                ):
+                    continue
+                if int(config.get("campaignVersion", 0)) != 3:
+                    return None
+                return config
+        return None
+
+    def _startCampaignLiveRun(self, lane, config):
+        self._campaignLiveData[lane] = {
+            "runId": config.get("runId"),
+            "name": config.get("experimentName", "Campaign run"),
+            "rounds": [],
+            "avg": [],
+            "worst": [],
+            "updated": time.monotonic(),
+        }
+        self._refreshLiveChart()
+
+    def _recordCampaignRound(
+        self,
+        lane,
+        config,
+        roundNum,
+        avgAcc,
+        worstAcc,
+    ):
+        series = self._campaignLiveData.get(lane)
+        if series is None or series.get("runId") != config.get("runId"):
+            self._startCampaignLiveRun(lane, config)
+            series = self._campaignLiveData[lane]
+        series["rounds"].append(int(roundNum))
+        series["avg"].append(float(avgAcc))
+        series["worst"].append(float(worstAcc))
+        series["updated"] = time.monotonic()
+        self._refreshLiveChart()
+
+    def _logCampaignConfiguration(self, lane, config, workerSettings):
+        split = "Non-IID" if config.get("nonIID", True) else "IID"
+        if config.get("nonIID", True):
+            split += f" (Dirichlet alpha={config.get('dirichletAlpha', 0.2)})"
+        hasHidden = bool(config.get("attackHidden"))
+        hasNoise = bool(config.get("useChannelNoise"))
+        useSs = bool(
+            config.get("snapshotSelection", config.get("useBasil", False))
+        )
+        useEbm = bool(
+            hasNoise
+            and config.get("noiseMitigation") == "ebm"
+            and float(config.get("ebmLambda", 0.0)) > 0.0
+        )
+        mitigation = (
+            "SS + EBM"
+            if useSs and useEbm
+            else "SS"
+            if useSs
+            else "EBM"
+            if useEbm
+            else "No Mitigation"
+        )
+        environment = {
+            "clean": "Clean Environment",
+            "hidden": "Hidden Byzantine Attack",
+            "noise": "Channel Noise",
+            "hidden_noise": "Hidden Byzantine Attack + Channel Noise",
+        }.get(config.get("environment"), str(config.get("environment", "unknown")))
+
+        self.logMessage("=" * 80)
+        self.logMessage(f"[lane {lane + 1}] STARTING CAMPAIGN 3 EXPERIMENT")
+        self.logMessage("=" * 80)
+        self.logMessage("Configuration:")
+        self.logMessage(
+            f"  Experiment: {config.get('experimentName', '(unnamed)')}"
+        )
+        self.logMessage(f"  Run ID:     {config.get('runId', '(none)')}")
+        self.logMessage(
+            f"  Dataset:    {config.get('dataset', 'cifar10')}  |  Split: {split}"
+        )
+        self.logMessage(
+            f"  Approach:   {str(config.get('approach', '?')).upper()}"
+            f"  |  Environment: {environment}"
+        )
+        self.logMessage(
+            f"  Seed: {config.get('seed')}  |  Nodes: {config.get('nNodes')}"
+            f"  |  Rounds: {config.get('nRounds')}"
+        )
+        self.logMessage(
+            f"  Local work: epochs={config.get('localEpochs')}, "
+            f"steps/epoch={config.get('stepsPerEpoch')}, "
+            f"batch={config.get('batchSize')}"
+        )
+        self.logMessage(
+            f"  LR: {config.get('learningRate')}  |  "
+            f"Momentum: {config.get('momentum')}  |  "
+            f"Decay: {bool(config.get('useLrDecay'))}"
+        )
+        self.logMessage(
+            f"  Aggregation: {config.get('aggregationMode')}  |  "
+            f"Mitigation: {mitigation}"
+        )
+        self.logMessage(
+            f"  Hidden attack: {'active' if hasHidden else 'inactive'}"
+            + (
+                f", nodes={config.get('attackerIds')}, "
+                f"starts round {config.get('attackHiddenStart')}"
+                if hasHidden
+                else ""
+            )
+        )
+        self.logMessage(
+            f"  Channel noise: {'active' if hasNoise else 'inactive'}"
+            + (
+                f", sigma={float(config.get('channelNoiseSigma', 0.0)):.1f}, "
+                f"starts round {config.get('channelNoiseStart', 0)}"
+                if hasNoise
+                else ""
+            )
+        )
+        self.logMessage(
+            f"  Snapshot Selection: {'active' if useSs else 'inactive'}"
+            + (
+                f", memory={config.get('basilMemorySize')}"
+                if useSs
+                else ""
+            )
+        )
+        if useEbm:
+            self.logMessage(
+                f"  EBM: lambda={float(config.get('ebmLambda', 0.0)):.8g}, "
+                f"lambda*sigma^2="
+                f"{float(config.get('ebmTargetCoefficient', 0.0)):.8g}"
+            )
+        if config.get("approach") == "cart":
+            self.logMessage(
+                f"  CART: gamma={float(config.get('distillStrength', 0.0)):.8g}, "
+                f"verify threshold={config.get('verifyThreshold')}"
+            )
+        self.logMessage(
+            f"  Worker: isolated GPU lane {lane + 1}, "
+            f"memory cap={workerSettings['gpuMemoryLimitMb']} MB"
+        )
+        self.logMessage("-" * 80)
+
+    def _updateCampaignPoolProgress(self, laneProgress, activeCount, latestLane):
+        if not laneProgress:
+            return
+        summaries = []
+        fractions = []
+        for lane in sorted(laneProgress):
+            roundNum, totalRounds, avgAcc = laneProgress[lane]
+            summaries.append(f"L{lane + 1} {roundNum}/{totalRounds}")
+            if totalRounds > 0:
+                fractions.append(roundNum / totalRounds)
+        if fractions:
+            self._progressVar.set(100.0 * float(np.mean(fractions)))
+        self._roundLabel.config(
+            text=f"{activeCount} active · " + " · ".join(summaries)
+        )
+        if latestLane not in laneProgress:
+            latestLane = max(laneProgress)
+        self._accLabel.config(text=f"Acc  {laneProgress[latestLane][2]:.1%}")
+        self._etaLabel.config(text=self._queueEtaVar.get())
+        self._setStatus(
+            f"Campaign queue running · {activeCount} isolated worker"
+            f"{'s' if activeCount != 1 else ''}"
+        )
+
+    def _drainCampaignWorkerEvents(self, pool, laneProgress):
+        for kind, lane, config, payload in pool.drain_events():
+            name = config.get("experimentName", config.get("runId", "Campaign run"))
+            if kind == "line":
+                if payload.startswith("[campaign3 round "):
+                    continue
+                self.root.after(0, self.logMessage, f"[lane {lane + 1}] {payload}")
+                continue
+
+            event = payload.get("event")
+            if event == "round":
+                roundNum = int(payload["round"])
+                totalRounds = int(payload["totalRounds"])
+                avgAcc = float(payload["averageAccuracy"])
+                worstAcc = float(payload["worstAccuracy"])
+                laneProgress[lane] = (
+                    roundNum,
+                    totalRounds,
+                    avgAcc,
+                )
+                self.root.after(
+                    0,
+                    self._recordCampaignRound,
+                    lane,
+                    config,
+                    roundNum,
+                    avgAcc,
+                    worstAcc,
+                )
+                self.root.after(
+                    0,
+                    self._updateCampaignPoolProgress,
+                    dict(laneProgress),
+                    pool.active_count,
+                    lane,
+                )
+            elif event == "preparing":
+                self.root.after(
+                    0,
+                    self.logMessage,
+                    f"[lane {lane + 1}] Preparing {name}",
+                )
+            elif event == "started":
+                estimate = self._runtimeEstimator.estimate(config)
+                self.root.after(
+                    0,
+                    self.logMessage,
+                    f"[lane {lane + 1}] Started {name} · estimated "
+                    f"{format_duration(estimate.seconds)} "
+                    f"({format_duration(estimate.low_seconds)}–"
+                    f"{format_duration(estimate.high_seconds)})",
+                )
+            elif event == "completed":
+                wallSeconds = float(payload["wallRuntimeSeconds"])
+                finalWorst = float(payload.get("finalWorstAccuracy", 0.0))
+                self.root.after(
+                    0,
+                    self.logMessage,
+                    f"[lane {lane + 1}] Completed {name}: "
+                    f"avg={float(payload['finalAverageAccuracy']):.4f}, "
+                    f"worst={finalWorst:.4f}, "
+                    f"time={format_duration(wallSeconds)} "
+                    f"({wallSeconds:.1f}s)",
+                )
+                metricsPath, runPath = campaign3ResultPaths(config)
+                self.root.after(
+                    0,
+                    self.logMessage,
+                    f"  saved metrics: {metricsPath}",
+                )
+                self.root.after(
+                    0,
+                    self.logMessage,
+                    f"  saved config:  {runPath}",
+                )
+            elif event == "stopped":
+                self.root.after(
+                    0,
+                    self.logMessage,
+                    f"[lane {lane + 1}] Stopped {name}; queue item retained.",
+                )
+            elif event == "failed":
+                self.root.after(
+                    0,
+                    self.logMessage,
+                    f"[lane {lane + 1}] ERROR {name}: {payload.get('error', 'unknown')}",
+                )
+
+    def _runIsolatedCampaignBlock(self):
+        settings = self._workerSettings()
+        pool = CampaignWorkerPool(
+            lanes=settings["lanes"],
+            gpu_memory_limit_mb=settings["gpuMemoryLimitMb"],
+        )
+        self._campaignWorkerPool = pool
+        completed = 0
+        plotConfig = None
+        failedMessage = None
+        laneProgress = {}
+        stopSent = False
+        self.logMessage(
+            f"Campaign execution: {settings['lanes']} isolated GPU lane"
+            f"{'s' if settings['lanes'] != 1 else ''}, "
+            f"{settings['gpuMemoryLimitMb']} MB cap per worker."
+        )
+
+        try:
+            while True:
+                self._drainCampaignWorkerEvents(pool, laneProgress)
+                for completion in pool.poll_finished():
+                    laneProgress.pop(completion.lane, None)
+                    config = completion.config
+                    name = config.get("experimentName", config.get("runId"))
+                    if completion.return_code == 0 and isCampaign3Completed(config):
+                        self._removeQueuedConfig(config)
+                        completed += 1
+                        plotConfig = config
+                        self._queueBatchNeedsPlot = True
+                        self._runtimeEstimator.reload()
+                        freeze_calibration_if_ready()
+                        if config.get("autoPlotCampaign3", True):
+                            self._scheduleCampaign3PlotRefresh(config)
+                        sendNotification(
+                            "Queue Step Done",
+                            f"{name} finished.",
+                            priority="high",
+                        )
+                    elif completion.return_code == 2 or not self.isRunning:
+                        self.logMessage(
+                            f"[lane {completion.lane + 1}] {name} remains queued."
+                        )
+                    else:
+                        failedMessage = (
+                            f"{name} failed in isolated worker lane "
+                            f"{completion.lane + 1} (exit {completion.return_code})."
+                        )
+                        self.logMessage(f"QUEUE ERROR: {failedMessage}")
+                        self.isRunning = False
+
+                if not self.isRunning and not stopSent:
+                    pool.request_stop()
+                    stopSent = True
+
+                launched = False
+                while self.isRunning and pool.available_lanes:
+                    activeConfigs = pool.active_configs()
+                    activeObjectIds = {id(config) for config in activeConfigs}
+                    activeRunIds = {
+                        config.get("runId")
+                        for config in activeConfigs
+                        if config.get("runId")
+                    }
+                    config = self._nextCampaignConfig(
+                        activeObjectIds,
+                        activeRunIds,
+                    )
+                    if config is None:
+                        break
+                    if isCampaign3Completed(config):
+                        self.logMessage(
+                            f"[SKIP] Already completed: "
+                            f"{config.get('experimentName', config.get('runId'))}"
+                        )
+                        self._removeQueuedConfig(config)
+                        continue
+                    active = pool.launch(config)
+                    laneProgress[active.lane] = (
+                        0,
+                        int(config.get("nRounds", 100)),
+                        0.0,
+                    )
+                    self.root.after(
+                        0,
+                        self._startCampaignLiveRun,
+                        active.lane,
+                        config,
+                    )
+                    self.root.after(
+                        0,
+                        self._logCampaignConfiguration,
+                        active.lane,
+                        config,
+                        dict(settings),
+                    )
+                    launched = True
+                    sendNotification(
+                        "Queue Started",
+                        f"{config.get('experimentName', config.get('runId'))} has started.",
+                        priority="default",
+                    )
+
+                now = time.monotonic()
+                if now - self._queueLastEstimateRefresh >= 10.0:
+                    self._queueLastEstimateRefresh = now
+                    self._scheduleQueueEstimateRefresh()
+
+                if not pool.has_active and not launched:
+                    break
+                time.sleep(0.2)
+        finally:
+            if pool.has_active:
+                pool.request_stop()
+                deadline = time.monotonic() + 120.0
+                while pool.has_active and time.monotonic() < deadline:
+                    self._drainCampaignWorkerEvents(pool, laneProgress)
+                    pool.poll_finished()
+                    time.sleep(0.2)
+                if pool.has_active:
+                    pool.kill_remaining()
+                    pool.wait(timeout=10.0)
+            self._drainCampaignWorkerEvents(pool, laneProgress)
+            self._campaignWorkerPool = None
+            self.root.after(0, self._updateQueueButton)
+        return completed, plotConfig, failedMessage
 
     def runQueue(self):
         if self.isRunning:
@@ -2294,27 +3763,34 @@ class ExperimentGUI:
             messagebox.showwarning("Empty Queue", "The config queue is empty.")
             return
 
+        with self._queueLock:
+            self._saveQueueState()
         self.runButton.config(state=tk.DISABLED)
         self.runAllButton.config(state=tk.DISABLED)
         self.queueButton.config(state=tk.NORMAL)
         self.stopButton.config(state=tk.NORMAL)
         self.isRunning = True
+        self._queueBatchNeedsPlot = False
+        self._queueLastEstimateRefresh = 0.0
         self.clearOutput()
         self._liveAccData.clear()
         self._liveWorstData.clear()
         self._refreshLiveChart()
         self.notebook.select(3)
+        self._refreshQueueEstimate()
 
         self.currentThread = threading.Thread(target=self.runQueueThread)
         self.currentThread.start()
 
     def runQueueThread(self):
         completed = 0
+        plottedConfig = None
         try:
             self.logMessage("=" * 80)
             with self._queueLock:
                 initialQueued = len(self.configQueue)
             self.logMessage(f"RUN QUEUE: {initialQueued} experiment(s) queued")
+            self.logMessage(self._queueEstimateText())
             self.logMessage("=" * 80 + "\n")
 
             while self.isRunning:
@@ -2328,6 +3804,16 @@ class ExperimentGUI:
                 if not self.isRunning:
                     self.logMessage("\n[STOPPED] Queue run cancelled by user.")
                     break
+
+                if int(config.get("campaignVersion", 0)) == 3:
+                    blockCompleted, blockPlotConfig, failure = (
+                        self._runIsolatedCampaignBlock()
+                    )
+                    completed += blockCompleted
+                    plottedConfig = blockPlotConfig or plottedConfig
+                    if failure or not self.isRunning:
+                        break
+                    continue
 
                 self.logMessage("=" * 80)
                 expName = config.get('experimentName', f'Queue item #{completed + 1}')
@@ -2364,6 +3850,7 @@ class ExperimentGUI:
                             break
                 self.root.after(0, self._updateQueueButton)
                 completed += 1
+                plottedConfig = config
 
                 sendNotification("Queue Step Done", f"{expName} finished.", priority="high")
                 if removedCompleted:
@@ -2385,6 +3872,19 @@ class ExperimentGUI:
             self.logMessage(traceback.format_exc())
             sendNotification("Queue FAILED", str(e), priority="urgent")
         finally:
+            with self._queueLock:
+                self._saveQueueState()
+            if self._queueBatchNeedsPlot and plottedConfig is not None:
+                self._waitForCampaign3PlotRefresh()
+                self.logMessage(
+                    "\nGenerating changed Campaign 3 plots at the queue boundary…"
+                )
+                self.generatePlots(
+                    showDialog=False,
+                    config=plottedConfig,
+                    onlyMissing=True,
+                )
+                self._queueBatchNeedsPlot = False
             self.root.after(0, self._onRunFinished)
 
     def saveConfig(self):
@@ -2417,6 +3917,7 @@ class ExperimentGUI:
 
     def loadConfig(self):
         configDir       = os.path.join(os.path.dirname(os.path.abspath(__file__)), "configs")
+        currentConfigDir = os.path.join(configDir, "current")
         currentApproach = self.approachVar.get() if hasattr(self, 'approachVar') else 'basil'
 
         # ── Custom picker dialog ──────────────────────────────────────────────
@@ -2430,10 +3931,32 @@ class ExperimentGUI:
         selectedPath = [None]
         splitVar     = tk.StringVar(value='nonIID')
         approachVar  = tk.StringVar(value=currentApproach)
+        sourceVar    = tk.StringVar(value='current')
+
+        sourceFrame = tk.Frame(dlg, bg=BG)
+        sourceFrame.pack(fill=tk.X, padx=12, pady=(12, 0))
+        tk.Label(
+            sourceFrame,
+            text="Library:",
+            bg=BG,
+            fg=HEADER,
+            font=('Segoe UI', 9, 'bold'),
+        ).pack(side=tk.LEFT, padx=(0, 8))
+        for label, value in (
+            ("Current", "current"),
+            ("Legacy / Custom", "legacy"),
+        ):
+            ttk.Radiobutton(
+                sourceFrame,
+                text=label,
+                variable=sourceVar,
+                value=value,
+                command=lambda: refreshList(),
+            ).pack(side=tk.LEFT, padx=6)
 
         # ── Data split selector ──
         splitFrame = tk.Frame(dlg, bg=BG)
-        splitFrame.pack(fill=tk.X, padx=12, pady=(12, 0))
+        splitFrame.pack(fill=tk.X, padx=12, pady=(8, 0))
         tk.Label(splitFrame, text="Data Split:", bg=BG, fg=HEADER,
                  font=('Segoe UI', 9, 'bold')).pack(side=tk.LEFT, padx=(0, 8))
         for sp in ('nonIID', 'IID'):
@@ -2481,12 +4004,17 @@ class ExperimentGUI:
         def refreshList():
             sp = splitVar.get()
             ap = approachVar.get()
+            rootDir = (
+                currentConfigDir
+                if sourceVar.get() == 'current'
+                else configDir
+            )
             # Update counts on all approach labels
             for _ap, lv in apCountLabels.items():
-                _f = os.path.join(configDir, sp, _ap)
+                _f = os.path.join(rootDir, sp, _ap)
                 _n = len([x for x in os.listdir(_f) if x.endswith('.json')]) if os.path.isdir(_f) else 0
                 lv.set(f"{_ap.capitalize()}  ({_n})")
-            folder = os.path.join(configDir, sp, ap)
+            folder = os.path.join(rootDir, sp, ap)
             files  = sorted([f for f in os.listdir(folder) if f.endswith('.json')]) \
                      if os.path.isdir(folder) else []
             listbox.delete(0, tk.END)
@@ -2499,7 +4027,17 @@ class ExperimentGUI:
             if not sel:
                 return
             name = listbox.get(sel[0]) + '.json'
-            selectedPath[0] = os.path.join(configDir, splitVar.get(), approachVar.get(), name)
+            rootDir = (
+                currentConfigDir
+                if sourceVar.get() == 'current'
+                else configDir
+            )
+            selectedPath[0] = os.path.join(
+                rootDir,
+                splitVar.get(),
+                approachVar.get(),
+                name,
+            )
             dlg.destroy()
 
         listbox.bind('<Double-Button-1>', lambda e: onLoad())
@@ -2573,8 +4111,157 @@ class ExperimentGUI:
             messagebox.showerror("Error", f"Failed to load configuration:\n{e}")
 
     # ── Plot results ──────────────────────────────────────────────────────────
+    def _scheduleCampaign3PlotRefresh(self, config):
+        """Queue one nonblocking PNG refresh after a completed Campaign 3 run."""
+        if (
+            int(config.get("campaignVersion", 0)) != 3
+            or not config.get("autoPlotCampaign3", True)
+        ):
+            return
+        split = "nonIID" if config.get("nonIID", True) else "IID"
+        with self._campaignPlotCondition:
+            self._campaignPlotPendingSplits.add(split)
+            if (
+                self._campaignPlotThread is not None
+                and self._campaignPlotThread.is_alive()
+            ):
+                self._campaignPlotCondition.notify_all()
+                return
+            self._campaignPlotThread = threading.Thread(
+                target=self._campaign3PlotRefreshLoop,
+                name="campaign3-plot-refresh",
+                daemon=True,
+            )
+            self._campaignPlotThread.start()
+
+    def _campaign3PlotRefreshLoop(self):
+        from plotCampaign3 import generate_campaign3_live_plots
+
+        while True:
+            with self._campaignPlotCondition:
+                if not self._campaignPlotPendingSplits:
+                    self._campaignPlotThread = None
+                    self._campaignPlotCondition.notify_all()
+                    return
+                split = sorted(self._campaignPlotPendingSplits)[0]
+                self._campaignPlotPendingSplits.remove(split)
+
+            self.root.after(
+                0,
+                self.logMessage,
+                f"\n[plots3] Refreshing changed {split} PNG previews…",
+            )
+            try:
+                result = generate_campaign3_live_plots(split=split)
+                message = (
+                    f"[plots3] Live refresh complete: "
+                    f"{len(result['generated'])} updated, "
+                    f"{len(result['skipped'])} unchanged."
+                )
+                self.root.after(0, self.logMessage, message)
+                for error in result["errors"]:
+                    self.root.after(
+                        0,
+                        self.logMessage,
+                        f"[plots3] WARNING: {error}",
+                    )
+            except Exception as error:
+                self.root.after(
+                    0,
+                    self.logMessage,
+                    f"[plots3] Live refresh failed: {error}",
+                )
+                self.root.after(
+                    0,
+                    self.logMessage,
+                    traceback.format_exc(),
+                )
+
+    def _waitForCampaign3PlotRefresh(self):
+        """Wait for pending previews before writing final PNG/PDF/EPS figures."""
+        while True:
+            with self._campaignPlotCondition:
+                thread = self._campaignPlotThread
+                pending = bool(self._campaignPlotPendingSplits)
+            if thread is None and not pending:
+                return
+            if thread is not None:
+                thread.join(timeout=0.25)
+            else:
+                time.sleep(0.05)
+
     def plotResults(self):
-        self.generatePlots(showDialog=True)
+        dlg = tk.Toplevel(self.root)
+        dlg.title("Generate Plots")
+        dlg.configure(bg=BG)
+        dlg.resizable(False, False)
+        dlg.transient(self.root)
+        dlg.grab_set()
+
+        tk.Label(
+            dlg,
+            text="Choose plot output",
+            bg=BG,
+            fg=HEADER,
+            font=("Segoe UI", 12, "bold"),
+        ).pack(anchor=tk.W, padx=18, pady=(16, 2))
+        tk.Label(
+            dlg,
+            text=(
+                f"Campaign 3 R2 reads {CAMPAIGN3_RESULT_ROOT} and writes "
+                f"{CAMPAIGN3_PLOT_ROOT}."
+            ),
+            bg=BG,
+            fg=MUTED,
+            font=("Segoe UI", 9),
+        ).pack(anchor=tk.W, padx=18, pady=(0, 12))
+
+        campaignFrame = ttk.LabelFrame(dlg, text="Campaign 3 R2", padding=10)
+        campaignFrame.pack(fill=tk.X, padx=18, pady=(0, 8))
+
+        def runCampaign(mode):
+            dlg.destroy()
+            self.generateCampaign3Plots(
+                mode=mode,
+                showDialog=True,
+                onlyChanged=False,
+            )
+
+        ttk.Button(
+            campaignFrame,
+            text="Paper Figures",
+            command=lambda: runCampaign("paper"),
+        ).pack(side=tk.LEFT, padx=(0, 6))
+        ttk.Button(
+            campaignFrame,
+            text="Diagnostics",
+            command=lambda: runCampaign("diagnostics"),
+        ).pack(side=tk.LEFT, padx=6)
+        ttk.Button(
+            campaignFrame,
+            text="Paper + Diagnostics",
+            style="Run.TButton",
+            command=lambda: runCampaign("both"),
+        ).pack(side=tk.LEFT, padx=(6, 0))
+
+        legacyFrame = ttk.LabelFrame(dlg, text="Legacy results", padding=10)
+        legacyFrame.pack(fill=tk.X, padx=18, pady=(0, 12))
+        ttk.Button(
+            legacyFrame,
+            text="Generate plots / plots2",
+            command=lambda: (dlg.destroy(), self.generatePlots(showDialog=True)),
+        ).pack(side=tk.LEFT)
+        ttk.Button(
+            dlg,
+            text="Cancel",
+            command=dlg.destroy,
+        ).pack(anchor=tk.E, padx=18, pady=(0, 16))
+
+        dlg.update_idletasks()
+        width, height = 520, 245
+        x = self.root.winfo_x() + (self.root.winfo_width() - width) // 2
+        y = self.root.winfo_y() + (self.root.winfo_height() - height) // 2
+        dlg.geometry(f"{width}x{height}+{x}+{y}")
 
     def _attackKeyFromConfig(self, config):
         attackParts = []
@@ -2586,7 +4273,73 @@ class ExperimentGUI:
                 attackParts.append(s)
         return "_".join(attackParts) if attackParts else "none"
 
+    def generateCampaign3Plots(
+        self,
+        *,
+        mode="both",
+        showDialog=True,
+        split=None,
+        onlyChanged=True,
+    ):
+        try:
+            from plotCampaign3 import generate_campaign3_plots
+
+            self.logMessage("\n" + "=" * 60)
+            self.logMessage(f"GENERATING CAMPAIGN 3 {mode.upper()} PLOTS")
+            self.logMessage("=" * 60)
+            result = generate_campaign3_plots(
+                mode=mode,
+                split=split,
+                only_changed=onlyChanged,
+            )
+            self.logMessage(f"Completed records found: {result['records']}")
+            self.logMessage(f"Figures generated:       {len(result['generated'])}")
+            self.logMessage(f"Unchanged figures:       {len(result['skipped'])}")
+            for error in result["errors"]:
+                self.logMessage(f"WARNING: {error}")
+            self.logMessage(f"Output: {result['plotRoot']}")
+            self.logMessage("=" * 60)
+            if result["records"] == 0:
+                message = (
+                    "No completed Campaign 3 R2 results were found in "
+                    f"{CAMPAIGN3_RESULT_ROOT}."
+                )
+                self._setStatus("No completed Campaign 3 results found.")
+                if showDialog:
+                    messagebox.showinfo("No Campaign 3 Results", message)
+                return result
+            self._setStatus(
+                f"Campaign 3 plots: {len(result['generated'])} generated, "
+                f"{len(result['skipped'])} unchanged."
+            )
+            if showDialog:
+                detail = (
+                    f"Generated: {len(result['generated'])}\n"
+                    f"Unchanged: {len(result['skipped'])}\n"
+                    f"Warnings: {len(result['errors'])}\n\n"
+                    f"Saved under {CAMPAIGN3_PLOT_ROOT}/."
+                )
+                messagebox.showinfo("Campaign 3 Plots", detail)
+            return result
+        except Exception as error:
+            self.logMessage(f"\nERROR generating Campaign 3 plots: {error}")
+            self.logMessage(traceback.format_exc())
+            if showDialog:
+                messagebox.showerror(
+                    "Campaign 3 Plot Error",
+                    f"Failed to generate Campaign 3 plots:\n{error}",
+                )
+            return None
+
     def generatePlots(self, showDialog=True, config=None, onlyMissing=False):
+        if config is not None and int(config.get("campaignVersion", 0)) == 3:
+            split = "nonIID" if config.get("nonIID", True) else "IID"
+            return self.generateCampaign3Plots(
+                mode="both",
+                showDialog=showDialog,
+                split=split,
+                onlyChanged=onlyMissing,
+            )
         try:
             from plotGui import (discoverDataSplits, discoverDatasets, discoverAttackTypes, discoverApproaches,
                                  discoverExperiments, groupExperimentsByNoiseBucket, noiseBucket,

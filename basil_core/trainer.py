@@ -28,10 +28,10 @@ __all__ = [
 # Cross-entropy on logits (as in Basil)
 lossFn = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
 
-def addChannelNoiseToParams(params, sigma):
+def addChannelNoiseToParams(params, sigma, rng=None):
     """Add Gaussian channel noise using sigma as a model-level relative L2 budget.
 
-    The noisy-channel paper's sigma is a communication perturbation budget for
+    This project interprets sigma as a communication perturbation budget for
     the transmitted model, not an absolute stddev applied independently to every
     parameter coordinate. For CIFAR-scale CNNs, absolute or per-tensor stddev
     noise destroys the model because millions of coordinates are perturbed.
@@ -58,9 +58,10 @@ def addChannelNoiseToParams(params, sigma):
     model_norm = float(np.sqrt(max(total_sq, 1e-12)))
     noise_std = float(sigma) * model_norm / float(np.sqrt(total_dim))
 
+    normal = rng.normal if rng is not None else np.random.normal
     noisy = []
     for w in params:
-        noise = np.random.normal(0.0, noise_std, size=w.shape).astype(np.float32)
+        noise = normal(0.0, noise_std, size=w.shape).astype(np.float32)
         noisy.append((w + noise).astype(np.float32))
     return noisy
 

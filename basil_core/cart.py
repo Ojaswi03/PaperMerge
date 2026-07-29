@@ -144,9 +144,8 @@ class CARTNode(BasilNode):
             ce_grads = _batchGradients(model_inner, weights, x, y)
 
             # Proximal term gradient: d/dw [(mu/2) * ||w - w_ref||^2].
-            # Keep this CART regularizer separate from EBM. EBM is a channel
-            # noise mitigation, so it should amplify the learning signal, not
-            # double the class-memory pull that prevents non-IID forgetting.
+            # Keep the independent defenses separated: EBM scales the
+            # supervised learning signal, while CART controls non-IID drift.
             prox_grads = [proxMu * (w - r) for w, r in zip(weights, refParams)]
 
             if ebmEnabled:
@@ -179,7 +178,7 @@ class CARTNode(BasilNode):
             self.localTrain(lr=lr, stepsPerEpoch=stepsPerEpoch)
             return
 
-        # Proximal coefficient: base + EMA-smoothed class-aware amplification.
+        # Proximal coefficient is driven only by observed class gaps.
         #
         # Raw mean_trust jumps sharply each round as the registry fills,
         # causing the proximal mu to oscillate → zigzag accuracy curves.
@@ -190,12 +189,16 @@ class CARTNode(BasilNode):
         # This averages over the last ~7 rounds, damping per-round registry
         # fluctuations while still responding to genuine knowledge gaps.
         #
-        #   mu = γ × (1 + ema_trust)
-        #   cold start  → mu = γ × 1.0  (always active — prevents forgetting)
-        #   registry ↑  → mu grows smoothly as class gaps accumulate
+        #   mu = clip(γ × ema_trust, 0, γ)
+        #   no reliable gap → mu = 0
+        #   registry gap    → mu grows smoothly up to γ
         raw_mean_trust = float(np.mean(trustWeights))
         self._emaTrust = self._emaDecay * self._emaTrust + (1.0 - self._emaDecay) * raw_mean_trust
-        mu = float(self.distillStrength * (1.0 + self._emaTrust))
+        mu = float(np.clip(
+            self.distillStrength * self._emaTrust,
+            0.0,
+            self.distillStrength,
+        ))
 
         # Freeze reference point = current model params (before local training)
         self._ensureCartCompiled()
@@ -347,13 +350,8 @@ def cartRingTraining(
         ssStr = " SS" if useSnapshots else ""
         print(f"[CART round {r}] lr={lr:.6f}{noiseStatus}{ssStr}{mitigationStr}{attackStr}...", flush=True)
 
-        # Match the BASIL/Merged EBM calibration: each model accumulates
-        # sqrt(n) independent ring-hop perturbations across a round, so use
-        # sigma / sqrt(n) per hop to keep the round-level budget at sigma.
-        if channelNoiseActive and noiseModel == "ebm":
-            commSigma = sigma / math.sqrt(n)
-        else:
-            commSigma = sigma if channelNoiseActive else 0.0
+        # Every mitigation arm is exposed to the same configured link noise.
+        commSigma = sigma if channelNoiseActive else 0.0
 
         # ===== SEQUENTIAL RING =====
         for i in range(n):

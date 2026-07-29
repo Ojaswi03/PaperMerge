@@ -30,8 +30,15 @@ def signFlipAttack(weights, flipProb=0.38):
     return out
 
 
-def hiddenAttack(weights, maliciousWeights=None, blendRatio=0.55, attackStrength=1.4):
+def hiddenAttack(
+    weights,
+    maliciousWeights=None,
+    blendRatio=0.55,
+    attackStrength=1.4,
+    rng=None,
+):
     # blend honest weights toward a malicious direction
+    normal = rng.normal if rng is not None else np.random.normal
     out = []
     for idx, w in enumerate(weights):
         if maliciousWeights is not None and idx < len(maliciousWeights):
@@ -39,7 +46,9 @@ def hiddenAttack(weights, maliciousWeights=None, blendRatio=0.55, attackStrength
             attacked = ((1.0 - blendRatio) * w + blendRatio * m).astype(np.float32)
         else:
             weight_std = max(np.std(w), 0.01)
-            perturbation = -attackStrength * w + np.random.normal(0.0, 0.05 * weight_std, size=w.shape)
+            perturbation = -attackStrength * w + normal(
+                0.0, 0.05 * weight_std, size=w.shape
+            )
             attacked = ((1.0 - blendRatio) * w + blendRatio * perturbation).astype(np.float32)
         out.append(attacked)
     return out
@@ -110,7 +119,7 @@ def noiseAmplificationAttack(weights, amplification=5.0):
     return out
 
 
-def applyAttack(weights, attackType, maliciousWeights=None, blendRatio=0.5):
+def applyAttack(weights, attackType, maliciousWeights=None, blendRatio=0.5, rng=None):
     # normalize attack type string then dispatch to the right function
     atk = (attackType or "none").lower().replace("-", "_")
 
@@ -121,7 +130,13 @@ def applyAttack(weights, attackType, maliciousWeights=None, blendRatio=0.5):
         return signFlipAttack(weights, flipProb=0.38)
 
     if atk == "hidden":
-        return hiddenAttack(weights, maliciousWeights, blendRatio=0.55, attackStrength=1.4)
+        return hiddenAttack(
+            weights,
+            maliciousWeights,
+            blendRatio=0.55,
+            attackStrength=1.4,
+            rng=rng,
+        )
 
     if atk == "scaling":
         return scalingAttack(weights, scaleFactor=10.0)

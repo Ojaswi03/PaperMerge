@@ -211,7 +211,37 @@ LOGS.md
 
 # Claude Code instructions (local dev only)
 CLAUDE.md
+AGENTS.md
+/.claude/
+/.agents/
+/.codex
 
 # Presentation draft files (local only)
 cart_presentation.md
 cart_presentation.txt
+
+# Local editor and operating-system state
+/.vscode/
+/.idea/
+.DS_Store
+Thumbs.db
+
+# Local Python environment; keep environment/requirements.txt tracked
+/environment/*/
+
+# Runtime logs, queue state, and obsolete local checkpoints
+/error.txt
+/checkpoint.txt
+/gui/queue_state.json
+/experiments/logs/
+nohup.out
+*.pid
+
+# Machine-local experiment acceleration state
+experiments/cache/
+experiments/results3/r2/workers/
+experiments/results3/r2/worker_profile.json
+
+# Isolated exploratory outputs and transient plot locks
+/experiments/wcm_pilot/
+/plots3/.campaign3_plot.lock
