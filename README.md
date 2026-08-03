@@ -21,6 +21,9 @@ Merged and CART are the project additions built on the two main papers.
   file/function reference.
 - [Campaign 3 R2 Guide](docs/Campaign3Guide.md) contains the exact current
   protocol, equations, calibration rules, and paper-facing interpretation.
+- [Campaign 4 Engineering And Evaluation Plan](docs/Campaign4Plan.md) defines
+  the isolated `results4`/`plots4` campaign, sigma `0.4-0.6` diagnosis,
+  adaptive EBM extension, live node-ring GUI, and GPU runtime targets.
 - [Gamma Explained](docs/gammaExplained.md) explains CART `gamma` and the
   active proximal coefficient `mu`.
 - [WCM Pilot](docs/WCM_PILOT.md) documents the isolated WCM implementation,
@@ -164,6 +167,7 @@ PaperMerge/
 ├── docs/
 │   ├── GetToKnow.md
 │   ├── Campaign3Guide.md
+│   ├── Campaign4Plan.md
 │   ├── gammaExplained.md
 │   └── WCM_PILOT.md
 ├── basil_core/

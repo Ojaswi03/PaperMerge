@@ -6,6 +6,9 @@ Start with:
   current test status, diagrams, end-to-end execution, and function reference.
 - [Campaign 3 R2 Guide](Campaign3Guide.md): exact protocol, equations,
   calibration, result interpretation, and paper-facing boundaries.
+- [Campaign 4 Engineering And Evaluation Plan](Campaign4Plan.md): isolated
+  `results4`/`plots4` design, sigma 0.4-0.6 root-cause investigation,
+  adaptive-EBM boundary, live ring telemetry, and GPU runtime plan.
 - [Gamma Explained](gammaExplained.md): CART `gamma`, class gaps, and active
   proximal strength `mu`.
 - [WCM Pilot](WCM_PILOT.md): isolated Worst-Case Model implementation and
