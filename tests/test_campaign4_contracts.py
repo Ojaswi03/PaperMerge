@@ -184,6 +184,45 @@ class Campaign4ContractTests(unittest.TestCase):
         self.assertEqual(len(build_diagnostic("cart")), 33)
         self.assertEqual(len(build_performance_benchmark()), 4)
 
+    def test_adaptive_weight_decay_defaults_off_and_requires_noise(self):
+        default_config = make_config(
+            split="nonIID",
+            approach="merged",
+            environment="noise",
+            mitigation="none",
+            sigma=0.6,
+            seed=2025,
+        )
+        self.assertEqual(default_config["adaptiveWeightDecayMode"], "none")
+        self.assertEqual(default_config["adaptiveWeightDecayTargetRatio"], 2.0)
+        self.assertEqual(default_config["adaptiveWeightDecayGain"], 0.025)
+        self.assertEqual(default_config["adaptiveWeightDecayCoefficientMin"], 1e-6)
+        self.assertEqual(default_config["adaptiveWeightDecayCoefficientMax"], 0.05)
+        self.assertEqual(default_config["adaptiveWeightDecayBeta"], 0.9)
+        self.assertEqual(default_config["adaptiveWeightDecayMaxChangeFactor"], 2.0)
+
+        adaptive_config = make_config(
+            split="nonIID",
+            approach="merged",
+            environment="noise",
+            mitigation="none",
+            sigma=0.6,
+            seed=2025,
+            adaptive_weight_decay_mode="adaptive",
+        )
+        self.assertEqual(adaptive_config["adaptiveWeightDecayMode"], "adaptive")
+        self.assertNotEqual(adaptive_config["runId"], default_config["runId"])
+
+        with self.assertRaises(ValueError):
+            make_config(
+                split="nonIID",
+                approach="merged",
+                environment="clean",
+                mitigation="none",
+                seed=2025,
+                adaptive_weight_decay_mode="adaptive",
+            )
+
     def test_invalid_cross_hazard_mitigations_are_rejected(self):
         with self.assertRaises(ValueError):
             make_config(

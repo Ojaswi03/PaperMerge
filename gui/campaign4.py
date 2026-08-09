@@ -254,6 +254,13 @@ def make_config(
     jit_compile: bool = False,
     precision: str = "float32",
     weight_decay_coefficient: float = 0.0,
+    adaptive_weight_decay_mode: str = "none",
+    adaptive_weight_decay_target_ratio: float = 2.0,
+    adaptive_weight_decay_gain: float = 0.025,
+    adaptive_weight_decay_coefficient_min: float = 1e-6,
+    adaptive_weight_decay_coefficient_max: float = 0.05,
+    adaptive_weight_decay_beta: float = 0.9,
+    adaptive_weight_decay_max_change_factor: float = 2.0,
 ) -> dict:
     """Build one explicit Campaign 4 configuration.
 
@@ -301,6 +308,14 @@ def make_config(
         raise ValueError("SS is valid only when the Hidden attack is active.")
     if use_ebm and not has_noise:
         raise ValueError("EBM is valid only when channel noise is active.")
+    if adaptive_weight_decay_mode not in ("none", "adaptive"):
+        raise ValueError(
+            f"Unknown adaptive weight decay mode: {adaptive_weight_decay_mode}"
+        )
+    if adaptive_weight_decay_mode == "adaptive" and not has_noise:
+        raise ValueError(
+            "Adaptive weight decay is valid only when channel noise is active."
+        )
     if has_noise and float(sigma) <= 0.0:
         raise ValueError("A noisy environment requires sigma > 0.")
     if not use_ebm:
@@ -399,6 +414,13 @@ def make_config(
         "learningRate": 0.05,
         "momentum": 0.9,
         "weightDecayCoefficient": float(weight_decay_coefficient),
+        "adaptiveWeightDecayMode": str(adaptive_weight_decay_mode),
+        "adaptiveWeightDecayTargetRatio": float(adaptive_weight_decay_target_ratio),
+        "adaptiveWeightDecayGain": float(adaptive_weight_decay_gain),
+        "adaptiveWeightDecayCoefficientMin": float(adaptive_weight_decay_coefficient_min),
+        "adaptiveWeightDecayCoefficientMax": float(adaptive_weight_decay_coefficient_max),
+        "adaptiveWeightDecayBeta": float(adaptive_weight_decay_beta),
+        "adaptiveWeightDecayMaxChangeFactor": float(adaptive_weight_decay_max_change_factor),
         "optimizerStateMode": optimizer_state_mode,
         "batchSize": 512,
         "internalMicroBatchSize": int(internal_micro_batch),
