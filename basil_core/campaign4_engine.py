@@ -417,10 +417,13 @@ class SharedDeviceWorker:
         self.model = model
         self.micro_batch_size = int(micro_batch_size)
         self._lr = _MutableLR(float(lr0))
+        self._weight_decay_var = tf.Variable(
+            float(weight_decay), trainable=False, dtype=tf.float32
+        )
         self._optimizer = tf.keras.optimizers.SGD(
             learning_rate=self._lr,
             momentum=float(momentum),
-            weight_decay=(float(weight_decay) if float(weight_decay) > 0.0 else None),
+            weight_decay=self._weight_decay_var,
         )
         self._optimizer.build(self.model.trainable_weights)
         self._optimizer_slots = [
@@ -613,11 +616,13 @@ class SharedDeviceWorker:
         initial_coefficient: float,
         stress: float,
         prox_mu: float,
+        weight_decay_coefficient: float,
     ):
         self.load(params)
         for reference, weight in zip(self._ref_params, self.model.trainable_weights):
             reference.assign(tf.cast(weight, tf.float32))
         self._lr.assign(float(lr))
+        self._weight_decay_var.assign(float(weight_decay_coefficient))
         self._coefficient.assign(float(initial_coefficient))
         self._requested_coefficient.assign(float(initial_coefficient))
         self._stress.assign(float(stress))
@@ -1074,6 +1079,7 @@ def run_campaign_four(
                     initial_coefficient=0.0,
                     stress=0.0,
                     prox_mu=0.0,
+                    weight_decay_coefficient=float(config.get("weightDecayCoefficient", 0.0)),
                 )
                 trained_params.append(trained)
                 if is_cart:
@@ -1195,6 +1201,7 @@ def run_campaign_four(
                     ),
                     stress=node.stress_ema,
                     prox_mu=mu,
+                    weight_decay_coefficient=float(config.get("weightDecayCoefficient", 0.0)),
                 )
                 telemetry["training_seconds"][round_id, node_id] = (
                     time.perf_counter() - training_started

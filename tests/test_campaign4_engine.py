@@ -18,6 +18,7 @@ if tf is not None:
         _relative_l2_channel_noise,
         _weight_decay_control_step,
         run_campaign_four,
+        SharedDeviceWorker,
     )
     from basil_core.trainer import lossFn
 
@@ -278,6 +279,63 @@ class Campaign4EngineTests(unittest.TestCase):
         norm_off = float(result_off["telemetry"]["model_norm"][-1].mean())
         norm_on = float(result_on["telemetry"]["model_norm"][-1].mean())
         self.assertLess(norm_on, norm_off)
+
+    def test_weight_decay_variable_updates_live_without_retrace(self):
+        tf.keras.utils.set_random_seed(21)
+        model = self.TinyModel()
+        worker = SharedDeviceWorker(
+            model,
+            lr0=0.1,
+            momentum=0.0,
+            micro_batch_size=4,
+            jit_compile=False,
+            adaptive_config={
+                "adaptiveEbmTargetRatioBase": 0.05,
+                "adaptiveEbmStressGain": 0.25,
+                "adaptiveEbmRatioMin": 0.02,
+                "adaptiveEbmRatioMax": 0.35,
+                "adaptiveEbmCoefficientMin": 1e-6,
+                "adaptiveEbmCoefficientMax": 0.01,
+                "adaptiveEbmBeta": 0.9,
+                "adaptiveEbmMaxChangeFactor": 2.0,
+            },
+        )
+        params = worker.export()
+        optimizer_state = worker.zero_optimizer_state()
+        x = tf.ones((4, 4), dtype=tf.float32)
+        y = tf.zeros(4, dtype=tf.int32)
+
+        params_zero_decay, optimizer_state, _ = worker.train(
+            params,
+            optimizer_state=optimizer_state,
+            data_iterator=iter([(x, y)] * 10),
+            first_batch=(x, y),
+            total_steps=5,
+            lr=0.1,
+            ebm_mode="none",
+            initial_coefficient=0.0,
+            stress=0.0,
+            prox_mu=0.0,
+            weight_decay_coefficient=0.0,
+        )
+        norm_zero_decay = float(tf.linalg.global_norm(params_zero_decay).numpy())
+
+        params_with_decay, _, _ = worker.train(
+            params,
+            optimizer_state=optimizer_state,
+            data_iterator=iter([(x, y)] * 10),
+            first_batch=(x, y),
+            total_steps=5,
+            lr=0.1,
+            ebm_mode="none",
+            initial_coefficient=0.0,
+            stress=0.0,
+            prox_mu=0.0,
+            weight_decay_coefficient=0.5,
+        )
+        norm_with_decay = float(tf.linalg.global_norm(params_with_decay).numpy())
+
+        self.assertLess(norm_with_decay, norm_zero_decay)
 
 
 if __name__ == "__main__":
