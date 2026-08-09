@@ -16,6 +16,7 @@ if tf is not None:
         _base_and_regularizer_gradients,
         _bounded_adaptive_coefficient,
         _relative_l2_channel_noise,
+        _weight_decay_control_step,
         run_campaign_four,
     )
     from basil_core.trainer import lossFn
@@ -143,6 +144,59 @@ class Campaign4EngineTests(unittest.TestCase):
         )
         self.assertGreaterEqual(float(value.numpy()), 0.0005)
         self.assertLessEqual(float(value.numpy()), 0.002)
+
+    def test_weight_decay_control_step_is_bounded_and_rate_limited(self):
+        applied, smoothed = _weight_decay_control_step(
+            previous_coefficient=1e-6,
+            previous_smoothed_ratio=1.0,
+            model_norm=346.6,
+            model_norm_round0=56.4,
+            target_ratio=2.0,
+            gain=0.025,
+            coefficient_min=1e-6,
+            coefficient_max=0.05,
+            beta=0.9,
+            max_change_factor=2.0,
+        )
+        # growth_ratio = 346.6/56.4 approx 6.15; smoothed = 0.9*1.0 + 0.1*6.15 = 1.515
+        # desired = clip(0.025*(1.515-2.0), 1e-6, 0.05) -> clipped to the coefficient_min floor
+        # since (1.515-2.0) is negative -- rate-limited against a previous of 1e-6
+        self.assertGreaterEqual(applied, 1e-6)
+        self.assertLessEqual(applied, 1e-6 * 2.0)
+        self.assertAlmostEqual(smoothed, 1.515, places=3)
+
+        # A node already at a high coefficient facing continued high growth
+        # should ramp toward the ceiling, not snap there in one round.
+        applied_high, _ = _weight_decay_control_step(
+            previous_coefficient=0.01,
+            previous_smoothed_ratio=4.0,
+            model_norm=346.6,
+            model_norm_round0=56.4,
+            target_ratio=2.0,
+            gain=0.025,
+            coefficient_min=1e-6,
+            coefficient_max=0.05,
+            beta=0.9,
+            max_change_factor=2.0,
+        )
+        self.assertGreater(applied_high, 0.01)
+        self.assertLessEqual(applied_high, 0.01 * 2.0)
+
+        # Zero previous must not permanently lock the coefficient at zero
+        # (the multiplicative-rate-limiter degeneracy this floor exists to avoid).
+        applied_from_floor, _ = _weight_decay_control_step(
+            previous_coefficient=1e-6,
+            previous_smoothed_ratio=5.0,
+            model_norm=346.6,
+            model_norm_round0=56.4,
+            target_ratio=2.0,
+            gain=0.025,
+            coefficient_min=1e-6,
+            coefficient_max=0.05,
+            beta=0.9,
+            max_change_factor=2.0,
+        )
+        self.assertGreater(applied_from_floor, 1e-6)
 
     def test_relative_noise_is_deterministic_and_has_requested_norm(self):
         params = [tf.reshape(tf.range(1, 101, dtype=tf.float32), (10, 10))]

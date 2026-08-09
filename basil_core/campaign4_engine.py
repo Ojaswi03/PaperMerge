@@ -315,6 +315,42 @@ def _bounded_adaptive_coefficient(
     return tf.clip_by_value(smoothed, lower, upper)
 
 
+def _weight_decay_control_step(
+    *,
+    previous_coefficient: float,
+    previous_smoothed_ratio: float,
+    model_norm: float,
+    model_norm_round0: float,
+    target_ratio: float,
+    gain: float,
+    coefficient_min: float,
+    coefficient_max: float,
+    beta: float,
+    max_change_factor: float,
+) -> tuple[float, float]:
+    """Return (applied_coefficient, smoothed_ratio) for Phase C's weight-decay controller.
+
+    Plain Python, not TF ops: this runs once per round in the round loop,
+    not inside a per-step traced function, so it operates on the plain
+    floats _state_diagnostics already returns. ``coefficient_min`` must be
+    a small positive floor, never 0.0 -- the multiplicative rate limiter
+    below would otherwise lock the coefficient at a permanent 0.0 once it
+    reached there.
+    """
+    growth_ratio = model_norm / max(model_norm_round0, EPSILON)
+    smoothed_ratio = beta * previous_smoothed_ratio + (1.0 - beta) * growth_ratio
+    desired = max(
+        coefficient_min,
+        min(gain * (smoothed_ratio - target_ratio), coefficient_max),
+    )
+    previous = max(coefficient_min, min(previous_coefficient, coefficient_max))
+    lower = previous / max(max_change_factor, 1.0)
+    upper = previous * max(max_change_factor, 1.0)
+    applied = max(lower, min(desired, upper))
+    applied = max(coefficient_min, min(applied, coefficient_max))
+    return applied, smoothed_ratio
+
+
 @dataclass
 class RingSnapshot:
     sender_id: int
