@@ -1,4 +1,4 @@
-"""Subprocess pool for isolated Campaign 3 queue execution."""
+"""Subprocess pool for isolated Campaign 3 and Campaign 4 execution."""
 
 from __future__ import annotations
 
@@ -7,6 +7,7 @@ import json
 import os
 from pathlib import Path
 import queue
+import signal
 import subprocess
 import sys
 import threading
@@ -18,6 +19,86 @@ from gui.campaign3 import write_json_atomic
 EVENT_PREFIX = "@@CAMPAIGN_EVENT@@"
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 WORK_DIR = Path("experiments") / "results3" / "r2" / "workers"
+PID_SUFFIX = ".pid.json"
+
+
+def _pid_is_alive(pid: int) -> bool:
+    try:
+        os.kill(int(pid), 0)
+    except (OSError, ValueError):
+        return False
+    return True
+
+
+def find_orphan_workers(work_dir: Path | str) -> list[dict]:
+    """Return records for tracked worker PIDs that are still alive.
+
+    Stale sidecar files whose process has already exited are removed.
+    Each returned record includes the sidecar path so the orphan can be
+    terminated and its record cleaned afterwards.
+    """
+    orphans = []
+    directory = Path(work_dir)
+    if not directory.is_dir():
+        return orphans
+    for pid_path in sorted(directory.glob(f"*{PID_SUFFIX}")):
+        try:
+            record = json.loads(pid_path.read_text())
+            pid = int(record["pid"])
+        except (OSError, ValueError, KeyError, TypeError):
+            try:
+                pid_path.unlink()
+            except OSError:
+                pass
+            continue
+        if not _pid_is_alive(pid):
+            try:
+                pid_path.unlink()
+            except OSError:
+                pass
+            continue
+        record["pidPath"] = pid_path
+        orphans.append(record)
+    return orphans
+
+
+def terminate_orphan_workers(
+    orphans: list[dict], *, term_timeout: float = 15.0
+) -> int:
+    """Terminate tracked orphan workers: SIGTERM, wait, then SIGKILL.
+
+    Workers trap SIGTERM as a graceful stop request, so a hard kill follows
+    for any process still alive after ``term_timeout`` seconds. Returns the
+    number of processes that were signaled.
+    """
+    signaled = 0
+    for record in orphans:
+        pid = int(record["pid"])
+        try:
+            os.kill(pid, signal.SIGTERM)
+            signaled += 1
+        except OSError:
+            continue
+    deadline = time.monotonic() + max(0.0, term_timeout)
+    remaining = [int(record["pid"]) for record in orphans]
+    while remaining and time.monotonic() < deadline:
+        remaining = [pid for pid in remaining if _pid_is_alive(pid)]
+        if remaining:
+            time.sleep(0.1)
+    for pid in remaining:
+        try:
+            os.kill(pid, signal.SIGKILL)
+        except OSError:
+            pass
+    for record in orphans:
+        pid_path = record.get("pidPath")
+        if pid_path is None:
+            continue
+        try:
+            Path(pid_path).unlink()
+        except OSError:
+            pass
+    return signaled
 
 
 @dataclass
@@ -26,6 +107,7 @@ class ActiveWorker:
     config: dict
     process: subprocess.Popen
     config_path: Path
+    gpu_memory_limit_mb: int
     started_monotonic: float
     reader: threading.Thread
 
@@ -36,6 +118,7 @@ class WorkerCompletion:
     config: dict
     return_code: int
     elapsed_seconds: float
+    gpu_memory_limit_mb: int
 
 
 class CampaignWorkerPool:
@@ -78,7 +161,13 @@ class CampaignWorkerPool:
         with self._lock:
             return [active.config for active in self.active.values()]
 
-    def launch(self, config: dict, lane: int | None = None) -> ActiveWorker:
+    def launch(
+        self,
+        config: dict,
+        lane: int | None = None,
+        *,
+        gpu_memory_limit_mb: int | None = None,
+    ) -> ActiveWorker:
         if lane is None:
             available = self.available_lanes
             if not available:
@@ -91,13 +180,18 @@ class CampaignWorkerPool:
         run_id = str(config.get("runId", f"lane-{lane}"))
         config_path = self.work_dir / f"{run_id}.lane-{lane}.json"
         write_json_atomic(config_path, config)
+        memory_limit = (
+            self.gpu_memory_limit_mb
+            if gpu_memory_limit_mb is None
+            else max(0, int(gpu_memory_limit_mb))
+        )
         command = [
             self.python_executable,
             str(self.worker_script),
             "--config",
             str(config_path),
             "--gpu-memory-mb",
-            str(self.gpu_memory_limit_mb),
+            str(memory_limit),
         ]
         environment = os.environ.copy()
         environment["PYTHONUNBUFFERED"] = "1"
@@ -111,11 +205,24 @@ class CampaignWorkerPool:
             bufsize=1,
         )
 
+        pid_path = self.work_dir / f"{run_id}.lane-{lane}{PID_SUFFIX}"
+        write_json_atomic(
+            pid_path,
+            {
+                "pid": process.pid,
+                "runId": run_id,
+                "lane": lane,
+                "script": str(self.worker_script),
+                "startedAt": time.time(),
+            },
+        )
+
         active = ActiveWorker(
             lane=lane,
             config=config,
             process=process,
             config_path=config_path,
+            gpu_memory_limit_mb=memory_limit,
             started_monotonic=time.monotonic(),
             reader=None,
         )
@@ -171,14 +278,21 @@ class CampaignWorkerPool:
                     config=active.config,
                     return_code=int(return_code),
                     elapsed_seconds=time.monotonic() - active.started_monotonic,
+                    gpu_memory_limit_mb=active.gpu_memory_limit_mb,
                 )
             )
             with self._lock:
                 self.active.pop(lane, None)
-            try:
-                active.config_path.unlink()
-            except OSError:
-                pass
+            for path in (
+                active.config_path,
+                active.config_path.with_name(
+                    active.config_path.stem + PID_SUFFIX
+                ),
+            ):
+                try:
+                    path.unlink()
+                except OSError:
+                    pass
         return finished
 
     def active_elapsed_by_run_id(self) -> dict[str, float]:

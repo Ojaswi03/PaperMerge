@@ -21,9 +21,7 @@ _WATCH_TARGETS = [
 # ── GUI subprocess mode ────────────────────────────────────────────────────────
 def _run_gui():
     """Run the actual GUI. Invoked when --gui flag is present."""
-    from scripts.common import setupGpu
     os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
-    setupGpu()
 
     from gui.experimentGui import main
 
@@ -61,17 +59,65 @@ def _collect_mtimes():
     return mtimes
 
 
+# Written by the GUI while a queue is running; the watcher defers restarts
+# while it exists so training workers are never orphaned by a code change.
+_QUEUE_SENTINEL = os.path.join(PROJECT_ROOT, 'gui', '.queue_active.json')
+
+
 def _launch_subprocess():
     import subprocess
-    return subprocess.Popen([sys.executable, __file__, '--gui'])
+    # New session so the GUI and every worker it spawns share a process
+    # group the launcher can terminate as a tree.
+    return subprocess.Popen(
+        [sys.executable, __file__, '--gui'], start_new_session=True
+    )
+
+
+def _stop_gui_tree(proc):
+    """Terminate the GUI and all of its worker processes.
+
+    Workers trap SIGTERM as a graceful stop request, so the whole group is
+    hard-killed once the GUI is gone. Worker saves are atomic and stopped
+    runs stay in the queue, so this loses at most the in-flight round.
+    Without this, campaign workers survive the GUI and keep training on the
+    GPU invisibly.
+    """
+    import signal
+    import subprocess
+
+    def _signal_tree(signum):
+        # start_new_session=True makes the GUI its own group leader, so its
+        # PID doubles as the process-group ID even after the GUI is reaped.
+        try:
+            os.killpg(proc.pid, signum)
+            return True
+        except (OSError, ProcessLookupError):
+            return False
+
+    if not _signal_tree(signal.SIGTERM):
+        proc.terminate()
+    try:
+        proc.wait(timeout=6)
+    except subprocess.TimeoutExpired:
+        pass
+    if not _signal_tree(signal.SIGKILL):
+        proc.kill()
+    try:
+        proc.wait(timeout=6)
+    except subprocess.TimeoutExpired:
+        pass
+
+
+def _queue_is_active(proc):
+    return proc.poll() is None and os.path.exists(_QUEUE_SENTINEL)
 
 
 def _run_watcher():
-    import subprocess
     import time
 
     mtimes = _collect_mtimes()
     proc = _launch_subprocess()
+    deferred_announced = False
 
     try:
         while True:
@@ -84,6 +130,7 @@ def _run_watcher():
                 print('\n[Launcher] Reload requested - restarting GUI...\n')
                 mtimes = _collect_mtimes()
                 proc = _launch_subprocess()
+                deferred_announced = False
                 continue
 
             # GUI closed normally (user clicked Exit / closed window)
@@ -103,24 +150,30 @@ def _run_watcher():
                 labels = ', '.join(changed[:4])
                 if len(changed) > 4:
                     labels += f' (+{len(changed) - 4} more)'
+                if _queue_is_active(proc):
+                    # Restarting now would kill or orphan the training
+                    # workers mid-run. Hold the restart until the queue
+                    # finishes; keep the old mtimes so the pending change
+                    # keeps being detected.
+                    if not deferred_announced:
+                        print(f'\n[Launcher] Changed: {labels}')
+                        print(
+                            '[Launcher] Queue is running - restart deferred '
+                            'until it finishes.'
+                        )
+                        deferred_announced = True
+                    continue
                 print(f'\n[Launcher] Changed: {labels}')
                 print('[Launcher] Restarting GUI...\n')
-                proc.terminate()
-                try:
-                    proc.wait(timeout=6)
-                except subprocess.TimeoutExpired:
-                    proc.kill()
+                _stop_gui_tree(proc)
                 time.sleep(0.3)
-                mtimes = new_mtimes
+                mtimes = _collect_mtimes()
                 proc = _launch_subprocess()
+                deferred_announced = False
 
     except KeyboardInterrupt:
-        print('\n[Launcher] Interrupted - stopping GUI...')
-        proc.terminate()
-        try:
-            proc.wait(timeout=6)
-        except subprocess.TimeoutExpired:
-            proc.kill()
+        print('\n[Launcher] Interrupted - stopping GUI and workers...')
+        _stop_gui_tree(proc)
 
 
 # ── Entry point ────────────────────────────────────────────────────────────────
