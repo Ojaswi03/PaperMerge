@@ -30,6 +30,7 @@ import threading
 import json
 import hashlib
 from datetime import datetime, timedelta
+from pathlib import Path
 import numpy as np
 
 # Add project root to path
@@ -56,7 +57,36 @@ from gui.campaign3 import (
     write_json_atomic,
     write_npz_atomic,
 )
-from gui.campaign_workers import CampaignWorkerPool
+from gui.campaign4 import (
+    CAMPAIGN_STATE as CAMPAIGN4_STATE,
+    CONFIG_ROOT as CAMPAIGN4_CONFIG_ROOT,
+    PERFORMANCE_PROFILE as CAMPAIGN4_PERFORMANCE_PROFILE,
+    PLOT_ROOT as CAMPAIGN4_PLOT_ROOT,
+    PRESET_LABELS as CAMPAIGN4_PRESET_LABELS,
+    RESULT_BASE as CAMPAIGN4_RESULT_BASE,
+    RESULT_ROOT as CAMPAIGN4_RESULT_ROOT,
+    WORKER_ROOT as CAMPAIGN4_WORKER_ROOT,
+    apply_performance_profile as applyCampaign4PerformanceProfile,
+    build_preset as buildCampaign4Preset,
+    diagnostic_completion as campaign4DiagnosticCompletion,
+    freeze_campaign_state as freezeCampaign4State,
+    is_completed as isCampaign4Completed,
+    is_confirmation_frozen as isCampaign4ConfirmationFrozen,
+    load_campaign_state as loadCampaign4State,
+    result_paths as campaign4ResultPaths,
+)
+from gui.campaign_workers import (
+    CampaignWorkerPool,
+    WORK_DIR as CAMPAIGN3_WORKER_ROOT,
+    find_orphan_workers,
+    terminate_orphan_workers,
+)
+from gui.campaign4_execution import (
+    memory_limit_for_config as campaign4MemoryLimit,
+    select_next_config as selectCampaign4Config,
+    settings_from_profile as campaign4ExecutionSettings,
+)
+from gui.network_view import CampaignNetworkView
 from gui.runtime_estimator import (
     RuntimeEstimator,
     format_duration,
@@ -150,19 +180,37 @@ class ExperimentGUI:
         self._queueStatePath = os.path.join(
             os.path.dirname(os.path.abspath(__file__)), "queue_state.json"
         )
+        # Sentinel the launcher's file-watcher checks so a code change never
+        # restarts the GUI (and orphans GPU workers) while a queue is running.
+        self._queueActivePath = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), ".queue_active.json"
+        )
         self._queuePreset1Path = os.path.join(
             os.path.dirname(os.path.abspath(__file__)), "presets", "preset1_queue.json"
         )
         self.queueButton = None   # set when toolbar is built
-        self._runtimeEstimator = RuntimeEstimator()
+        self._runtimeEstimator = RuntimeEstimator(
+            (
+                Path("experiments") / "results3" / "r2",
+                CAMPAIGN4_RESULT_BASE,
+            )
+        )
         self._workerProfile = load_worker_profile()
+        self._workerProfile4 = load_worker_profile(CAMPAIGN4_PERFORMANCE_PROFILE)
+        if self._workerProfile4.get("status") == "not_benchmarked":
+            self._workerProfile4["gpuMemoryLimitMb"] = 7600
+        self._runtimeEstimator.set_execution_profile(self._workerProfile4)
         self._campaignWorkerPool = None
+        self._campaignWorkerFailures = {}
         self._benchmarkProcess = None
         self._queueLastEstimateRefresh = 0.0
         self._queueBatchNeedsPlot = False
         self._campaignPlotCondition = threading.Condition()
         self._campaignPlotPendingSplits = set()
         self._campaignPlotThread = None
+        self._campaign4PlotCondition = threading.Condition()
+        self._campaign4PlotPendingSplits = set()
+        self._campaign4PlotThread = None
 
         # Live-chart / progress tracking
         self._liveAccData    = []
@@ -180,6 +228,21 @@ class ExperimentGUI:
         self.createUI()
         self._loadQueueState()
         self._setupKeyboardShortcuts()
+
+        # A fresh GUI has no running queue; drop any sentinel a killed
+        # session left behind, then surface workers it may have leaked.
+        self._clearQueueActiveSentinel()
+        startupOrphans = self._findOrphanWorkers()
+        if startupOrphans:
+            names = ", ".join(
+                f"{entry.get('runId', '?')} (pid {entry.get('pid', '?')})"
+                for entry in startupOrphans
+            )
+            self.logMessage(
+                f"WARNING: {len(startupOrphans)} campaign worker(s) from a "
+                f"previous session are still running: {names}. They hold GPU "
+                "memory; starting the queue will offer to terminate them."
+            )
 
         self.root.protocol("WM_DELETE_WINDOW", self.onClosing)
         self._setStatus("Ready  ·  Ctrl+R = Run   Ctrl+S = Save   Ctrl+L = Load   Esc = Stop   Ctrl+Shift+R = Reload")
@@ -384,16 +447,19 @@ class ExperimentGUI:
         advancedTab = ttk.Frame(self.notebook)
         attackTab   = ttk.Frame(self.notebook)
         outputTab   = ttk.Frame(self.notebook)
+        networkTab  = ttk.Frame(self.notebook)
 
         self.notebook.add(basicTab,    text="  Basic  ")
         self.notebook.add(advancedTab, text="  Advanced  ")
         self.notebook.add(attackTab,   text="  Attacks  ")
         self.notebook.add(outputTab,   text="  Output  ")
+        self.notebook.add(networkTab,  text="  Network  ")
 
         self.createBasicTab(basicTab)
         self.createAdvancedTab(advancedTab)
         self.createAttackTab(attackTab)
         self.createOutputTab(outputTab)
+        self.networkView = CampaignNetworkView(networkTab)
 
     def _createProgressFrame(self):
         pf = tk.Frame(self.root, bg=PANEL_BG, highlightthickness=1,
@@ -1112,6 +1178,11 @@ class ExperimentGUI:
     _ERROR_FILE = "error.txt"
 
     def logMessage(self, message):
+        # Tk widgets are only safe to touch from the main thread; queue and
+        # plot threads log through the event loop instead of directly.
+        if threading.current_thread() is not threading.main_thread():
+            self.root.after(0, self.logMessage, message)
+            return
         tag = self._pickLogTag(message)
         self.outputText.insert(tk.END, message + "\n", tag)
         self.outputText.see(tk.END)
@@ -1413,6 +1484,9 @@ class ExperimentGUI:
         if int(config.get('campaignVersion', 0)) == 3:
             metricsPath, runPath = campaign3ResultPaths(config)
             return str(metricsPath), str(runPath)
+        if int(config.get('campaignVersion', 0)) == 4:
+            metricsPath, runPath, _ = campaign4ResultPaths(config)
+            return str(metricsPath), str(runPath)
 
         dataset = config.get('dataset', '')
         attackParts = []
@@ -1447,6 +1521,8 @@ class ExperimentGUI:
     def _isAlreadyRun(self, config):
         if int(config.get('campaignVersion', 0)) == 3:
             return isCampaign3Completed(config)
+        if int(config.get('campaignVersion', 0)) == 4:
+            return isCampaign4Completed(config)
 
         accPath, configPath = self._getResultPaths(config)
         if accPath is None or not os.path.exists(accPath):
@@ -2330,8 +2406,21 @@ class ExperimentGUI:
         self.generatePlots(showDialog=False, config=config, onlyMissing=True)
 
     # ── Config Queue ──────────────────────────────────────────────────────────
-    def _workerSettings(self):
-        profile = self._workerProfile or {}
+    def _workerSettings(self, campaignVersion=None):
+        if campaignVersion is None:
+            with self._queueLock:
+                campaignVersion = (
+                    int(self.configQueue[0].get("campaignVersion", 0))
+                    if self.configQueue
+                    else 3
+                )
+        profile = (
+            self._workerProfile4
+            if int(campaignVersion) == 4
+            else self._workerProfile
+        ) or {}
+        if int(campaignVersion) == 4:
+            return campaign4ExecutionSettings(profile)
         validated = (
             profile.get("status") == "validated"
             and int(profile.get("recommendedLanes", 1)) == 2
@@ -2339,7 +2428,12 @@ class ExperimentGUI:
         lanes = 2 if validated else 1
         return {
             "lanes": lanes,
-            "gpuMemoryLimitMb": int(profile.get("gpuMemoryLimitMb", 4200)),
+            "gpuMemoryLimitMb": int(
+                profile.get(
+                    "gpuMemoryLimitMb",
+                    7600 if int(campaignVersion) == 4 else 4200,
+                )
+            ),
             "concurrencySlowdown": (
                 float(profile.get("concurrencySlowdown", 1.0))
                 if lanes > 1
@@ -2362,6 +2456,14 @@ class ExperimentGUI:
             lanes=settings["lanes"],
             active_elapsed=activeElapsed,
             concurrency_slowdown=settings["concurrencySlowdown"],
+            max_concurrent_ebm=settings.get("maxConcurrentEbm"),
+            allow_mixed_ebm_standard=settings.get(
+                "allowMixedEbmStandard",
+                True,
+            ),
+            allow_dual_standard=settings.get("allowDualStandard", True),
+            prioritize_ebm=settings.get("prioritizeEbm", False),
+            runtime_slowdowns=settings.get("runtimeSlowdowns"),
         )
         if not queueSnapshot:
             return "Queue estimate: empty"
@@ -2391,24 +2493,56 @@ class ExperimentGUI:
     def _refreshQueueEstimate(self):
         self._queueEtaVar.set(self._queueEstimateText())
         settings = self._workerSettings()
-        profile = self._workerProfile or {}
-        if settings["lanes"] == 2:
-            profileText = (
-                f"Execution: validated 2-lane mode · "
-                f"{float(profile.get('measuredSpeedup', 0.0)):.2f}x benchmark speedup · "
-                f"{settings['gpuMemoryLimitMb']} MB per worker"
+        with self._queueLock:
+            campaignVersion = (
+                int(self.configQueue[0].get("campaignVersion", 0))
+                if self.configQueue
+                else 3
             )
-        elif profile.get("status") == "single_lane_required":
+        profile = (
+            self._workerProfile4
+            if campaignVersion == 4
+            else self._workerProfile
+        ) or {}
+        selectedProfile = profile.get("selectedProfile") or {}
+        precisionValidation = profile.get("precisionValidation") or {}
+        backendSpeedup = float(precisionValidation.get("medianSpeedup", 0.0))
+        executionName = (
+            f"{selectedProfile.get('precisionProfile', 'float32')} / "
+            f"{selectedProfile.get('gpuAllocator', 'bfc')}"
+            if campaignVersion == 4
+            else "isolated workers"
+        )
+        speedText = (
+            f"{backendSpeedup:.2f}x backend / "
+            f"{settings.get('measuredSpeedup', 0.0):.2f}x lane throughput"
+            if campaignVersion == 4
+            else f"{float(profile.get('measuredSpeedup', 0.0)):.2f}x benchmark speedup"
+        )
+        if settings["lanes"] == 2:
+            limits = settings.get("memoryLimitsMb", {})
             profileText = (
-                "Execution: 1 isolated GPU worker · two-lane benchmark did not "
+                f"Execution: validated resource-aware 2-lane mode · "
+                f"{executionName} · "
+                f"{speedText} · "
+                f"max {settings.get('maxConcurrentEbm', 1)} EBM lane · "
+                f"standard {limits.get('standard', '?')} MB / "
+                f"EBM {limits.get('ebm', '?')} MB"
+            )
+        elif settings.get("status") == "single_lane_required":
+            profileText = (
+                f"Execution: 1 isolated GPU worker · {executionName} · "
+                "two-lane benchmark did not "
                 "meet the safety/throughput gate"
             )
         else:
             profileText = (
-                "Execution: 1 isolated GPU worker · benchmark 2 lanes before "
+                f"Execution: 1 isolated GPU worker · {executionName} · "
+                "benchmark 2 lanes before "
                 "enabling concurrency"
             )
-        self._workerProfileVar.set(profileText)
+        prefix = "Campaign 4" if campaignVersion == 4 else "Campaign 3"
+        self._workerProfileVar.set(f"{prefix} · {profileText}")
 
     def _scheduleQueueEstimateRefresh(self):
         try:
@@ -2430,16 +2564,96 @@ class ExperimentGUI:
         except Exception as e:
             self.logMessage(f"WARNING: could not save queue state: {e}")
 
+    def _setQueueActiveSentinel(self):
+        try:
+            write_json_atomic(
+                self._queueActivePath,
+                {"pid": os.getpid(), "startedAt": time.time()},
+            )
+        except Exception as e:
+            self.logMessage(f"WARNING: could not mark queue active: {e}")
+
+    def _clearQueueActiveSentinel(self):
+        try:
+            os.unlink(self._queueActivePath)
+        except OSError:
+            pass
+
+    def _workerRoots(self):
+        return (CAMPAIGN3_WORKER_ROOT, CAMPAIGN4_WORKER_ROOT)
+
+    def _findOrphanWorkers(self):
+        orphans = []
+        for root in self._workerRoots():
+            orphans.extend(find_orphan_workers(root))
+        return orphans
+
+    def _handleOrphanWorkers(self, parent=None):
+        """Detect leaked GPU workers; offer to terminate before a queue run.
+
+        Returns True when it is safe to start the queue.
+        """
+        orphans = self._findOrphanWorkers()
+        if not orphans:
+            return True
+        names = ", ".join(
+            f"{entry.get('runId', '?')} (pid {entry.get('pid', '?')})"
+            for entry in orphans
+        )
+        if not messagebox.askyesno(
+            "Orphaned Workers Detected",
+            f"{len(orphans)} campaign worker(s) from a previous session are "
+            f"still training on the GPU:\n\n{names}\n\n"
+            "Starting the queue now would compete with them for GPU memory. "
+            "Terminate them and start the queue?",
+            parent=parent,
+        ):
+            self.logMessage(
+                "Queue start cancelled: orphaned workers are still running "
+                f"({names})."
+            )
+            return False
+        terminate_orphan_workers(orphans)
+        self.logMessage(
+            f"Terminated {len(orphans)} orphaned worker(s): {names}. "
+            "Their stopped configs remain queued."
+        )
+        return True
+
     def _loadQueueState(self):
         try:
             if os.path.exists(self._queueStatePath):
                 with open(self._queueStatePath, 'r') as f:
                     loaded = json.load(f)
                 if isinstance(loaded, list):
-                    self.configQueue = [dict(cfg) for cfg in loaded if isinstance(cfg, dict)]
+                    self.configQueue = [
+                        self._applyCampaign4PerformanceProfile(dict(cfg))
+                        if int(cfg.get("campaignVersion", 0)) == 4
+                        else dict(cfg)
+                        for cfg in loaded
+                        if isinstance(cfg, dict)
+                    ]
         except Exception as e:
             self.logMessage(f"WARNING: could not load queue state: {e}")
         self._updateQueueButton()
+
+    def _refreshQueuedCampaign4Profiles(self):
+        """Apply the current validated backend to persisted Campaign 4 items."""
+        changed = 0
+        with self._queueLock:
+            for index, config in enumerate(self.configQueue):
+                if int(config.get("campaignVersion", 0)) != 4:
+                    continue
+                profiled = applyCampaign4PerformanceProfile(
+                    config,
+                    self._workerProfile4,
+                )
+                if profiled != config:
+                    self.configQueue[index] = profiled
+                    changed += 1
+            if changed:
+                self._saveQueueState()
+        return changed
 
     def _updateQueueButton(self):
         n = len(self.configQueue)
@@ -2555,6 +2769,380 @@ class ExperimentGUI:
         )
         return len(pending)
 
+    def _requireCampaign4Freeze(self, parent=None):
+        if isCampaign4ConfirmationFrozen(execution_profile=self._workerProfile4):
+            return True
+        completion = campaign4DiagnosticCompletion(
+            execution_profile=self._workerProfile4
+        )
+        state = loadCampaign4State()
+        if completion["complete"]:
+            reason = (
+                "The diagnostic sweep is complete, but the freeze record is "
+                "missing or no longer matches the exact Campaign 4 method/code."
+            )
+        else:
+            reason = (
+                f"Only {completion['completed']}/{completion['expected']} "
+                "Merged+CART diagnostic runs are complete."
+            )
+            if completion.get("sourceMismatchRunIds"):
+                reason += (
+                    f" {len(completion['sourceMismatchRunIds'])} artifact(s) "
+                    "were produced by stale Campaign 4 source files."
+                )
+        if state.get("status") == "frozen":
+            reason += " The existing freeze record is stale and must be reviewed."
+        messagebox.showwarning(
+            "Campaign 4 Confirmation Locked",
+            f"{reason}\n\nComplete all diagnostics, review their plots, then "
+            "use 'Freeze Campaign 4 method' before queuing confirmation runs.",
+            parent=parent,
+        )
+        return False
+
+    def _freezeCampaign4Method(self, parent=None, refreshCallback=None):
+        if self.isRunning:
+            messagebox.showwarning(
+                "Queue Running",
+                "Stop the active queue before freezing the Campaign 4 method.",
+                parent=parent,
+            )
+            return False
+        completion = campaign4DiagnosticCompletion(
+            execution_profile=self._workerProfile4
+        )
+        if not completion["complete"]:
+            mismatchText = (
+                f"\nStale-source artifacts: "
+                f"{len(completion.get('sourceMismatchRunIds', []))}."
+                if completion.get("sourceMismatchRunIds")
+                else ""
+            )
+            messagebox.showwarning(
+                "Diagnostics Incomplete",
+                "Campaign 4 requires all Merged and CART diagnostics before "
+                f"freezing. Completed: {completion['completed']}/"
+                f"{completion['expected']}.{mismatchText}",
+                parent=parent,
+            )
+            return False
+        if isCampaign4ConfirmationFrozen(execution_profile=self._workerProfile4):
+            state = loadCampaign4State()
+            messagebox.showinfo(
+                "Campaign 4 Already Frozen",
+                f"The current method contract is frozen at "
+                f"{state.get('frozenAt', 'an unknown time')}.\n\n"
+                f"Freeze record: {CAMPAIGN4_STATE}",
+                parent=parent,
+            )
+            return True
+        rationale = simpledialog.askstring(
+            "Freeze Campaign 4 Method",
+            "Record why this adaptive controller is accepted for confirmation. "
+            "This must be based only on diagnostic seed 2025:",
+            parent=parent,
+        )
+        if rationale is None:
+            return False
+        rationale = rationale.strip()
+        if not rationale:
+            messagebox.showerror(
+                "Rationale Required",
+                "Enter a non-empty diagnostic decision rationale.",
+                parent=parent,
+            )
+            return False
+        margin = simpledialog.askfloat(
+            "Predeclare Non-Inferiority Margin",
+            "Enter the advisor-approved accuracy margin before viewing "
+            "confirmation results (0.05 means five percentage points):",
+            initialvalue=0.05,
+            minvalue=0.0,
+            maxvalue=1.0,
+            parent=parent,
+        )
+        if margin is None:
+            return False
+        if not messagebox.askyesno(
+            "Confirm Method Freeze",
+            "Freeze the exact Campaign 4 adaptive method, engine source, "
+            "diagnostic run identities, confirmation matrix, and declared "
+            f"margin ({margin:.4f})?\n\nSubsequent code or protocol changes "
+            "invalidate this freeze record.",
+            parent=parent,
+        ):
+            return False
+        try:
+            state = freezeCampaign4State(
+                rationale=rationale,
+                noninferiority_margin=margin,
+                execution_profile=self._workerProfile4,
+            )
+        except Exception as error:
+            messagebox.showerror(
+                "Campaign 4 Freeze Failed",
+                str(error),
+                parent=parent,
+            )
+            return False
+        if refreshCallback is not None:
+            refreshCallback()
+        self.logMessage(
+            f"Campaign 4 method frozen at {state['frozenAt']}; "
+            f"non-inferiority margin={margin:.4f}; state={CAMPAIGN4_STATE}"
+        )
+        self._setStatus("Campaign 4 method frozen; confirmation is unlocked.")
+        messagebox.showinfo(
+            "Campaign 4 Frozen",
+            f"Confirmation presets are now unlocked.\n\n"
+            f"Freeze record: {CAMPAIGN4_STATE}",
+            parent=parent,
+        )
+        return True
+
+    def _appendCampaign4Preset(self, presetKey, parent=None, refreshCallback=None):
+        if presetKey in (
+            "main_confirmation",
+            "non_iid_confirmation",
+            "iid_confirmation",
+        ) and not self._requireCampaign4Freeze(parent=parent):
+            return 0
+        try:
+            configs = [
+                self._applyCampaign4PerformanceProfile(dict(config))
+                for config in buildCampaign4Preset(presetKey)
+            ]
+        except Exception as error:
+            messagebox.showerror("Campaign 4", str(error), parent=parent)
+            return 0
+
+        with self._queueLock:
+            queuedRunIds = {
+                config.get("runId")
+                for config in self.configQueue
+                if config.get("runId")
+            }
+            added = 0
+            skippedQueued = 0
+            skippedCompleted = 0
+            for config in configs:
+                runId = config["runId"]
+                if runId in queuedRunIds:
+                    skippedQueued += 1
+                    continue
+                if isCampaign4Completed(config):
+                    skippedCompleted += 1
+                    continue
+                self.configQueue.append(dict(config))
+                queuedRunIds.add(runId)
+                added += 1
+            if not self.isRunning:
+                self.configQueue = self._configsByEstimatedDuration(self.configQueue)
+            self._saveQueueState()
+
+        if refreshCallback is not None:
+            refreshCallback()
+        self._updateQueueButton()
+        label = CAMPAIGN4_PRESET_LABELS.get(presetKey, presetKey)
+        self._setStatus(
+            f"{label}: added {added}; skipped {skippedQueued} queued and "
+            f"{skippedCompleted} completed."
+        )
+        if parent is not None:
+            messagebox.showinfo(
+                "Campaign 4",
+                f"{label}\n\nAdded: {added}\n"
+                f"Already queued: {skippedQueued}\n"
+                f"Already completed: {skippedCompleted}",
+                parent=parent,
+            )
+        return added
+
+    def _replaceWithCampaign4Preset(
+        self,
+        presetKey,
+        parent=None,
+        refreshCallback=None,
+    ):
+        if presetKey in (
+            "main_confirmation",
+            "non_iid_confirmation",
+            "iid_confirmation",
+        ) and not self._requireCampaign4Freeze(parent=parent):
+            return 0
+        if self.isRunning:
+            messagebox.showwarning(
+                "Queue Running",
+                "Stop the active queue before replacing it.",
+                parent=parent,
+            )
+            return 0
+        try:
+            configs = [
+                self._applyCampaign4PerformanceProfile(dict(config))
+                for config in buildCampaign4Preset(presetKey)
+            ]
+        except Exception as error:
+            messagebox.showerror("Campaign 4", str(error), parent=parent)
+            return 0
+        pending = [config for config in configs if not isCampaign4Completed(config)]
+        completed = len(configs) - len(pending)
+        with self._queueLock:
+            existingCount = len(self.configQueue)
+        prompt = (
+            f"Replace the current {existingCount}-item queue with pending runs "
+            f"from {CAMPAIGN4_PRESET_LABELS.get(presetKey, presetKey)}?\n\n"
+            f"Preset total: {len(configs)}\nAlready completed: {completed}\n"
+            f"Will be queued: {len(pending)}\n\nExisting results are not changed."
+        )
+        if existingCount and not messagebox.askyesno(
+            "Replace Queue", prompt, parent=parent
+        ):
+            return 0
+        with self._queueLock:
+            self.configQueue = self._configsByEstimatedDuration(
+                [dict(config) for config in pending]
+            )
+            self._saveQueueState()
+        if refreshCallback is not None:
+            refreshCallback()
+        self._updateQueueButton()
+        messagebox.showinfo(
+            "Campaign 4",
+            f"Loaded {len(pending)} pending runs.\n"
+            f"Reused {completed} completed results.\n\n{self._queueEtaVar.get()}",
+            parent=parent,
+        )
+        return len(pending)
+
+    def _applyCampaign4PerformanceProfile(self, config):
+        profiled = applyCampaign4PerformanceProfile(config, self._workerProfile4)
+        config.clear()
+        config.update(profiled)
+        return config
+
+    def _benchmarkCampaign4Profiles(self, parent=None):
+        if self.isRunning:
+            messagebox.showwarning(
+                "Busy",
+                "Stop the current experiment or queue before profiling.",
+                parent=parent,
+            )
+            return
+        if not messagebox.askyesno(
+            "Benchmark Campaign 4 GPU",
+            "Benchmark exact full-batch float32/BF16 execution, allocator choices, "
+            "and memory-safe two-lane combinations across standard, SS, EBM, "
+            "and CART+SS+EBM paths?\n\nA faster BF16 candidate must also pass two "
+            "100-round no-save canaries, so a complete first-time profile can take "
+            "roughly 2–3 hours. Two lanes are enabled only when fingerprints, "
+            "finite values, VRAM headroom, and measured throughput all pass.",
+            parent=parent,
+        ):
+            return
+        self.isRunning = True
+        self.runButton.config(state=tk.DISABLED)
+        self.runAllButton.config(state=tk.DISABLED)
+        self.stopButton.config(state=tk.NORMAL)
+        self._setStatus("Benchmarking Campaign 4 GPU profiles…")
+        self.currentThread = threading.Thread(
+            target=self._runCampaign4BenchmarkThread,
+            daemon=True,
+        )
+        self.currentThread.start()
+
+    def _runCampaign4BenchmarkThread(self):
+        try:
+            projectRoot = Path(__file__).resolve().parents[1]
+            def runCommand(command):
+                self._benchmarkProcess = subprocess.Popen(
+                    command,
+                    cwd=projectRoot,
+                    text=True,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
+                    start_new_session=True,
+                )
+                if self._benchmarkProcess.stdout is not None:
+                    for line in self._benchmarkProcess.stdout:
+                        self.root.after(0, self.logMessage, line.rstrip())
+                return self._benchmarkProcess.wait()
+
+            returnCode = runCommand(
+                [
+                    sys.executable,
+                    str(projectRoot / "scripts" / "benchmark_campaign4.py"),
+                    "--gpu-memory-mb",
+                    "7600",
+                    "--include-cuda-malloc-async",
+                    "--include-mixed-bfloat16",
+                ]
+            )
+            if returnCode == 0:
+                pendingProfile = load_worker_profile(
+                    CAMPAIGN4_PERFORMANCE_PROFILE
+                )
+                if pendingProfile.get("status") == "requires_full_round_validation":
+                    returnCode = runCommand(
+                        [
+                            sys.executable,
+                            str(
+                                projectRoot
+                                / "scripts"
+                                / "validate_campaign4_precision.py"
+                            ),
+                            "--gpu-memory-mb",
+                            "7600",
+                        ]
+                    )
+            if returnCode == 0:
+                returnCode = runCommand(
+                    [
+                        sys.executable,
+                        str(
+                            projectRoot
+                            / "scripts"
+                            / "benchmark_campaign4_lanes.py"
+                        ),
+                        "--calibration-memory-mb",
+                        "7600",
+                    ]
+                )
+            self._workerProfile4 = load_worker_profile(
+                CAMPAIGN4_PERFORMANCE_PROFILE
+            )
+            updatedQueueItems = self._refreshQueuedCampaign4Profiles()
+            self._runtimeEstimator.reload()
+            self._runtimeEstimator.set_execution_profile(self._workerProfile4)
+            self.root.after(0, self._refreshQueueEstimate)
+            if returnCode != 0:
+                raise RuntimeError(
+                    f"Campaign 4 GPU benchmark exited with code {returnCode}."
+                )
+            selected = self._workerProfile4.get("selectedProfile") or {}
+            execution = self._workerProfile4.get("concurrencyProfile") or {}
+            self.root.after(
+                0,
+                messagebox.showinfo,
+                "Campaign 4 GPU Benchmark",
+                "Validated profile: "
+                f"{selected.get('profileId', 'none')}. "
+                f"Execution lanes: {execution.get('recommendedLanes', 1)}. "
+                f"Updated pending Campaign 4 queue items: {updatedQueueItems}.",
+            )
+        except Exception as error:
+            self.root.after(0, self.logMessage, f"CAMPAIGN 4 BENCHMARK ERROR: {error}")
+            self.root.after(
+                0,
+                messagebox.showerror,
+                "Campaign 4 GPU Benchmark",
+                str(error),
+            )
+        finally:
+            self._benchmarkProcess = None
+            self.root.after(0, self._onRunFinished)
+
     def _benchmarkCampaignWorkers(self, parent=None):
         if self.isRunning:
             messagebox.showwarning(
@@ -2640,6 +3228,7 @@ class ExperimentGUI:
     def openQueueManager(self):
         configDir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "configs")
         currentConfigDir = os.path.join(configDir, "current")
+        campaign4ConfigDir = str(Path(__file__).resolve().parents[1] / CAMPAIGN4_CONFIG_ROOT)
 
         dlg = tk.Toplevel(self.root)
         dlg.title("Config Queue")
@@ -2668,6 +3257,74 @@ class ExperimentGUI:
                     textvariable=repeatVar).pack(side=tk.LEFT)
         tk.Label(topFrame, text="times", bg=BG, fg=MUTED,
                  font=('Segoe UI', 9)).pack(side=tk.LEFT, padx=(4, 0))
+
+        # ── Campaign-four presets ──
+        campaign4Frame = ttk.LabelFrame(
+            dlg,
+            text="Campaign 4 · Adaptive high-noise study (new isolated results)",
+            padding=8,
+        )
+        campaign4Frame.pack(fill=tk.X, padx=12, pady=(2, 6))
+        campaign4Buttons = (
+            ("Diagnose non-IID Merged · 33", "diagnostic_non_iid_merged"),
+            ("Diagnose non-IID CART · 33", "diagnostic_non_iid_cart"),
+            ("Static EBM controls · 60", "static_controls"),
+            ("non-IID confirmation · 198", "non_iid_confirmation"),
+            ("IID confirmation · 198", "iid_confirmation"),
+            ("GPU benchmark · 4", "performance_benchmark"),
+        )
+        for index, (text, presetKey) in enumerate(campaign4Buttons):
+            ttk.Button(
+                campaign4Frame,
+                text=text,
+                style="Preset.TButton",
+                command=lambda key=presetKey: self._appendCampaign4Preset(
+                    key,
+                    parent=dlg,
+                    refreshCallback=refreshTree,
+                ),
+            ).grid(
+                row=index // 3,
+                column=index % 3,
+                sticky=tk.EW,
+                padx=3,
+                pady=3,
+            )
+        ttk.Button(
+            campaign4Frame,
+            text="Main confirmation · Add / Restore Missing · 396",
+            style="Queue.TButton",
+            command=lambda: self._appendCampaign4Preset(
+                "main_confirmation",
+                parent=dlg,
+                refreshCallback=refreshTree,
+            ),
+        ).grid(row=2, column=0, columnspan=2, sticky=tk.EW, padx=3, pady=3)
+        ttk.Button(
+            campaign4Frame,
+            text="Replace with Main",
+            command=lambda: self._replaceWithCampaign4Preset(
+                "main_confirmation",
+                parent=dlg,
+                refreshCallback=refreshTree,
+            ),
+        ).grid(row=2, column=2, sticky=tk.EW, padx=3, pady=3)
+        ttk.Button(
+            campaign4Frame,
+            text="Freeze Campaign 4 method",
+            style="Queue.TButton",
+            command=lambda: self._freezeCampaign4Method(
+                parent=dlg,
+                refreshCallback=refreshTree,
+            ),
+        ).grid(row=3, column=0, columnspan=2, sticky=tk.EW, padx=3, pady=(4, 0))
+        ttk.Button(
+            campaign4Frame,
+            text="Profile GPU + lanes",
+            command=lambda: self._benchmarkCampaign4Profiles(parent=dlg),
+        ).grid(row=3, column=2, sticky=tk.E, padx=3, pady=(4, 0))
+        for column in range(3):
+            campaign4Frame.columnconfigure(column, weight=1)
 
         # ── Campaign-three presets ──
         campaignFrame = ttk.LabelFrame(
@@ -2939,7 +3596,7 @@ class ExperimentGUI:
 
             splitVar2    = tk.StringVar(value='nonIID')
             approachVar2 = tk.StringVar(value=currentApproach)
-            sourceVar2   = tk.StringVar(value='current')
+            sourceVar2   = tk.StringVar(value='campaign4')
 
             sourceFrame2 = tk.Frame(pickerDlg, bg=BG)
             sourceFrame2.pack(fill=tk.X, padx=12, pady=(12, 0))
@@ -2951,7 +3608,8 @@ class ExperimentGUI:
                 font=('Segoe UI', 9, 'bold'),
             ).pack(side=tk.LEFT, padx=(0, 8))
             for label, value in (
-                ("Current", "current"),
+                ("Campaign 4", "campaign4"),
+                ("Campaign 3 R2", "current"),
                 ("Legacy / Custom", "legacy"),
             ):
                 ttk.Radiobutton(
@@ -3019,12 +3677,19 @@ class ExperimentGUI:
             def refreshPicker():
                 sp = splitVar2.get()
                 ap = approachVar2.get()
-                rootDir = (
-                    currentConfigDir
-                    if sourceVar2.get() == 'current'
-                    else configDir
-                )
-                if sourceVar2.get() == 'current':
+                rootDir = {
+                    'campaign4': campaign4ConfigDir,
+                    'current': currentConfigDir,
+                    'legacy': configDir,
+                }[sourceVar2.get()]
+                if sourceVar2.get() == 'campaign4':
+                    sourceNotice2.config(
+                        text=(
+                            "Campaign 4 adaptive/static study configs; outputs stay in results4."
+                        ),
+                        fg=SUCCESS,
+                    )
+                elif sourceVar2.get() == 'current':
                     sourceNotice2.config(
                         text=(
                             "Current reproducible hidden/noise study configs "
@@ -3060,11 +3725,11 @@ class ExperimentGUI:
                 selectedConfigs = []
                 for idx in sel:
                     name = listbox2.get(idx) + '.json'
-                    rootDir = (
-                        currentConfigDir
-                        if sourceVar2.get() == 'current'
-                        else configDir
-                    )
+                    rootDir = {
+                        'campaign4': campaign4ConfigDir,
+                        'current': currentConfigDir,
+                        'legacy': configDir,
+                    }[sourceVar2.get()]
                     path = os.path.join(
                         rootDir,
                         splitVar2.get(),
@@ -3074,6 +3739,7 @@ class ExperimentGUI:
                     try:
                         with open(path) as f:
                             cfg = json.load(f)
+                        cfg = self._applyCampaign4PerformanceProfile(cfg)
                         for _ in range(repeatVar.get()):
                             selectedConfigs.append(dict(cfg))
                     except Exception as e:
@@ -3114,14 +3780,15 @@ class ExperimentGUI:
 
             splitVarA = tk.StringVar(value='nonIID')
             apVarA    = tk.StringVar(value='cart')
-            sourceVarA = tk.StringVar(value='current')
+            sourceVarA = tk.StringVar(value='campaign4')
 
             tk.Label(adlg, text="Library:", bg=BG, fg=HEADER,
                      font=('Segoe UI', 9, 'bold')).grid(row=0, column=0, sticky=tk.W, padx=12, pady=(14, 4))
             sourceFA = tk.Frame(adlg, bg=BG)
             sourceFA.grid(row=0, column=1, sticky=tk.W, padx=4, pady=(14, 4))
             for label, value in (
-                ("Current", "current"),
+                ("Campaign 4", "campaign4"),
+                ("Campaign 3 R2", "current"),
                 ("Legacy / Custom", "legacy"),
             ):
                 ttk.Radiobutton(
@@ -3154,11 +3821,11 @@ class ExperimentGUI:
             def doAddAll():
                 sp = splitVarA.get()
                 ap = apVarA.get()
-                rootDir = (
-                    currentConfigDir
-                    if sourceVarA.get() == 'current'
-                    else configDir
-                )
+                rootDir = {
+                    'campaign4': campaign4ConfigDir,
+                    'current': currentConfigDir,
+                    'legacy': configDir,
+                }[sourceVarA.get()]
                 folder = os.path.join(rootDir, sp, ap)
                 if not os.path.isdir(folder):
                     messagebox.showerror("Error", f"Folder not found: {sp}/{ap}", parent=adlg)
@@ -3174,6 +3841,7 @@ class ExperimentGUI:
                     try:
                         with open(os.path.join(folder, fname)) as f:
                             cfg = json.load(f)
+                        cfg = self._applyCampaign4PerformanceProfile(cfg)
                         for _ in range(repeatVar.get()):
                             selectedConfigs.append(dict(cfg))
                         added += 1
@@ -3366,8 +4034,25 @@ class ExperimentGUI:
         self.root.after(0, self._updateQueueButton)
         return removed
 
-    def _nextCampaignConfig(self, activeObjectIds, activeRunIds):
+    def _nextCampaignConfig(
+        self,
+        activeObjectIds,
+        activeRunIds,
+        campaignVersion,
+        *,
+        activeConfigs=(),
+        workerSettings=None,
+    ):
         with self._queueLock:
+            if int(campaignVersion) == 4:
+                return selectCampaign4Config(
+                    self.configQueue,
+                    active_configs=activeConfigs,
+                    active_object_ids=activeObjectIds,
+                    active_run_ids=activeRunIds,
+                    campaign_version=campaignVersion,
+                    settings=workerSettings or self._workerSettings(4),
+                )
             for config in self.configQueue:
                 if id(config) in activeObjectIds:
                     continue
@@ -3376,7 +4061,7 @@ class ExperimentGUI:
                     and config.get("runId") in activeRunIds
                 ):
                     continue
-                if int(config.get("campaignVersion", 0)) != 3:
+                if int(config.get("campaignVersion", 0)) != int(campaignVersion):
                     return None
                 return config
         return None
@@ -3435,13 +4120,17 @@ class ExperimentGUI:
         )
         environment = {
             "clean": "Clean Environment",
+            "clean_ceiling": "Ideal Full-Consensus Clean Ceiling",
             "hidden": "Hidden Byzantine Attack",
             "noise": "Channel Noise",
             "hidden_noise": "Hidden Byzantine Attack + Channel Noise",
         }.get(config.get("environment"), str(config.get("environment", "unknown")))
 
         self.logMessage("=" * 80)
-        self.logMessage(f"[lane {lane + 1}] STARTING CAMPAIGN 3 EXPERIMENT")
+        campaignVersion = int(config.get("campaignVersion", 3))
+        self.logMessage(
+            f"[lane {lane + 1}] STARTING CAMPAIGN {campaignVersion} EXPERIMENT"
+        )
         self.logMessage("=" * 80)
         self.logMessage("Configuration:")
         self.logMessage(
@@ -3500,11 +4189,19 @@ class ExperimentGUI:
             )
         )
         if useEbm:
-            self.logMessage(
-                f"  EBM: lambda={float(config.get('ebmLambda', 0.0)):.8g}, "
-                f"lambda*sigma^2="
-                f"{float(config.get('ebmTargetCoefficient', 0.0)):.8g}"
-            )
+            if campaignVersion == 4:
+                self.logMessage(
+                    f"  EBM: mode={config.get('ebmMode')}, initial coefficient="
+                    f"{float(config.get('ebmInitialCoefficient', 0.0)):.8g}, "
+                    f"bounded=[{float(config.get('adaptiveEbmCoefficientMin', 0.0)):.1g}, "
+                    f"{float(config.get('adaptiveEbmCoefficientMax', 0.0)):.3g}]"
+                )
+            else:
+                self.logMessage(
+                    f"  EBM: lambda={float(config.get('ebmLambda', 0.0)):.8g}, "
+                    f"lambda*sigma^2="
+                    f"{float(config.get('ebmTargetCoefficient', 0.0)):.8g}"
+                )
         if config.get("approach") == "cart":
             self.logMessage(
                 f"  CART: gamma={float(config.get('distillStrength', 0.0)):.8g}, "
@@ -3512,8 +4209,16 @@ class ExperimentGUI:
             )
         self.logMessage(
             f"  Worker: isolated GPU lane {lane + 1}, "
-            f"memory cap={workerSettings['gpuMemoryLimitMb']} MB"
+            f"memory cap={workerSettings.get('activeMemoryLimitMb', workerSettings['gpuMemoryLimitMb'])} MB"
         )
+        if campaignVersion == 4:
+            self.logMessage(
+                f"  GPU profile: microbatch={config.get('internalMicroBatchSize')}, "
+                f"precision={config.get('precisionProfile')}, "
+                f"XLA={bool(config.get('jitCompile'))}, "
+                f"allocator={config.get('gpuAllocator', 'bfc')}, "
+                f"optimizer state={config.get('optimizerStateMode')}"
+            )
         self.logMessage("-" * 80)
 
     def _updateCampaignPoolProgress(self, laneProgress, activeCount, latestLane):
@@ -3540,11 +4245,11 @@ class ExperimentGUI:
             f"{'s' if activeCount != 1 else ''}"
         )
 
-    def _drainCampaignWorkerEvents(self, pool, laneProgress):
+    def _drainCampaignWorkerEvents(self, pool, laneProgress, campaignVersion):
         for kind, lane, config, payload in pool.drain_events():
             name = config.get("experimentName", config.get("runId", "Campaign run"))
             if kind == "line":
-                if payload.startswith("[campaign3 round "):
+                if payload.startswith(("[campaign3 round ", "[campaign4 round ")):
                     continue
                 self.root.after(0, self.logMessage, f"[lane {lane + 1}] {payload}")
                 continue
@@ -3569,12 +4274,28 @@ class ExperimentGUI:
                     avgAcc,
                     worstAcc,
                 )
+                if int(campaignVersion) == 4:
+                    self.root.after(
+                        0,
+                        self.networkView.apply_round,
+                        lane,
+                        config,
+                        dict(payload),
+                    )
                 self.root.after(
                     0,
                     self._updateCampaignPoolProgress,
                     dict(laneProgress),
                     pool.active_count,
                     lane,
+                )
+            elif event == "node_update" and int(campaignVersion) == 4:
+                self.root.after(
+                    0,
+                    self.networkView.apply_node_update,
+                    lane,
+                    config,
+                    dict(payload),
                 )
             elif event == "preparing":
                 self.root.after(
@@ -3604,7 +4325,11 @@ class ExperimentGUI:
                     f"time={format_duration(wallSeconds)} "
                     f"({wallSeconds:.1f}s)",
                 )
-                metricsPath, runPath = campaign3ResultPaths(config)
+                if int(campaignVersion) == 4:
+                    metricsPath, runPath, telemetryPath = campaign4ResultPaths(config)
+                else:
+                    metricsPath, runPath = campaign3ResultPaths(config)
+                    telemetryPath = None
                 self.root.after(
                     0,
                     self.logMessage,
@@ -3615,53 +4340,107 @@ class ExperimentGUI:
                     self.logMessage,
                     f"  saved config:  {runPath}",
                 )
+                if telemetryPath is not None:
+                    self.root.after(
+                        0,
+                        self.logMessage,
+                        f"  saved telemetry: {telemetryPath}",
+                    )
+                    self.root.after(0, self.networkView.finish_run, lane, "completed")
             elif event == "stopped":
                 self.root.after(
                     0,
                     self.logMessage,
                     f"[lane {lane + 1}] Stopped {name}; queue item retained.",
                 )
+                if int(campaignVersion) == 4:
+                    self.root.after(0, self.networkView.finish_run, lane, "stopped")
             elif event == "failed":
+                self._campaignWorkerFailures[(int(campaignVersion), lane)] = dict(payload)
                 self.root.after(
                     0,
                     self.logMessage,
                     f"[lane {lane + 1}] ERROR {name}: {payload.get('error', 'unknown')}",
                 )
+                if int(campaignVersion) == 4:
+                    self.root.after(0, self.networkView.finish_run, lane, "failed")
 
-    def _runIsolatedCampaignBlock(self):
-        settings = self._workerSettings()
-        pool = CampaignWorkerPool(
-            lanes=settings["lanes"],
-            gpu_memory_limit_mb=settings["gpuMemoryLimitMb"],
-        )
+    def _runIsolatedCampaignBlock(self, campaignVersion):
+        campaignVersion = int(campaignVersion)
+        if campaignVersion == 4:
+            isCompleted = isCampaign4Completed
+            workerScript = (
+                Path(__file__).resolve().parents[1]
+                / "scripts"
+                / "run_campaign4_worker.py"
+            )
+            workDir = CAMPAIGN4_WORKER_ROOT
+        else:
+            isCompleted = isCampaign3Completed
+            workerScript = None
+            workDir = None
+
+        settings = self._workerSettings(campaignVersion)
+        poolArguments = {
+            "lanes": settings["lanes"],
+            "gpu_memory_limit_mb": settings["gpuMemoryLimitMb"],
+        }
+        if workerScript is not None:
+            poolArguments.update(
+                {"worker_script": workerScript, "work_dir": workDir}
+            )
+        pool = CampaignWorkerPool(**poolArguments)
         self._campaignWorkerPool = pool
         completed = 0
         plotConfig = None
         failedMessage = None
         laneProgress = {}
         stopSent = False
+        confirmationFrozen = (
+            isCampaign4ConfirmationFrozen(execution_profile=self._workerProfile4)
+            if campaignVersion == 4
+            else True
+        )
+        if campaignVersion == 4 and settings["lanes"] > 1:
+            limits = settings.get("memoryLimitsMb", {})
+            memoryText = (
+                f"standard cap {limits.get('standard')} MB, "
+                f"full-batch EBM cap {limits.get('ebm')} MB, "
+                f"max concurrent EBM {settings.get('maxConcurrentEbm', 1)}"
+            )
+        else:
+            memoryText = f"{settings['gpuMemoryLimitMb']} MB cap per worker"
         self.logMessage(
-            f"Campaign execution: {settings['lanes']} isolated GPU lane"
-            f"{'s' if settings['lanes'] != 1 else ''}, "
-            f"{settings['gpuMemoryLimitMb']} MB cap per worker."
+            f"Campaign {campaignVersion} execution: {settings['lanes']} isolated GPU lane"
+            f"{'s' if settings['lanes'] != 1 else ''}, {memoryText}."
         )
 
         try:
             while True:
-                self._drainCampaignWorkerEvents(pool, laneProgress)
-                for completion in pool.poll_finished():
+                self._drainCampaignWorkerEvents(
+                    pool, laneProgress, campaignVersion
+                )
+                completions = pool.poll_finished()
+                if completions:
+                    self._drainCampaignWorkerEvents(
+                        pool, laneProgress, campaignVersion
+                    )
+                for completion in completions:
                     laneProgress.pop(completion.lane, None)
                     config = completion.config
                     name = config.get("experimentName", config.get("runId"))
-                    if completion.return_code == 0 and isCampaign3Completed(config):
+                    if completion.return_code == 0 and isCompleted(config):
                         self._removeQueuedConfig(config)
                         completed += 1
                         plotConfig = config
                         self._queueBatchNeedsPlot = True
                         self._runtimeEstimator.reload()
-                        freeze_calibration_if_ready()
-                        if config.get("autoPlotCampaign3", True):
-                            self._scheduleCampaign3PlotRefresh(config)
+                        if campaignVersion == 3:
+                            freeze_calibration_if_ready()
+                            if config.get("autoPlotCampaign3", True):
+                                self._scheduleCampaign3PlotRefresh(config)
+                        elif config.get("autoPlotCampaign4", True):
+                            self._scheduleCampaign4PlotRefresh(config)
                         sendNotification(
                             "Queue Step Done",
                             f"{name} finished.",
@@ -3672,10 +4451,29 @@ class ExperimentGUI:
                             f"[lane {completion.lane + 1}] {name} remains queued."
                         )
                     else:
-                        failedMessage = (
-                            f"{name} failed in isolated worker lane "
-                            f"{completion.lane + 1} (exit {completion.return_code})."
+                        failure = self._campaignWorkerFailures.pop(
+                            (campaignVersion, completion.lane), {}
                         )
+                        errorText = str(failure.get("error", ""))
+                        isOom = campaignVersion == 4 and (
+                            bool(failure.get("resourceExhausted"))
+                            or failure.get("errorType") == "ResourceExhaustedError"
+                            or "ResourceExhausted" in errorText
+                            or "OOM" in errorText.upper()
+                            or "RESOURCE_EXHAUSTED" in errorText.upper()
+                        )
+                        if isOom:
+                            failedMessage = (
+                                f"{name} exceeded its validated full-batch GPU cap in "
+                                f"lane {completion.lane + 1}. The unchanged batch-512 "
+                                "config remains queued; concurrency has stopped so the "
+                                "machine profile can be re-benchmarked."
+                            )
+                        else:
+                            failedMessage = (
+                                f"{name} failed in isolated worker lane "
+                                f"{completion.lane + 1} (exit {completion.return_code})."
+                            )
                         self.logMessage(f"QUEUE ERROR: {failedMessage}")
                         self.isRunning = False
 
@@ -3695,17 +4493,45 @@ class ExperimentGUI:
                     config = self._nextCampaignConfig(
                         activeObjectIds,
                         activeRunIds,
+                        campaignVersion,
+                        activeConfigs=activeConfigs,
+                        workerSettings=settings,
                     )
                     if config is None:
                         break
-                    if isCampaign3Completed(config):
+                    if campaignVersion == 4:
+                        if (
+                            config.get("phase") == "confirmation"
+                            and not confirmationFrozen
+                        ):
+                            failedMessage = (
+                                "Campaign 4 confirmation is locked. Complete all "
+                                "66 diagnostics and freeze the method contract first. "
+                                "The current queue item was retained."
+                            )
+                            self.logMessage(f"QUEUE BLOCKED: {failedMessage}")
+                            self.isRunning = False
+                            break
+                        oldRunId = config.get("runId")
+                        self._applyCampaign4PerformanceProfile(config)
+                        if config.get("runId") != oldRunId:
+                            self._saveQueueState()
+                    if isCompleted(config):
                         self.logMessage(
                             f"[SKIP] Already completed: "
                             f"{config.get('experimentName', config.get('runId'))}"
                         )
                         self._removeQueuedConfig(config)
                         continue
-                    active = pool.launch(config)
+                    memoryLimit = (
+                        campaign4MemoryLimit(config, settings)
+                        if campaignVersion == 4
+                        else settings["gpuMemoryLimitMb"]
+                    )
+                    active = pool.launch(
+                        config,
+                        gpu_memory_limit_mb=memoryLimit,
+                    )
                     laneProgress[active.lane] = (
                         0,
                         int(config.get("nRounds", 100)),
@@ -3722,8 +4548,15 @@ class ExperimentGUI:
                         self._logCampaignConfiguration,
                         active.lane,
                         config,
-                        dict(settings),
+                        {**settings, "activeMemoryLimitMb": memoryLimit},
                     )
+                    if campaignVersion == 4:
+                        self.root.after(
+                            0,
+                            self.networkView.start_run,
+                            active.lane,
+                            config,
+                        )
                     launched = True
                     sendNotification(
                         "Queue Started",
@@ -3744,13 +4577,15 @@ class ExperimentGUI:
                 pool.request_stop()
                 deadline = time.monotonic() + 120.0
                 while pool.has_active and time.monotonic() < deadline:
-                    self._drainCampaignWorkerEvents(pool, laneProgress)
+                    self._drainCampaignWorkerEvents(
+                        pool, laneProgress, campaignVersion
+                    )
                     pool.poll_finished()
                     time.sleep(0.2)
                 if pool.has_active:
                     pool.kill_remaining()
                     pool.wait(timeout=10.0)
-            self._drainCampaignWorkerEvents(pool, laneProgress)
+            self._drainCampaignWorkerEvents(pool, laneProgress, campaignVersion)
             self._campaignWorkerPool = None
             self.root.after(0, self._updateQueueButton)
         return completed, plotConfig, failedMessage
@@ -3763,8 +4598,12 @@ class ExperimentGUI:
             messagebox.showwarning("Empty Queue", "The config queue is empty.")
             return
 
+        if not self._handleOrphanWorkers():
+            return
+
         with self._queueLock:
             self._saveQueueState()
+        self._setQueueActiveSentinel()
         self.runButton.config(state=tk.DISABLED)
         self.runAllButton.config(state=tk.DISABLED)
         self.queueButton.config(state=tk.NORMAL)
@@ -3805,9 +4644,10 @@ class ExperimentGUI:
                     self.logMessage("\n[STOPPED] Queue run cancelled by user.")
                     break
 
-                if int(config.get("campaignVersion", 0)) == 3:
+                campaignVersion = int(config.get("campaignVersion", 0))
+                if campaignVersion in (3, 4):
                     blockCompleted, blockPlotConfig, failure = (
-                        self._runIsolatedCampaignBlock()
+                        self._runIsolatedCampaignBlock(campaignVersion)
                     )
                     completed += blockCompleted
                     plottedConfig = blockPlotConfig or plottedConfig
@@ -3875,9 +4715,14 @@ class ExperimentGUI:
             with self._queueLock:
                 self._saveQueueState()
             if self._queueBatchNeedsPlot and plottedConfig is not None:
-                self._waitForCampaign3PlotRefresh()
+                campaignVersion = int(plottedConfig.get("campaignVersion", 0))
+                if campaignVersion == 4:
+                    self._waitForCampaign4PlotRefresh()
+                else:
+                    self._waitForCampaign3PlotRefresh()
                 self.logMessage(
-                    "\nGenerating changed Campaign 3 plots at the queue boundary…"
+                    f"\nGenerating changed Campaign {campaignVersion} plots "
+                    "at the queue boundary…"
                 )
                 self.generatePlots(
                     showDialog=False,
@@ -3885,6 +4730,7 @@ class ExperimentGUI:
                     onlyMissing=True,
                 )
                 self._queueBatchNeedsPlot = False
+            self._clearQueueActiveSentinel()
             self.root.after(0, self._onRunFinished)
 
     def saveConfig(self):
@@ -4190,6 +5036,84 @@ class ExperimentGUI:
             else:
                 time.sleep(0.05)
 
+    def _scheduleCampaign4PlotRefresh(self, config):
+        if (
+            int(config.get("campaignVersion", 0)) != 4
+            or not config.get("autoPlotCampaign4", True)
+        ):
+            return
+        split = str(
+            config.get(
+                "split",
+                "nonIID" if config.get("nonIID", True) else "IID",
+            )
+        )
+        with self._campaign4PlotCondition:
+            self._campaign4PlotPendingSplits.add(split)
+            if (
+                self._campaign4PlotThread is not None
+                and self._campaign4PlotThread.is_alive()
+            ):
+                self._campaign4PlotCondition.notify_all()
+                return
+            self._campaign4PlotThread = threading.Thread(
+                target=self._campaign4PlotRefreshLoop,
+                name="campaign4-plot-refresh",
+                daemon=True,
+            )
+            self._campaign4PlotThread.start()
+
+    def _campaign4PlotRefreshLoop(self):
+        from plotCampaign4 import generate_campaign4_live_plots
+
+        while True:
+            with self._campaign4PlotCondition:
+                if not self._campaign4PlotPendingSplits:
+                    self._campaign4PlotThread = None
+                    self._campaign4PlotCondition.notify_all()
+                    return
+                split = sorted(self._campaign4PlotPendingSplits)[0]
+                self._campaign4PlotPendingSplits.remove(split)
+            self.root.after(
+                0,
+                self.logMessage,
+                f"\n[plots4] Refreshing changed {split} PNG previews…",
+            )
+            try:
+                result = generate_campaign4_live_plots(split=split)
+                self.root.after(
+                    0,
+                    self.logMessage,
+                    f"[plots4] Live refresh complete: "
+                    f"{len(result['generated'])} updated, "
+                    f"{len(result['skipped'])} unchanged.",
+                )
+                for error in result["errors"]:
+                    self.root.after(
+                        0,
+                        self.logMessage,
+                        f"[plots4] WARNING: {error}",
+                    )
+            except Exception as error:
+                self.root.after(
+                    0,
+                    self.logMessage,
+                    f"[plots4] Live refresh failed: {error}",
+                )
+                self.root.after(0, self.logMessage, traceback.format_exc())
+
+    def _waitForCampaign4PlotRefresh(self):
+        while True:
+            with self._campaign4PlotCondition:
+                thread = self._campaign4PlotThread
+                pending = bool(self._campaign4PlotPendingSplits)
+            if thread is None and not pending:
+                return
+            if thread is not None:
+                thread.join(timeout=0.25)
+            else:
+                time.sleep(0.05)
+
     def plotResults(self):
         dlg = tk.Toplevel(self.root)
         dlg.title("Generate Plots")
@@ -4208,13 +5132,36 @@ class ExperimentGUI:
         tk.Label(
             dlg,
             text=(
-                f"Campaign 3 R2 reads {CAMPAIGN3_RESULT_ROOT} and writes "
-                f"{CAMPAIGN3_PLOT_ROOT}."
+                f"Campaign 4 writes {CAMPAIGN4_PLOT_ROOT}; Campaign 3 R2 remains "
+                f"under {CAMPAIGN3_PLOT_ROOT}."
             ),
             bg=BG,
             fg=MUTED,
             font=("Segoe UI", 9),
         ).pack(anchor=tk.W, padx=18, pady=(0, 12))
+
+        campaign4Frame = ttk.LabelFrame(dlg, text="Campaign 4", padding=10)
+        campaign4Frame.pack(fill=tk.X, padx=18, pady=(0, 8))
+
+        def runCampaign4(mode):
+            dlg.destroy()
+            self.generateCampaign4Plots(
+                mode=mode,
+                showDialog=True,
+                onlyChanged=False,
+            )
+
+        for text, mode in (
+            ("Paper Figures", "paper"),
+            ("Diagnostics", "diagnostics"),
+            ("Paper + Diagnostics", "both"),
+        ):
+            ttk.Button(
+                campaign4Frame,
+                text=text,
+                style="Run.TButton" if mode == "both" else "TButton",
+                command=lambda selected=mode: runCampaign4(selected),
+            ).pack(side=tk.LEFT, padx=6)
 
         campaignFrame = ttk.LabelFrame(dlg, text="Campaign 3 R2", padding=10)
         campaignFrame.pack(fill=tk.X, padx=18, pady=(0, 8))
@@ -4258,7 +5205,7 @@ class ExperimentGUI:
         ).pack(anchor=tk.E, padx=18, pady=(0, 16))
 
         dlg.update_idletasks()
-        width, height = 520, 245
+        width, height = 560, 335
         x = self.root.winfo_x() + (self.root.winfo_width() - width) // 2
         y = self.root.winfo_y() + (self.root.winfo_height() - height) // 2
         dlg.geometry(f"{width}x{height}+{x}+{y}")
@@ -4272,6 +5219,67 @@ class ExperimentGUI:
             if config.get(k):
                 attackParts.append(s)
         return "_".join(attackParts) if attackParts else "none"
+
+    def generateCampaign4Plots(
+        self,
+        *,
+        mode="both",
+        showDialog=True,
+        split=None,
+        onlyChanged=True,
+    ):
+        try:
+            from plotCampaign4 import generate_campaign4_plots
+
+            self.logMessage("\n" + "=" * 60)
+            self.logMessage(f"GENERATING CAMPAIGN 4 {mode.upper()} PLOTS")
+            self.logMessage("=" * 60)
+            result = generate_campaign4_plots(
+                mode=mode,
+                split=split,
+                only_changed=onlyChanged,
+            )
+            self.logMessage(f"Completed records found: {result['records']}")
+            self.logMessage(f"Figures generated:       {len(result['generated'])}")
+            self.logMessage(f"Unchanged figures:       {len(result['skipped'])}")
+            for warning in result.get("warnings", []):
+                self.logMessage(f"NOTICE: {warning}")
+            for error in result["errors"]:
+                self.logMessage(f"WARNING: {error}")
+            self.logMessage(f"Output: {result['plotRoot']}")
+            self.logMessage("=" * 60)
+            if result["records"] == 0:
+                message = (
+                    "No completed Campaign 4 results were found in "
+                    f"{CAMPAIGN4_RESULT_ROOT}."
+                )
+                self._setStatus("No completed Campaign 4 results found.")
+                if showDialog:
+                    messagebox.showinfo("No Campaign 4 Results", message)
+                return result
+            self._setStatus(
+                f"Campaign 4 plots: {len(result['generated'])} generated, "
+                f"{len(result['skipped'])} unchanged."
+            )
+            if showDialog:
+                messagebox.showinfo(
+                    "Campaign 4 Plots",
+                    f"Generated: {len(result['generated'])}\n"
+                    f"Unchanged: {len(result['skipped'])}\n"
+                    f"Notices: {len(result.get('warnings', []))}\n"
+                    f"Plot errors: {len(result['errors'])}\n\n"
+                    f"Saved under {CAMPAIGN4_PLOT_ROOT}/.",
+                )
+            return result
+        except Exception as error:
+            self.logMessage(f"\nERROR generating Campaign 4 plots: {error}")
+            self.logMessage(traceback.format_exc())
+            if showDialog:
+                messagebox.showerror(
+                    "Campaign 4 Plot Error",
+                    f"Failed to generate Campaign 4 plots:\n{error}",
+                )
+            return None
 
     def generateCampaign3Plots(
         self,
@@ -4332,6 +5340,19 @@ class ExperimentGUI:
             return None
 
     def generatePlots(self, showDialog=True, config=None, onlyMissing=False):
+        if config is not None and int(config.get("campaignVersion", 0)) == 4:
+            split = str(
+                config.get(
+                    "split",
+                    "nonIID" if config.get("nonIID", True) else "IID",
+                )
+            )
+            return self.generateCampaign4Plots(
+                mode="both",
+                showDialog=showDialog,
+                split=split,
+                onlyChanged=onlyMissing,
+            )
         if config is not None and int(config.get("campaignVersion", 0)) == 3:
             split = "nonIID" if config.get("nonIID", True) else "IID"
             return self.generateCampaign3Plots(
