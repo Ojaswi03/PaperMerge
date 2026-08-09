@@ -166,11 +166,12 @@ class CurrentConfigLibraryTests(unittest.TestCase):
 
         self.assertEqual(manifest["counts"], expected_manifest_counts)
 
-    def test_gui_defaults_to_current_multi_select_library(self):
+    def test_gui_defaults_to_campaign4_multi_select_library(self):
         source = (
             Path(__file__).resolve().parents[1] / "gui" / "experimentGui.py"
         ).read_text(encoding="utf-8")
-        self.assertIn("sourceVar2   = tk.StringVar(value='current')", source)
+        self.assertIn("sourceVar2   = tk.StringVar(value='campaign4')", source)
+        self.assertIn('(\"Campaign 4\", \"campaign4\")', source)
         self.assertIn("selectmode=tk.EXTENDED", source)
         self.assertIn("self._configsByEstimatedDuration", source)
         self.assertIn("tree.bind('<B1-Motion>', dragRow", source)
@@ -184,7 +185,8 @@ class CurrentConfigLibraryTests(unittest.TestCase):
         self.assertIn('float(payload["worstAccuracy"])', source)
         self.assertIn("self._recordCampaignRound,", source)
         self.assertIn("self._startCampaignLiveRun,", source)
-        self.assertIn("STARTING CAMPAIGN 3 EXPERIMENT", source)
+        self.assertIn("STARTING CAMPAIGN {campaignVersion} EXPERIMENT", source)
+        self.assertIn("self.networkView.apply_node_update", source)
 
 
 if __name__ == "__main__":
