@@ -6,6 +6,7 @@ from dataclasses import dataclass
 import csv
 import hashlib
 import json
+import logging
 import math
 import os
 from pathlib import Path
@@ -324,7 +325,21 @@ def _atomic_save_figure(figure, path, fmt):
     temp = Path(temp_name)
     try:
         FigureCanvasAgg(figure)
-        figure.savefig(temp, format=fmt, bbox_inches="tight", dpi=300)
+        if fmt == "eps":
+            # PostScript has no transparency channel; alpha-blended artists
+            # (e.g. confidence-interval bands) render opaque instead, which
+            # matplotlib logs every time via logging (not warnings.warn, so
+            # a warnings filter can't catch it). Expected and harmless for
+            # this format only -- other formats keep the logger untouched.
+            ps_logger = logging.getLogger("matplotlib.backends.backend_ps")
+            previous_level = ps_logger.level
+            ps_logger.setLevel(logging.ERROR)
+            try:
+                figure.savefig(temp, format=fmt, bbox_inches="tight", dpi=300)
+            finally:
+                ps_logger.setLevel(previous_level)
+        else:
+            figure.savefig(temp, format=fmt, bbox_inches="tight", dpi=300)
         os.replace(temp, path)
     finally:
         if temp.exists():
@@ -1021,7 +1036,7 @@ def _runtime_panel(records, approach, split):
         axis.set_xticks(NOISE_LEVELS)
         axis.set_xlabel("Channel-noise sigma")
         axis.set_ylabel(ylabel)
-        axis.legend(frameon=False)
+        _legend_if_any(axis)
 
     staged = [
         record
@@ -1087,7 +1102,7 @@ def _runtime_panel(records, approach, split):
     clip_axis.set_xlabel("Channel-noise sigma")
     clip_axis.set_ylabel("Gradient clip fraction")
     clip_axis.set_ylim(0, 1)
-    clip_axis.legend(frameon=False)
+    _legend_if_any(clip_axis)
     fig.suptitle(f"Runtime and resource diagnostics: {approach.upper()} ({split})", fontsize=10)
     fig.tight_layout()
     return fig
