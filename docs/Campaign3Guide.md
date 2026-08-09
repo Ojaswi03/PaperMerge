@@ -565,7 +565,8 @@ the measured duration.
 
 ### 11.1 Individual Current Config Library
 
-**Add from File** defaults to `gui/configs/current`. It supports selecting
+**Add from File** defaults to `gui/configs/campaign4`; select **Campaign 3 R2**
+to browse `gui/configs/current`. It supports selecting
 multiple files from one split and approach. The checked-in matrix counts are:
 
 | Split | BASIL | Noisy | Merged | CART |

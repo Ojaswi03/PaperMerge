@@ -21,9 +21,9 @@ Merged and CART are the project additions built on the two main papers.
   file/function reference.
 - [Campaign 3 R2 Guide](docs/Campaign3Guide.md) contains the exact current
   protocol, equations, calibration rules, and paper-facing interpretation.
-- [Campaign 4 Engineering And Evaluation Plan](docs/Campaign4Plan.md) defines
-  the isolated `results4`/`plots4` campaign, sigma `0.4-0.6` diagnosis,
-  adaptive EBM extension, live node-ring GUI, and GPU runtime targets.
+- [Campaign 4 Engineering And Evaluation Plan](docs/Campaign4Plan.md) documents
+  the implemented isolated `results4`/`plots4` campaign, sigma `0.4-0.6`
+  diagnosis, adaptive EBM extension, live node-ring GUI, and measured runtime.
 - [Gamma Explained](docs/gammaExplained.md) explains CART `gamma` and the
   active proximal coefficient `mu`.
 - [WCM Pilot](docs/WCM_PILOT.md) documents the isolated WCM implementation,
@@ -64,6 +64,10 @@ The GUI supports:
 - persistent queue state in `gui/queue_state.json`
 - lane-aware live average/worst accuracy charts for isolated Campaign 3 workers
 - a complete per-run configuration block in the Output experiment log
+- Campaign 4 presets and individual versioned config selection
+- a Campaign 4 Network tab with live directed-ring state, node inspection,
+  SS candidates, outgoing noise, and completed-run telemetry replay
+- incremental Campaign 4 PNG previews and final PNG/PDF/EPS output
 - empirical per-config durations plus total queue ETA, uncertainty range, and
   projected completion time
 
@@ -73,8 +77,8 @@ runs without replacing custom queue items. Custom selections can be moved to
 the top and run next while the paper campaign remains persisted underneath.
 
 Use **Queue > Add from File** to choose individual configurations. The picker
-defaults to the versioned **Current** library, supports multi-selection, and
-shows separate IID/non-IID counts for BASIL, Noisy, Merged, and CART. When the
+defaults to the isolated **Campaign 4** library, supports multi-selection, and
+also exposes Campaign 3 R2 Current plus legacy/custom sources. When the
 queue is stopped, adding selected files automatically sorts the resulting queue
 by ascending estimated runtime. During a run, the selected block is sorted and
 appended at the bottom without disturbing active work. **Shortest First** can
@@ -144,6 +148,66 @@ See the [Campaign 3 R2 Guide](docs/Campaign3Guide.md) for the complete
 protocol, equations, diagrams, result layout, pilot findings, and paper-draft
 synchronization notes.
 
+## Campaign 4
+
+Campaign 4 is a separate, versioned investigation of high-noise accumulation.
+It preserves the BASIL-derived Snapshot Selection rule and the original static
+EBM path as a control. Its separately labeled adaptive EBM controller changes
+only the bounded coefficient of the same gradient-norm objective using
+receiver-observable stress; it does not use attacker identity or test accuracy.
+
+```text
+gui/configs/campaign4/                 # 526 selectable configs + manifest
+experiments/results4/campaign4/        # Campaign 4 artifacts only
+plots4/campaign4/                      # Campaign 4 figures/tables only
+```
+
+Official EBM configs keep batch size 512 and evaluate the second-order term on
+that full batch. An OOM stops Campaign 4, leaves the unchanged queue item in
+place, and requires the machine profile to be rerun; the GUI never lowers the
+batch or silently changes the EBM objective. Incompatible execution profiles
+are written to separate plot subfolders instead of being pooled.
+
+The validated local RTX 4070 Ti profile uses `mixed_bfloat16` Tensor Core
+compute with float32 model variables, gradient accumulation, EBM norms, noise,
+CART state, and reported metrics. Two independent 100-round no-save canaries
+measured 1.77x and 1.87x speedups while passing the declared final-accuracy,
+learning-curve, worst-node, initialization, and finite-value gates. This is a
+numerical execution profile; it does not change Snapshot Selection or the EBM
+objective. Resource profiling also permits two workers only when at most one
+is an EBM worker. Two simultaneous EBM workers were measured and rejected for
+insufficient throughput.
+
+Run the contract check and machine profile before diagnosis:
+
+```bash
+source environment/basil-noise-env/bin/activate
+python scripts/sync_campaign4_configs.py --check
+python scripts/benchmark_campaign4.py --rounds 2 --repeats 3 \
+  --include-cuda-malloc-async --include-mixed-bfloat16
+python scripts/validate_campaign4_precision.py
+python scripts/benchmark_campaign4_lanes.py --rounds 2 --repeats 3
+python runGui.py
+```
+
+The GUI's **Profile GPU + lanes** button runs the same sequence and invokes the
+100-round precision validator only when the short benchmark selects a pending
+BF16 candidate. Once validated, the queue ETA is about 10 h 43 min for one
+33-run diagnostic suite and about 21 h 26 min for both 66-run non-IID
+diagnostic suites on this machine. The complete 198-run non-IID confirmation
+matrix is a later stage and is not a 24-hour single-GPU workload.
+
+Start with **Diagnose non-IID Merged - 33**, then run
+**Diagnose non-IID CART - 33** and review both diagnostic suites. After all 66
+runs finish, use
+**Freeze Campaign 4 method** to record the diagnostic rationale and
+advisor-selected non-inferiority margin. Confirmation preset loading and worker
+launch remain locked until this exact method/code contract is recorded in
+`experiments/results4/campaign4/campaign_state.json`. GPU profiling and the
+100-round no-save precision canaries verify execution behavior only; they are
+not saved as scientific Campaign 4 evidence. The worker and Campaign 4 plot
+loader reject any short diagnostic, static-control, or confirmation artifact.
+
 ## Run One Config From CLI
 
 ```bash
@@ -174,6 +238,7 @@ PaperMerge/
 │   ├── basil.py
 │   ├── cart.py
 │   ├── campaign_engine.py
+│   ├── campaign4_engine.py
 │   ├── trainer.py
 │   ├── attacks.py
 │   ├── models.py
@@ -181,25 +246,37 @@ PaperMerge/
 ├── gui/
 │   ├── experimentGui.py
 │   ├── campaign3.py
+│   ├── campaign4.py
+│   ├── campaign4_execution.py
 │   ├── campaign_workers.py
+│   ├── network_view.py
 │   ├── config_library.py
 │   ├── runtime_estimator.py
 │   ├── queue_state.json
 │   └── configs/
 │       ├── current/{IID,nonIID}/{basil,noisy,merged,cart}/
+│       ├── campaign4/{IID,nonIID}/{merged,cart}/
 │       ├── IID/{basil,noisy,merged,cart}/
 │       └── nonIID/{basil,noisy,merged,cart}/
 ├── plots/
 │   ├── plotGui.py
-│   └── plotCampaign3.py
+│   ├── plotCampaign3.py
+│   └── plotCampaign4.py
 ├── scripts/
 │   ├── benchmark_campaign_workers.py
 │   ├── run_campaign_worker.py
+│   ├── run_campaign4_worker.py
+│   ├── benchmark_campaign4.py
+│   ├── validate_campaign4_precision.py
+│   ├── benchmark_campaign4_lanes.py
+│   ├── sync_campaign4_configs.py
 │   ├── run_single_config.py
 │   ├── sync_gui_config_library.py
 │   └── testSetup.py
 ├── experiments/results/gui/
-└── experiments/results3/r2/gui/
+├── experiments/results3/r2/gui/
+├── experiments/results4/campaign4/gui/
+└── plots4/campaign4/
 ```
 
 ## Outputs

@@ -233,6 +233,7 @@ Thumbs.db
 /error.txt
 /checkpoint.txt
 /gui/queue_state.json
+/gui/.queue_active.json
 /experiments/logs/
 nohup.out
 *.pid
@@ -241,6 +242,9 @@ nohup.out
 experiments/cache/
 experiments/results3/r2/workers/
 experiments/results3/r2/worker_profile.json
+experiments/results4/campaign4/workers/
+experiments/results4/campaign4/performance_profile.json
+/plots4/campaign4/.plot_manifest.json
 
 # Isolated exploratory outputs and transient plot locks
 /experiments/wcm_pilot/

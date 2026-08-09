@@ -2,7 +2,7 @@
 
 # Campaign 4 Engineering And Evaluation Plan
 
-**Status:** implementation plan, not completed experimental evidence  
+**Status:** implementation complete; diagnostic and confirmation evidence pending
 **Date:** August 3, 2026  
 **Scope:** CIFAR-10, IID and non-IID, Merged and CART, clean conditions,
 Gaussian channel noise, and hidden Byzantine attacks
@@ -18,10 +18,20 @@ from previous campaigns. The implementation must also reduce warm-cache
 GPU utilization without reducing the configured batch size, node count,
 rounds, local epochs, or optimizer updates.
 
+The software described here is now implemented. No completed official
+100-round Campaign 4 diagnostic has yet established that adaptive EBM improves
+accuracy or satisfies the expected hierarchy. The completed checks are
+code-contract tests, tiny-model integration tests, two-round no-save GPU
+benchmarks, and two paired 100-round no-save float32-versus-BF16 precision
+canaries. Those checks establish execution correctness, numerical tolerance,
+and measured resource use, not paper results. Performance and precision runs
+are never accepted as scientific diagnostics or paper evidence.
+
 ## Index
 
 | Section | Purpose |
 |---|---|
+| [Implementation Status](#implementation-status) | Separates completed software from evidence that still must be generated |
 | [Research Question](#research-question) | Defines the comparison that the paper is trying to make |
 | [Expected Evidence Hierarchy](#expected-hierarchy) | Shows the expected accuracy tiers without forcing results |
 | [Current Failure Evidence](#current-failure) | Summarizes what starts at sigma 0.4 and worsens at 0.5-0.6 |
@@ -39,6 +49,56 @@ rounds, local epochs, or optimizer updates.
 | [Verification](#verification) | Defines unit, integration, numerical, runtime, and OOM tests |
 | [Execution Order](#execution-order) | Provides the staged implementation and run sequence |
 | [Decision Rules](#decision-rules) | Prevents endless tuning and result-driven method changes |
+
+<a id="implementation-status"></a>
+
+## Implementation Status [Back to top](#top)
+
+Implemented components:
+
+| Component | Current state |
+|---|---|
+| Versioned config contract | `gui/campaign4.py`, protocol revision `campaign4-2026-08-03-r2` |
+| Checked-in config library | 526 JSON files: 396 confirmation, 60 static controls, 66 diagnostics, 4 benchmark cases |
+| Isolated worker | Atomic metrics/telemetry/metadata saving, explicit TensorFlow cleanup, stop/failure preservation |
+| Ring engine | GPU-resident logical states, protocol-matched pairwise clean path, SS telemetry, static/adaptive EBM, CART telemetry |
+| Objective contract | Official EBM uses the full configured batch of 512 for exact `grad(||grad F_batch||^2)` semantics |
+| Round contract | Every diagnostic, static-control, and confirmation run must contain all 100 rounds; the worker and plot loader reject short scientific artifacts |
+| GUI | Campaign 4 presets, individual config selection, ETA, live accuracy, directed ring, node inspector, telemetry replay |
+| Method freeze | Confirmation presets and worker launch remain locked until all 66 diagnostics are complete under one execution profile and `campaign_state.json` records exact source hashes, method/profile contract, rationale, and predeclared margin |
+| Plotting | Incremental PNG/PDF/EPS paper and diagnostic figures under `plots4/campaign4` |
+| Profile isolation | Incompatible protocol/batch/precision/XLA/allocator/optimizer profiles are never pooled |
+| Validated backend | Full batch 512, mixed-BF16 compute, float32 variables/accumulation/norms/noise/metrics, `cuda_malloc_async`, no XLA |
+| Validated scheduler | Two isolated workers, at most one EBM worker; standard+standard and EBM+standard passed, EBM+EBM was rejected |
+| Tests | Campaign 4 contract, objective, noise, controller, event, plotting, and reducer tests pass |
+
+Measured two-round no-save GPU medians on the local RTX 4070 Ti:
+
+| Path | Float32/BFC wall | BF16/async wall | BF16 peak allocation |
+|---|---:|---:|---:|
+| Standard Merged | 35.95 s | 24.08 s | about 2.0 GiB |
+| Snapshot Selection | 36.21 s | 23.86 s | about 1.4 GiB |
+| Adaptive EBM | 70.84 s | 42.09 s | about 2.9 GiB |
+| CART + SS + adaptive EBM | 72.67 s | 43.47 s | about 2.9 GiB |
+
+The faster backend was then tested on two complete 100-round no-save canaries:
+
+| Canary | Float32 wall | BF16 wall | Speedup | Final-accuracy delta | AUC delta |
+|---|---:|---:|---:|---:|---:|
+| Clean non-IID CART | 20 min 43 s | 11 min 44 s | 1.77x | 0.00684 | 0.00585 |
+| Hidden+noise 0.6 CART SS+EBM | 51 min 7 s | 27 min 21 s | 1.87x | 0.00001 | 0.00805 |
+
+Both canaries used identical initialization and passed finite-value,
+final-accuracy, learning-curve-AUC, and worst-node gates. The second canary
+still collapsed near random accuracy under both precisions; that is method
+evidence to diagnose, not a performance-profile failure.
+
+Resource benchmarks permit two lanes for standard+standard (1.15x throughput)
+and EBM+standard (1.13x). EBM+EBM produced only 1.02x and remains disabled.
+With measured overlap slowdowns, one 33-run diagnostic suite is estimated at
+about 10 h 43 min and both Merged+CART diagnostic suites at about 21 h 26 min.
+The full 198-run non-IID confirmation remains about 51 hours on one GPU and is
+not claimed as a 24-hour workload.
 
 <a id="research-question"></a>
 
@@ -291,8 +351,15 @@ has a measurable but limited ratio to the supervised gradient. It will include:
 - Separate telemetry for requested and applied coefficients.
 - No response based on whether the simulator knows a sender is Byzantine.
 
-The controller constants must be selected on diagnostic seeds and frozen
-before confirmation seeds are run.
+The controller constants must be selected on diagnostic seed 2025 and frozen
+before confirmation seeds are run. The GUI enforces this with **Freeze
+Campaign 4 method**. It writes
+`experiments/results4/campaign4/campaign_state.json`, including the exact
+provenance-file hashes, execution profile, generated diagnostic and
+confirmation identities, written rationale, and advisor-selected
+non-inferiority margin. A source, profile, or protocol change invalidates the
+state rather than silently reusing it. Diagnostics produced by stale source
+hashes do not count toward the 66-run gate.
 
 <a id="diagnostic-experiments"></a>
 
@@ -317,6 +384,10 @@ For each of `0.4`, `0.5`, and `0.6`, compare:
 
 This isolates whether temporal accumulation is primarily optimizer state,
 insufficient EBM response, or their interaction.
+
+The generated diagnostics include the visit-reset static/adaptive arms plus
+persistent static/adaptive noise-only arms at each of `0.4`, `0.5`, and `0.6`
+for both Merged and CART. This produces 33 diagnostic configs per approach.
 
 ### Stage C: environment decomposition
 
@@ -419,7 +490,7 @@ All criteria are evaluated with paired seeds and raw, unclamped values.
 
 ### Target and constraints
 
-Current Campaign 3 EBM configurations take approximately 53-56 minutes. The
+Earlier float32 EBM configurations took approximately 53-56 minutes. The
 Campaign 4 stretch target is:
 
 | Path | Warm-cache 100-round wall-time target |
@@ -467,25 +538,29 @@ accepted only after the dominant stage is identified.
 
 ### Optimization order
 
-1. **Autotune the internal microbatch, not the configured batch.** Benchmark
-   internal sizes 128, 256, and 512 under one isolated worker. Select the
-   largest OOM-safe value separately for standard and second-order EBM paths.
-   Gradient accumulation must continue to represent one batch of 512.
+1. **Freeze the official EBM gradient batch.** A direct implementation check
+   found that averaging separate microbatch gradient-norm regularizers is not
+   mathematically identical to the norm of the complete batch gradient. All
+   official static/adaptive EBM runs therefore use one full batch of 512.
+   Sizes 128/256 are allowed only in explicitly labeled performance
+   diagnostics and are excluded from paper aggregates. The queue never falls
+   back to them after an OOM.
 
 2. **Use the available GPU memory safely.** Replace the fixed 4200 MB campaign
    cap with a benchmarked single-worker profile that reserves operating-system
    and GUI headroom. Cache the selected profile by GPU, model, precision, and
    training path. Never guess based only on installed system RAM.
 
-3. **Benchmark XLA per path.** Compile the stable training kernels with
-   `jit_compile=True` only when warm-run throughput improves and numerical
-   validation passes. Keep an automatic non-XLA fallback.
+3. **Benchmark XLA per path.** The full-batch XLA warm-up failed on this
+   TensorFlow/CUDA stack, so `jit_compile=False` remains selected. A failed XLA
+   candidate is not retried during scientific execution.
 
-4. **Benchmark mixed precision conservatively.** Use float16 Tensor Core
-   computation while retaining float32 master weights, noise generation,
-   gradient accumulation, EBM norms, CART state, and reported metrics. Dynamic
-   loss scaling and finite checks are mandatory. Reject mixed precision if
-   second-order EBM becomes unstable or changes SS decisions materially.
+4. **Benchmark mixed precision conservatively.** `mixed_bfloat16` Tensor Core
+   compute is selected while model variables, gradient accumulation, EBM norms,
+   channel noise, CART state, and reported metrics remain float32. It passed
+   two paired 100-round no-save canaries. `mixed_float16` remains rejected
+   because the custom second-order path does not yet have the required dynamic
+   loss-scaling and finite-gradient contract.
 
 5. **Keep ring state on the GPU where memory permits.** Replace repeated
    NumPy CPU-to-GPU model transfers with device tensors for logical-node state,
@@ -507,13 +582,16 @@ accepted only after the dominant stage is identified.
 
 9. **Preserve isolated-process cleanup.** A completed worker explicitly clears
    TensorFlow/Keras state, invokes garbage collection, and exits so CUDA memory
-   is returned before the next configuration. Process reuse will be considered
-   only if profiling shows compilation is a major fraction of the new runtime.
+   is returned before the next configuration. The GUI launcher does not eagerly
+   initialize CUDA, so worker caps are not competing with a parent training
+   context. Process reuse will be considered only if profiling shows
+   compilation is a major fraction of the new runtime.
 
-10. **Use one GPU lane unless a new benchmark proves otherwise.** The current
-    two-lane benchmark achieved only about 1.01x throughput. Parallel workers
-    remain disabled unless they fit, remain deterministic, and exceed the
-    predeclared throughput gate.
+10. **Use only measured lane combinations.** Two standard workers and one EBM
+    plus one standard worker passed exact fingerprint, finite-output, VRAM, and
+    1.05x throughput gates. Two EBM workers achieved only 1.02x and remain
+    disabled. The queue therefore runs at most one EBM worker and fills the
+    second lane with standard work when available.
 
 ### Runtime benchmark gate
 
@@ -525,12 +603,15 @@ For each optimization profile:
    final fingerprint.
 4. Accept the profile only when it is faster on at least three repeats and does
    not change the experiment contract.
-5. On OOM, terminate the isolated worker, keep the queue item, lower only the
-   internal microbatch/profile, and retry from the beginning.
+5. On OOM, terminate the isolated workers, retain the unchanged batch-512 queue
+   item, and require a fresh machine profile. Do not mutate or retry the
+   scientific configuration automatically.
 
-The required speedup from the current EBM runtime is approximately 3.6x to
-reach 15 minutes. That is a stretch target and must be demonstrated by the
-benchmark rather than assumed from the GPU model.
+The validated backend provides about 1.8x on the complete canaries. Clean CART
+is within the 10-15 minute target, while the difficult EBM canary remains about
+27 minutes. The 10-15 minute per-EBM target has therefore not been achieved;
+the 24-hour diagnostic objective is met through the backend improvement and
+resource-aware overlap, without reducing scientific work.
 
 <a id="live-network-gui"></a>
 
@@ -646,8 +727,11 @@ versioned rather than silently changing old contracts.
 | `gui/experimentGui.py` | Campaign 4 queue buttons, Network tab, lane binding, and plot actions |
 | `gui/campaign_workers.py` | Transport arbitrary bounded Campaign 4 telemetry events |
 | `gui/runtime_estimator.py` | Version-aware per-stage history and Campaign 4 ETA estimates |
+| `gui/campaign4_execution.py` | Apply the validated per-path memory caps, EBM concurrency limit, and resource-aware queue selection |
 | `basil_core/data/cifar.py` | Profiled input-pipeline changes that preserve partition and batch contracts |
-| `scripts/benchmark_campaign4.py` | Microbatch, precision, XLA, memory, equivalence, and throughput benchmark |
+| `scripts/benchmark_campaign4.py` | Full-batch allocator, precision, XLA, memory, and numerical benchmark |
+| `scripts/validate_campaign4_precision.py` | Paired 100-round float32/BF16 no-save precision and speed gate |
+| `scripts/benchmark_campaign4_lanes.py` | No-save pair benchmark for memory-safe, fingerprint-preserving lane combinations |
 | `scripts/sync_campaign4_configs.py` | Generate the checked-in Campaign 4 config library and manifest |
 
 <a id="verification"></a>
@@ -659,8 +743,9 @@ versioned rather than silently changing old contracts.
 - Static EBM reproduces the declared objective and coefficient.
 - Adaptive mode with adaptation disabled equals static mode.
 - The EBM gradient is compared with finite differences on a tiny model.
-- Microbatch sizes 128/256/512 produce equivalent full-batch gradients within
-  a declared float32 tolerance.
+- The full-batch EBM gradient matches the declared nested-tape objective.
+- Official OOM handling retains the unchanged full-batch queue item and cannot
+  enter confirmation aggregates through a smaller-batch retry.
 - Mixed precision is rejected if gradients become non-finite or deviate beyond
   the approved tolerance.
 - GPU stateless noise has the declared covariance and deterministic keyed seed.
@@ -727,6 +812,58 @@ Implementation checkpoints:
    pass for Merged.
 7. CART and IID runs use the same frozen controller; they are not retuned to
    produce a preferred ordering.
+
+### Commands and GUI order
+
+```bash
+source environment/basil-noise-env/bin/activate
+python scripts/sync_campaign4_configs.py --check
+python scripts/benchmark_campaign4.py --rounds 2 --repeats 3 \
+  --include-cuda-malloc-async --include-mixed-bfloat16
+python scripts/validate_campaign4_precision.py
+python scripts/benchmark_campaign4_lanes.py --rounds 2 --repeats 3
+python runGui.py
+```
+
+The three profiling commands are the manual equivalent of the GUI's
+**Profile GPU + lanes** action. The precision validator is required only after
+the short benchmark reports `requires_full_round_validation`; the GUI performs
+that conditional check automatically.
+
+In **Queue**, use this order:
+
+1. `Diagnose non-IID Merged - 33`.
+2. `Diagnose non-IID CART - 33` to test transfer without CART-specific EBM
+   retuning.
+3. Inspect `plots4/campaign4/.../diagnostics` using seed 2025 only.
+4. Click `Freeze Campaign 4 method`, record the diagnostic rationale, and enter
+   the advisor-selected non-inferiority margin. The button remains locked until
+   all 66 diagnostics are complete.
+5. `Static EBM controls - 60` for the paired method comparison.
+6. Run non-IID confirmation, then IID confirmation, only after the diagnostic
+   decision is documented.
+
+Do not edit Campaign 4 training/provenance files or switch the validated GPU
+profile during the 66-run diagnostic sweep. Such a change intentionally makes
+earlier diagnostics ineligible for the freeze instead of mixing methods.
+
+Confirmation preset buttons and worker launch both verify the freeze state.
+This means a confirmation JSON selected manually cannot bypass the protocol
+gate; it remains in the queue until the exact current method is frozen.
+
+Each completed worker writes:
+
+```text
+experiments/results4/campaign4/gui/<split>/cifar10/<attack>/<approach>/
+  <noise>/<condition>/seed_<seed>/<run-id>/
+    metrics.npz
+    telemetry.npz
+    run.json
+```
+
+The GUI incrementally regenerates changed images under
+`plots4/campaign4/images/gui/...`; the final plot action also writes PDF and
+EPS versions. A stopped or failed config remains in the queue.
 
 <a id="decision-rules"></a>
 

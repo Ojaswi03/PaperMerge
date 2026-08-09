@@ -7,7 +7,7 @@ has been run, what the stored results mean, how an experiment travels from a
 JSON configuration to CIFAR-10 training and publication plots, and what every
 project code file and callable is responsible for.
 
-The description reflects the repository state on **July 29, 2026**. It
+The description reflects the repository state on **August 3, 2026**. It
 documents the code as implemented. It does not turn expected accuracy ordering
 into a guarantee, and it does not treat incomplete experiment arms as evidence.
 
@@ -21,6 +21,7 @@ major section heading returns here.
 | Section | Brief explanation |
 |---|---|
 | [What Has Been Tested So Far](#tested-so-far) | Current Campaign 3 R2 coverage, completed records, missing runs, and result-reading links |
+| [Campaign 4 Status](#campaign4-status) | Implemented high-noise diagnosis, adaptive EBM boundary, isolated outputs, GUI, and evidence still pending |
 | [What A Result Means](#result-meaning) | Definitions of stored metrics, baselines, paired comparisons, and valid interpretation |
 | [Component Boundaries](#component-boundaries) | Exact responsibilities of consensus, Snapshot Selection, EBM, Merged, and CART |
 | [End-To-End System](#end-to-end-system) | Full flow from a selected JSON config to training, saved artifacts, and plots |
@@ -45,6 +46,54 @@ major section heading returns here.
 <a id="tested-so-far"></a>
 
 ## What Has Been Tested So Far [↑](#section-index)
+
+<a id="campaign4-status"></a>
+
+### Campaign 4 implementation and test status
+
+Campaign 4 is implemented as a separate protocol revision for diagnosing the
+sigma `0.4-0.6` accumulation observed in Campaign 3. It does not overwrite or
+pool Campaign 3 records.
+
+| Campaign 4 item | Current status |
+|---|---|
+| Config library | 526 generated JSONs: 396 confirmation, 60 static controls, 66 diagnostics, 4 performance cases |
+| Result root | `experiments/results4/campaign4/` |
+| Plot root | `plots4/campaign4/` |
+| Clean reference | Protocol-matched pairwise ring; optional full-consensus ceiling remains distinctly labeled |
+| Byzantine scope | Hidden attack only, nodes 1/4/6/8, active from round 20 |
+| Noise scope | Relative-L2 Gaussian link noise, active from round 0, sigma 0.2-0.6 |
+| SS | Core BASIL-derived snapshot rule is unchanged; telemetry surrounds it |
+| Static EBM | Preserved as a paper-derived control |
+| Adaptive EBM | New project extension that bounds/smooths the coefficient using receiver-observable model stress |
+| CART | Same class-registry/proximal responsibility, evaluated as an add-on to Merged |
+| GUI | Presets, individual file selection, live chart/log, directed ring, node inspector, and telemetry replay |
+| Saving | Atomic `metrics.npz`, `telemetry.npz`, and `run.json` per run ID |
+| Plot integrity | Confirmation, static controls, diagnostics, and performance checks are phase-separated; incompatible execution profiles are not pooled |
+| Round integrity | Scientific phases require complete 100-round histories in both the worker and plot loader; one/two-round benchmark and unit checks are not result evidence |
+| Validated compute | Full batch 512, mixed-BF16 compute with float32 variables/accumulation/norms/noise/metrics, async CUDA allocator, no XLA |
+| Validated lanes | Two isolated workers with at most one EBM worker; standard+standard and EBM+standard passed, EBM+EBM was rejected |
+
+The automated Campaign 4 tests cover config semantics, exact full-batch EBM
+gradients on a tiny model, adaptive bounds, deterministic relative noise,
+events, telemetry shape, incremental plotting, profile separation, and stale
+GUI event rejection. A virtual-display GUI construction check also passed.
+
+Two-round no-save GPU benchmarks and two complete 100-round no-save precision
+canaries verify the selected backend on the local RTX 4070 Ti. The canaries
+measured 1.77x speedup for clean CART and 1.87x for CART SS+EBM at sigma 0.6,
+while passing initialization, finite-value, final-accuracy, AUC, and worst-node
+gates. The difficult EBM canary still took about 27 minutes and collapsed near
+random accuracy in both float32 and BF16. That collapse remains a method result
+to diagnose; the performance profile does **not** establish that adaptive EBM
+improves accuracy.
+
+The measured queue estimate is about 10 h 43 min for one 33-run diagnostic
+suite and 21 h 26 min for both 66-run Merged+CART diagnostics. The complete
+198-run non-IID confirmation remains about 51 hours on this single GPU.
+
+The exact Campaign 4 run order, equations, acceptance rules, plot catalog, and
+implementation status are in [Campaign 4 Engineering And Evaluation Plan](Campaign4Plan.md).
 
 ### Official Campaign 3 R2 records
 
@@ -601,9 +650,17 @@ One 100-round R2 config performs:
 = 25,000 optimizer updates
 ```
 
-Every effective batch has 512 images but is split into four activation
-microbatches of 128. A standard config therefore executes roughly 100,000
+Campaign 3 R2 splits each effective batch of 512 into four activation
+microbatches of 128. A standard R2 config therefore executes roughly 100,000
 microbatch gradient passes before adding evaluation work.
+
+Campaign 4 official EBM runs instead use the full configured batch of 512 in
+one nested-tape pass. This is required because the gradient of the norm of the
+complete batch gradient is not equal to an average of separate microbatch
+gradient-norm derivatives. The full batch fits on the measured GPU. Smaller
+Campaign 4 microbatches are performance diagnostics only and cannot enter
+confirmation plots. An OOM retains the unchanged batch-512 queue item and
+stops the campaign instead of silently lowering the batch.
 
 EBM is more expensive because differentiating
 `F + lambda*sigma^2*||grad F||^2` requires nested gradient tapes and
@@ -625,9 +682,11 @@ partition-generation costs. They cannot remove CNN training, second-order EBM,
 SS scoring, CART probes, or evaluation.
 
 Running two GPU workers is not automatically faster. Both contend for the same
-GPU compute and memory bandwidth. The repository benchmark measured only about
-1.01x throughput on the current RTX 4070 Ti, below the 1.4x gate, so one lane
-is the safe measured setting.
+GPU compute and memory bandwidth. Campaign 4 measures combinations separately:
+standard+standard reached 1.15x throughput, EBM+standard reached 1.13x, and
+EBM+EBM reached only 1.02x. The resource-aware scheduler therefore permits two
+lanes but never starts two EBM workers together. It also applies separately
+measured memory caps and overlap slowdowns to queue execution and ETA math.
 
 <a id="repository-map"></a>
 
@@ -643,11 +702,13 @@ PaperMerge/
   basil_core/                  Models, data, attacks, ring engines, CART
   noise_comm/                  EBM/WCM mathematical helpers
   gui/                         Tk GUI, campaign contracts, workers, configs
-  plots/                       Legacy and R2 plot generators
+  plots/                       Legacy, R2, and Campaign 4 plot generators
   scripts/                     Runners, workers, calibration, maintenance
   tests/                       Contract, engine, worker, cache, and WCM tests
   experiments/                 Configs, caches, legacy results, R2 results
   plots3/r2/                   Current R2 plots and tables
+  experiments/results4/        Isolated Campaign 4 results and telemetry
+  plots4/campaign4/            Isolated Campaign 4 figures and tables
 ```
 
 The next sections are a file-by-file and function-by-function reference.
@@ -660,7 +721,7 @@ The next sections are a file-by-file and function-by-function reference.
 
 | Callable | Responsibility |
 |---|---|
-| `_run_gui()` | Imports and invokes `gui.experimentGui.main()` inside the launched GUI process. |
+| `_run_gui()` | Imports and invokes `gui.experimentGui.main()` without eagerly initializing CUDA; manual legacy execution initializes lazily and isolated campaign workers own their GPU contexts. |
 | `_collect_mtimes()` | Scans project Python files and returns modification times used by hot reload. |
 | `_launch_subprocess()` | Starts a fresh Python child running this file in GUI-child mode. |
 | `_run_watcher()` | Supervises the child, watches source changes, handles reload code 42, and relaunches when requested. |
@@ -763,13 +824,14 @@ legacy in-process runs, R2 isolated runs, and plot refresh scheduling.
 
 | Method | Responsibility |
 |---|---|
-| `_workerSettings()` | Loads the benchmark profile and returns validated lane count, GPU cap, and slowdown. |
-| `_queueEstimateText()` | Formats item count, ETA range, finish clock time, lanes, and summed work. |
+| `_workerSettings()` | Loads Campaign-specific execution settings, including per-path caps, pair permissions, EBM limit, and measured slowdowns. |
+| `_queueEstimateText()` | Formats item count, resource-aware ETA range, finish clock time, lanes, and summed work. |
 | `_refreshQueueEstimate()` | Reloads runtime history and refreshes queue/active estimates. |
 | `_scheduleQueueEstimateRefresh()` | Debounces ETA recalculation on the Tk event loop. |
 | `_configsByEstimatedDuration()` | Stable-sorts configs by empirical estimated seconds. |
 | `_saveQueueState()` | Writes the current queue JSON to local persistent state. |
-| `_loadQueueState()` | Restores a valid saved queue at startup. |
+| `_loadQueueState()` | Restores a valid saved queue and applies the current validated profile to Campaign 4 items for accurate IDs and ETAs. |
+| `_refreshQueuedCampaign4Profiles()` | Reprofiles pending Campaign 4 items after a successful GPU benchmark without dropping or reordering them. |
 | `_updateQueueButton()` | Updates the Queue button badge and schedules ETA refresh. |
 | `_appendCampaign3Preset()` | Builds a named R2 preset and appends only missing/not-queued configs. |
 | `_replaceWithCampaign3Preset()` | Replaces the stopped queue with a confirmed preset after warning the user. |
@@ -804,7 +866,7 @@ The remaining queue methods are:
 | Method | Responsibility |
 |---|---|
 | `_removeQueuedConfig()` | Removes the exact successful config object and persists the queue. |
-| `_nextCampaignConfig()` | Finds the next non-active, non-duplicate Campaign 3 item. |
+| `_nextCampaignConfig()` | Finds the next non-active item and delegates Campaign 4 selection to the validated resource policy. |
 | `_startCampaignLiveRun()` | Allocates lane-specific chart/progress state. |
 | `_recordCampaignRound()` | Stores one worker round event and schedules chart refresh. |
 | `_logCampaignConfiguration()` | Prints the complete R2 config and worker settings before launch. |
@@ -825,10 +887,21 @@ The remaining queue methods are:
 | `_scheduleCampaign3PlotRefresh()` | Marks a split dirty and starts/debounces the live plot thread. |
 | `_campaign3PlotRefreshLoop()` | Generates changed PNG previews until no dirty split remains. |
 | `_waitForCampaign3PlotRefresh()` | Waits for in-flight live refreshes before a final format pass. |
+| `_appendCampaign4Preset()` | Appends only incomplete configs from one Campaign 4 preset while preserving custom queue entries. |
+| `_replaceWithCampaign4Preset()` | Replaces the stopped queue with a confirmed Campaign 4 preset after checking completed artifacts. |
+| `_applyCampaign4PerformanceProfile()` | Applies the validated batch-512 precision/allocator profile and re-derives run identity without changing the SS or EBM method. |
+| `_benchmarkCampaign4Profiles()`, `_runCampaign4BenchmarkThread()` | Run short backend candidates, the conditional 100-round BF16 validator, and lane-pair profiling without saving research results. |
+| `_startCampaignLiveRun()` | Initializes lane-aware live chart and Network-tab state for one worker. |
+| `_recordCampaignRound()` | Adds one worker round to the matching lane history. |
+| `_logCampaignConfiguration()` | Prints the full active protocol, attack/noise timing, defenses, CART, and worker profile to Output. |
+| `_drainCampaignWorkerEvents()` | Routes worker log, round, node, completion, stop, and failure events to the GUI thread. |
+| `_runIsolatedCampaignBlock()` | Executes a contiguous Campaign 3 or 4 queue block, applies per-path caps, preserves failures/stops, and leaves a batch-512 Campaign 4 OOM unchanged in the queue. |
+| `_scheduleCampaign4PlotRefresh()`, `_campaign4PlotRefreshLoop()`, `_waitForCampaign4PlotRefresh()` | Debounce incremental Campaign 4 previews and synchronize the final plot pass. |
 | `plotResults()` | Opens paper/diagnostic/both plot controls. |
 | `runCampaign()` | Nested callback that starts the requested R2 plotting mode. |
 | `_attackKeyFromConfig()` | Converts active attack flags to a stable legacy folder key. |
 | `generateCampaign3Plots()` | Calls the R2 plotter, reports generated/skipped/errors, and handles UI state. |
+| `generateCampaign4Plots()` | Calls the Campaign 4 plotter, reports profile-separation notices/errors, and preserves isolated output routing. |
 | `generatePlots()` | Calls legacy plotting for one config or the discovered result tree, optionally only when stale/missing. |
 | `main()` | Creates the Tk root and starts the GUI event loop. |
 
@@ -836,12 +909,12 @@ The remaining queue methods are:
 
 | Callable | Responsibility |
 |---|---|
-| `ActiveWorker` | Dataclass holding lane, config, subprocess, temp config path, start time, and reader thread. |
-| `WorkerCompletion` | Immutable completion record with lane, config, return code, and elapsed wall time. |
+| `ActiveWorker` | Dataclass holding lane, config, subprocess, temp config path, start time, reader thread, and that run's GPU cap. |
+| `WorkerCompletion` | Immutable completion record with lane, config, return code, elapsed wall time, and applied GPU cap. |
 | `CampaignWorkerPool.__init__()` | Configures lane count, GPU cap, worker script/interpreter, work directory, locks, and event queue. |
 | `available_lanes`, `active_count`, `has_active` | Thread-safe properties describing pool capacity. |
 | `active_configs()` | Returns configs currently owned by child processes. |
-| `launch()` | Atomically writes a lane temp config, starts one worker subprocess, records it, and starts output reading. |
+| `launch()` | Atomically writes a lane temp config, starts one worker with the selected per-path GPU cap, records it, and starts output reading. |
 | `_read_output()` | Converts prefixed JSON lines to structured events and all other lines to log events. |
 | `drain_events()` | Nonblockingly drains accumulated worker output for the GUI. |
 | `poll_finished()` | Reaps exited workers, closes output, removes temp configs, and returns completions. |
@@ -862,10 +935,20 @@ The remaining queue methods are:
 | `_matching_tier()` | Ranks historical records from exact signature to EBM-only fallback. |
 | `_scaled_seconds()` | Scales a historical runtime by work units and adds missing process overhead. |
 | `RuntimeEstimator.__init__()`, `reload()` | Initialize or refresh historical samples. |
+| `set_execution_profile()` | Loads validated 100-round no-save canary timings as fallback calibration when official history does not yet exist. |
 | `RuntimeEstimator.estimate()` | Uses same-round robust medians when possible and conservative defaults otherwise. |
-| `RuntimeEstimator.estimate_queue()` | Computes lane-aware makespan and total work with active elapsed-time subtraction. Its nested `makespan()` greedily schedules durations across lanes; `remaining_work()` sums config work after elapsed-time subtraction. |
+| `RuntimeEstimator.estimate_queue()` | Event-simulates the validated EBM concurrency limit and pair-specific overlap slowdowns, while subtracting active elapsed time and separately reporting wall-clock versus total config work. |
 | `load_worker_profile()` | Loads benchmark recommendations or safe single-lane defaults. |
 | `format_duration()` | Formats seconds as seconds, minutes, hours, or days. |
+
+### `gui/campaign4_execution.py`
+
+| Callable | Responsibility |
+|---|---|
+| `is_ebm_config()` | Identifies configs that execute the full-batch second-order EBM path. |
+| `settings_from_profile()` | Converts a validated backend/lane profile into conservative lane, cap, slowdown, and EBM-limit settings. |
+| `memory_limit_for_config()` | Selects the measured standard or EBM cap for one worker launch. |
+| `select_next_config()` | Fills validated lane combinations, prioritizing long EBM work while never starting an unvalidated pair. |
 
 ### `gui/config_library.py`
 
@@ -913,6 +996,50 @@ matrix construction. It deliberately imports no TensorFlow or Tkinter code.
 | `is_completed()` | Requires both files plus matching completed status, run ID, and config hash. |
 | `write_json_atomic()` | Flushes a temporary JSON file and atomically replaces the destination. |
 | `write_npz_atomic()` | Writes compressed arrays to a temporary archive and atomically replaces the destination. |
+
+### `gui/campaign4.py`
+
+This is the TensorFlow-free Campaign 4 research contract. It is the only
+source for Campaign 4 identities, legal environment/defense combinations, and
+isolated paths.
+
+| Callable | Responsibility |
+|---|---|
+| `_canonical_payload()`, `config_hash()`, `make_run_id()` | Canonicalize a config and derive stable content-addressed identity. |
+| `static_ebm_coefficient()` | Returns the frozen Campaign 3 coefficient used by the static-control path. |
+| `_gamma_for_sigma()` | Resolves the existing scalar/bucketed CART gamma schedule. |
+| `_condition_id()`, `_experiment_name()` | Build stable condition identity and complete queue/log labels, including persistent optimizer diagnostics. |
+| `make_config()` | Generates the float32 baseline contract and enforces clean/SS/EBM semantics, attack/noise timing, batch 512, and exact full-batch EBM for official phases. |
+| `_main_matrix()` | Builds the 33-condition-per-seed environment decomposition. |
+| `build_main_confirmation()` | Returns 396 IID/non-IID, Merged/CART, three-seed confirmations. |
+| `build_split_confirmation()` | Returns the 198 confirmations for one split. |
+| `build_static_controls()` | Returns 60 paired non-IID static EBM controls. |
+| `build_diagnostic()` | Returns 33 high-noise diagnostics per approach, including persistent-versus-reset momentum. |
+| `build_performance_benchmark()` | Returns four short standard/SS/EBM/CART+joint performance representatives. |
+| `build_preset()` | Dispatches named GUI preset families. |
+| `result_run_dir()`, `result_paths()` | Route every run to split/attack/approach/noise/condition/seed/run-ID storage. |
+| `is_completed()` | Requires matching completed metadata plus all three Campaign 4 artifacts. |
+| `apply_performance_profile()` | Applies a validated precision/allocator profile and re-derives content identity without relaxing batch 512 or changing SS/EBM equations. |
+| `current_source_hashes()` | Hashes every declared Campaign 4 provenance file used by the worker and freeze audit. |
+| `adaptive_method_contract()` | Captures exact adaptive/static settings, CART schedule, execution profile, source hashes, and generated diagnostic/confirmation identities. |
+| `diagnostic_completion()` | Verifies all 66 expected Merged+CART diagnostic triples by profiled run ID and current provenance hashes. |
+| `load_campaign_state()` | Reads the Campaign 4 freeze artifact without accepting malformed JSON. |
+| `freeze_campaign_state()` | Requires complete diagnostics, then atomically records the written rationale, predeclared margin, exact method contract, and completed diagnostic identities. |
+| `is_confirmation_frozen()` | Invalidates confirmation access when diagnostics disappear or the protocol, execution profile, source hashes, method hash, or run matrix changes. |
+
+### `gui/network_view.py`
+
+| Callable | Responsibility |
+|---|---|
+| `CampaignNetworkView.__init__()`, `_build()` | Construct the Network tab, directed ring, lane/node controls, inspector tabs, and replay slider. |
+| `start_run()` | Initialize bounded state for one lane/run without model arrays. |
+| `apply_node_update()` | Reduce one node event and reject events older than that node's current state. |
+| `apply_round()` | Reduce average/worst/per-node round metrics while rejecting stale round events. |
+| `finish_run()` | Mark the lane completed, stopped, or failed. |
+| `request_redraw()`, `_redraw()` | Throttle rendering, draw noise-weighted ring links, and overlay selected/rejected snapshot sources. |
+| `_refresh_inspector()` | Render incoming, attack, optimizer, EBM, CART, SS-candidate, and outgoing-link fields. |
+| `_on_lane()`, `_on_node()`, `_canvas_click()` | Keep lane/node selectors and canvas selection synchronized. |
+| `_choose_replay()`, `load_replay()`, `_on_replay_round()`, `_show_replay_round()` | Load completed metadata/telemetry and reconstruct a selected historical round. |
 
 `gui/__init__.py` is an empty package marker.
 
@@ -1053,6 +1180,48 @@ This is the deterministic official R2 training engine.
 | `_selected_snapshot()` | Applies SS relative-distance filtering and fixed-batch minimum-loss ranking, or immediate-predecessor selection without SS. |
 | `_evaluate_states()` | Loads every logical node and returns limited-test average, worst, and per-node accuracy. |
 | `run_campaign_three()` | Seeds deterministically, initializes shared/logical state, runs clean or sequential ring rounds, applies CART/SS/EBM/attacks/noise, emits callbacks, computes final diagnostics, and returns all metrics. |
+
+### `basil_core/campaign4_engine.py`
+
+Campaign 4 is versioned separately from Campaign 3. It keeps logical model,
+optimizer, and snapshot tensors on the GPU, adds full telemetry, and implements
+the separately identified adaptive EBM extension. It does not change the core
+Snapshot Selection ranking rule.
+
+| Callable | Responsibility |
+|---|---|
+| `_device_copy()` | Copy a parameter list to independent float32 device tensors. |
+| `_params_to_numpy()` | Convert a parameter list to host float32 arrays for explicit final/debug use. |
+| `params_hash()` | Hash complete parameter bytes when a full provenance fingerprint is needed. |
+| `_state_diagnostics()`, `_state_signature()` | Transfer compact reductions once to derive a short state signature and model norm. |
+| `_seed_pair()` | Derive deterministic TensorFlow stateless RNG keys from semantic link/attack identifiers. |
+| `_global_norm()`, `_relative_parameter_distance()` | Compute full-list norm and normalized model distance. |
+| `_average_params()`, `_average_many()` | Apply pairwise ring consensus or the separately labeled all-node clean ceiling. |
+| `_relative_l2_channel_noise()` | Add one deterministic GPU-side Gaussian perturbation per sender-receiver link with requested relative L2 magnitude. |
+| `_hidden_attack()` | Reproduce the Campaign 3 hidden corruption with deterministic TensorFlow RNG. |
+| `_microbatch_slices()`, `_base_gradients()` | Support weighted standard-gradient accumulation for diagnostic execution profiles. |
+| `_base_and_regularizer_gradients()` | Differentiate `F_batch` and `||grad F_batch||^2`; official EBM calls it with the full batch of 512. |
+| `_bounded_adaptive_coefficient()` | Convert receiver-observable stress and measured gradient norms into a bounded, EMA-smoothed, rate-limited coefficient. |
+| `RingSnapshot` | Store sender/round/device parameters, optional registry, measured link noise, attack flag, and bounded state signature. |
+| `SelectionDecision` | Store the chosen snapshot plus sender, distance, loss, plausibility, and fallback vectors. |
+| `LogicalNode` | Hold one logical node's device parameters, optimizer slots, data/probe, registry, class state, stress, coefficient, and bounded memory. |
+| `LogicalNode.receive()` | Replace the latest snapshot from a sender and enforce BASIL memory size. |
+| `SharedDeviceWorker.__init__()` | Build one shared model/SGD instance, reference/diagnostic variables, and compiled standard/EBM/predict kernels. |
+| `load()`, `export()` | Move one logical device state into/out of the shared model without NumPy round-trips. |
+| `zero_optimizer_state()`, `_load_optimizer_state()`, `_export_optimizer_state()` | Manage independent logical-node momentum state. |
+| `_reset_diagnostics()` | Clear on-device gradient/clip counters before one node visit. |
+| `batch_loss_tensor()`, `batch_loss()` | Score SS candidates on the fixed receiving-node batch. |
+| `train()` | Load state, set LR/reference/EBM/CART controls, execute all local steps, and return tensors plus bounded diagnostics. |
+| `probe_metrics()` | Compute private per-class accuracy/support for CART verification and updates. |
+| `confusion()` | Compute one node's final full-test confusion matrix. |
+| `_gpu_peak_bytes()` | Read TensorFlow peak GPU allocation when supported. |
+| `_class_accuracy_from_confusion()`, `_accuracy_from_confusion()` | Convert final confusion matrices into per-class, average, worst, and per-node accuracy. |
+| `_mean_reference_supported_gap()` | Compute CART's verified, supported, consensus-reproducible class gap. |
+| `_select_snapshot()` | Apply the existing plausibility-guard then local-loss selection, or immediate predecessor when SS is off. |
+| `_evaluate_states()` | Evaluate all logical node states on bounded round-evaluation batches. |
+| `_telemetry_arrays()`, `_store_candidates()` | Allocate typed round/node telemetry and store bounded SS candidate fields. |
+| `_node_event()` | Produce JSON-bounded live GUI state without model tensors. |
+| `run_campaign_four()` | Validate the EBM batch contract, seed deterministically, execute clean/full/ring paths, noise/hidden/SS/EBM/CART logic, callbacks, full final evaluation, telemetry, timing, and peak memory. |
 
 ### `basil_core/data/cifar.py`
 
@@ -1232,6 +1401,63 @@ local noisy-communication paper. It is not connected to R2.
 | `_run_one()` | Runs one benchmark worker synchronously and captures merged output. |
 | `_load_summary()` | Reads a worker's deterministic JSON summary. |
 | `main()` | Warms cache, times two sequential and two concurrent runs, compares fingerprints, applies the speedup/safety gate, and writes the worker profile. |
+
+### `scripts/run_campaign4_worker.py`
+
+| Callable | Responsibility |
+|---|---|
+| `_parse_args()` | Parse one config, GPU memory cap, cache path, no-save summary mode, and benchmark event suppression. |
+| `_emit()` | Write bounded prefixed JSON events consumed by the GUI worker pool. |
+| `_configure_tensorflow()` | Set the validated allocator, float32 or mixed-BF16 compute policy, and one logical GPU cap before device initialization. |
+| `_partition_hash()` | Hash exact client index arrays for split provenance. |
+| `_sha256_file()`, `_source_hashes()` | Record hashes of every Campaign 4 source file that affects a run. |
+| `_git_state()` | Record Git revision and whether tracked files were dirty at execution time. |
+| `_fingerprint()` | Hash all saved metric and telemetry arrays. |
+| `_scientific_fingerprint()` | Hash all scientific arrays while excluding runtime-only telemetry so lane equivalence can be checked exactly. |
+| `_tensorflow_metadata()` | Record TensorFlow, CUDA, cuDNN, physical GPU, and logical GPU information. |
+| `main()` | Validate Campaign 4/full-batch/precision contracts, save lifecycle metadata atomically, load CIFAR, run the engine, save all artifacts, emit live events, preserve stop/failure state, clear Keras, collect Python garbage, and exit. |
+| `request_stop()` | Nested signal handler that requests a safe round-boundary stop. |
+
+### `scripts/benchmark_campaign4.py`
+
+| Callable | Responsibility |
+|---|---|
+| `_parse_args()` | Parse short rounds, repeats, GPU cap, optional XLA/async-allocator/BF16 candidates, numerical tolerance, and profile path. |
+| `_profile_candidates()`, `_profile_id()` | Build named exact-full-batch execution candidates; XLA, async allocation, and BF16 are explicit opt-ins. |
+| `_command()`, `_run()` | Execute one no-save isolated worker and collect its summary/log tail. |
+| `_configured()` | Apply one profile to a short non-research config and recompute run identity. |
+| `main()` | Warm each profile, run standard/SS/EBM/CART+joint representatives, enforce OOM/finite/numerical/repeat gates, and write either a validated backend or a BF16 candidate requiring full validation. |
+
+### `scripts/validate_campaign4_precision.py`
+
+| Callable | Responsibility |
+|---|---|
+| `_cases()` | Builds clean CART and difficult sigma-0.6 CART SS+EBM 100-round no-save canaries. |
+| `_configured()` | Applies float32 baseline or BF16 candidate settings and re-derives identity. |
+| `_run()` | Streams sparse round progress from one isolated full run and reads its no-save summary. |
+| `_finite()` | Rejects missing or non-finite final, worst, AUC, or runtime values. |
+| `main()` | Compares initialization, final accuracy, AUC, worst-node accuracy, and speed; validates BF16 or restores float32. |
+
+### `scripts/benchmark_campaign4_lanes.py`
+
+| Callable | Responsibility |
+|---|---|
+| `_gpu_memory()` | Reads current total/used/free VRAM before allowing a pair. |
+| `_sequential_calibration()` | Measures path-specific peak allocation and scientific fingerprints in isolation. |
+| `_run_pair()` | Starts a temporary no-save worker pair with independently derived caps. |
+| `_pair_result()` | Applies exact fingerprint, finite-output, VRAM-headroom, OOM, and throughput gates across repeats. |
+| `main()` | Validates standard+standard, EBM+standard, and EBM+EBM separately and stores the permitted resource policy and measured slowdowns. |
+
+### `scripts/sync_campaign4_configs.py`
+
+| Callable | Responsibility |
+|---|---|
+| `_parse_args()` | Parse write mode versus read-only `--check`. |
+| `_all_configs()` | Combine and de-duplicate all confirmation/control/diagnostic/benchmark configs. |
+| `_relative_path()` | Build deterministic split/approach filenames. |
+| `_expected_payloads()` | Build all config payloads plus the 526-entry manifest. |
+| `_is_current()` | Compare disk paths and complete JSON values with the code-generated contract. |
+| `main()` | Report drift in check mode or remove stale generated JSONs and atomically regenerate the library. |
 
 ### `scripts/run_single_config.py`
 
@@ -1431,6 +1657,35 @@ This is the only plotter for official R2 records.
 | `generate_campaign3_plots()` | Serializes plot generation with a process lock. |
 | `generate_campaign3_live_plots()` | Requests changed PNG previews only after a completed experiment. |
 
+### `plots/plotCampaign4.py`
+
+This plotter discovers only validated Campaign 4 triples (`run.json`,
+`metrics.npz`, `telemetry.npz`). It writes incremental PNG previews and final
+PNG/PDF/EPS outputs without modifying measured values.
+
+| Callable | Responsibility |
+|---|---|
+| `RunRecord` and properties | Pair config/metrics/telemetry and normalize split, approach, environment, defense, sigma, seed, phase, EBM mode, and execution signature. |
+| `_load_npz()`, `_record_signature()`, `_validated_record()`, `load_records()` | Safely cache and validate Campaign 4 artifacts from the isolated root. |
+| `clear_record_cache()` | Explicitly invalidate cached result records. |
+| `_paper_style()`, `_mean_error()`, `_select()`, `_finals()` | Apply consistent conference-oriented style and finite grouping/statistics. |
+| `_profile_slug()`, `_group_by_execution_profile()` | Separate protocol revision, full-batch, precision, XLA, and optimizer-state profiles before aggregation. |
+| `_source_fingerprint()`, `_atomic_save_figure()` | Detect changed inputs and atomically replace one output format. |
+| `_Writer.figure()`, `_Writer.finish()` | Skip unchanged figures and persist the incremental manifest. |
+| `_evidence_hierarchy()` | Show absolute clean/single/joint/partial/no-defense accuracy without forcing rank. |
+| `_line_by_sigma()`, `_joint_challenge()`, `_defense_composition()` | Draw uncertainty-aware final-accuracy comparisons over sigma. |
+| `_avg_worst()`, `_seed_profiles()`, `_class_retention()` | Expose weak nodes, seed variation, and class-level behavior. |
+| `_mean_history()`, `_learning_curves()` | Align round histories and draw clean/hidden/joint curves with attack-start marker and seed spread. |
+| `_noise_robustness()` | Compare final accuracy and learning-curve AUC for noise-only EBM and joint SS+EBM. |
+| `_paired_delta()`, `_cart_lift()`, `_static_adaptive()` | Compute raw signed matched-seed effects; negative values remain negative. |
+| `_telemetry_panel()` | Plot measured link noise, stress, coefficient, and clipping over rounds. |
+| `_selection_panel()` | Plot post-activation attacker-selection and SS fallback fractions. |
+| `_runtime_panel()` | Plot runtime, peak GPU allocation, stage breakdown, and clipping frequency. |
+| `_completeness()` | Mark required approach/condition/seed cells complete independent of machine profile run ID. |
+| `_write_summary_csv()` | Write raw run-level metrics plus execution-profile fields. |
+| `generate_campaign4_plots()` | Dispatch profile-separated paper/diagnostic suites and return generated/skipped/error/notice lists. |
+| `generate_campaign4_live_plots()` | Generate changed PNG previews after one completed queue item. |
+
 ### `plots/plotGui.py`
 
 This is the legacy/result2 GUI plotter.
@@ -1542,6 +1797,30 @@ R2 config, and `_run()` calls the official engine.
 | `test_cart_gap_requires_reference_to_reproduce_registry_claim()` | Historical registry claims are capped by current reference capability. |
 | `test_ss_guard_filters_implausible_low_loss_neighbor()` | The integration guard removes an implausible candidate that would otherwise win local-loss ranking. Nested `FakeWorker.batch_loss()` supplies controlled scores. |
 
+### `tests/test_campaign4_contracts.py`
+
+| Test group | What it verifies |
+|---|---|
+| Path and matrix tests | New roots never use Campaign 3 paths; counts are 396/60/33/33/4 with unique run IDs. |
+| Semantic tests | Clean cannot enable defenses, SS requires hidden attack, EBM requires noise, hidden starts at 20, noise starts at 0, generated configs use float32 baselines, and official EBM remains full-batch under any validated execution profile. |
+| Completion test | A run is complete only with matching metadata, metrics, and telemetry. |
+| Method-freeze test | Confirmation stays locked until all 66 diagnostics exist; the atomic freeze binds the rationale, declared margin, exact run identities, and current method/code hash. |
+| Generated-library test | All 526 checked-in JSONs and manifest match code generation. |
+| Incremental plot test | Synthetic completed records create isolated figures once and skip unchanged outputs next time. |
+| Profile-isolation test | XLA/non-XLA confirmation records are written to separate profile folders rather than pooled. |
+| Network reducer test | A delayed node event cannot overwrite a newer node state. |
+
+### `tests/test_campaign4_engine.py`
+
+The nested tiny model/data helpers run Campaign 4 without CIFAR-scale cost.
+
+| Test | What it verifies |
+|---|---|
+| `test_second_order_gradient_matches_declared_objective()` | Full-batch nested tapes match direct differentiation of `F + c||grad F||^2`. |
+| `test_adaptive_coefficient_is_bounded_and_rate_limited()` | The controller obeys coefficient and per-step change bounds. |
+| `test_relative_noise_is_deterministic_and_has_requested_norm()` | Stateless link noise repeats by key and realizes the configured relative norm. |
+| `test_run_emits_node_events_and_complete_telemetry()` | A tiny hidden+noise+SS+adaptive EBM run returns complete shapes and JSON-bounded events with no parameters. |
+
 ### `tests/test_campaign_workers.py`
 
 `CampaignWorkerPoolTests` exercises subprocess scheduling and stop behavior.
@@ -1572,7 +1851,7 @@ R2 config, and `_run()` calls the official engine.
 | `test_merged_and_cart_files_are_exact_campaign_r2_confirmations()` | Current generated Merged/CART JSON equals the source matrix exactly. |
 | `test_standalone_paper_baselines_keep_defenses_in_scope()` | BASIL has no EBM and Noisy has no SS; legacy scale metadata remains consistent. |
 | `test_synced_json_library_matches_the_generators()` | Every checked-in Current JSON and manifest count matches generated content. |
-| `test_gui_defaults_to_current_multi_select_library()` | Source-level guard for Current picker, extended selection, duration sorting, and drag binding. |
+| `test_gui_defaults_to_campaign4_multi_select_library()` | Source-level guard for Campaign 4 default picker, extended selection, duration sorting, and drag binding. |
 | `test_campaign_worker_events_feed_the_log_and_live_chart()` | Source-level guard for config logging and average/worst worker chart events. |
 
 ### `tests/test_runtime_estimator.py`
@@ -1633,6 +1912,7 @@ test discovery.
 | `README.md` | Public setup, run commands, current campaign summary, and navigation. |
 | `docs/GetToKnow.md` | Complete advisor-facing repository and callable map. |
 | `docs/Campaign3Guide.md` | Detailed R2 protocol, equations, calibration, diagrams, and interpretation. |
+| `docs/Campaign4Plan.md` | Implemented Campaign 4 protocol, adaptive/static boundary, diagnostics, GUI, plots, run order, and pending evidence. |
 | `docs/gammaExplained.md` | Worked explanation of CART gamma and mu. |
 | `docs/WCM_PILOT.md` | Isolated WCM design, safety, commands, and decision rule. |
 | `docs/cart_presentation.md` / `.txt` | Private ignored presentation drafts, not part of a pushed advisor package. |
@@ -1660,13 +1940,15 @@ declared split, approach, environment, mitigation, sigma, seed, gamma, or
 protocol patch:
 
 - `gui/configs/current/` contains 636 experiment configs plus one manifest.
+- `gui/configs/campaign4/` contains 526 Campaign 4 configs plus one manifest.
 - Legacy/custom config directories contain 616 JSON records.
 - `gui/presets/preset1_queue.json` is an older 36-entry queue snapshot.
 - `gui/queue_state.json` is machine-local mutable UI state and is ignored.
 
 Every Current file can be regenerated from `gui/config_library.py` and
-`gui/campaign3.py`; the checked-in JSON makes GUI selection transparent and
-reviewable.
+`gui/campaign3.py`. Campaign 4 files are generated from `gui/campaign4.py` by
+`scripts/sync_campaign4_configs.py`; checked-in JSON keeps GUI selection
+transparent and reviewable.
 
 ### Environment and caches
 
@@ -1683,6 +1965,7 @@ and is ignored.
 | `experiments/results2/`, `plots2/` | Previous Merged/CART studies |
 | `experiments/results3/` outside `r2` | First Campaign 3 attempt, preserved |
 | `experiments/results3/r2/`, `plots3/r2/` | Current official R2 evidence |
+| `experiments/results4/campaign4/`, `plots4/campaign4/` | Campaign 4 isolated artifacts; implementation complete, official evidence pending |
 
 Research results, plots, configs, papers, and public docs are intentionally not
 blanket-ignored.
@@ -1720,6 +2003,32 @@ MPLCONFIGDIR=/tmp/papermerge-mpl \
 environment/basil-noise-env/bin/python plots/plotCampaign3.py
 ```
 
+### Verify and run Campaign 4
+
+```bash
+environment/basil-noise-env/bin/python scripts/sync_campaign4_configs.py --check
+environment/basil-noise-env/bin/python scripts/benchmark_campaign4.py \
+  --rounds 2 --repeats 3 \
+  --include-cuda-malloc-async --include-mixed-bfloat16
+environment/basil-noise-env/bin/python scripts/validate_campaign4_precision.py
+environment/basil-noise-env/bin/python scripts/benchmark_campaign4_lanes.py \
+  --rounds 2 --repeats 3
+python runGui.py
+```
+
+The GUI's **Profile GPU + lanes** button runs this flow and calls the precision
+validator only when a pending BF16 candidate exists. Do not rerun the expensive
+100-round canaries before every queue; the validated local profile is reused
+until code or hardware profiling is intentionally repeated.
+
+Use the Campaign 4 Merged diagnostic preset first. Generate final Campaign 4
+formats with:
+
+```bash
+MPLCONFIGDIR=/tmp/papermerge-mpl \
+environment/basil-noise-env/bin/python plots/plotCampaign4.py --mode both
+```
+
 ### Run focused automated checks
 
 ```bash
@@ -1730,6 +2039,11 @@ environment/basil-noise-env/bin/python -m unittest \
   tests.test_runtime_estimator \
   tests.test_campaign_workers \
   tests.test_cifar_cache \
+  tests.test_campaign4_contracts \
+  tests.test_campaign4_engine \
+  tests.test_campaign4_execution \
+  tests.test_campaign4_performance_profiles \
+  tests.test_campaign4_worker \
   tests.test_wcm -v
 ```
 
@@ -1748,6 +2062,14 @@ included in that focused command.
 6. Report missing or negative effects rather than replacing them.
 7. Re-run the failed Merged sigma-0.2 EBM confirmation and the missing Merged
    matrix before making complete CART-versus-Merged claims.
+8. For Campaign 4, require completed `run.json`, `metrics.npz`, and
+   `telemetry.npz`; do not include performance or precision-validation runs in
+   paper aggregates.
+9. Complete both 33-run Campaign 4 diagnostic presets using seed 2025, review
+   their diagnostic plots, and click `Freeze Campaign 4 method` before running
+   or inspecting confirmation seeds 2026-2028.
+10. Keep `experiments/results4/campaign4/campaign_state.json` with the research
+    artifacts; it is the auditable method decision and declared margin.
 
 <a id="known-boundaries"></a>
 
@@ -1756,6 +2078,15 @@ included in that focused command.
 - R2 currently supports CIFAR-10 in the official worker.
 - The stored R2 evidence is non-IID only at this snapshot.
 - Merged confirmation is incomplete even though CART confirmation is complete.
+- Campaign 4 has no completed official 100-round diagnostic evidence at this
+  snapshot. The two 100-round no-save precision canaries validate the execution
+  profile only and are not paper records.
+- Campaign 4 adaptive EBM is a project extension, not an unchanged claim from
+  the noisy-communication paper. Static EBM remains the paper-derived control.
+- Campaign 4's validated BF16 backend reduced the difficult adaptive-EBM
+  canary from about 51 minutes to about 27 minutes. The 10-15 minute per-EBM
+  target remains unmet, although the expected 66-run diagnostic sweep now fits
+  near the 24-hour target through resource-aware overlap.
 - A simulator coordinator computes consensus and evaluation; there is no
   physical network deployment.
 - Channel noise is a relative full-model L2 Gaussian model, not packet loss,
