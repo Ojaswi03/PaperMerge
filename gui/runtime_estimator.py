@@ -59,14 +59,21 @@ def _active_ebm(config: dict) -> bool:
 
 def _signature(config: dict) -> tuple:
     return (
+        int(config.get("campaignVersion", 0)),
         str(config.get("dataset", "cifar10")),
         str(config.get("approach", "merged")),
         _active_ebm(config),
+        str(config.get("ebmMode", "static" if _active_ebm(config) else "none")),
         bool(config.get("snapshotSelection", config.get("useBasil", False))),
         bool(config.get("useChannelNoise", False)),
         str(config.get("environment", "")) == "clean",
         bool(config.get("nonIID", True)),
         int(config.get("batchSize", 512)),
+        int(config.get("internalMicroBatchSize", 128)),
+        str(config.get("precisionProfile", "float32")),
+        bool(config.get("jitCompile", False)),
+        str(config.get("gpuAllocator", "bfc")),
+        str(config.get("optimizerStateMode", "legacy")),
         int(config.get("nNodes", 10)),
         int(config.get("localEpochs", 5)),
         int(config.get("stepsPerEpoch", 5)),
@@ -124,20 +131,40 @@ def _matching_tier(target: dict, record: dict) -> int | None:
         return 0
 
     # Keep approach, EBM, SS, split, batch, node count, and local work.
-    important = (0, 1, 2, 3, 6, 7, 8, 9, 10)
+    important = (
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+    )
     if all(target_signature[index] == record_signature[index] for index in important):
         return 1
 
     # Fall back to the same approach and expensive algorithmic path.
     if (
-        target_signature[0:4] == record_signature[0:4]
-        and target_signature[6] == record_signature[6]
+        target_signature[0:6] == record_signature[0:6]
+        and target_signature[8] == record_signature[8]
     ):
         return 2
 
-    if target_signature[1:3] == record_signature[1:3]:
+    if target_signature[0:5] == record_signature[0:5]:
         return 3
-    if target_signature[2] == record_signature[2]:
+    if (
+        target_signature[0] == record_signature[0]
+        and target_signature[3:5] == record_signature[3:5]
+    ):
         return 4
     return None
 
@@ -150,13 +177,53 @@ def _scaled_seconds(target: dict, record: _RuntimeRecord) -> float:
 
 
 class RuntimeEstimator:
-    def __init__(self, result_root: Path | str = DEFAULT_RESULT_ROOT):
-        self.result_root = Path(result_root)
+    def __init__(
+        self,
+        result_root: Path | str | Iterable[Path | str] = DEFAULT_RESULT_ROOT,
+    ):
+        if isinstance(result_root, (str, Path)):
+            self.result_roots = (Path(result_root),)
+        else:
+            self.result_roots = tuple(Path(value) for value in result_root)
+        self.result_root = self.result_roots[0]
         self.records: list[_RuntimeRecord] = []
+        self.execution_calibrations: dict[tuple[int, str, bool], float] = {}
         self.reload()
 
     def reload(self) -> None:
-        self.records = _load_records(self.result_root)
+        self.records = [
+            record
+            for root in self.result_roots
+            for record in _load_records(root)
+        ]
+
+    def set_execution_profile(self, profile: dict | None) -> None:
+        """Load full-round no-save runtime canaries from a machine profile."""
+        self.execution_calibrations = {}
+        profile = profile if isinstance(profile, dict) else {}
+        selected = profile.get("selectedProfile")
+        validation = profile.get("precisionValidation")
+        if (
+            profile.get("status") != "validated"
+            or not isinstance(selected, dict)
+            or not isinstance(validation, dict)
+            or validation.get("status") != "validated"
+        ):
+            return
+        profile_id = str(selected.get("profileId", ""))
+        if not profile_id:
+            return
+        for case in validation.get("cases", []):
+            if not isinstance(case, dict) or not case.get("passed"):
+                continue
+            case_id = str(case.get("caseId", ""))
+            is_ebm = "joint" in case_id or "ebm" in case_id
+            try:
+                seconds = float(case["candidateWallSeconds"])
+            except (KeyError, TypeError, ValueError):
+                continue
+            if math.isfinite(seconds) and seconds > 0.0:
+                self.execution_calibrations[(4, profile_id, is_ebm)] = seconds
 
     def estimate(self, config: dict) -> RuntimeEstimate:
         candidates: list[tuple[_RuntimeRecord, int]] = []
@@ -166,6 +233,22 @@ class RuntimeEstimator:
                 candidates.append((record, tier))
 
         if not candidates:
+            calibration_key = (
+                int(config.get("campaignVersion", 0)),
+                str(config.get("performanceProfileId", "")),
+                _active_ebm(config),
+            )
+            calibration = self.execution_calibrations.get(calibration_key)
+            if calibration is not None:
+                scale = _work_units(config) / (100 * 10 * 5 * 5)
+                expected = calibration * scale
+                return RuntimeEstimate(
+                    seconds=expected,
+                    low_seconds=expected * 0.90,
+                    high_seconds=expected * 1.15,
+                    sample_count=1,
+                    basis="validated 100-round precision canary",
+                )
             # Conservative defaults derived from this repository's 100-round
             # campaign runs. They are used only before any history exists.
             baseline = 3900.0 if _active_ebm(config) else 1500.0
@@ -217,34 +300,164 @@ class RuntimeEstimator:
         lanes: int = 1,
         active_elapsed: dict[str, float] | None = None,
         concurrency_slowdown: float = 1.0,
+        max_concurrent_ebm: int | None = None,
+        allow_mixed_ebm_standard: bool = True,
+        allow_dual_standard: bool = True,
+        prioritize_ebm: bool = False,
+        runtime_slowdowns: dict[str, float] | None = None,
     ) -> QueueEstimate:
         queue = list(configs)
         lanes = max(1, int(lanes))
         slowdown = max(1.0, float(concurrency_slowdown)) if lanes > 1 else 1.0
+        max_concurrent_ebm = (
+            lanes
+            if max_concurrent_ebm is None
+            else max(1, min(lanes, int(max_concurrent_ebm)))
+        )
+        runtime_slowdowns = (
+            runtime_slowdowns if isinstance(runtime_slowdowns, dict) else {}
+        )
+        mixed_ebm_slowdown = max(
+            1.0,
+            float(runtime_slowdowns.get("mixedEbm", slowdown)),
+        )
+        mixed_standard_slowdown = max(
+            1.0,
+            float(runtime_slowdowns.get("mixedStandard", slowdown)),
+        )
+        dual_standard_slowdown = max(
+            1.0,
+            float(runtime_slowdowns.get("dualStandard", slowdown)),
+        )
+        dual_ebm_slowdown = max(
+            1.0,
+            float(runtime_slowdowns.get("dualEbm", slowdown)),
+        )
         active_elapsed = active_elapsed or {}
         estimates = [(config, self.estimate(config)) for config in queue]
 
         def makespan(selector) -> float:
-            lane_totals = [0.0] * lanes
+            active_jobs = []
             pending = []
             for config, estimate in estimates:
                 run_id = str(config.get("runId", ""))
-                duration = selector(estimate) * slowdown
+                duration = selector(estimate)
                 if run_id and run_id in active_elapsed:
                     elapsed = max(0.0, float(active_elapsed[run_id]))
-                    lane_index = min(range(lanes), key=lane_totals.__getitem__)
-                    lane_totals[lane_index] = max(0.0, duration - elapsed)
+                    active_jobs.append(
+                        {
+                            "remaining": max(0.0, duration - elapsed),
+                            "ebm": _active_ebm(config),
+                        }
+                    )
                 else:
-                    pending.append(duration)
-            for duration in pending:
-                lane_index = min(range(lanes), key=lane_totals.__getitem__)
-                lane_totals[lane_index] += duration
-            return max(lane_totals, default=0.0)
+                    pending.append(
+                        {
+                            "duration": duration,
+                            "ebm": _active_ebm(config),
+                        }
+                    )
+
+            now = 0.0
+
+            def candidate_index():
+                if not pending:
+                    return None
+                active_ebm = sum(1 for job in active_jobs if job["ebm"])
+                active_standard = len(active_jobs) - active_ebm
+
+                if not active_jobs:
+                    if prioritize_ebm:
+                        for index, job in enumerate(pending):
+                            if job["ebm"]:
+                                return index
+                    return 0
+
+                if active_ebm:
+                    if active_ebm < max_concurrent_ebm:
+                        for index, job in enumerate(pending):
+                            if job["ebm"]:
+                                return index
+                    if allow_mixed_ebm_standard:
+                        for index, job in enumerate(pending):
+                            if not job["ebm"]:
+                                return index
+                    return None
+
+                if active_standard:
+                    if allow_mixed_ebm_standard:
+                        for index, job in enumerate(pending):
+                            if job["ebm"]:
+                                return index
+                    if allow_dual_standard:
+                        for index, job in enumerate(pending):
+                            if not job["ebm"]:
+                                return index
+                    return None
+                return 0
+
+            while pending or active_jobs:
+                while pending and len(active_jobs) < lanes:
+                    index = candidate_index()
+                    if index is None:
+                        break
+                    job = pending.pop(index)
+                    active_jobs.append(
+                        {
+                            "remaining": job["duration"],
+                            "ebm": job["ebm"],
+                        }
+                    )
+                if not active_jobs:
+                    # Invalid policies must not turn an ETA call into a hang.
+                    job = pending.pop(0)
+                    active_jobs.append(
+                        {
+                            "remaining": job["duration"],
+                            "ebm": job["ebm"],
+                        }
+                    )
+
+                if len(active_jobs) == 1:
+                    slowdowns_for_active = [1.0]
+                elif all(job["ebm"] for job in active_jobs):
+                    slowdowns_for_active = [dual_ebm_slowdown] * len(active_jobs)
+                elif all(not job["ebm"] for job in active_jobs):
+                    slowdowns_for_active = [dual_standard_slowdown] * len(active_jobs)
+                else:
+                    slowdowns_for_active = [
+                        mixed_ebm_slowdown
+                        if job["ebm"]
+                        else mixed_standard_slowdown
+                        for job in active_jobs
+                    ]
+                elapsed_to_finish = min(
+                    job["remaining"] * job_slowdown
+                    for job, job_slowdown in zip(
+                        active_jobs,
+                        slowdowns_for_active,
+                    )
+                )
+                for job, job_slowdown in zip(
+                    active_jobs,
+                    slowdowns_for_active,
+                ):
+                    job["remaining"] = max(
+                        0.0,
+                        job["remaining"] - elapsed_to_finish / job_slowdown,
+                    )
+                now += elapsed_to_finish
+                active_jobs = [
+                    job
+                    for job in active_jobs
+                    if job["remaining"] > 1e-9
+                ]
+            return now
 
         def remaining_work(selector) -> float:
             total = 0.0
             for config, estimate in estimates:
-                duration = selector(estimate) * slowdown
+                duration = selector(estimate)
                 run_id = str(config.get("runId", ""))
                 if run_id and run_id in active_elapsed:
                     duration = max(

@@ -100,6 +100,116 @@ class RuntimeEstimatorTests(unittest.TestCase):
             self.assertEqual(estimator.estimate(standard).seconds, 1000.0)
             self.assertEqual(estimator.estimate(ebm).seconds, 4000.0)
 
+    def test_queue_eta_respects_one_ebm_at_a_time(self):
+        ebm = [
+            make_config(
+                split="nonIID",
+                approach="merged",
+                environment="noise",
+                mitigation="ebm",
+                sigma=0.2,
+                seed=seed,
+                rounds=100,
+            )
+            for seed in (2026, 2027)
+        ]
+        standard = [
+            make_config(
+                split="nonIID",
+                approach="merged",
+                environment="clean",
+                mitigation="none",
+                seed=seed,
+                rounds=100,
+            )
+            for seed in (2026, 2027)
+        ]
+        with tempfile.TemporaryDirectory() as directory:
+            for config in ebm:
+                self._write_runtime(directory, config, 100.0)
+            for config in standard:
+                self._write_runtime(directory, config, 40.0)
+            estimator = RuntimeEstimator(directory)
+            unrestricted = estimator.estimate_queue(ebm + standard, lanes=2)
+            constrained = estimator.estimate_queue(
+                standard + ebm,
+                lanes=2,
+                max_concurrent_ebm=1,
+                allow_mixed_ebm_standard=True,
+                allow_dual_standard=True,
+                prioritize_ebm=True,
+            )
+            self.assertEqual(unrestricted.seconds, 140.0)
+            self.assertEqual(constrained.seconds, 200.0)
+
+    def test_queue_eta_applies_measured_pair_slowdowns_only_while_overlapped(self):
+        configs = [
+            make_config(
+                split="nonIID",
+                approach="merged",
+                environment="clean",
+                mitigation="none",
+                seed=seed,
+                rounds=100,
+            )
+            for seed in (2026, 2027, 2028)
+        ]
+        with tempfile.TemporaryDirectory() as directory:
+            for config in configs:
+                self._write_runtime(directory, config, 100.0)
+            estimator = RuntimeEstimator(directory)
+            estimate = estimator.estimate_queue(
+                configs,
+                lanes=2,
+                runtime_slowdowns={"dualStandard": 1.5},
+            )
+            # Two jobs share the GPU for 150 s; the final job then runs alone.
+            self.assertEqual(estimate.seconds, 250.0)
+
+    def test_validated_full_round_canary_replaces_generic_default(self):
+        config = make_config(
+            split="nonIID",
+            approach="cart",
+            environment="hidden_noise",
+            mitigation="ss_ebm",
+            sigma=0.6,
+            seed=2026,
+            rounds=100,
+        )
+        config.update(
+            {
+                "campaignVersion": 4,
+                "performanceProfileId": "bf16-test",
+                "precisionProfile": "mixed_bfloat16",
+            }
+        )
+        with tempfile.TemporaryDirectory() as directory:
+            estimator = RuntimeEstimator(directory)
+            estimator.set_execution_profile(
+                {
+                    "status": "validated",
+                    "selectedProfile": {"profileId": "bf16-test"},
+                    "precisionValidation": {
+                        "status": "validated",
+                        "cases": [
+                            {
+                                "caseId": "joint_cart_sigma_0_6",
+                                "passed": True,
+                                "candidateWallSeconds": 1640.0,
+                            }
+                        ],
+                    },
+                }
+            )
+            estimate = estimator.estimate(config)
+            self.assertEqual(estimate.seconds, 1640.0)
+            self.assertIn("precision canary", estimate.basis)
+
+            estimator.set_execution_profile({"status": "not_benchmarked"})
+            fallback = estimator.estimate(config)
+            self.assertNotEqual(fallback.seconds, 1640.0)
+            self.assertEqual(fallback.basis, "conservative default")
+
 
 if __name__ == "__main__":
     unittest.main()
