@@ -122,17 +122,40 @@ norm, indistinguishable from the true zero baseline's 346.6) --
 `coefficient_min=1e-6`, ten times smaller again, is negligible by the same
 evidence, not a new assumption.
 
-Bounds grounded in the sweep above, not guessed:
+**Second correction, found by the final whole-branch review after Task 6
+built the validation configs (not caught during design or any per-task
+review):** the original `target=2.0`/`gain=0.025` pairing was reasoned
+about in terms of `desired`, but `applied` is what actually reaches the
+optimizer, and the multiplicative rate limiter (`x2`/round) plus the
+`coefficient_min=1e-6` floor means `applied` must climb ~13 doublings
+before entering the working range, regardless of how large `desired` gets.
+Simulating the committed control-law function open-loop against the real
+Phase A sigma=0.6 no-mitigation telemetry (not a guess -- the actual
+recorded `model_norm` per round) confirmed this is not theoretical: the
+original bounds do not reach `1e-2` until round 59, or `3e-2` until round
+72 -- 20-35 rounds after the collapse they exist to prevent already begins
+(round ~34-40). Raising `coefficient_min` alone (the reviewer's first
+suggestion) barely helps (round 59->56 for `1e-2`; `3e-2` stays at round
+72 regardless) -- the floor was never the dominant bottleneck. The
+dominant bottleneck is `target=2.0` itself: it was calibrated to the
+growth ratio *at* the edge of collapse, leaving no runway for a controller
+that needs many rounds to ramp its own output. `target=1.1` (react to any
+10% growth, not wait for a 2x threshold) with `gain=0.05` was verified by
+the same simulation method to reach `1e-2` by round 15 and `3e-2` by round
+29 -- before collapse onset, which is what the controller needs to be
+useful at all.
+
+Bounds grounded in the sweep above and this simulation, not guessed:
 
 | constant | value | grounding |
 |---|---:|---|
-| `target` | 2.0 | growth ratio at sigma=0.6's own healthy peak round (108.8/56.4 approx 1.93), right before collapse begins |
+| `target` | 1.1 | (was 2.0) -- verified by open-loop simulation against the real sigma=0.6 telemetry to activate the controller before collapse onset (round 34-40), unlike 2.0 (see correction above) |
 | `coefficient_max` | 0.05 | highest coefficient confirmed still functional (0.293 final accuracy); 0.1 is excluded entirely -- demonstrated catastrophic (0.195 final, norm crushed to 6.0) |
-| `coefficient_min` | 1e-6 | keeps the multiplicative rate limiter from getting stuck at a permanent 0.0 (see correction above); reused from adaptive EBM's own floor, and independently justified by Phase A's 1e-4 result showing no measurable effect at this order of magnitude |
+| `coefficient_min` | 1e-6 | keeps the multiplicative rate limiter from getting stuck at a permanent 0.0 (see first correction above); reused from adaptive EBM's own floor, and independently justified by Phase A's 1e-4 result showing no measurable effect at this order of magnitude. Raising this alone does not fix the ramp-time problem (see second correction above) -- kept at 1e-6 since the real fix is `target`/`gain`, not the floor |
 | `base` | 0.0 | the desired-coefficient formula's baseline before the rate-limited floor is applied -- always-safe, always-tested target; low-growth conditions decay toward `coefficient_min` (negligible), not toward an untested value |
 | `beta` | 0.9 | reused from adaptive EBM's proven-stable smoothing constant |
 | `max_change_factor` | 2.0 | reused from adaptive EBM's proven-stable rate limit |
-| `gain` | 0.025 | chosen so the controller reaches `coefficient_max` once `smoothed_ratio` hits 4.0 (`0.025*(4.0-2.0)=0.05`) -- well before sigma=0.6's fully-collapsed final ratio of 6.15, so the controller is already at full strength during the pre-collapse acceleration phase (observed starting around round 34-40) rather than only maxing out after collapse has already happened. At the fully-collapsed ratio of 6.15 it stays clipped at 0.05, never exceeding the confirmed-functional ceiling |
+| `gain` | 0.05 | (was 0.025) -- verified alongside the retuned `target` by the same simulation; `0.025` alone was insufficient even at `target=1.1` |
 
 ## Activation scope
 
@@ -154,8 +177,8 @@ convention:
 
 ```
 adaptiveWeightDecayMode: "none" | "adaptive"      (default "none")
-adaptiveWeightDecayTargetRatio: float              (default 2.0)
-adaptiveWeightDecayGain: float                     (default 0.025)
+adaptiveWeightDecayTargetRatio: float              (default 1.1)
+adaptiveWeightDecayGain: float                     (default 0.05)
 adaptiveWeightDecayCoefficientMin: float           (default 1e-6)
 adaptiveWeightDecayCoefficientMax: float           (default 0.05)
 adaptiveWeightDecayBeta: float                     (default 0.9)
@@ -213,10 +236,19 @@ A), `merged`/nonIID/persistent/seed 2025/100 rounds:
 ## Open questions this validation must answer before any further sweep
 
 1. Does the controller reach the sigma=0.6 sweet spot on its own, or does
-   `gain=0.025` need retuning (too slow/fast to reach the working range
-   within the round budget)?
-2. Does it correctly stay inert at low sigma, or does the `target=2.0`
-   threshold trigger unnecessarily there?
+   `gain=0.05` need further retuning (too slow/fast to reach the working
+   range within the round budget)? The retuned `target=1.1`/`gain=0.05`
+   pairing was verified by open-loop simulation to activate before
+   collapse onset (round 34-40) -- closed-loop behavior (where the
+   controller's own decay slows norm growth, changing the trajectory it
+   reacts to) is what this diagnostic run actually checks.
+2. Does it correctly stay inert at low sigma, or does the retuned
+   `target=1.1` threshold (much more sensitive than the original 2.0)
+   trigger unnecessarily there? This is now a real risk worth watching
+   closely at sigma=0.2/0.4 -- reacting to any 10% growth is a much lower
+   bar than the original 2x threshold, so over-triggering on ordinary
+   training noise is the main thing that could go wrong with this
+   correction.
 3. If both hold, is the controller ready for the same isolate-then-combine
    sequence Phase A used (test alone first, then consider EBM/SS
    combination as separate future work)?
