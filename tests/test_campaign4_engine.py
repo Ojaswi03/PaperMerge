@@ -337,6 +337,63 @@ class Campaign4EngineTests(unittest.TestCase):
 
         self.assertLess(norm_with_decay, norm_zero_decay)
 
+    def test_adaptive_weight_decay_ramps_up_when_norm_grows(self):
+        train, test, metadata = self._data(seed=55)
+        config = self._config(
+            environment="noise",
+            mitigation="none",
+            sigma=0.6,
+            seed=55,
+            nRounds=6,
+            adaptiveWeightDecayMode="adaptive",
+            adaptiveWeightDecayTargetRatio=2.0,
+            adaptiveWeightDecayGain=0.025,
+            adaptiveWeightDecayCoefficientMin=1e-6,
+            adaptiveWeightDecayCoefficientMax=0.05,
+            adaptiveWeightDecayBeta=0.9,
+            adaptiveWeightDecayMaxChangeFactor=2.0,
+        )
+        result = run_campaign_four(
+            config=config,
+            model_class=self.TinyModel,
+            train_loaders=train,
+            test_loader=test,
+            data_metadata=metadata,
+        )
+        coefficient = result["telemetry"]["adaptive_weight_decay_coefficient"]
+        growth_ratio = result["telemetry"]["adaptive_weight_decay_growth_ratio"]
+        self.assertEqual(coefficient.shape, (6, 3))
+        self.assertEqual(growth_ratio.shape, (6, 3))
+        # Round 0 has no prior-round norm yet -- must start at the exact 0.0
+        # default (not the coefficient_min floor, which would falsely claim
+        # "evidence of growth" before any has been observed).
+        self.assertTrue(np.all(coefficient[0] == 0.0))
+        # From round 1 on, the controller is active -- every value must stay
+        # within the configured bounds.
+        self.assertTrue(np.all(coefficient[1:] >= 1e-6 - 1e-9))
+        self.assertTrue(np.all(coefficient <= 0.05 + 1e-9))
+
+    def test_adaptive_weight_decay_off_matches_mode_none_exactly(self):
+        train, test, metadata = self._data(seed=56)
+        base_kwargs = dict(
+            environment="noise",
+            mitigation="none",
+            sigma=0.4,
+            seed=56,
+            nRounds=4,
+        )
+        config_none = self._config(**base_kwargs, adaptiveWeightDecayMode="none")
+        result_none = run_campaign_four(
+            config=config_none,
+            model_class=self.TinyModel,
+            train_loaders=train,
+            test_loader=test,
+            data_metadata=metadata,
+        )
+        self.assertTrue(
+            np.all(result_none["telemetry"]["adaptive_weight_decay_coefficient"] == 0.0)
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

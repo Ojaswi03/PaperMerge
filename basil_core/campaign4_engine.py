@@ -393,6 +393,10 @@ class LogicalNode:
     ema_gap: float = 0.0
     stress_ema: float = 0.0
     adaptive_coefficient: float = 0.0
+    model_norm: float = 0.0
+    model_norm_round0: float = 0.0
+    weight_decay_growth_ratio_ema: float = 1.0
+    adaptive_weight_decay_coefficient: float = 0.0
     memory: OrderedDict = field(default_factory=OrderedDict)
 
     def receive(self, snapshot: RingSnapshot) -> None:
@@ -825,6 +829,8 @@ def _telemetry_arrays(rounds: int, nodes: int, memory: int):
         "candidate_losses": np.full(candidate_shape, np.nan, dtype=np.float32),
         "candidate_plausible": np.zeros(candidate_shape, dtype=np.bool_),
         "model_norm": np.zeros(shape, dtype=np.float32),
+        "adaptive_weight_decay_coefficient": np.zeros(shape, dtype=np.float32),
+        "adaptive_weight_decay_growth_ratio": np.zeros(shape, dtype=np.float32),
         "consensus_innovation": np.zeros(shape, dtype=np.float32),
         "stress_ema": np.zeros(shape, dtype=np.float32),
         "ebm_coefficient": np.zeros(shape, dtype=np.float32),
@@ -1180,6 +1186,31 @@ def run_campaign_four(
                     time.perf_counter() - cart_started
                 )
 
+                adaptive_wd_mode = str(config.get("adaptiveWeightDecayMode", "none"))
+                if adaptive_wd_mode == "adaptive" and round_id > 0:
+                    applied_wd, node.weight_decay_growth_ratio_ema = _weight_decay_control_step(
+                        previous_coefficient=max(
+                            node.adaptive_weight_decay_coefficient,
+                            float(config["adaptiveWeightDecayCoefficientMin"]),
+                        ),
+                        previous_smoothed_ratio=node.weight_decay_growth_ratio_ema,
+                        model_norm=node.model_norm,
+                        model_norm_round0=node.model_norm_round0,
+                        target_ratio=float(config["adaptiveWeightDecayTargetRatio"]),
+                        gain=float(config["adaptiveWeightDecayGain"]),
+                        coefficient_min=float(config["adaptiveWeightDecayCoefficientMin"]),
+                        coefficient_max=float(config["adaptiveWeightDecayCoefficientMax"]),
+                        beta=float(config["adaptiveWeightDecayBeta"]),
+                        max_change_factor=float(config["adaptiveWeightDecayMaxChangeFactor"]),
+                    )
+                    node.adaptive_weight_decay_coefficient = applied_wd
+                elif adaptive_wd_mode != "adaptive":
+                    node.adaptive_weight_decay_coefficient = float(
+                        config.get("weightDecayCoefficient", 0.0)
+                    )
+                # else: round 0 under adaptive mode -- no prior-round norm yet,
+                # node.adaptive_weight_decay_coefficient stays at its 0.0 default.
+
                 optimizer_state = (
                     worker.zero_optimizer_state()
                     if config["optimizerStateMode"] == "visit_reset"
@@ -1201,7 +1232,7 @@ def run_campaign_four(
                     ),
                     stress=node.stress_ema,
                     prox_mu=mu,
-                    weight_decay_coefficient=float(config.get("weightDecayCoefficient", 0.0)),
+                    weight_decay_coefficient=node.adaptive_weight_decay_coefficient,
                 )
                 telemetry["training_seconds"][round_id, node_id] = (
                     time.perf_counter() - training_started
@@ -1224,6 +1255,9 @@ def run_campaign_four(
                     )
 
                 signature, model_norm = _state_diagnostics(node.params)
+                if round_id == 0:
+                    node.model_norm_round0 = model_norm
+                node.model_norm = model_norm
 
                 attack_active = bool(
                     hidden_enabled and round_id >= hidden_start and node_id in attackers
@@ -1302,6 +1336,12 @@ def run_campaign_four(
                 telemetry["selected_attacked"][round_id, node_id] = selected.attacked
                 telemetry["selection_fallback"][round_id, node_id] = decision.fallback
                 telemetry["model_norm"][round_id, node_id] = model_norm
+                telemetry["adaptive_weight_decay_coefficient"][round_id, node_id] = (
+                    node.adaptive_weight_decay_coefficient
+                )
+                telemetry["adaptive_weight_decay_growth_ratio"][round_id, node_id] = (
+                    node.weight_decay_growth_ratio_ema
+                )
                 telemetry["consensus_innovation"][round_id, node_id] = consensus_innovation
                 telemetry["stress_ema"][round_id, node_id] = node.stress_ema
                 telemetry["ebm_coefficient"][round_id, node_id] = diagnostics["coefficient"]
