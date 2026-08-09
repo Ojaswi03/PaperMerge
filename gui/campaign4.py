@@ -185,7 +185,11 @@ def _condition_id(
     method = ""
     if mitigation in ("ebm", "ss_ebm"):
         method = f"_{ebm_mode}_ebm"
-    suffix = "_wd" if float(weight_decay) > 0.0 else ""
+    suffix = (
+        f"_wd_{weight_decay:g}".replace(".", "_")
+        if float(weight_decay) > 0.0
+        else ""
+    )
     if environment == "clean":
         return "clean_pairwise_no_mitigation" + suffix
     if environment == "clean_ceiling":
@@ -775,6 +779,7 @@ def adaptive_method_contract(execution_profile: dict | None = None) -> dict:
         "stepsPerEpoch",
         "learningRate",
         "momentum",
+        "weightDecayCoefficient",
     )
     cart_keys = (
         "distillStrength",

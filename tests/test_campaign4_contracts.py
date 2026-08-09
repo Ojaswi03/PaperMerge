@@ -164,7 +164,7 @@ class Campaign4ContractTests(unittest.TestCase):
             weight_decay_coefficient=1e-4,
         )
         self.assertEqual(decayed_config["weightDecayCoefficient"], 1e-4)
-        self.assertTrue(decayed_config["conditionId"].endswith("_wd"))
+        self.assertTrue(decayed_config["conditionId"].endswith("_wd_0_0001"))
         self.assertIn("weight_decay=0.0001", decayed_config["experimentName"])
         self.assertNotEqual(decayed_config["runId"], default_config["runId"])
 
@@ -460,6 +460,50 @@ class Campaign4ContractTests(unittest.TestCase):
             second["runId"] = make_run_id(second)
             _write_synthetic_completed(first, result_root, 0.70)
             _write_synthetic_completed(second, result_root, 0.71)
+            clear_record_cache()
+            result = generate_campaign4_plots(
+                mode="paper",
+                split="nonIID",
+                only_changed=True,
+                formats=("png",),
+                result_root=result_root,
+                plot_root=plot_root,
+            )
+            self.assertEqual(result["errors"], [])
+            self.assertTrue(result["warnings"])
+            self.assertTrue(
+                all("/profiles/" in path for path in result["generated"])
+            )
+
+    def test_plotter_separates_weight_decay_from_no_mitigation(self):
+        with tempfile.TemporaryDirectory() as directory:
+            temporary = Path(directory)
+            result_root = temporary / "results4"
+            plot_root = temporary / "plots4"
+            baseline = make_config(
+                split="nonIID",
+                approach="merged",
+                environment="noise",
+                mitigation="none",
+                sigma=0.6,
+                seed=2025,
+                rounds=100,
+                optimizer_state_mode="persistent",
+            )
+            decayed = make_config(
+                split="nonIID",
+                approach="merged",
+                environment="noise",
+                mitigation="none",
+                sigma=0.6,
+                seed=2025,
+                rounds=100,
+                optimizer_state_mode="persistent",
+                weight_decay_coefficient=1e-4,
+            )
+            self.assertNotEqual(baseline["runId"], decayed["runId"])
+            _write_synthetic_completed(baseline, result_root, 0.10)
+            _write_synthetic_completed(decayed, result_root, 0.30)
             clear_record_cache()
             result = generate_campaign4_plots(
                 mode="paper",
