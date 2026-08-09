@@ -194,8 +194,8 @@ class Campaign4ContractTests(unittest.TestCase):
             seed=2025,
         )
         self.assertEqual(default_config["adaptiveWeightDecayMode"], "none")
-        self.assertEqual(default_config["adaptiveWeightDecayTargetRatio"], 2.0)
-        self.assertEqual(default_config["adaptiveWeightDecayGain"], 0.025)
+        self.assertEqual(default_config["adaptiveWeightDecayTargetRatio"], 1.1)
+        self.assertEqual(default_config["adaptiveWeightDecayGain"], 0.05)
         self.assertEqual(default_config["adaptiveWeightDecayCoefficientMin"], 1e-6)
         self.assertEqual(default_config["adaptiveWeightDecayCoefficientMax"], 0.05)
         self.assertEqual(default_config["adaptiveWeightDecayBeta"], 0.9)
