@@ -48,7 +48,16 @@ def _emit(event, **payload):
 
 
 def _configure_tensorflow(config, memory_limit_mb):
-    os.environ.setdefault("TF_FORCE_GPU_ALLOW_GROWTH", "true")
+    # Forcing growth mode fights a hard per-lane memory_limit below: growth
+    # tells the allocator to keep expanding on demand, while the logical
+    # device configuration is supposed to be a ceiling. Only force growth
+    # when no hard cap is requested (unbounded / single-lane case) - with a
+    # cap, leaving TF_FORCE_GPU_ALLOW_GROWTH unset lets the virtual-device
+    # limit actually hold instead of being silently exceeded.
+    if memory_limit_mb <= 0:
+        os.environ.setdefault("TF_FORCE_GPU_ALLOW_GROWTH", "true")
+    else:
+        os.environ.pop("TF_FORCE_GPU_ALLOW_GROWTH", None)
     allocator = str(config.get("gpuAllocator", "bfc"))
     if allocator == "cuda_malloc_async":
         os.environ["TF_GPU_ALLOCATOR"] = "cuda_malloc_async"
