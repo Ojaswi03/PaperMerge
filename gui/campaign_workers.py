@@ -20,6 +20,7 @@ EVENT_PREFIX = "@@CAMPAIGN_EVENT@@"
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 WORK_DIR = Path("experiments") / "results3" / "r2" / "workers"
 PID_SUFFIX = ".pid.json"
+LOG_SUFFIX = ".log"
 
 
 def _pid_is_alive(pid: int) -> bool:
@@ -107,6 +108,7 @@ class ActiveWorker:
     config: dict
     process: subprocess.Popen
     config_path: Path
+    log_path: Path
     gpu_memory_limit_mb: int
     started_monotonic: float
     reader: threading.Thread
@@ -179,6 +181,7 @@ class CampaignWorkerPool:
 
         run_id = str(config.get("runId", f"lane-{lane}"))
         config_path = self.work_dir / f"{run_id}.lane-{lane}.json"
+        log_path = self.work_dir / f"{run_id}.lane-{lane}{LOG_SUFFIX}"
         write_json_atomic(config_path, config)
         memory_limit = (
             self.gpu_memory_limit_mb
@@ -222,6 +225,7 @@ class CampaignWorkerPool:
             config=config,
             process=process,
             config_path=config_path,
+            log_path=log_path,
             gpu_memory_limit_mb=memory_limit,
             started_monotonic=time.monotonic(),
             reader=None,
@@ -241,16 +245,27 @@ class CampaignWorkerPool:
     def _read_output(self, active: ActiveWorker):
         if active.process.stdout is None:
             return
-        for raw_line in active.process.stdout:
-            line = raw_line.rstrip()
-            if line.startswith(EVENT_PREFIX):
-                try:
-                    event = json.loads(line[len(EVENT_PREFIX) :])
-                except ValueError:
-                    event = {"event": "malformed", "line": line}
-                self.events.put(("event", active.lane, active.config, event))
-            elif line:
-                self.events.put(("line", active.lane, active.config, line))
+        # Line-buffered and flushed after every write: if the worker is
+        # killed by a signal (OOM, native segfault/abort in TF/CUDA) rather
+        # than exiting through Python, nothing else persists what it printed
+        # before dying - the GUI's own log widget dies with it. This file is
+        # the only place that output survives for post-mortem diagnosis.
+        with open(active.log_path, "w", buffering=1) as log_file:
+            log_file.write(
+                f"# pid={active.process.pid} lane={active.lane} "
+                f"startedAt={time.time()}\n"
+            )
+            for raw_line in active.process.stdout:
+                log_file.write(raw_line)
+                line = raw_line.rstrip()
+                if line.startswith(EVENT_PREFIX):
+                    try:
+                        event = json.loads(line[len(EVENT_PREFIX) :])
+                    except ValueError:
+                        event = {"event": "malformed", "line": line}
+                    self.events.put(("event", active.lane, active.config, event))
+                elif line:
+                    self.events.put(("line", active.lane, active.config, line))
 
     def drain_events(self):
         drained = []
@@ -283,12 +298,31 @@ class CampaignWorkerPool:
             )
             with self._lock:
                 self.active.pop(lane, None)
-            for path in (
+            cleanup_paths = [
                 active.config_path,
                 active.config_path.with_name(
                     active.config_path.stem + PID_SUFFIX
                 ),
-            ):
+            ]
+            if return_code == 0:
+                # Successful run: the log duplicates what the GUI already
+                # showed live, so drop it like the other per-run sidecars.
+                cleanup_paths.append(active.log_path)
+            else:
+                # Non-zero or signal-killed exit: keep the log on disk -
+                # it may hold the only surviving record of a native crash
+                # that never reached run_campaign4_worker.py's own
+                # exception handler (which writes status=failed itself).
+                self.events.put(
+                    (
+                        "line",
+                        lane,
+                        active.config,
+                        f"Worker exited with code {return_code}; "
+                        f"output preserved at {active.log_path}",
+                    )
+                )
+            for path in cleanup_paths:
                 try:
                     path.unlink()
                 except OSError:

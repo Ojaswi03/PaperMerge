@@ -39,6 +39,29 @@ def _write_fake_worker(directory, *, sleep_seconds=0.05):
     return path
 
 
+def _write_crashing_worker(directory):
+    path = Path(directory) / "crashing_worker.py"
+    path.write_text(
+        textwrap.dedent(
+            """
+            import argparse
+            import json
+            import sys
+
+            parser = argparse.ArgumentParser()
+            parser.add_argument("--config")
+            parser.add_argument("--gpu-memory-mb")
+            args = parser.parse_args()
+            config = json.load(open(args.config))
+            print("native crash simulation: about to abort", flush=True)
+            sys.exit(1)
+            """
+        ),
+        encoding="utf-8",
+    )
+    return path
+
+
 class CampaignWorkerPoolTests(unittest.TestCase):
     def _fake_worker(self, directory, *, sleep_seconds=0.05):
         return _write_fake_worker(directory, sleep_seconds=sleep_seconds)
@@ -73,6 +96,43 @@ class CampaignWorkerPoolTests(unittest.TestCase):
                 {"first", "second"},
             )
             self.assertEqual(list(work_dir.glob("*.json")), [])
+            self.assertEqual(list(work_dir.glob("*.log")), [])
+
+    def test_failed_worker_log_is_preserved_for_post_mortem_diagnosis(self):
+        with tempfile.TemporaryDirectory() as directory:
+            script = _write_crashing_worker(directory)
+            work_dir = Path(directory) / "work"
+            pool = CampaignWorkerPool(
+                lanes=1,
+                gpu_memory_limit_mb=4200,
+                work_dir=work_dir,
+                worker_script=script,
+            )
+            pool.launch({"runId": "will-crash", "experimentName": "Will Crash"})
+            completions = []
+            deadline = time.monotonic() + 5.0
+            while pool.has_active and time.monotonic() < deadline:
+                completions.extend(pool.poll_finished())
+                time.sleep(0.01)
+
+            self.assertEqual(len(completions), 1)
+            self.assertNotEqual(completions[0].return_code, 0)
+            # The config/pid sidecars are still cleaned up like any other
+            # finished worker, but the log survives so the output the
+            # process printed before dying isn't lost with the GUI's live
+            # display.
+            self.assertEqual(list(work_dir.glob("*.json")), [])
+            log_files = list(work_dir.glob("*.log"))
+            self.assertEqual(len(log_files), 1)
+            self.assertIn("native crash simulation", log_files[0].read_text())
+
+            events = pool.drain_events()
+            self.assertTrue(
+                any(
+                    kind == "line" and "output preserved at" in payload
+                    for kind, _, _, payload in events
+                )
+            )
 
     def test_stop_terminates_active_worker_without_losing_config_identity(self):
         with tempfile.TemporaryDirectory() as directory:
