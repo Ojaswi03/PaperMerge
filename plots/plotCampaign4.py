@@ -45,27 +45,31 @@ except ImportError:
 PLOT_SCHEMA_VERSION = 3
 FORMATS = ("png", "pdf", "eps")
 NOISE_LEVELS = (0.2, 0.3, 0.4, 0.5, 0.6)
-MITIGATIONS = ("none", "ss", "ebm", "ss_ebm")
+MITIGATIONS = ("none", "ss", "ss_wd", "ebm", "ss_ebm", "ss_ebm_wd")
 MITIGATION_LABELS = {
     "none": "No mitigation",
     "ss": "SS",
+    "ss_wd": "SS+WD",
     "ebm": "EBM",
     "ss_ebm": "SS+EBM",
+    "ss_ebm_wd": "SS+EBM+WD",
 }
 COLORS = {
     "clean": "#000000",
     "none": "#6B6B6B",
     "ss": "#0072B2",
+    "ss_wd": "#56B4E9",
     "ebm": "#E69F00",
     "ss_ebm": "#009E73",
+    "ss_ebm_wd": "#F0E442",
     "merged": "#0072B2",
     "cart": "#D55E00",
     "adaptive": "#009E73",
     "static": "#CC79A7",
     "worst": "#D55E00",
 }
-MARKERS = {"none": "o", "ss": "s", "ebm": "^", "ss_ebm": "D"}
-HATCHES = ("", "///", "\\\\", "xx", "..", "++", "oo")
+MARKERS = {"none": "o", "ss": "s", "ss_wd": "P", "ebm": "^", "ss_ebm": "D", "ss_ebm_wd": "*"}
+HATCHES = ("", "///", "\\\\", "xx", "..", "++", "oo", "**")
 CLASS_NAMES = (
     "airplane",
     "automobile",
@@ -111,6 +115,30 @@ class RunRecord:
     @property
     def mitigation(self):
         return str(self.config.get("mitigation", "none"))
+
+    @property
+    def effective_mitigation(self):
+        """Mitigation label used for plotting, distinguishing weight-decay tiers.
+
+        weightDecayCoefficient/adaptiveWeightDecayMode are orthogonal to
+        `mitigation` (see CLAUDE.md's Research Rules), so a run can report
+        mitigation="ss" or "ss_ebm" while also applying weight decay - the
+        accuracy-ordering matrix's "ss" tier already has adaptive weight
+        decay engaged (it pairs SS for the attack with weight decay for the
+        noise), so mitigation="ss" alone is not an accurate label. The
+        adaptive-weight-decay controller starts every run's coefficient at
+        0.0 and adjusts it online, so a static weightDecayCoefficient check
+        alone misses adaptive runs entirely - both signals must be checked.
+        Without this split, weight-decay runs would silently average into
+        the plain SS / SS+EBM bars and lines under a misleading label.
+        """
+        weight_decay_active = (
+            float(self.config.get("weightDecayCoefficient", 0.0)) > 0.0
+            or str(self.config.get("adaptiveWeightDecayMode", "none")) != "none"
+        )
+        if weight_decay_active and self.mitigation in ("ss", "ss_ebm"):
+            return f"{self.mitigation}_wd"
+        return self.mitigation
 
     @property
     def sigma(self):
@@ -402,13 +430,15 @@ def _legend_if_any(axis, **kwargs):
 
 def _evidence_hierarchy(records, approach, split):
     categories = [
-        ("Clean", _select(records, environment="clean", mitigation="none")),
-        ("Hidden\n+ SS", _select(records, environment="hidden", mitigation="ss")),
-        ("Noise\n+ EBM", _select(records, environment="noise", mitigation="ebm")),
-        ("Joint\n+ SS+EBM", _select(records, environment="hidden_noise", mitigation="ss_ebm")),
-        ("Joint\n+ SS", _select(records, environment="hidden_noise", mitigation="ss")),
-        ("Joint\n+ EBM", _select(records, environment="hidden_noise", mitigation="ebm")),
-        ("Joint\n+ none", _select(records, environment="hidden_noise", mitigation="none")),
+        ("Clean", _select(records, environment="clean", effective_mitigation="none")),
+        ("Hidden\n+ SS", _select(records, environment="hidden", effective_mitigation="ss")),
+        ("Noise\n+ EBM", _select(records, environment="noise", effective_mitigation="ebm")),
+        ("Joint\n+ SS+EBM", _select(records, environment="hidden_noise", effective_mitigation="ss_ebm")),
+        ("Joint\n+ SS+EBM+WD", _select(records, environment="hidden_noise", effective_mitigation="ss_ebm_wd")),
+        ("Joint\n+ SS", _select(records, environment="hidden_noise", effective_mitigation="ss")),
+        ("Joint\n+ SS+WD", _select(records, environment="hidden_noise", effective_mitigation="ss_wd")),
+        ("Joint\n+ EBM", _select(records, environment="hidden_noise", effective_mitigation="ebm")),
+        ("Joint\n+ none", _select(records, environment="hidden_noise", effective_mitigation="none")),
     ]
     present = [(label, group) for label, group in categories if group]
     if not present:
@@ -451,7 +481,7 @@ def _line_by_sigma(axis, records, environment, mitigation, label, color, marker)
             record
             for record in records
             if record.environment == environment
-            and record.mitigation == mitigation
+            and record.effective_mitigation == mitigation
             and abs(record.sigma - sigma) < 1e-9
         ]
         if group:
@@ -518,7 +548,7 @@ def _defense_composition(records, approach, split):
 
 
 def _avg_worst(records, approach, split):
-    joint = [record for record in records if record.environment == "hidden_noise" and record.mitigation == "ss_ebm"]
+    joint = [record for record in records if record.environment == "hidden_noise" and record.effective_mitigation == "ss_ebm"]
     if not joint:
         return None
     fig = Figure(figsize=(5.6, 3.5))
@@ -543,7 +573,7 @@ def _avg_worst(records, approach, split):
 
 
 def _seed_profiles(records, approach, split):
-    joint = [record for record in records if record.environment == "hidden_noise" and record.mitigation == "ss_ebm"]
+    joint = [record for record in records if record.environment == "hidden_noise" and record.effective_mitigation == "ss_ebm"]
     if not joint:
         return None
     fig = Figure(figsize=(5.6, 3.5))
@@ -594,7 +624,7 @@ def _learning_curves(records, approach, split):
                     record
                     for record in records
                     if record.environment == "hidden_noise"
-                    and record.mitigation == "ss_ebm"
+                    and record.effective_mitigation == "ss_ebm"
                     and abs(record.sigma - sigma) < 1e-9
                 ],
                 SIGMA_COLORS[index],
@@ -635,7 +665,7 @@ def _noise_robustness(records, approach, split):
     relevant = [
         record
         for record in records
-        if (record.environment, record.mitigation)
+        if (record.environment, record.effective_mitigation)
         in (("noise", "ebm"), ("hidden_noise", "ss_ebm"))
     ]
     if not relevant:
@@ -657,7 +687,7 @@ def _noise_robustness(records, approach, split):
                     record
                     for record in relevant
                     if record.environment == environment
-                    and record.mitigation == mitigation
+                    and record.effective_mitigation == mitigation
                     and abs(record.sigma - sigma) < 1e-9
                 ]
                 if group:
@@ -688,7 +718,7 @@ def _noise_robustness(records, approach, split):
 
 
 def _class_retention(records, approach, split):
-    joint = [record for record in records if record.environment == "hidden_noise" and record.mitigation == "ss_ebm"]
+    joint = [record for record in records if record.environment == "hidden_noise" and record.effective_mitigation == "ss_ebm"]
     if not joint:
         return None
     matrix = np.full((len(NOISE_LEVELS), 10), np.nan, dtype=np.float64)
@@ -715,7 +745,7 @@ def _class_retention(records, approach, split):
 def _paired_delta(records, left_approach, right_approach, environment, mitigation):
     by_key = {}
     for record in records:
-        if record.environment != environment or record.mitigation != mitigation:
+        if record.environment != environment or record.effective_mitigation != mitigation:
             continue
         key = (
             record.seed,
@@ -1214,7 +1244,7 @@ def generate_campaign4_plots(
         for split_name in splits:
             split_records = [record for record in records if record.split == split_name]
             confirmation_all = [
-                record for record in split_records if record.phase == "confirmation"
+                record for record in split_records if record.phase in SCIENTIFIC_PHASES
             ]
             confirmation_profiles = _group_by_execution_profile(confirmation_all)
             base = Path("images") / "gui" / split_name / "cifar10" / "hidden"
@@ -1234,7 +1264,7 @@ def generate_campaign4_plots(
                     all_evidence = [
                         record
                         for record in split_records
-                        if record.phase in ("confirmation", "static_control")
+                        if record.phase in SCIENTIFIC_PHASES
                         and record.execution_signature == signature
                     ]
                     for approach in ("merged", "cart"):
