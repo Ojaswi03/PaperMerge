@@ -3512,17 +3512,36 @@ class ExperimentGUI:
             tree.delete(*tree.get_children())
             with self._queueLock:
                 queueSnapshot = list(self.configQueue)
+            activeElapsed = (
+                self._campaignWorkerPool.active_elapsed_by_run_id()
+                if self._campaignWorkerPool is not None
+                else {}
+            )
             for i, cfg in enumerate(queueSnapshot, 1):
                 name    = cfg.get('experimentName', f'Config #{i}')
                 approach = cfg.get('approach', '?')
                 attack   = _attackSummary(cfg)
                 noise    = 'Yes' if cfg.get('useChannelNoise') else 'No'
                 estimate = self._runtimeEstimator.estimate(cfg)
-                estimatedTime = (
-                    f"{format_duration(estimate.seconds)} "
-                    f"({format_duration(estimate.low_seconds)}–"
-                    f"{format_duration(estimate.high_seconds)})"
-                )
+                elapsed = activeElapsed.get(str(cfg.get('runId', '')))
+                if elapsed is not None:
+                    # Actively running: show remaining time, not the full
+                    # from-scratch estimate, so this matches the live
+                    # "Total remaining" banner instead of double-counting
+                    # progress already made.
+                    elapsed = max(0.0, float(elapsed))
+                    estimatedTime = (
+                        f"{format_duration(max(0.0, estimate.seconds - elapsed))} left "
+                        f"({format_duration(max(0.0, estimate.low_seconds - elapsed))}–"
+                        f"{format_duration(max(0.0, estimate.high_seconds - elapsed))}) · "
+                        f"running, {format_duration(elapsed)} elapsed"
+                    )
+                else:
+                    estimatedTime = (
+                        f"{format_duration(estimate.seconds)} "
+                        f"({format_duration(estimate.low_seconds)}–"
+                        f"{format_duration(estimate.high_seconds)})"
+                    )
                 tree.insert(
                     '',
                     tk.END,
@@ -3974,6 +3993,20 @@ class ExperimentGUI:
         dlg.geometry(f"{w}x{h}+{x}+{y}")
         refreshTree()
         tree.bind('<Delete>', lambda e: removeSelected())
+
+        def _liveRefreshTick():
+            # Keeps the per-row "Estimated Time" column in sync with the
+            # "Total remaining" banner while a queue is running - both are
+            # otherwise recomputed on the same 10s cadence, but this table
+            # previously only refreshed on explicit add/remove/reorder
+            # actions and went stale the moment a run started.
+            if not dlg.winfo_exists():
+                return
+            if self.isRunning:
+                refreshTree()
+            dlg.after(10000, _liveRefreshTick)
+
+        dlg.after(10000, _liveRefreshTick)
 
         dragState = {"iid": None, "moved": False}
 
