@@ -30,6 +30,10 @@ Merged and CART are the project additions built on the two main papers.
   safety boundary, and evaluation plan.
 - [Documentation index](docs/README.md) links the guides and generated result
   report/tables.
+- [Session Handoff](docs/SessionHandoff.md) is a full-context summary for
+  picking up the weight-norm-control / accuracy-ordering diagnostic work —
+  thesis context, architecture, exact bugs found and fixed this session,
+  current queue state, and open questions.
 
 ## Setup
 
@@ -207,6 +211,71 @@ launch remain locked until this exact method/code contract is recorded in
 100-round no-save precision canaries verify execution behavior only; they are
 not saved as scientific Campaign 4 evidence. The worker and Campaign 4 plot
 loader reject any short diagnostic, static-control, or confirmation artifact.
+
+### Adaptive Weight-Decay Controller (Weight-Norm Control)
+
+`weightDecayCoefficient` and `adaptiveWeightDecayMode` are a config axis
+orthogonal to `mitigation` (see `basil_core/campaign4_engine.py`'s SGD
+optimizer wiring and `gui/campaign4.py`'s `make_config`). Two runs can both
+report `mitigation="ss_ebm"` while only one also has adaptive weight decay
+engaged. When `adaptiveWeightDecayMode="adaptive"`, a bounded/EMA-smoothed/
+rate-limited controller (the same pattern already used for adaptive EBM)
+adjusts the coefficient online each round in response to observed weight
+norm; the static `weightDecayCoefficient` field always starts at `0.0` for
+adaptive runs and is not a reliable "is weight decay active" signal by
+itself — check `adaptiveWeightDecayMode` too. `plots/plotCampaign4.py`'s
+`RunRecord.effective_mitigation` property encodes this correctly for
+plotting (see below); code reading `mitigation` directly instead of
+`effective_mitigation` will silently conflate weight-decay and non-weight-decay
+runs under the same label.
+
+### Campaign 4 Plot Phase Gate And Mitigation Tiers
+
+`plots/plotCampaign4.py` only builds the "paper" figure set (evidence
+hierarchy, defense composition, learning curves, noise robustness, etc.) from
+records whose `phase` is in `SCIENTIFIC_PHASES = {"diagnostic",
+"static_control", "confirmation"}` — all three are already held to the same
+completeness bar by `_validated_record` (100-round history required). Do not
+narrow this back to `phase == "confirmation"` only; that was a bug that
+silently produced zero paper figures for every Campaign 4 result until fixed.
+
+`RunRecord.effective_mitigation` distinguishes weight-decay-augmented tiers
+from their plain counterparts for plotting purposes: `mitigation="ss"` with
+weight decay active reports as `"ss_wd"`, and `mitigation="ss_ebm"` with
+weight decay active reports as `"ss_ebm_wd"`. `MITIGATIONS`,
+`MITIGATION_LABELS`, `COLORS`, and `MARKERS` all carry these tiers. When
+adding new mitigation combinations, extend `effective_mitigation` and these
+registries together — every accuracy-hierarchy figure keys off
+`effective_mitigation`, not the raw `mitigation` field.
+
+### Accuracy-Ordering Diagnostic Matrix
+
+`gui/campaign4.py`'s `make_config` builds the non-IID accuracy-ordering
+diagnostic matrix (clean > single stressor+matched mitigation > joint+partial
+mitigation > joint+full mitigation > joint+no mitigation), run per approach
+(merged, cart) at `phase="diagnostic"`. Each condition is queued at multiple
+seeds (`2025`, and `CONFIRMATION_SEEDS = (2026, 2027, 2028)` as needed) for
+seed-ablation plots (`seed_profiles.png`). The matrix intentionally includes a
+true SS-only tier (`mitigation="ss"`, `adaptiveWeightDecayMode="none"`, noise
+left unmitigated) alongside an SS+adaptive-weight-decay tier
+(`mitigation="ss"`, `adaptiveWeightDecayMode="adaptive"`) and an
+SS+EBM+adaptive-weight-decay tier (`mitigation="ss_ebm"`,
+`adaptiveWeightDecayMode="adaptive"`) — these are three distinct experimental
+conditions that must not be pooled under the same plotted label.
+
+### Execution Reliability (Single-Lane, Crash Forensics)
+
+Campaign 4 queues currently run **single-lane only** (`recommendedLanes: 1`
+in `experiments/results4/campaign4/performance_profile.json`, a machine-local
+file excluded from version control). Two root causes behind an earlier 2-lane
+GPU-memory exhaustion incident were fixed and committed:
+`TF_FORCE_GPU_ALLOW_GROWTH` no longer overrides the per-lane hard memory cap
+in `scripts/run_campaign4_worker.py`'s `_configure_tensorflow`, and
+`gui/campaign_workers.py` persists each worker's full stdout/stderr to a
+`.log` file next to its PID sidecar so a native crash leaves a diagnosable
+trace instead of a silent hang. Despite both fixes, 2-lane concurrency is a
+standing, non-negotiable decision to keep disabled based on direct operator
+experience — do not re-enable it without being asked.
 
 ## Run One Config From CLI
 

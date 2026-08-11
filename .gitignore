@@ -249,3 +249,8 @@ experiments/results4/campaign4/performance_profile.json
 # Isolated exploratory outputs and transient plot locks
 /experiments/wcm_pilot/
 /plots3/.campaign3_plot.lock
+
+# Defensive: plotCampaign4.py resolves PLOT_ROOT/RESULT_ROOT relative to cwd;
+# running it from plots/ instead of the repo root writes a stray duplicate tree
+# here instead of the real /plots4/campaign4/.
+/plots/plots4/
