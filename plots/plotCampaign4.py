@@ -1221,6 +1221,499 @@ def _write_summary_csv(records, path):
             os.unlink(temp_name)
 
 
+def _seed_matrix_groups(records):
+    """Group completed records by (split, approach, seed) for the per-seed,
+    legacy-style comparison figures (every condition for that approach+seed
+    bundled into one set of plots, mirroring plots2/plotGui.py's layout)."""
+    groups = {}
+    for record in records:
+        groups.setdefault((record.split, record.approach, record.seed), []).append(record)
+    return groups
+
+
+_SEED_ENV_ORDER = {"clean": 0, "hidden": 1, "noise": 2, "hidden_noise": 3}
+_SEED_MIT_ORDER = {"none": 0, "ss": 1, "ss_wd": 2, "ss_ebm_wd": 3, "ss_ebm": 4, "ebm": 5}
+
+
+def _seed_condition_key(record):
+    return (
+        _SEED_ENV_ORDER.get(record.environment, 9),
+        _SEED_MIT_ORDER.get(record.effective_mitigation, 9),
+        record.sigma,
+    )
+
+
+def _seed_condition_label(record):
+    mitigation_label = MITIGATION_LABELS.get(record.effective_mitigation, record.effective_mitigation)
+    if record.environment == "clean":
+        return "Clean\n(no attack, no noise)"
+    if record.environment == "hidden":
+        return f"Hidden Attack\n+ {mitigation_label}"
+    if record.environment == "noise":
+        # environment=noise + mitigation="none" with adaptive weight decay
+        # engaged is the "weight-decay-only" tier: effective_mitigation stays
+        # "none" (only ss/ss_ebm gain a _wd suffix), so label it explicitly.
+        wd_active = (
+            float(record.config.get("weightDecayCoefficient", 0.0)) > 0.0
+            or str(record.config.get("adaptiveWeightDecayMode", "none")) != "none"
+        )
+        label = "WD" if (record.mitigation == "none" and wd_active) else mitigation_label
+        return f"Noise σ={record.sigma:g}\n+ {label}"
+    return f"Hidden+Noise σ={record.sigma:g}\n+ {mitigation_label}"
+
+
+def _seed_condition_color(record, palette, index):
+    if record.environment == "clean":
+        return COLORS["clean"]
+    return palette[index % len(palette)]
+
+
+def _seed_palette(n):
+    cmap_name = "tab20" if n <= 20 else "hsv"
+    cmap = mpl.colormaps[cmap_name].resampled(max(n, 1))
+    return [cmap(i) for i in range(n)]
+
+
+def _seed_ordered_conditions(records):
+    return sorted(records, key=_seed_condition_key)
+
+
+def _seed_final_accuracy_bar(records, approach, seed, split):
+    ordered = _seed_ordered_conditions(records)
+    if not ordered:
+        return None
+    labels = [_seed_condition_label(record) for record in ordered]
+    finals = [record.scalar("final_avg") for record in ordered]
+    palette = _seed_palette(len(ordered))
+    colors = [_seed_condition_color(record, palette, index) for index, record in enumerate(ordered)]
+
+    fig = Figure(figsize=(max(9.0, len(ordered) * 0.85), 5.5))
+    ax = fig.subplots()
+    bars = ax.bar(range(len(ordered)), finals, color=colors, width=0.6, edgecolor="black", linewidth=0.4)
+    for bar, value in zip(bars, finals):
+        ax.text(
+            bar.get_x() + bar.get_width() / 2,
+            bar.get_height() + 0.01,
+            f"{value:.3f}",
+            ha="center",
+            va="bottom",
+            fontsize=6.5,
+            fontweight="bold",
+        )
+    ax.set_xticks(range(len(ordered)), labels, rotation=30, ha="right", fontsize=6.5)
+    ax.set_ylabel("Final average accuracy")
+    ax.set_ylim(0, 1.05)
+    ax.set_title(f"Final Accuracy | CIFAR-10 | {approach.upper()} | seed={seed} ({split})")
+    return fig
+
+
+def _seed_ablation_groups(records, approach, seed, split):
+    sigmas = sorted({record.sigma for record in records if record.sigma > 0.0})
+    if not sigmas:
+        return None
+    tiers = (
+        ("none", "None (worst case)"),
+        ("ss", "SS only"),
+        ("ss_wd", "SS+WD"),
+        ("ss_ebm_wd", "SS+EBM+WD"),
+    )
+    values = {}
+    for sigma in sigmas:
+        for tier_key, _ in tiers:
+            group = _select(records, environment="hidden_noise", effective_mitigation=tier_key)
+            group = [record for record in group if abs(record.sigma - sigma) < 1e-9]
+            if group:
+                values[(sigma, tier_key)] = _mean_error(_finals(group))[0]
+        noise_group = [
+            record
+            for record in records
+            if record.environment == "noise" and abs(record.sigma - sigma) < 1e-9
+        ]
+        if noise_group:
+            values[(sigma, "wd_only")] = _mean_error(_finals(noise_group))[0]
+
+    present_tiers = [key for key, _ in tiers if any((sigma, key) in values for sigma in sigmas)]
+    has_wd_only = any((sigma, "wd_only") in values for sigma in sigmas)
+    bar_keys = (["wd_only"] if has_wd_only else []) + present_tiers
+    bar_labels = {"wd_only": "Noise + WD only"}
+    bar_labels.update({key: label for key, label in tiers})
+    if not bar_keys:
+        return None
+
+    x = np.arange(len(sigmas))
+    width = min(0.18, 0.8 / max(1, len(bar_keys)))
+    fig = Figure(figsize=(max(8.0, len(sigmas) * 2.6), 5.5))
+    ax = fig.subplots()
+    for index, key in enumerate(bar_keys):
+        offsets = x + (index - (len(bar_keys) - 1) / 2) * width
+        heights = [values.get((sigma, key), 0.0) for sigma in sigmas]
+        color = COLORS.get(key, "#6b7280") if key != "wd_only" else "#7c3aed"
+        bars = ax.bar(offsets, heights, width=width, label=bar_labels[key], color=color, edgecolor="black", linewidth=0.4)
+        for bar, height in zip(bars, heights):
+            if height <= 0:
+                continue
+            ax.text(
+                bar.get_x() + bar.get_width() / 2,
+                height + 0.008,
+                f"{height:.3f}",
+                ha="center",
+                va="bottom",
+                fontsize=6.5,
+                rotation=90,
+            )
+    ax.set_xticks(x, [f"σ={sigma:g}" for sigma in sigmas])
+    ax.set_ylabel("Final average accuracy")
+    max_value = max(values.values()) if values else 1.0
+    ax.set_ylim(0, min(1.0, max_value + 0.15))
+    ax.set_title(f"Ablation Groups | CIFAR-10 | {approach.upper()} | seed={seed} ({split})")
+    ax.legend(frameon=False, fontsize=6.5, loc="upper left", bbox_to_anchor=(1.01, 1), borderaxespad=0)
+    return fig
+
+
+def _seed_experiments_line(records, approach, seed, split, *, zoom=False):
+    ordered = _seed_ordered_conditions(records)
+    if not ordered:
+        return None
+    palette = _seed_palette(len(ordered))
+    fig = Figure(figsize=(11.0, 6.0))
+    ax = fig.subplots()
+    all_values = []
+    for index, record in enumerate(ordered):
+        history = np.asarray(record.metrics.get("avg_history"))
+        if history.size == 0:
+            continue
+        rounds = np.arange(len(history))
+        all_values.extend(float(value) for value in history)
+        color = _seed_condition_color(record, palette, index)
+        ax.plot(
+            rounds,
+            history,
+            label=_seed_condition_label(record).replace("\n", " "),
+            color=color,
+            linewidth=1.8,
+            marker=MARKERS.get(record.effective_mitigation, "o"),
+            markersize=3,
+            markevery=max(1, len(rounds) // 10),
+        )
+    ax.set_xlabel("Training Round")
+    ax.set_ylabel("Average Accuracy")
+    ax.legend(fontsize=6, loc="upper left", bbox_to_anchor=(1.01, 1), borderaxespad=0)
+    if zoom and all_values:
+        y_min = max(0.0, min(all_values) - 0.03)
+        y_max = min(1.0, max(all_values) + 0.06)
+        if y_max - y_min < 0.12:
+            center = (y_max + y_min) / 2
+            y_min = max(0.0, center - 0.06)
+            y_max = min(1.0, center + 0.06)
+        ax.set_ylim(y_min, y_max)
+        ax.set_title(f"Zoomed Accuracy | CIFAR-10 | {approach.upper()} | seed={seed} ({split})")
+    else:
+        ax.set_ylim(0, 1)
+        ax.set_title(f"CIFAR-10 | {approach.upper()} | seed={seed} ({split}) — Average Accuracy")
+    return fig
+
+
+def _seed_grid(records, approach, seed, split):
+    ordered = _seed_ordered_conditions(records)
+    if len(ordered) <= 1:
+        return None
+    palette = _seed_palette(len(ordered))
+    n_cols = min(len(ordered), 3)
+    n_rows = (len(ordered) + n_cols - 1) // n_cols
+    fig = Figure(figsize=(4.4 * n_cols, 3.4 * n_rows))
+    axes = fig.subplots(n_rows, n_cols, squeeze=False).flatten()
+    fig.suptitle(f"CIFAR-10 | {approach.upper()} | seed={seed} ({split}) — Average Accuracy", fontweight="bold")
+    for index, record in enumerate(ordered):
+        axis = axes[index]
+        history = np.asarray(record.metrics.get("avg_history"))
+        if history.size == 0:
+            axis.set_visible(False)
+            continue
+        rounds = np.arange(len(history))
+        color = _seed_condition_color(record, palette, index)
+        axis.plot(rounds, history, color=color, linewidth=1.8, marker=MARKERS.get(record.effective_mitigation, "o"), markersize=2.5, markevery=max(1, len(rounds) // 10))
+        axis.set_title(_seed_condition_label(record).replace("\n", " "), fontsize=7, fontweight="bold")
+        axis.set_xlabel("Round", fontsize=7)
+        axis.set_ylabel("Average Accuracy", fontsize=7)
+        axis.set_ylim(0, 1)
+        if len(history):
+            axis.annotate(
+                f"{history[-1]:.3f}",
+                xy=(len(history) - 1, history[-1]),
+                fontsize=7,
+                fontweight="bold",
+                xytext=(-30, 10),
+                textcoords="offset points",
+            )
+    for index in range(len(ordered), len(axes)):
+        axes[index].set_visible(False)
+    fig.tight_layout(rect=(0.0, 0.0, 1.0, 0.96))
+    return fig
+
+
+def generate_seed_matrix_plots(
+    *,
+    split=None,
+    only_changed=True,
+    formats=FORMATS,
+    result_root=RESULT_ROOT,
+    plot_root=PLOT_ROOT,
+):
+    """Legacy plotGui.py-style figures (final-accuracy bar, ablation groups,
+    learning-curve overlay + zoom, small-multiples grid), bundled per
+    (split, approach, seed) across every condition in that seed's
+    accuracy-ordering matrix. Written under images/gui/{split}/cifar10/
+    hidden/{approach}/seed_{seed}/accuracy_ordering/ -- a location separate
+    from generate_campaign4_plots' own figures so this can run standalone
+    without touching that pipeline or its manifest.
+    """
+    _paper_style()
+    with _PLOT_LOCK:
+        records = load_records(result_root=result_root, split=split)
+        writer = _Writer(plot_root, only_changed, formats)
+        errors = []
+        groups = _seed_matrix_groups(records)
+        for (split_name, approach, seed), group_records in sorted(groups.items()):
+            if split and split_name != split:
+                continue
+            output = (
+                Path("images")
+                / "gui"
+                / split_name
+                / "cifar10"
+                / "hidden"
+                / approach
+                / f"seed_{seed}"
+                / "accuracy_ordering"
+            )
+            figures = (
+                ("final_accuracy_avg", lambda rec=group_records: _seed_final_accuracy_bar(rec, approach, seed, split_name)),
+                ("ablation_groups_avg", lambda rec=group_records: _seed_ablation_groups(rec, approach, seed, split_name)),
+                ("experiments_avg", lambda rec=group_records: _seed_experiments_line(rec, approach, seed, split_name, zoom=False)),
+                ("experiments_avg_zoom", lambda rec=group_records: _seed_experiments_line(rec, approach, seed, split_name, zoom=True)),
+                ("grid_avg", lambda rec=group_records: _seed_grid(rec, approach, seed, split_name)),
+            )
+            for name, factory in figures:
+                try:
+                    writer.figure(
+                        f"seed_matrix:{split_name}:{approach}:{seed}:{name}",
+                        group_records,
+                        output / name,
+                        factory,
+                    )
+                except Exception as error:
+                    errors.append(f"{split_name}/{approach}/seed_{seed}/{name}: {error}")
+        writer.finish()
+        return {"generated": writer.generated, "skipped": writer.skipped, "errors": errors}
+
+
+def _overall_average_conditions(records):
+    """Group records by condition (environment, effective_mitigation, sigma)
+    across every seed present, and average both the final accuracy and the
+    round-by-round learning curve pointwise across whatever seeds have that
+    condition. Returns a list of dicts sorted into the standard condition
+    order, each carrying a representative record (for labeling/coloring)
+    plus the averaged values and the seed count actually averaged."""
+    buckets = {}
+    for record in records:
+        key = (record.environment, record.effective_mitigation, round(float(record.sigma), 3))
+        buckets.setdefault(key, []).append(record)
+    conditions = []
+    for group in buckets.values():
+        representative = group[0]
+        finals = [record.scalar("final_avg") for record in group]
+        histories = [
+            history
+            for history in (np.asarray(record.metrics.get("avg_history")) for record in group)
+            if history.size > 0
+        ]
+        history_mean = None
+        if histories:
+            min_len = min(history.shape[0] for history in histories)
+            history_mean = np.stack([history[:min_len] for history in histories]).mean(axis=0)
+        conditions.append(
+            {
+                "representative": representative,
+                "final_mean": float(np.mean(finals)) if finals else math.nan,
+                "history_mean": history_mean,
+                "n_seeds": len({record.seed for record in group}),
+            }
+        )
+    conditions.sort(key=lambda item: _seed_condition_key(item["representative"]))
+    return conditions
+
+
+def _overall_final_accuracy_bar(records, approach, split):
+    conditions = _overall_average_conditions(records)
+    if not conditions:
+        return None
+    labels = [_seed_condition_label(condition["representative"]) for condition in conditions]
+    finals = [condition["final_mean"] for condition in conditions]
+    palette = _seed_palette(len(conditions))
+    colors = [
+        _seed_condition_color(condition["representative"], palette, index)
+        for index, condition in enumerate(conditions)
+    ]
+
+    fig = Figure(figsize=(max(9.0, len(conditions) * 0.85), 5.5))
+    ax = fig.subplots()
+    bars = ax.bar(range(len(conditions)), finals, color=colors, width=0.6, edgecolor="black", linewidth=0.4)
+    for bar, condition in zip(bars, conditions):
+        ax.text(
+            bar.get_x() + bar.get_width() / 2,
+            bar.get_height() + 0.01,
+            f"{condition['final_mean']:.3f}\n(n={condition['n_seeds']})",
+            ha="center",
+            va="bottom",
+            fontsize=6,
+            fontweight="bold",
+        )
+    ax.set_xticks(range(len(conditions)), labels, rotation=30, ha="right", fontsize=6.5)
+    ax.set_ylabel("Final average accuracy (mean across seeds)")
+    ax.set_ylim(0, 1.05)
+    ax.set_title(f"Final Accuracy | CIFAR-10 | {approach.upper()} | Overall Average ({split})")
+    return fig
+
+
+def _overall_experiments_line(records, approach, split, *, zoom=False):
+    conditions = [c for c in _overall_average_conditions(records) if c["history_mean"] is not None]
+    if not conditions:
+        return None
+    palette = _seed_palette(len(conditions))
+    fig = Figure(figsize=(11.0, 6.0))
+    ax = fig.subplots()
+    all_values = []
+    for index, condition in enumerate(conditions):
+        history = condition["history_mean"]
+        rounds = np.arange(len(history))
+        all_values.extend(float(value) for value in history)
+        representative = condition["representative"]
+        color = _seed_condition_color(representative, palette, index)
+        label = _seed_condition_label(representative).replace("\n", " ") + f" (n={condition['n_seeds']})"
+        ax.plot(
+            rounds,
+            history,
+            label=label,
+            color=color,
+            linewidth=1.8,
+            marker=MARKERS.get(representative.effective_mitigation, "o"),
+            markersize=3,
+            markevery=max(1, len(rounds) // 10),
+        )
+    ax.set_xlabel("Training Round")
+    ax.set_ylabel("Average Accuracy (mean across seeds)")
+    ax.legend(fontsize=6, loc="upper left", bbox_to_anchor=(1.01, 1), borderaxespad=0)
+    if zoom and all_values:
+        y_min = max(0.0, min(all_values) - 0.03)
+        y_max = min(1.0, max(all_values) + 0.06)
+        if y_max - y_min < 0.12:
+            center = (y_max + y_min) / 2
+            y_min = max(0.0, center - 0.06)
+            y_max = min(1.0, center + 0.06)
+        ax.set_ylim(y_min, y_max)
+        ax.set_title(f"Zoomed Accuracy | CIFAR-10 | {approach.upper()} | Overall Average ({split})")
+    else:
+        ax.set_ylim(0, 1)
+        ax.set_title(f"CIFAR-10 | {approach.upper()} | Overall Average ({split}) — Average Accuracy (mean across seeds)")
+    return fig
+
+
+def _overall_grid(records, approach, split):
+    conditions = [c for c in _overall_average_conditions(records) if c["history_mean"] is not None]
+    if len(conditions) <= 1:
+        return None
+    palette = _seed_palette(len(conditions))
+    n_cols = min(len(conditions), 3)
+    n_rows = (len(conditions) + n_cols - 1) // n_cols
+    fig = Figure(figsize=(4.4 * n_cols, 3.4 * n_rows))
+    axes = fig.subplots(n_rows, n_cols, squeeze=False).flatten()
+    fig.suptitle(
+        f"CIFAR-10 | {approach.upper()} | Overall Average ({split}) — Average Accuracy (mean across seeds)",
+        fontweight="bold",
+    )
+    for index, condition in enumerate(conditions):
+        axis = axes[index]
+        history = condition["history_mean"]
+        representative = condition["representative"]
+        rounds = np.arange(len(history))
+        color = _seed_condition_color(representative, palette, index)
+        axis.plot(
+            rounds,
+            history,
+            color=color,
+            linewidth=1.8,
+            marker=MARKERS.get(representative.effective_mitigation, "o"),
+            markersize=2.5,
+            markevery=max(1, len(rounds) // 10),
+        )
+        axis.set_title(
+            _seed_condition_label(representative).replace("\n", " ") + f" (n={condition['n_seeds']})",
+            fontsize=7,
+            fontweight="bold",
+        )
+        axis.set_xlabel("Round", fontsize=7)
+        axis.set_ylabel("Average Accuracy", fontsize=7)
+        axis.set_ylim(0, 1)
+        if len(history):
+            axis.annotate(
+                f"{history[-1]:.3f}",
+                xy=(len(history) - 1, history[-1]),
+                fontsize=7,
+                fontweight="bold",
+                xytext=(-30, 10),
+                textcoords="offset points",
+            )
+    for index in range(len(conditions), len(axes)):
+        axes[index].set_visible(False)
+    fig.tight_layout(rect=(0.0, 0.0, 1.0, 0.96))
+    return fig
+
+
+def generate_overall_average_plots(
+    *,
+    only_changed=True,
+    formats=FORMATS,
+    result_root=RESULT_ROOT,
+    plot_root=PLOT_ROOT,
+):
+    """Per-split, per-approach figures with every condition averaged across
+    whichever seeds have completed it (n_seeds noted per bar/line). Written
+    to '{split} Overall Average/{APPROACH}/' directly under plot_root
+    (plots4/campaign4/ by default) -- a cross-seed summary view separate
+    from the per-seed accuracy_ordering figures.
+    """
+    _paper_style()
+    with _PLOT_LOCK:
+        records = load_records(result_root=result_root, split=None)
+        writer = _Writer(plot_root, only_changed, formats)
+        errors = []
+        groups = {}
+        for record in records:
+            groups.setdefault((record.split, record.approach), []).append(record)
+        for (split_name, approach), group_records in sorted(groups.items()):
+            output = Path(f"{split_name} Overall Average") / approach.upper()
+            seed_label = f"avg of {len({r.seed for r in group_records})} seeds"
+            figures = (
+                ("final_accuracy_avg", lambda rec=group_records: _overall_final_accuracy_bar(rec, approach, split_name)),
+                ("ablation_groups_avg", lambda rec=group_records, seed_label=seed_label: _seed_ablation_groups(rec, approach, seed_label, split_name)),
+                ("experiments_avg", lambda rec=group_records: _overall_experiments_line(rec, approach, split_name, zoom=False)),
+                ("experiments_avg_zoom", lambda rec=group_records: _overall_experiments_line(rec, approach, split_name, zoom=True)),
+                ("grid_avg", lambda rec=group_records: _overall_grid(rec, approach, split_name)),
+            )
+            for name, factory in figures:
+                try:
+                    writer.figure(
+                        f"overall_avg:{split_name}:{approach}:{name}",
+                        group_records,
+                        output / name,
+                        factory,
+                    )
+                except Exception as error:
+                    errors.append(f"{split_name}/{approach}/{name}: {error}")
+        writer.finish()
+        return {"generated": writer.generated, "skipped": writer.skipped, "errors": errors}
+
+
 def generate_campaign4_plots(
     *,
     mode="both",
@@ -1402,12 +1895,29 @@ def generate_campaign4_plots(
 
 
 def generate_campaign4_live_plots(*, split=None):
-    return generate_campaign4_plots(
+    result = generate_campaign4_plots(
         mode="both",
         split=split,
         only_changed=True,
         formats=("png",),
     )
+    seed_matrix_result = generate_seed_matrix_plots(
+        split=split,
+        only_changed=True,
+        formats=("png",),
+    )
+    # Overall-average figures pool every seed regardless of which split just
+    # changed, but the Writer's fingerprint cache makes an unaffected
+    # split/approach group a no-op, so this stays cheap to call every time.
+    overall_result = generate_overall_average_plots(
+        only_changed=True,
+        formats=("png",),
+    )
+    for extra in (seed_matrix_result, overall_result):
+        result["generated"] = result["generated"] + extra["generated"]
+        result["skipped"] = result["skipped"] + extra["skipped"]
+        result["errors"] = result["errors"] + extra["errors"]
+    return result
 
 
 __all__ = [
@@ -1415,6 +1925,8 @@ __all__ = [
     "clear_record_cache",
     "generate_campaign4_live_plots",
     "generate_campaign4_plots",
+    "generate_overall_average_plots",
+    "generate_seed_matrix_plots",
     "load_records",
 ]
 

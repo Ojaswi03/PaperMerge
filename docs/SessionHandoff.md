@@ -137,7 +137,7 @@ baseline. A **new, genuinely SS-only tier** (`mitigation="ss"`,
 `adaptiveWeightDecayMode="none"`, `hidden_noise` environment, sigma
 0.2/0.4/0.6) was added this session — 12 configs (2 approaches × 2 seeds ×
 3 sigmas) — to complete the real ladder: **SS-only → SS+WD → SS+EBM+WD →
-worst-case**. This tier has not run yet (see §7, current queue state).
+worst-case**. This tier has run to completion (see §7, current state).
 
 **Seed ablation:** the project's own seed convention already existed in
 `gui/campaign4.py`: `DIAGNOSTIC_SEED = 2025`, `CONFIRMATION_SEEDS = (2026,
@@ -147,13 +147,16 @@ variance for `seed_profiles.png` and error bars on every other figure — with
 only one seed, every error bar in every figure is exactly zero-width
 (`_mean_error` only computes real spread when `len(values) > 1`).
 
-**Important, still-live finding:** at the current n=3-per-cell (single seed,
-3 sigmas averaged), the 3-mitigation tier (SS+EBM+WD) does **not** beat the
-2-mitigation tier (SS+WD) — 0.326 vs 0.336 (CART), 0.324 vs 0.340 (merged).
+**Important, still-live finding:** now at n=6-per-cell (both seeds, 3 sigmas
+averaged), the 3-mitigation tier (SS+EBM+WD) still does **not** beat the
+2-mitigation tier (SS+WD) — 0.335 vs 0.339 (CART), 0.326 vs 0.345 (merged).
 This is real data, not a bug — it directly tests (and so far does not
 confirm) whether EBM adds value once adaptive weight decay is already
-mitigating noise. The seed-2026 batch (once run) will double the sample size
-and either confirm or overturn this. Do not assume this is settled.
+mitigating noise. The seed-2026 batch has now run and the finding held up
+rather than overturning — see §7 for the current telemetry investigation
+into whether this is a genuine EBM/weight-decay interaction effect. Do not
+assume this is settled; only two seeds' worth of data exists so far, and
+`CONFIRMATION_SEEDS` still has 2027/2028 unused if more evidence is wanted.
 
 ## 5. Two Real Bugs Found And Fixed In `plots/plotCampaign4.py` This Session
 
@@ -300,22 +303,33 @@ the auto-memory file `campaign4_single_lane_only.md`. Summary:
 
 ## 7. Current State — Read This Before Doing Anything
 
-**Queue** (`gui/queue_state.json`, git-ignored but present in the working
-tree, 40 configs, not yet run):
+**Queue** (`gui/queue_state.json`, git-ignored): empty — the 40-config batch
+described below has finished running.
+
+**Completed results:** 90 `run.json` records total (56 at `seed=2025`, 34 at
+`seed=2026`), all `phase="diagnostic"`, all `status="completed"`, no
+failures, no OOM. This is the original 50-record accuracy-ordering matrix
+plus the 40-config batch that was queued:
 
 - 28 configs: full accuracy-ordering matrix at `seed=2026` (mirrors the
-  completed `seed=2025` batch exactly).
-- 12 configs: the new true SS-only tier (`mitigation="ss"`,
+  `seed=2025` batch exactly).
+- 12 configs: the true SS-only tier (`mitigation="ss"`,
   `adaptiveWeightDecayMode="none"`, `hidden_noise`, sigma 0.2/0.4/0.6), at
   **both** seeds 2025 and 2026 (2 approaches × 2 seeds × 3 sigmas).
 
-All single-lane, `phase="diagnostic"`, 100 rounds, `optimizer_state_mode="persistent"`.
-Ready to run whenever the GUI is opened (`python runGui.py` — queue reloads
-automatically).
+All single-lane, `optimizer_state_mode="persistent"`. Plots regenerated and
+correct as of this session (with both bugs above fixed).
 
-**Completed results:** 50 `run.json` records, all `seed=2025`,
-`phase="diagnostic"`, all `status="completed"`, no failures, no OOM. Plots
-regenerated and correct as of this session (with both bugs above fixed).
+**Open research question, not yet resolved:** across both seeds (n=6 per
+cell), `SS+WD` slightly outperforms `SS+EBM+WD` (CART 0.339 vs 0.335, merged
+0.345 vs 0.326) — i.e. adding EBM on top of SS+WD does not help, and may
+hurt slightly. Telemetry on one CART/hidden_noise/`ss_ebm_wd`/sigma=0.4/
+seed=2025 run shows the adaptive EBM coefficient actively varying
+(min/mean/max = 0.000194/0.00080/0.00179 against bounds 1e-6/0.0025) — so
+EBM is genuinely engaging, not silently pinned off. This does not yet
+explain the flat-to-negative result; it could be a real interaction effect
+(EBM's gradient-norm regularizer and weight decay competing over the same
+underlying quantity) or could resolve with more seeds. Not root-caused.
 
 **A previously-flagged, still-unresolved anomaly** (from an earlier session,
 investigated via `systematic-debugging` but not root-caused): the CART/Merged

@@ -3997,16 +3997,18 @@ class ExperimentGUI:
         def _liveRefreshTick():
             # Keeps the per-row "Estimated Time" column in sync with the
             # "Total remaining" banner while a queue is running - both are
-            # otherwise recomputed on the same 10s cadence, but this table
-            # previously only refreshed on explicit add/remove/reorder
-            # actions and went stale the moment a run started.
+            # recomputed on the same 1s cadence. RuntimeEstimator.estimate()
+            # is cached by runId (see runtime_estimator.py), so redrawing
+            # this table every second stays cheap even at a few hundred
+            # queued rows -- only entries whose underlying data actually
+            # changed cost a real recompute.
             if not dlg.winfo_exists():
                 return
             if self.isRunning:
                 refreshTree()
-            dlg.after(10000, _liveRefreshTick)
+            dlg.after(1000, _liveRefreshTick)
 
-        dlg.after(10000, _liveRefreshTick)
+        dlg.after(1000, _liveRefreshTick)
 
         dragState = {"iid": None, "moved": False}
 
@@ -4598,7 +4600,7 @@ class ExperimentGUI:
                     )
 
                 now = time.monotonic()
-                if now - self._queueLastEstimateRefresh >= 10.0:
+                if now - self._queueLastEstimateRefresh >= 1.0:
                     self._queueLastEstimateRefresh = now
                     self._scheduleQueueEstimateRefresh()
 

@@ -188,7 +188,18 @@ class RuntimeEstimator:
         self.result_root = self.result_roots[0]
         self.records: list[_RuntimeRecord] = []
         self.execution_calibrations: dict[tuple[int, str, bool], float] = {}
+        # estimate() is O(len(self.records)) per call and gets invoked once
+        # per queued config on every GUI redraw of the queue table -- with a
+        # few hundred queued configs and a few hundred historical records,
+        # that is O(queue x history) work repeated on every click even when
+        # neither the queue nor the history actually changed. Cache results
+        # by runId (a content hash, so identical runId implies an identical
+        # estimate) and invalidate only when the underlying data changes.
+        self._estimate_cache: dict[str, RuntimeEstimate] = {}
         self.reload()
+
+    def _invalidate_estimate_cache(self) -> None:
+        self._estimate_cache = {}
 
     def reload(self) -> None:
         self.records = [
@@ -196,10 +207,12 @@ class RuntimeEstimator:
             for root in self.result_roots
             for record in _load_records(root)
         ]
+        self._invalidate_estimate_cache()
 
     def set_execution_profile(self, profile: dict | None) -> None:
         """Load full-round no-save runtime canaries from a machine profile."""
         self.execution_calibrations = {}
+        self._invalidate_estimate_cache()
         profile = profile if isinstance(profile, dict) else {}
         selected = profile.get("selectedProfile")
         validation = profile.get("precisionValidation")
@@ -226,6 +239,17 @@ class RuntimeEstimator:
                 self.execution_calibrations[(4, profile_id, is_ebm)] = seconds
 
     def estimate(self, config: dict) -> RuntimeEstimate:
+        run_id = config.get("runId")
+        if run_id:
+            cached = self._estimate_cache.get(run_id)
+            if cached is not None:
+                return cached
+        result = self._estimate_uncached(config)
+        if run_id:
+            self._estimate_cache[run_id] = result
+        return result
+
+    def _estimate_uncached(self, config: dict) -> RuntimeEstimate:
         candidates: list[tuple[_RuntimeRecord, int]] = []
         for record in self.records:
             tier = _matching_tier(config, record.config)
