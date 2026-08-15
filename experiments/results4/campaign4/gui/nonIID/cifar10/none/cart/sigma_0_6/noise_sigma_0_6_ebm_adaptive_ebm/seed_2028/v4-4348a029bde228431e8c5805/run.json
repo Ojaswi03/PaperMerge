@@ -1,6 +1,12 @@
 {
+  "artifactPaths": {
+    "metrics": "experiments/results4/campaign4/gui/nonIID/cifar10/none/cart/sigma_0_6/noise_sigma_0_6_ebm_adaptive_ebm/seed_2028/v4-4348a029bde228431e8c5805/metrics.npz",
+    "run": "experiments/results4/campaign4/gui/nonIID/cifar10/none/cart/sigma_0_6/noise_sigma_0_6_ebm_adaptive_ebm/seed_2028/v4-4348a029bde228431e8c5805/run.json",
+    "telemetry": "experiments/results4/campaign4/gui/nonIID/cifar10/none/cart/sigma_0_6/noise_sigma_0_6_ebm_adaptive_ebm/seed_2028/v4-4348a029bde228431e8c5805/telemetry.npz"
+  },
   "campaignId": "hidden_cifar10_v4",
   "codeRevision": "6f601c8ea4c3a79377b0c2e8fe1eb75061b0fbed",
+  "completedAt": "2026-08-12T23:49:03.333172-04:00",
   "config": {
     "adaptiveEbmBeta": 0.9,
     "adaptiveEbmCoefficientMax": 0.0025,
@@ -95,9 +101,15 @@
   },
   "configHash": "4348a029bde228431e8c58054802240577e08aaad1b1995b61e7fbd75301bf68",
   "executionMode": "isolated_process",
+  "finalAverageAccuracy": 0.10000000149011612,
+  "finalLearningCurveAuc": 0.2468148022890091,
+  "finalWorstAccuracy": 0.10000000149011612,
   "gpuAllocator": "cuda_malloc_async",
   "gpuMemoryLimitMb": 3111,
+  "initializationHash": "a657591e48110b15189a4566b8a2c02ab0e6f56ae7b49c236304ba74164d1fcb",
   "partitionHash": "72a39afc3e6bbc76bb17d0f0fa17f9907c46ce4267ad3a5a3ba2bb812efc03c5",
+  "peakGpuBytes": 3045174239,
+  "resultFingerprint": "a37ea3d4b20c2daaa9ea65b6991e3a2bbb94df87fe48b76c307088e35495b93a",
   "runId": "v4-4348a029bde228431e8c5805",
   "runtime": {
     "cudaVersion": "12.5.1",
@@ -110,7 +122,10 @@
     ],
     "tensorflowVersion": "2.18.0"
   },
+  "runtimeSeconds": 1561.050380698005,
   "schemaVersion": 4,
+  "scientificFingerprint": "82911d5e3097153570cbde76e856387d4126677b3f58ee3f9ce4abd85794fc23",
+  "serializationSeconds": 0.006585702001757454,
   "sourceHashes": {
     "basil_core/basil.py": "366f5c80e06b44beb248ab9f8dc21dc20e35b578ca5932fc0d4ffc93d2d4324d",
     "basil_core/campaign4_engine.py": "372692ae57c53d2ea7e6a2e46619e47bbf61f48aa26e5ef870467e80bd955847",
@@ -122,6 +137,7 @@
     "scripts/run_campaign4_worker.py": "046f6515c5e0c3ce14d6ce41a4f352872465f0cada6a8f29368066250e5a86d1"
   },
   "startedAt": "2026-08-12T23:22:59.855699-04:00",
-  "status": "running",
+  "status": "completed",
+  "wallRuntimeSeconds": 1565.917873547005,
   "workingTreeDirty": true
 }
