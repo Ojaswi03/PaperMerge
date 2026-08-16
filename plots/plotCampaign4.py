@@ -51,6 +51,7 @@ MITIGATION_LABELS = {
     "ss": "SS",
     "ss_wd": "SS+WD",
     "ebm": "EBM",
+    "ebm_wd": "EBM+WD",
     "ss_ebm": "SS+EBM",
     "ss_ebm_wd": "SS+EBM+WD",
 }
@@ -60,6 +61,7 @@ COLORS = {
     "ss": "#0072B2",
     "ss_wd": "#56B4E9",
     "ebm": "#E69F00",
+    "ebm_wd": "#CC79A7",
     "ss_ebm": "#009E73",
     "ss_ebm_wd": "#F0E442",
     "merged": "#0072B2",
@@ -68,7 +70,7 @@ COLORS = {
     "static": "#CC79A7",
     "worst": "#D55E00",
 }
-MARKERS = {"none": "o", "ss": "s", "ss_wd": "P", "ebm": "^", "ss_ebm": "D", "ss_ebm_wd": "*"}
+MARKERS = {"none": "o", "ss": "s", "ss_wd": "P", "ebm": "^", "ebm_wd": "v", "ss_ebm": "D", "ss_ebm_wd": "*"}
 HATCHES = ("", "///", "\\\\", "xx", "..", "++", "oo", "**")
 CLASS_NAMES = (
     "airplane",
@@ -141,9 +143,37 @@ class RunRecord:
             float(self.config.get("weightDecayCoefficient", 0.0)) > 0.0
             or str(self.config.get("adaptiveWeightDecayMode", "none")) != "none"
         )
-        if weight_decay_active and self.mitigation in ("ss", "ss_ebm"):
+        if weight_decay_active and self.mitigation in ("ss", "ss_ebm", "ebm"):
             return f"{self.mitigation}_wd"
         return self.mitigation
+
+    @property
+    def wd_active(self):
+        """True when adaptive weight decay is actually engaged on this run.
+
+        Distinct from a static calibration-sweep coefficient (see
+        `is_wd_sweep_point`): this only flags the real adaptive-WD combo
+        runs, so it can be folded into rerun-dedup keys alongside
+        `condition_id` - otherwise an EBM-only run and an EBM+WD run that
+        happen to share a conditionId collapse into a single record and
+        silently drop one of them instead of appearing as distinct bars.
+        """
+        return str(self.config.get("adaptiveWeightDecayMode", "none")) == "adaptive"
+
+    @property
+    def is_wd_sweep_point(self):
+        """True for single-seed static-weight-decay calibration points.
+
+        These fix a specific `weightDecayCoefficient` (not adaptive) to
+        sweep the coefficient itself, and were never meant to sit in the
+        per-seed condition-comparison matrix alongside the real mitigation
+        tiers - they inflate the bar count and pull the average toward
+        whatever coefficients happened to be swept.
+        """
+        return (
+            float(self.config.get("weightDecayCoefficient", 0.0)) > 0.0
+            and not self.wd_active
+        )
 
     @property
     def sigma(self):
@@ -258,17 +288,24 @@ def _validated_record(run_path):
 
 def _dedupe_reruns(records):
     """Keep only the most-recently-completed run per (split, approach, seed,
-    conditionId).
+    conditionId, wd_active).
 
     Rerunning a condition (e.g. after a fix) leaves the old result folder in
     place unless someone manually moves it to superseded/, so both the stale
     and the fresh run land in the active tree. Without this, every plot that
     groups by condition draws one bar/line per duplicate and every average
     is pulled toward whichever stale runs happen to be present.
+
+    wd_active is part of the key because weightDecayCoefficient/
+    adaptiveWeightDecayMode are orthogonal to conditionId (see
+    RunRecord.effective_mitigation) - an EBM-only run and an EBM+WD combo
+    run can share the exact same conditionId/seed/approach/split, and
+    without this they'd collapse into one record, silently dropping
+    whichever one is older instead of surfacing as two distinct bars.
     """
     best = {}
     for record in records:
-        key = (record.split, record.approach, record.seed, record.condition_id)
+        key = (record.split, record.approach, record.seed, record.condition_id, record.wd_active)
         current = best.get(key)
         if current is None:
             best[key] = record
@@ -1255,15 +1292,32 @@ def _write_summary_csv(records, path):
 def _seed_matrix_groups(records):
     """Group completed records by (split, approach, seed) for the per-seed,
     legacy-style comparison figures (every condition for that approach+seed
-    bundled into one set of plots, mirroring plots2/plotGui.py's layout)."""
+    bundled into one set of plots, mirroring plots2/plotGui.py's layout).
+
+    Excludes single-seed static-weight-decay calibration sweep points
+    (RunRecord.is_wd_sweep_point) - those exist to tune a coefficient, not
+    to be compared as a mitigation tier, and pooling them in here inflates
+    the bar count and pulls the average toward whichever coefficients
+    happened to be swept.
+    """
     groups = {}
     for record in records:
+        if record.is_wd_sweep_point:
+            continue
         groups.setdefault((record.split, record.approach, record.seed), []).append(record)
     return groups
 
 
 _SEED_ENV_ORDER = {"clean": 0, "hidden": 1, "noise": 2, "hidden_noise": 3}
-_SEED_MIT_ORDER = {"none": 0, "ss": 1, "ss_wd": 2, "ss_ebm_wd": 3, "ss_ebm": 4, "ebm": 5}
+_SEED_MIT_ORDER = {
+    "none": 0,
+    "ss": 1,
+    "ss_wd": 2,
+    "ss_ebm_wd": 3,
+    "ss_ebm": 4,
+    "ebm": 5,
+    "ebm_wd": 6,
+}
 
 
 def _seed_condition_key(record):
