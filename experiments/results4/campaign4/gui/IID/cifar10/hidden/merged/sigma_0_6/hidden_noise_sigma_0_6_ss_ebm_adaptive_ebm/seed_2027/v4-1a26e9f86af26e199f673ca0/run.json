@@ -1,7 +1,12 @@
 {
+  "artifactPaths": {
+    "metrics": "experiments/results4/campaign4/gui/IID/cifar10/hidden/merged/sigma_0_6/hidden_noise_sigma_0_6_ss_ebm_adaptive_ebm/seed_2027/v4-1a26e9f86af26e199f673ca0/metrics.npz",
+    "run": "experiments/results4/campaign4/gui/IID/cifar10/hidden/merged/sigma_0_6/hidden_noise_sigma_0_6_ss_ebm_adaptive_ebm/seed_2027/v4-1a26e9f86af26e199f673ca0/run.json",
+    "telemetry": "experiments/results4/campaign4/gui/IID/cifar10/hidden/merged/sigma_0_6/hidden_noise_sigma_0_6_ss_ebm_adaptive_ebm/seed_2027/v4-1a26e9f86af26e199f673ca0/telemetry.npz"
+  },
   "campaignId": "hidden_cifar10_v4",
-  "codeRevision": "b257d1fa0c2006dbb5d542ee09570a11966ed805",
-  "completedRounds": 7,
+  "codeRevision": "7d78b43a1132eae50bfad484c40b5871bfd3e6ee",
+  "completedAt": "2026-08-14T22:42:54.383044-04:00",
   "config": {
     "adaptiveEbmBeta": 0.9,
     "adaptiveEbmCoefficientMax": 0.0025,
@@ -96,9 +101,15 @@
   },
   "configHash": "1a26e9f86af26e199f673ca0b06478d8b274a37497678ea57a77c4f8e8ee71c3",
   "executionMode": "isolated_process",
+  "finalAverageAccuracy": 0.10001000016927719,
+  "finalLearningCurveAuc": 0.45780321955680847,
+  "finalWorstAccuracy": 0.10000000149011612,
   "gpuAllocator": "cuda_malloc_async",
   "gpuMemoryLimitMb": 3111,
+  "initializationHash": "44acaf0de3c1d586d51705de862fcaf60199139e42448448544a1939c95c38ce",
   "partitionHash": "afb262afc96902d151fa4a6300e48c21763be75ae22eba2a96e798085815ffc6",
+  "peakGpuBytes": 3073623379,
+  "resultFingerprint": "d893fb1962731a8fcb36aa5a719f65f228d7fd8c0592b54e44517609ec5d61e4",
   "runId": "v4-1a26e9f86af26e199f673ca0",
   "runtime": {
     "cudaVersion": "12.5.1",
@@ -111,7 +122,10 @@
     ],
     "tensorflowVersion": "2.18.0"
   },
+  "runtimeSeconds": 2018.4797462459974,
   "schemaVersion": 4,
+  "scientificFingerprint": "3fa094cb6ed0083bf31793109adf1d3b3e1b7951d5245ac98d353b2f8053c7a1",
+  "serializationSeconds": 0.009238188999006525,
   "sourceHashes": {
     "basil_core/basil.py": "366f5c80e06b44beb248ab9f8dc21dc20e35b578ca5932fc0d4ffc93d2d4324d",
     "basil_core/campaign4_engine.py": "372692ae57c53d2ea7e6a2e46619e47bbf61f48aa26e5ef870467e80bd955847",
@@ -122,9 +136,8 @@
     "gui/campaign4.py": "6374c0863ce5919d82195e4fac47827cad294557f4e5e9a212445a1e50a065df",
     "scripts/run_campaign4_worker.py": "046f6515c5e0c3ce14d6ce41a4f352872465f0cada6a8f29368066250e5a86d1"
   },
-  "startedAt": "2026-08-14T20:36:45.534606-04:00",
-  "status": "stopped",
-  "stoppedAt": "2026-08-14T20:39:35.720281-04:00",
-  "wallRuntimeSeconds": 172.21125413999835,
+  "startedAt": "2026-08-14T22:09:13.571742-04:00",
+  "status": "completed",
+  "wallRuntimeSeconds": 2022.805565792005,
   "workingTreeDirty": true
 }

@@ -99,10 +99,15 @@ class RunRecord:
     run_path: Path
     metrics_path: Path
     telemetry_path: Path
+    completed_at: str = ""
 
     @property
     def split(self):
         return str(self.config.get("split", "nonIID"))
+
+    @property
+    def condition_id(self):
+        return str(self.config.get("conditionId", ""))
 
     @property
     def approach(self):
@@ -241,6 +246,7 @@ def _validated_record(run_path):
             run_path=run_path,
             metrics_path=metrics_path,
             telemetry_path=telemetry_path,
+            completed_at=str(metadata.get("completedAt", "")),
         )
         return record
     except (OSError, ValueError, KeyError):
@@ -250,12 +256,37 @@ def _validated_record(run_path):
             _CACHE[key] = (signature, record)
 
 
+def _dedupe_reruns(records):
+    """Keep only the most-recently-completed run per (split, approach, seed,
+    conditionId).
+
+    Rerunning a condition (e.g. after a fix) leaves the old result folder in
+    place unless someone manually moves it to superseded/, so both the stale
+    and the fresh run land in the active tree. Without this, every plot that
+    groups by condition draws one bar/line per duplicate and every average
+    is pulled toward whichever stale runs happen to be present.
+    """
+    best = {}
+    for record in records:
+        key = (record.split, record.approach, record.seed, record.condition_id)
+        current = best.get(key)
+        if current is None:
+            best[key] = record
+            continue
+        current_stamp = (current.completed_at, current.run_path.stat().st_mtime_ns)
+        candidate_stamp = (record.completed_at, record.run_path.stat().st_mtime_ns)
+        if candidate_stamp > current_stamp:
+            best[key] = record
+    return list(best.values())
+
+
 def load_records(result_root=RESULT_ROOT, split=None):
     records = []
     for run_path in Path(result_root).glob("**/run.json"):
         record = _validated_record(run_path)
         if record is not None and (split is None or record.split == split):
             records.append(record)
+    records = _dedupe_reruns(records)
     return sorted(
         records,
         key=lambda item: (

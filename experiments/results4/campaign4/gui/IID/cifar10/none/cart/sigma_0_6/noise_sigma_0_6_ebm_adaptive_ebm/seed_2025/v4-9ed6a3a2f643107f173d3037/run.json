@@ -5,8 +5,8 @@
     "telemetry": "experiments/results4/campaign4/gui/IID/cifar10/none/cart/sigma_0_6/noise_sigma_0_6_ebm_adaptive_ebm/seed_2025/v4-9ed6a3a2f643107f173d3037/telemetry.npz"
   },
   "campaignId": "hidden_cifar10_v4",
-  "codeRevision": "b257d1fa0c2006dbb5d542ee09570a11966ed805",
-  "completedAt": "2026-08-13T01:08:01.545545-04:00",
+  "codeRevision": "7d78b43a1132eae50bfad484c40b5871bfd3e6ee",
+  "completedAt": "2026-08-15T13:05:24.475964-04:00",
   "config": {
     "adaptiveEbmBeta": 0.9,
     "adaptiveEbmCoefficientMax": 0.0025,
@@ -101,15 +101,15 @@
   },
   "configHash": "9ed6a3a2f643107f173d30374594a274b5d0cd3d1da39a5ae67d3bdb25af54ab",
   "executionMode": "isolated_process",
-  "finalAverageAccuracy": 0.15488000214099884,
-  "finalLearningCurveAuc": 0.5405327081680298,
-  "finalWorstAccuracy": 0.10000000149011612,
+  "finalAverageAccuracy": 0.1964000016450882,
+  "finalLearningCurveAuc": 0.5387425422668457,
+  "finalWorstAccuracy": 0.15610000491142273,
   "gpuAllocator": "cuda_malloc_async",
   "gpuMemoryLimitMb": 3111,
   "initializationHash": "fc3212f4550756d7419f52b3330fc65505a2c261a8e78936571296ab6138cedf",
   "partitionHash": "5e018805273116286b1db8c6bd99d420304e8ea7da52d646402d1660059626e7",
-  "peakGpuBytes": 3060632503,
-  "resultFingerprint": "1220e938ec2e1c4cf5f69af41158d54e2ef0de3116e4eb29b1efccf41504cd71",
+  "peakGpuBytes": 3060632504,
+  "resultFingerprint": "0ec7fbf82ac641bd8e638452cf0df7582667469e78419431c3af65b681183552",
   "runId": "v4-9ed6a3a2f643107f173d3037",
   "runtime": {
     "cudaVersion": "12.5.1",
@@ -122,13 +122,13 @@
     ],
     "tensorflowVersion": "2.18.0"
   },
-  "runtimeSeconds": 1504.5172065389997,
+  "runtimeSeconds": 1546.306920892006,
   "schemaVersion": 4,
-  "scientificFingerprint": "63338d66e48a6a0c6c24c44cfb1f700e92710c9ba81a99ff07568a5bbb1e1140",
-  "serializationSeconds": 0.006231662002392113,
+  "scientificFingerprint": "8fa48a6cc204d18102da1f3fe2a5aa638620e50368366848bdea7d71fb7d3793",
+  "serializationSeconds": 0.006429577973904088,
   "sourceHashes": {
     "basil_core/basil.py": "366f5c80e06b44beb248ab9f8dc21dc20e35b578ca5932fc0d4ffc93d2d4324d",
-    "basil_core/campaign4_engine.py": "372692ae57c53d2ea7e6a2e46619e47bbf61f48aa26e5ef870467e80bd955847",
+    "basil_core/campaign4_engine.py": "aee1bd8f334e4a7fb83bb502ca104a1ba29927755674395724890fba435eac9f",
     "basil_core/class_registry.py": "277cfecef1d24a46e3785756e93fe392602bc6f3177a3aaa17af20867cbe200c",
     "basil_core/data/cifar.py": "9b63489085b1b4451b1edb4202d129b50cd3e70050d429df0aabefdb6dcf3bfa",
     "basil_core/models.py": "cc26e6af278a39e8a93ff289988970df9d99b5c6add5894230cb33ee3f3370be",
@@ -136,8 +136,8 @@
     "gui/campaign4.py": "6374c0863ce5919d82195e4fac47827cad294557f4e5e9a212445a1e50a065df",
     "scripts/run_campaign4_worker.py": "046f6515c5e0c3ce14d6ce41a4f352872465f0cada6a8f29368066250e5a86d1"
   },
-  "startedAt": "2026-08-13T00:42:30.916930-04:00",
+  "startedAt": "2026-08-15T12:39:35.842246-04:00",
   "status": "completed",
-  "wallRuntimeSeconds": 1508.7651146610006,
+  "wallRuntimeSeconds": 1550.5246909340203,
   "workingTreeDirty": true
 }
