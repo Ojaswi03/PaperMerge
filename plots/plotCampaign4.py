@@ -1361,13 +1361,15 @@ def _seed_palette(n):
 
 def _is_core_tier(record):
     """True for a record in one of the manuscript condition families:
-    Clean, Attack+SS, Noise+EBM, Noise+Enhanced EBM, Hidden+Noise+SS,
-    Hidden+Noise+EBM, Hidden+Noise+Enhanced EBM, Hidden+Noise+SS+EBM,
-    Hidden+Noise+SS+Enhanced EBM (each noise-bearing tier restricted to
-    sigma in {0.2, 0.4, 0.6}). Used to drop every other diagnostic tier
-    (SS+WD, no-mitigation baselines, sigma=0.3/0.5, ...) from the
+    Clean, Attack+SS, Noise+Enhanced EBM, Hidden+Noise+SS,
+    Hidden+Noise+Enhanced EBM, Hidden+Noise+SS+Enhanced EBM (each
+    noise-bearing tier restricted to sigma in {0.2, 0.4, 0.6}). Used to
+    drop every other diagnostic tier (SS+WD, no-mitigation baselines,
+    sigma=0.3/0.5, plain EBM without weight decay, ...) from the
     comparison figures (final-accuracy bar, experiments line, grid) so
-    only the curated set is shown.
+    only the curated set is shown. Plain-EBM data (noise+ebm,
+    hidden_noise+ebm, hidden_noise+ss_ebm) stays on disk and is loadable
+    for future plots -- this filter only controls what renders here.
     """
     sigma = round(float(record.sigma), 2)
     if record.environment == "clean":
@@ -1377,9 +1379,9 @@ def _is_core_tier(record):
     if sigma not in (0.2, 0.4, 0.6):
         return False
     if record.environment == "noise":
-        return record.effective_mitigation in ("ebm", "ebm_wd")
+        return record.effective_mitigation == "ebm_wd"
     if record.environment == "hidden_noise":
-        return record.effective_mitigation in ("ss", "ebm", "ebm_wd", "ss_ebm", "ss_ebm_wd")
+        return record.effective_mitigation in ("ss", "ebm_wd", "ss_ebm_wd")
     return False
 
 
