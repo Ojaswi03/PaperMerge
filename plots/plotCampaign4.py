@@ -51,9 +51,9 @@ MITIGATION_LABELS = {
     "ss": "SS",
     "ss_wd": "SS+WD",
     "ebm": "EBM",
-    "ebm_wd": "EBM+WD",
+    "ebm_wd": "Enhanced EBM",
     "ss_ebm": "SS+EBM",
-    "ss_ebm_wd": "SS+EBM+WD",
+    "ss_ebm_wd": "SS+Enhanced EBM",
 }
 COLORS = {
     "clean": "#000000",
@@ -687,12 +687,12 @@ def _learning_curves(records, approach, split):
     for index, sigma in enumerate(NOISE_LEVELS):
         lines.append(
             (
-                f"Joint SS+EBM, sigma={sigma:.1f}",
+                f"Joint SS+Enhanced EBM, sigma={sigma:.1f}",
                 [
                     record
                     for record in records
                     if record.environment == "hidden_noise"
-                    and record.effective_mitigation == "ss_ebm"
+                    and record.effective_mitigation == "ss_ebm_wd"
                     and abs(record.sigma - sigma) < 1e-9
                 ],
                 SIGMA_COLORS[index],
@@ -1313,10 +1313,10 @@ _SEED_MIT_ORDER = {
     "none": 0,
     "ss": 1,
     "ss_wd": 2,
-    "ss_ebm_wd": 3,
-    "ss_ebm": 4,
-    "ebm": 5,
-    "ebm_wd": 6,
+    "ebm": 3,
+    "ebm_wd": 4,
+    "ss_ebm": 5,
+    "ss_ebm_wd": 6,
 }
 
 
@@ -1359,8 +1359,32 @@ def _seed_palette(n):
     return [cmap(i) for i in range(n)]
 
 
+def _is_core_tier(record):
+    """True for a record in one of the manuscript condition families:
+    Clean, Attack+SS, Noise+EBM, Noise+Enhanced EBM, Hidden+Noise+SS,
+    Hidden+Noise+EBM, Hidden+Noise+Enhanced EBM, Hidden+Noise+SS+EBM,
+    Hidden+Noise+SS+Enhanced EBM (each noise-bearing tier restricted to
+    sigma in {0.2, 0.4, 0.6}). Used to drop every other diagnostic tier
+    (SS+WD, no-mitigation baselines, sigma=0.3/0.5, ...) from the
+    comparison figures (final-accuracy bar, experiments line, grid) so
+    only the curated set is shown.
+    """
+    sigma = round(float(record.sigma), 2)
+    if record.environment == "clean":
+        return record.effective_mitigation == "none"
+    if record.environment == "hidden":
+        return record.effective_mitigation == "ss"
+    if sigma not in (0.2, 0.4, 0.6):
+        return False
+    if record.environment == "noise":
+        return record.effective_mitigation in ("ebm", "ebm_wd")
+    if record.environment == "hidden_noise":
+        return record.effective_mitigation in ("ss", "ebm", "ebm_wd", "ss_ebm", "ss_ebm_wd")
+    return False
+
+
 def _seed_ordered_conditions(records):
-    return sorted(records, key=_seed_condition_key)
+    return sorted((record for record in records if _is_core_tier(record)), key=_seed_condition_key)
 
 
 def _seed_final_accuracy_bar(records, approach, seed, split):
@@ -1392,38 +1416,75 @@ def _seed_final_accuracy_bar(records, approach, seed, split):
     return fig
 
 
-def _seed_ablation_groups(records, approach, seed, split):
+def _noise_env_tier(record):
+    """Tier key for an environment="noise" (no-attack) record.
+
+    `effective_mitigation` only appends a `_wd` suffix for ss/ss_ebm/ebm
+    (see its docstring), so a plain mitigation="none" run with weight decay
+    engaged still reports effective_mitigation="none" - indistinguishable
+    from a true no-mitigation run without checking the weight-decay fields
+    directly. Without this split, "no mitigation", "WD only", "EBM alone"
+    and "EBM+WD" all silently pooled into one misleadingly-labeled bar.
+    """
+    weight_decay_active = (
+        float(record.config.get("weightDecayCoefficient", 0.0)) > 0.0
+        or str(record.config.get("adaptiveWeightDecayMode", "none")) != "none"
+    )
+    if record.mitigation == "ebm":
+        return "ebm_wd" if weight_decay_active else "ebm"
+    return "wd_only" if weight_decay_active else "none_noise"
+
+
+_HIDDEN_NOISE_ABLATION_TIERS = (
+    ("none", "None (worst case)"),
+    ("ss", "SS only"),
+    ("ss_wd", "SS+WD"),
+    ("ss_ebm", "SS+EBM"),
+    ("ss_ebm_wd", "SS+EBM+WD"),
+)
+_NOISE_ABLATION_TIERS = (
+    ("none_noise", "No mitigation"),
+    ("wd_only", "Noise + WD only"),
+    ("ebm", "EBM"),
+    ("ebm_wd", "EBM+WD"),
+)
+
+
+def _ablation_values(records, sigmas, tiers, *, environment):
+    values = {}
+    for sigma in sigmas:
+        if environment == "hidden_noise":
+            for tier_key, _ in tiers:
+                group = _select(records, environment="hidden_noise", effective_mitigation=tier_key)
+                group = [record for record in group if abs(record.sigma - sigma) < 1e-9]
+                if group:
+                    values[(sigma, tier_key)] = _mean_error(_finals(group))[0]
+        else:
+            noise_records = [
+                record
+                for record in records
+                if record.environment == "noise" and abs(record.sigma - sigma) < 1e-9
+            ]
+            for tier_key, _ in tiers:
+                group = [record for record in noise_records if _noise_env_tier(record) == tier_key]
+                if group:
+                    values[(sigma, tier_key)] = _mean_error(_finals(group))[0]
+    return values
+
+
+def _render_ablation_groups(records, approach, seed, split, *, environment, tiers, subtitle):
     sigmas = sorted({record.sigma for record in records if record.sigma > 0.0})
     if not sigmas:
         return None
-    tiers = (
-        ("none", "None (worst case)"),
-        ("ss", "SS only"),
-        ("ss_wd", "SS+WD"),
-        ("ss_ebm_wd", "SS+EBM+WD"),
-    )
-    values = {}
-    for sigma in sigmas:
-        for tier_key, _ in tiers:
-            group = _select(records, environment="hidden_noise", effective_mitigation=tier_key)
-            group = [record for record in group if abs(record.sigma - sigma) < 1e-9]
-            if group:
-                values[(sigma, tier_key)] = _mean_error(_finals(group))[0]
-        noise_group = [
-            record
-            for record in records
-            if record.environment == "noise" and abs(record.sigma - sigma) < 1e-9
-        ]
-        if noise_group:
-            values[(sigma, "wd_only")] = _mean_error(_finals(noise_group))[0]
-
-    present_tiers = [key for key, _ in tiers if any((sigma, key) in values for sigma in sigmas)]
-    has_wd_only = any((sigma, "wd_only") in values for sigma in sigmas)
-    bar_keys = (["wd_only"] if has_wd_only else []) + present_tiers
-    bar_labels = {"wd_only": "Noise + WD only"}
-    bar_labels.update({key: label for key, label in tiers})
+    values = _ablation_values(records, sigmas, tiers, environment=environment)
+    bar_keys = [key for key, _ in tiers if any((sigma, key) in values for sigma in sigmas)]
+    bar_labels = {key: label for key, label in tiers}
     if not bar_keys:
         return None
+
+    tier_colors = dict(COLORS)
+    tier_colors["none_noise"] = COLORS.get("none", "#6B6B6B")
+    tier_colors["wd_only"] = "#7c3aed"
 
     x = np.arange(len(sigmas))
     width = min(0.18, 0.8 / max(1, len(bar_keys)))
@@ -1432,7 +1493,7 @@ def _seed_ablation_groups(records, approach, seed, split):
     for index, key in enumerate(bar_keys):
         offsets = x + (index - (len(bar_keys) - 1) / 2) * width
         heights = [values.get((sigma, key), 0.0) for sigma in sigmas]
-        color = COLORS.get(key, "#6b7280") if key != "wd_only" else "#7c3aed"
+        color = tier_colors.get(key, "#6b7280")
         bars = ax.bar(offsets, heights, width=width, label=bar_labels[key], color=color, edgecolor="black", linewidth=0.4)
         for bar, height in zip(bars, heights):
             if height <= 0:
@@ -1450,9 +1511,35 @@ def _seed_ablation_groups(records, approach, seed, split):
     ax.set_ylabel("Final average accuracy")
     max_value = max(values.values()) if values else 1.0
     ax.set_ylim(0, min(1.0, max_value + 0.15))
-    ax.set_title(f"Ablation Groups | CIFAR-10 | {approach.upper()} | seed={seed} ({split})")
+    ax.set_title(f"Ablation Groups ({subtitle}) | CIFAR-10 | {approach.upper()} | seed={seed} ({split})")
     ax.legend(frameon=False, fontsize=6.5, loc="upper left", bbox_to_anchor=(1.01, 1), borderaxespad=0)
     return fig
+
+
+def _seed_ablation_attack_groups(records, approach, seed, split):
+    """Byzantine-attack ablation only (environment="hidden_noise" tiers)."""
+    return _render_ablation_groups(
+        records,
+        approach,
+        seed,
+        split,
+        environment="hidden_noise",
+        tiers=_HIDDEN_NOISE_ABLATION_TIERS,
+        subtitle="Byzantine Attack",
+    )
+
+
+def _seed_ablation_noise_groups(records, approach, seed, split):
+    """Channel-noise ablation only (environment="noise", no-attack tiers)."""
+    return _render_ablation_groups(
+        records,
+        approach,
+        seed,
+        split,
+        environment="noise",
+        tiers=_NOISE_ABLATION_TIERS,
+        subtitle="Channel Noise",
+    )
 
 
 def _seed_experiments_line(records, approach, seed, split, *, zoom=False):
@@ -1573,7 +1660,8 @@ def generate_seed_matrix_plots(
             )
             figures = (
                 ("final_accuracy_avg", lambda rec=group_records: _seed_final_accuracy_bar(rec, approach, seed, split_name)),
-                ("ablation_groups_avg", lambda rec=group_records: _seed_ablation_groups(rec, approach, seed, split_name)),
+                ("ablation_groups_attack_avg", lambda rec=group_records: _seed_ablation_attack_groups(rec, approach, seed, split_name)),
+                ("ablation_groups_noise_avg", lambda rec=group_records: _seed_ablation_noise_groups(rec, approach, seed, split_name)),
                 ("experiments_avg", lambda rec=group_records: _seed_experiments_line(rec, approach, seed, split_name, zoom=False)),
                 ("experiments_avg_zoom", lambda rec=group_records: _seed_experiments_line(rec, approach, seed, split_name, zoom=True)),
                 ("grid_avg", lambda rec=group_records: _seed_grid(rec, approach, seed, split_name)),
@@ -1601,6 +1689,8 @@ def _overall_average_conditions(records):
     plus the averaged values and the seed count actually averaged."""
     buckets = {}
     for record in records:
+        if not _is_core_tier(record):
+            continue
         key = (record.environment, record.effective_mitigation, round(float(record.sigma), 3))
         buckets.setdefault(key, []).append(record)
     conditions = []
@@ -1647,7 +1737,7 @@ def _overall_final_accuracy_bar(records, approach, split):
         ax.text(
             bar.get_x() + bar.get_width() / 2,
             bar.get_height() + 0.01,
-            f"{condition['final_mean']:.3f}\n(n={condition['n_seeds']})",
+            f"{condition['final_mean']:.3f}",
             ha="center",
             va="bottom",
             fontsize=6,
@@ -1674,7 +1764,7 @@ def _overall_experiments_line(records, approach, split, *, zoom=False):
         all_values.extend(float(value) for value in history)
         representative = condition["representative"]
         color = _seed_condition_color(representative, palette, index)
-        label = _seed_condition_label(representative).replace("\n", " ") + f" (n={condition['n_seeds']})"
+        label = _seed_condition_label(representative).replace("\n", " ")
         ax.plot(
             rounds,
             history,
@@ -1732,7 +1822,7 @@ def _overall_grid(records, approach, split):
             markevery=max(1, len(rounds) // 10),
         )
         axis.set_title(
-            _seed_condition_label(representative).replace("\n", " ") + f" (n={condition['n_seeds']})",
+            _seed_condition_label(representative).replace("\n", " "),
             fontsize=7,
             fontweight="bold",
         )
@@ -1757,15 +1847,16 @@ def _overall_grid(records, approach, split):
 def generate_overall_average_plots(
     *,
     only_changed=True,
-    formats=FORMATS,
+    formats=("png", "eps"),
     result_root=RESULT_ROOT,
     plot_root=PLOT_ROOT,
 ):
     """Per-split, per-approach figures with every condition averaged across
-    whichever seeds have completed it (n_seeds noted per bar/line). Written
-    to '{split} Overall Average/{APPROACH}/' directly under plot_root
+    whichever seeds have completed it. Written to
+    '{split} Overall Average/{APPROACH}/' directly under plot_root
     (plots4/campaign4/ by default) -- a cross-seed summary view separate
-    from the per-seed accuracy_ordering figures.
+    from the per-seed accuracy_ordering figures. Only png/eps are written
+    here (no pdf) per the Overall Average folder's output contract.
     """
     _paper_style()
     with _PLOT_LOCK:
@@ -1780,7 +1871,8 @@ def generate_overall_average_plots(
             seed_label = f"avg of {len({r.seed for r in group_records})} seeds"
             figures = (
                 ("final_accuracy_avg", lambda rec=group_records: _overall_final_accuracy_bar(rec, approach, split_name)),
-                ("ablation_groups_avg", lambda rec=group_records, seed_label=seed_label: _seed_ablation_groups(rec, approach, seed_label, split_name)),
+                ("ablation_groups_attack_avg", lambda rec=group_records, seed_label=seed_label: _seed_ablation_attack_groups(rec, approach, seed_label, split_name)),
+                ("ablation_groups_noise_avg", lambda rec=group_records, seed_label=seed_label: _seed_ablation_noise_groups(rec, approach, seed_label, split_name)),
                 ("experiments_avg", lambda rec=group_records: _overall_experiments_line(rec, approach, split_name, zoom=False)),
                 ("experiments_avg_zoom", lambda rec=group_records: _overall_experiments_line(rec, approach, split_name, zoom=True)),
                 ("grid_avg", lambda rec=group_records: _overall_grid(rec, approach, split_name)),

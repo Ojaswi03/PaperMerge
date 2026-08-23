@@ -208,9 +208,6 @@ class ExperimentGUI:
         self._campaignPlotCondition = threading.Condition()
         self._campaignPlotPendingSplits = set()
         self._campaignPlotThread = None
-        self._campaign4PlotCondition = threading.Condition()
-        self._campaign4PlotPendingSplits = set()
-        self._campaign4PlotThread = None
 
         # Live-chart / progress tracking
         self._liveAccData    = []
@@ -4472,10 +4469,13 @@ class ExperimentGUI:
                         self._runtimeEstimator.reload()
                         if campaignVersion == 3:
                             freeze_calibration_if_ready()
-                            if config.get("autoPlotCampaign3", True):
-                                self._scheduleCampaign3PlotRefresh(config)
-                        elif config.get("autoPlotCampaign4", True):
-                            self._scheduleCampaign4PlotRefresh(config)
+                        # Plot refresh is deliberately deferred to the queue
+                        # boundary (see runQueueThread's finally block) rather
+                        # than scheduled here per completion: with hundreds of
+                        # results on disk, a per-completion live refresh
+                        # reloads/regroups the entire results tree on every
+                        # single queue item, which dominated wall-clock time
+                        # on large batches.
                         sendNotification(
                             "Queue Step Done",
                             f"{name} finished.",
@@ -4751,9 +4751,7 @@ class ExperimentGUI:
                 self._saveQueueState()
             if self._queueBatchNeedsPlot and plottedConfig is not None:
                 campaignVersion = int(plottedConfig.get("campaignVersion", 0))
-                if campaignVersion == 4:
-                    self._waitForCampaign4PlotRefresh()
-                else:
+                if campaignVersion != 4:
                     self._waitForCampaign3PlotRefresh()
                 self.logMessage(
                     f"\nGenerating changed Campaign {campaignVersion} plots "
@@ -5064,84 +5062,6 @@ class ExperimentGUI:
             with self._campaignPlotCondition:
                 thread = self._campaignPlotThread
                 pending = bool(self._campaignPlotPendingSplits)
-            if thread is None and not pending:
-                return
-            if thread is not None:
-                thread.join(timeout=0.25)
-            else:
-                time.sleep(0.05)
-
-    def _scheduleCampaign4PlotRefresh(self, config):
-        if (
-            int(config.get("campaignVersion", 0)) != 4
-            or not config.get("autoPlotCampaign4", True)
-        ):
-            return
-        split = str(
-            config.get(
-                "split",
-                "nonIID" if config.get("nonIID", True) else "IID",
-            )
-        )
-        with self._campaign4PlotCondition:
-            self._campaign4PlotPendingSplits.add(split)
-            if (
-                self._campaign4PlotThread is not None
-                and self._campaign4PlotThread.is_alive()
-            ):
-                self._campaign4PlotCondition.notify_all()
-                return
-            self._campaign4PlotThread = threading.Thread(
-                target=self._campaign4PlotRefreshLoop,
-                name="campaign4-plot-refresh",
-                daemon=True,
-            )
-            self._campaign4PlotThread.start()
-
-    def _campaign4PlotRefreshLoop(self):
-        from plotCampaign4 import generate_campaign4_live_plots
-
-        while True:
-            with self._campaign4PlotCondition:
-                if not self._campaign4PlotPendingSplits:
-                    self._campaign4PlotThread = None
-                    self._campaign4PlotCondition.notify_all()
-                    return
-                split = sorted(self._campaign4PlotPendingSplits)[0]
-                self._campaign4PlotPendingSplits.remove(split)
-            self.root.after(
-                0,
-                self.logMessage,
-                f"\n[plots4] Refreshing changed {split} PNG previews…",
-            )
-            try:
-                result = generate_campaign4_live_plots(split=split)
-                self.root.after(
-                    0,
-                    self.logMessage,
-                    f"[plots4] Live refresh complete: "
-                    f"{len(result['generated'])} updated, "
-                    f"{len(result['skipped'])} unchanged.",
-                )
-                for error in result["errors"]:
-                    self.root.after(
-                        0,
-                        self.logMessage,
-                        f"[plots4] WARNING: {error}",
-                    )
-            except Exception as error:
-                self.root.after(
-                    0,
-                    self.logMessage,
-                    f"[plots4] Live refresh failed: {error}",
-                )
-                self.root.after(0, self.logMessage, traceback.format_exc())
-
-    def _waitForCampaign4PlotRefresh(self):
-        while True:
-            with self._campaign4PlotCondition:
-                thread = self._campaign4PlotThread
-                pending = bool(self._campaign4PlotPendingSplits)
             if thread is None and not pending:
                 return
             if thread is not None:

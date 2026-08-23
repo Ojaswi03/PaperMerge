@@ -582,19 +582,6 @@ def build_diagnostic(approach: str) -> list[dict]:
                     phase="diagnostic",
                 )
             )
-            configs.append(
-                make_config(
-                    split="nonIID",
-                    approach=approach,
-                    environment="noise",
-                    mitigation="ebm",
-                    ebm_mode=mode,
-                    sigma=sigma,
-                    seed=DIAGNOSTIC_SEED,
-                    phase="diagnostic",
-                    optimizer_state_mode="persistent",
-                )
-            )
         configs.append(
             make_config(
                 split="nonIID",
@@ -632,6 +619,60 @@ def build_diagnostic(approach: str) -> list[dict]:
                     phase="diagnostic",
                 )
             )
+        # WD tiers: mirror the four weight-decay combinations that exist in
+        # the live confirmation data (Noise+WD-only, Noise+EBM+WD, SS+WD,
+        # SS+EBM+WD) so the frozen method contract actually covers WD, not
+        # just the pre-WD matrix this function originally shipped with.
+        configs.append(
+            make_config(
+                split="nonIID",
+                approach=approach,
+                environment="noise",
+                mitigation="none",
+                sigma=sigma,
+                seed=DIAGNOSTIC_SEED,
+                phase="diagnostic",
+                adaptive_weight_decay_mode="adaptive",
+            )
+        )
+        configs.append(
+            make_config(
+                split="nonIID",
+                approach=approach,
+                environment="noise",
+                mitigation="ebm",
+                ebm_mode="adaptive",
+                sigma=sigma,
+                seed=DIAGNOSTIC_SEED,
+                phase="diagnostic",
+                adaptive_weight_decay_mode="adaptive",
+            )
+        )
+        configs.append(
+            make_config(
+                split="nonIID",
+                approach=approach,
+                environment="hidden_noise",
+                mitigation="ss",
+                sigma=sigma,
+                seed=DIAGNOSTIC_SEED,
+                phase="diagnostic",
+                adaptive_weight_decay_mode="adaptive",
+            )
+        )
+        configs.append(
+            make_config(
+                split="nonIID",
+                approach=approach,
+                environment="hidden_noise",
+                mitigation="ss_ebm",
+                ebm_mode="adaptive",
+                sigma=sigma,
+                seed=DIAGNOSTIC_SEED,
+                phase="diagnostic",
+                adaptive_weight_decay_mode="adaptive",
+            )
+        )
     return configs
 
 
