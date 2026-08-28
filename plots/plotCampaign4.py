@@ -1373,7 +1373,7 @@ def _is_core_tier(record):
     """
     sigma = round(float(record.sigma), 2)
     if record.environment == "clean":
-        return record.effective_mitigation == "none"
+        return record.effective_mitigation == "none" and not record.is_wd_sweep_point
     if record.environment == "hidden":
         return record.effective_mitigation == "ss"
     if sigma not in (0.2, 0.4, 0.6):
