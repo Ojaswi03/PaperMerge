@@ -43,6 +43,7 @@ except ImportError:
 
 
 PLOT_SCHEMA_VERSION = 3
+HIDDEN_ATTACK_START_ROUND = 20
 FORMATS = ("png", "pdf", "eps")
 NOISE_LEVELS = (0.2, 0.3, 0.4, 0.5, 0.6)
 MITIGATIONS = ("none", "ss", "ss_wd", "ebm", "ss_ebm", "ss_ebm_wd")
@@ -1389,6 +1390,16 @@ def _seed_ordered_conditions(records):
     return sorted((record for record in records if _is_core_tier(record)), key=_seed_condition_key)
 
 
+def _seed_title_fragment(seed):
+    """' | seed=2025' for a real per-seed plot; empty for cross-seed
+    overall-average plots, which pass an aggregate label string (e.g.
+    'avg of 4 seeds') in place of an integer seed -- that label is not
+    shown in the title."""
+    if isinstance(seed, int):
+        return f" | seed={seed}"
+    return ""
+
+
 def _seed_final_accuracy_bar(records, approach, seed, split):
     ordered = _seed_ordered_conditions(records)
     if not ordered:
@@ -1414,7 +1425,7 @@ def _seed_final_accuracy_bar(records, approach, seed, split):
     ax.set_xticks(range(len(ordered)), labels, rotation=30, ha="right", fontsize=6.5)
     ax.set_ylabel("Final average accuracy")
     ax.set_ylim(0, 1.05)
-    ax.set_title(f"Final Accuracy | CIFAR-10 | {approach.upper()} | seed={seed} ({split})")
+    ax.set_title(f"Final Accuracy | CIFAR-10 | {approach.upper()}{_seed_title_fragment(seed)} ({split})")
     return fig
 
 
@@ -1438,17 +1449,15 @@ def _noise_env_tier(record):
 
 
 _HIDDEN_NOISE_ABLATION_TIERS = (
-    ("none", "None (worst case)"),
     ("ss", "SS only"),
     ("ss_wd", "SS+WD"),
     ("ss_ebm", "SS+EBM"),
-    ("ss_ebm_wd", "SS+EBM+WD"),
+    ("ss_ebm_wd", "SS+Enhanced EBM"),
 )
 _NOISE_ABLATION_TIERS = (
-    ("none_noise", "No mitigation"),
     ("wd_only", "Noise + WD only"),
     ("ebm", "EBM"),
-    ("ebm_wd", "EBM+WD"),
+    ("ebm_wd", "Enhanced EBM"),
 )
 
 
@@ -1474,8 +1483,17 @@ def _ablation_values(records, sigmas, tiers, *, environment):
     return values
 
 
+_ABLATION_CORE_SIGMAS = (0.2, 0.4, 0.6)
+
+
 def _render_ablation_groups(records, approach, seed, split, *, environment, tiers, subtitle):
-    sigmas = sorted({record.sigma for record in records if record.sigma > 0.0})
+    sigmas = sorted(
+        {
+            round(record.sigma, 2)
+            for record in records
+            if record.sigma > 0.0 and round(record.sigma, 2) in _ABLATION_CORE_SIGMAS
+        }
+    )
     if not sigmas:
         return None
     values = _ablation_values(records, sigmas, tiers, environment=environment)
@@ -1513,7 +1531,7 @@ def _render_ablation_groups(records, approach, seed, split, *, environment, tier
     ax.set_ylabel("Final average accuracy")
     max_value = max(values.values()) if values else 1.0
     ax.set_ylim(0, min(1.0, max_value + 0.15))
-    ax.set_title(f"Ablation Groups ({subtitle}) | CIFAR-10 | {approach.upper()} | seed={seed} ({split})")
+    ax.set_title(f"Ablation Groups ({subtitle}) | CIFAR-10 | {approach.upper()}{_seed_title_fragment(seed)} ({split})")
     ax.legend(frameon=False, fontsize=6.5, loc="upper left", bbox_to_anchor=(1.01, 1), borderaxespad=0)
     return fig
 
@@ -1580,10 +1598,10 @@ def _seed_experiments_line(records, approach, seed, split, *, zoom=False):
             y_min = max(0.0, center - 0.06)
             y_max = min(1.0, center + 0.06)
         ax.set_ylim(y_min, y_max)
-        ax.set_title(f"Zoomed Accuracy | CIFAR-10 | {approach.upper()} | seed={seed} ({split})")
+        ax.set_title(f"Zoomed Accuracy | CIFAR-10 | {approach.upper()}{_seed_title_fragment(seed)} ({split})")
     else:
         ax.set_ylim(0, 1)
-        ax.set_title(f"CIFAR-10 | {approach.upper()} | seed={seed} ({split}) — Average Accuracy")
+        ax.set_title(f"CIFAR-10 | {approach.upper()}{_seed_title_fragment(seed)} ({split}) | Average Accuracy")
     return fig
 
 
@@ -1596,7 +1614,7 @@ def _seed_grid(records, approach, seed, split):
     n_rows = (len(ordered) + n_cols - 1) // n_cols
     fig = Figure(figsize=(4.4 * n_cols, 3.4 * n_rows))
     axes = fig.subplots(n_rows, n_cols, squeeze=False).flatten()
-    fig.suptitle(f"CIFAR-10 | {approach.upper()} | seed={seed} ({split}) — Average Accuracy", fontweight="bold")
+    fig.suptitle(f"CIFAR-10 | {approach.upper()}{_seed_title_fragment(seed)} ({split}) | Average Accuracy", fontweight="bold")
     for index, record in enumerate(ordered):
         axis = axes[index]
         history = np.asarray(record.metrics.get("avg_history"))
@@ -1746,25 +1764,50 @@ def _overall_final_accuracy_bar(records, approach, split):
             fontweight="bold",
         )
     ax.set_xticks(range(len(conditions)), labels, rotation=30, ha="right", fontsize=6.5)
-    ax.set_ylabel("Final average accuracy (mean across seeds)")
+    ax.set_ylabel("Final average accuracy")
     ax.set_ylim(0, 1.05)
     ax.set_title(f"Final Accuracy | CIFAR-10 | {approach.upper()} | Overall Average ({split})")
     return fig
 
 
+_ZOOM_TIER_KEYS = (
+    ("clean", "none", None),
+    ("hidden", "ss", None),
+    ("noise", "ebm_wd", 0.4),
+    ("hidden_noise", "ebm_wd", 0.4),
+    ("hidden_noise", "ss", 0.4),
+    ("hidden_noise", "ss_ebm_wd", 0.4),
+)
+
+
 def _overall_experiments_line(records, approach, split, *, zoom=False):
     conditions = [c for c in _overall_average_conditions(records) if c["history_mean"] is not None]
+    if zoom:
+        def _zoom_match(rep):
+            sigma = round(float(rep.sigma), 2)
+            for env, mitigation, want_sigma in _ZOOM_TIER_KEYS:
+                if rep.environment == env and rep.effective_mitigation == mitigation:
+                    if want_sigma is None or sigma == want_sigma:
+                        return True
+            return False
+
+        conditions = [c for c in conditions if _zoom_match(c["representative"])]
     if not conditions:
         return None
     palette = _seed_palette(len(conditions))
     fig = Figure(figsize=(11.0, 6.0))
     ax = fig.subplots()
     all_values = []
+    max_rounds = 0
+    attack_active = False
     for index, condition in enumerate(conditions):
         history = condition["history_mean"]
         rounds = np.arange(len(history))
+        max_rounds = max(max_rounds, len(history) - 1)
         all_values.extend(float(value) for value in history)
         representative = condition["representative"]
+        if representative.environment in ("hidden", "hidden_noise"):
+            attack_active = True
         color = _seed_condition_color(representative, palette, index)
         label = _seed_condition_label(representative).replace("\n", " ")
         ax.plot(
@@ -1777,9 +1820,23 @@ def _overall_experiments_line(records, approach, split, *, zoom=False):
             markersize=3,
             markevery=max(1, len(rounds) // 10),
         )
+    if attack_active and max_rounds >= HIDDEN_ATTACK_START_ROUND:
+        ax.axvline(HIDDEN_ATTACK_START_ROUND, color="#444444", linestyle=":", linewidth=1.2, zorder=0)
+        ax.text(
+            HIDDEN_ATTACK_START_ROUND,
+            0.02,
+            f" Attack starts (round {HIDDEN_ATTACK_START_ROUND})",
+            transform=ax.get_xaxis_transform(),
+            fontsize=6.5,
+            color="#444444",
+            rotation=90,
+            va="bottom",
+            ha="left",
+        )
     ax.set_xlabel("Training Round")
-    ax.set_ylabel("Average Accuracy (mean across seeds)")
+    ax.set_ylabel("Average Accuracy")
     ax.legend(fontsize=6, loc="upper left", bbox_to_anchor=(1.01, 1), borderaxespad=0)
+    ax.set_xlim(0, max_rounds if max_rounds > 0 else 1)
     if zoom and all_values:
         y_min = max(0.0, min(all_values) - 0.03)
         y_max = min(1.0, max(all_values) + 0.06)
@@ -1788,10 +1845,10 @@ def _overall_experiments_line(records, approach, split, *, zoom=False):
             y_min = max(0.0, center - 0.06)
             y_max = min(1.0, center + 0.06)
         ax.set_ylim(y_min, y_max)
-        ax.set_title(f"Zoomed Accuracy | CIFAR-10 | {approach.upper()} | Overall Average ({split})")
+        ax.set_title(f"Accuracy | CIFAR-10 | {approach.upper()} | Overall Average ({split})")
     else:
         ax.set_ylim(0, 1)
-        ax.set_title(f"CIFAR-10 | {approach.upper()} | Overall Average ({split}) — Average Accuracy (mean across seeds)")
+        ax.set_title(f"CIFAR-10 | {approach.upper()} | Overall Average ({split}) | Average Accuracy")
     return fig
 
 
@@ -1805,7 +1862,7 @@ def _overall_grid(records, approach, split):
     fig = Figure(figsize=(4.4 * n_cols, 3.4 * n_rows))
     axes = fig.subplots(n_rows, n_cols, squeeze=False).flatten()
     fig.suptitle(
-        f"CIFAR-10 | {approach.upper()} | Overall Average ({split}) — Average Accuracy (mean across seeds)",
+        f"CIFAR-10 | {approach.upper()} | Overall Average ({split}) | Average Accuracy (mean across seeds)",
         fontweight="bold",
     )
     for index, condition in enumerate(conditions):
@@ -1823,6 +1880,11 @@ def _overall_grid(records, approach, split):
             markersize=2.5,
             markevery=max(1, len(rounds) // 10),
         )
+        if (
+            representative.environment in ("hidden", "hidden_noise")
+            and len(history) - 1 >= HIDDEN_ATTACK_START_ROUND
+        ):
+            axis.axvline(HIDDEN_ATTACK_START_ROUND, color="#444444", linestyle=":", linewidth=1.0, zorder=0)
         axis.set_title(
             _seed_condition_label(representative).replace("\n", " "),
             fontsize=7,
@@ -1830,6 +1892,7 @@ def _overall_grid(records, approach, split):
         )
         axis.set_xlabel("Round", fontsize=7)
         axis.set_ylabel("Average Accuracy", fontsize=7)
+        axis.set_xlim(0, max(len(history) - 1, 1))
         axis.set_ylim(0, 1)
         if len(history):
             axis.annotate(
