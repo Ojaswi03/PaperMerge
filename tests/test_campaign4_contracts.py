@@ -98,8 +98,8 @@ class Campaign4ContractTests(unittest.TestCase):
         benchmark = build_performance_benchmark()
         self.assertEqual(len(main), 396)
         self.assertEqual(len(static), 60)
-        self.assertEqual(len(merged_diagnostic), 33)
-        self.assertEqual(len(cart_diagnostic), 33)
+        self.assertEqual(len(merged_diagnostic), 39)
+        self.assertEqual(len(cart_diagnostic), 39)
         self.assertEqual(len(benchmark), 4)
         combined = main + static + merged_diagnostic + cart_diagnostic + benchmark
         self.assertEqual(len({config["runId"] for config in combined}), len(combined))
@@ -180,8 +180,8 @@ class Campaign4ContractTests(unittest.TestCase):
         )
         self.assertEqual(len(build_main_confirmation()), 396)
         self.assertEqual(len(build_static_controls()), 60)
-        self.assertEqual(len(build_diagnostic("merged")), 33)
-        self.assertEqual(len(build_diagnostic("cart")), 33)
+        self.assertEqual(len(build_diagnostic("merged")), 39)
+        self.assertEqual(len(build_diagnostic("cart")), 39)
         self.assertEqual(len(build_performance_benchmark()), 4)
 
     def test_adaptive_weight_decay_defaults_off_and_requires_noise(self):
@@ -346,7 +346,7 @@ class Campaign4ContractTests(unittest.TestCase):
                 result_root=result_root,
                 execution_profile=profile,
             )
-            self.assertEqual(completion["expected"], 66)
+            self.assertEqual(completion["expected"], 78)
             self.assertEqual(completion["completed"], 0)
             with self.assertRaises(RuntimeError):
                 freeze_campaign_state(
@@ -425,8 +425,8 @@ class Campaign4ContractTests(unittest.TestCase):
         manifest = json.loads((root / "manifest.json").read_text(encoding="utf-8"))
         files = [path for path in root.glob("**/*.json") if path.name != "manifest.json"]
         self.assertEqual(manifest["campaignId"], CAMPAIGN_ID)
-        self.assertEqual(manifest["configCount"], 526)
-        self.assertEqual(len(files), 526)
+        self.assertEqual(manifest["configCount"], 538)
+        self.assertEqual(len(files), 538)
 
     def test_plotter_is_incremental_and_uses_only_explicit_roots(self):
         with tempfile.TemporaryDirectory() as directory:

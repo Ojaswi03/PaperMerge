@@ -59,13 +59,13 @@ Implemented components:
 | Component | Current state |
 |---|---|
 | Versioned config contract | `gui/campaign4.py`, protocol revision `campaign4-2026-08-03-r2` |
-| Checked-in config library | 526 JSON files: 396 confirmation, 60 static controls, 66 diagnostics, 4 benchmark cases |
+| Checked-in config library | 538 JSON files: 396 confirmation, 60 static controls, 78 diagnostics, 4 benchmark cases |
 | Isolated worker | Atomic metrics/telemetry/metadata saving, explicit TensorFlow cleanup, stop/failure preservation |
 | Ring engine | GPU-resident logical states, protocol-matched pairwise clean path, SS telemetry, static/adaptive EBM, CART telemetry |
 | Objective contract | Official EBM uses the full configured batch of 512 for exact `grad(||grad F_batch||^2)` semantics |
 | Round contract | Every diagnostic, static-control, and confirmation run must contain all 100 rounds; the worker and plot loader reject short scientific artifacts |
 | GUI | Campaign 4 presets, individual config selection, ETA, live accuracy, directed ring, node inspector, telemetry replay |
-| Method freeze | Confirmation presets and worker launch remain locked until all 66 diagnostics are complete under one execution profile and `campaign_state.json` records exact source hashes, method/profile contract, rationale, and predeclared margin |
+| Method freeze | Confirmation presets and worker launch remain locked until all 78 diagnostics are complete under one execution profile and `campaign_state.json` records exact source hashes, method/profile contract, rationale, and predeclared margin |
 | Plotting | Incremental PNG/PDF/EPS paper and diagnostic figures under `plots4/campaign4` |
 | Profile isolation | Incompatible protocol/batch/precision/XLA/allocator/optimizer profiles are never pooled |
 | Validated backend | Full batch 512, mixed-BF16 compute, float32 variables/accumulation/norms/noise/metrics, `cuda_malloc_async`, no XLA |
@@ -95,8 +95,8 @@ evidence to diagnose, not a performance-profile failure.
 
 Resource benchmarks permit two lanes for standard+standard (1.15x throughput)
 and EBM+standard (1.13x). EBM+EBM produced only 1.02x and remains disabled.
-With measured overlap slowdowns, one 33-run diagnostic suite is estimated at
-about 10 h 43 min and both Merged+CART diagnostic suites at about 21 h 26 min.
+The GUI estimates each 39-run diagnostic suite from measured worker durations,
+resource classes, and the selected execution profile.
 The full 198-run non-IID confirmation remains about 51 hours on one GPU and is
 not claimed as a 24-hour workload.
 
@@ -359,7 +359,7 @@ provenance-file hashes, execution profile, generated diagnostic and
 confirmation identities, written rationale, and advisor-selected
 non-inferiority margin. A source, profile, or protocol change invalidates the
 state rather than silently reusing it. Diagnostics produced by stale source
-hashes do not count toward the 66-run gate.
+hashes do not count toward the 78-run gate.
 
 <a id="diagnostic-experiments"></a>
 
@@ -832,19 +832,19 @@ that conditional check automatically.
 
 In **Queue**, use this order:
 
-1. `Diagnose non-IID Merged - 33`.
-2. `Diagnose non-IID CART - 33` to test transfer without CART-specific EBM
+1. `Diagnose non-IID Merged - 39`.
+2. `Diagnose non-IID CART - 39` to test transfer without CART-specific EBM
    retuning.
 3. Inspect `plots4/campaign4/.../diagnostics` using seed 2025 only.
 4. Click `Freeze Campaign 4 method`, record the diagnostic rationale, and enter
    the advisor-selected non-inferiority margin. The button remains locked until
-   all 66 diagnostics are complete.
+   all 78 diagnostics are complete.
 5. `Static EBM controls - 60` for the paired method comparison.
 6. Run non-IID confirmation, then IID confirmation, only after the diagnostic
    decision is documented.
 
 Do not edit Campaign 4 training/provenance files or switch the validated GPU
-profile during the 66-run diagnostic sweep. Such a change intentionally makes
+profile during the 78-run diagnostic sweep. Such a change intentionally makes
 earlier diagnostics ineligible for the freeze instead of mixing methods.
 
 Confirmation preset buttons and worker launch both verify the freeze state.

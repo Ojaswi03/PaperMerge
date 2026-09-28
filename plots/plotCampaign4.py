@@ -129,7 +129,7 @@ class RunRecord:
         """Mitigation label used for plotting, distinguishing weight-decay tiers.
 
         weightDecayCoefficient/adaptiveWeightDecayMode are orthogonal to
-        `mitigation` (see CLAUDE.md's Research Rules), so a run can report
+        `mitigation` (see the Campaign 4 research contract), so a run can report
         mitigation="ss" or "ss_ebm" while also applying weight decay - the
         accuracy-ordering matrix's "ss" tier already has adaptive weight
         decay engaged (it pairs SS for the attack with weight decay for the
@@ -488,7 +488,7 @@ def _finalize_axis(axis, title, ylabel="Final average accuracy"):
     axis.set_title(title)
     axis.set_ylabel(ylabel)
     axis.set_ylim(0.0, 1.0)
-    axis.legend(frameon=False, ncol=2)
+    _legend_if_any(axis, ncol=2)
 
 
 def _legend_if_any(axis, **kwargs):
@@ -1486,7 +1486,7 @@ def _ablation_values(records, sigmas, tiers, *, environment):
 _ABLATION_CORE_SIGMAS = (0.2, 0.4, 0.6)
 
 
-def _render_ablation_groups(records, approach, seed, split, *, environment, tiers, subtitle):
+def _render_ablation_groups(records, approach, seed, split, *, environment, tiers, subtitle, large=False):
     sigmas = sorted(
         {
             round(record.sigma, 2)
@@ -1506,6 +1506,7 @@ def _render_ablation_groups(records, approach, seed, split, *, environment, tier
     tier_colors["none_noise"] = COLORS.get("none", "#6B6B6B")
     tier_colors["wd_only"] = "#7c3aed"
 
+    title_fs, axis_fs, tick_fs, legend_fs, value_fs = (15, 13, 11, 11, 10) if large else (9, 8, 7, 6.5, 6.5)
     x = np.arange(len(sigmas))
     width = min(0.18, 0.8 / max(1, len(bar_keys)))
     fig = Figure(figsize=(max(8.0, len(sigmas) * 2.6), 5.5))
@@ -1524,19 +1525,26 @@ def _render_ablation_groups(records, approach, seed, split, *, environment, tier
                 f"{height:.3f}",
                 ha="center",
                 va="bottom",
-                fontsize=6.5,
+                fontsize=value_fs,
                 rotation=90,
             )
-    ax.set_xticks(x, [f"σ={sigma:g}" for sigma in sigmas])
-    ax.set_ylabel("Final average accuracy")
+    ax.set_xticks(x, [f"σ={sigma:g}" for sigma in sigmas], fontsize=tick_fs)
+    ax.tick_params(axis="y", labelsize=tick_fs)
+    ax.set_ylabel("Final average accuracy", fontsize=axis_fs)
     max_value = max(values.values()) if values else 1.0
     ax.set_ylim(0, min(1.0, max_value + 0.15))
-    ax.set_title(f"Ablation Groups ({subtitle}) | CIFAR-10 | {approach.upper()}{_seed_title_fragment(seed)} ({split})")
-    ax.legend(frameon=False, fontsize=6.5, loc="upper left", bbox_to_anchor=(1.01, 1), borderaxespad=0)
+    ax.set_title(
+        f"Ablation Groups ({subtitle}) | CIFAR-10 | {approach.upper()}{_seed_title_fragment(seed)} ({split})",
+        fontsize=title_fs,
+    )
+    if large:
+        ax.legend(frameon=False, fontsize=legend_fs, loc="best")
+    else:
+        ax.legend(frameon=False, fontsize=legend_fs, loc="upper left", bbox_to_anchor=(1.01, 1), borderaxespad=0)
     return fig
 
 
-def _seed_ablation_attack_groups(records, approach, seed, split):
+def _seed_ablation_attack_groups(records, approach, seed, split, *, large=False):
     """Byzantine-attack ablation only (environment="hidden_noise" tiers)."""
     return _render_ablation_groups(
         records,
@@ -1546,10 +1554,11 @@ def _seed_ablation_attack_groups(records, approach, seed, split):
         environment="hidden_noise",
         tiers=_HIDDEN_NOISE_ABLATION_TIERS,
         subtitle="Byzantine Attack",
+        large=large,
     )
 
 
-def _seed_ablation_noise_groups(records, approach, seed, split):
+def _seed_ablation_noise_groups(records, approach, seed, split, *, large=False):
     """Channel-noise ablation only (environment="noise", no-attack tiers)."""
     return _render_ablation_groups(
         records,
@@ -1559,6 +1568,7 @@ def _seed_ablation_noise_groups(records, approach, seed, split):
         environment="noise",
         tiers=_NOISE_ABLATION_TIERS,
         subtitle="Channel Noise",
+        large=large,
     )
 
 
@@ -1750,7 +1760,7 @@ def _overall_final_accuracy_bar(records, approach, split):
         for index, condition in enumerate(conditions)
     ]
 
-    fig = Figure(figsize=(max(9.0, len(conditions) * 0.85), 5.5))
+    fig = Figure(figsize=(max(10.0, len(conditions) * 1.0), 6.0))
     ax = fig.subplots()
     bars = ax.bar(range(len(conditions)), finals, color=colors, width=0.6, edgecolor="black", linewidth=0.4)
     for bar, condition in zip(bars, conditions):
@@ -1760,13 +1770,15 @@ def _overall_final_accuracy_bar(records, approach, split):
             f"{condition['final_mean']:.3f}",
             ha="center",
             va="bottom",
-            fontsize=6,
+            fontsize=10,
             fontweight="bold",
         )
-    ax.set_xticks(range(len(conditions)), labels, rotation=30, ha="right", fontsize=6.5)
-    ax.set_ylabel("Final average accuracy")
+    ax.set_xticks(range(len(conditions)), labels, rotation=30, ha="right", fontsize=11)
+    ax.tick_params(axis="y", labelsize=11)
+    ax.set_ylabel("Final average accuracy", fontsize=13)
     ax.set_ylim(0, 1.05)
-    ax.set_title(f"Final Accuracy | CIFAR-10 | {approach.upper()} | Overall Average ({split})")
+    ax.set_title(f"Final Accuracy | CIFAR-10 | {approach.upper()} | Overall Average ({split})", fontsize=15)
+    fig.tight_layout()
     return fig
 
 
@@ -1778,6 +1790,15 @@ _ZOOM_TIER_KEYS = (
     ("hidden_noise", "ss", 0.4),
     ("hidden_noise", "ss_ebm_wd", 0.4),
 )
+
+_ZOOM_MARKERS = {
+    ("clean", "none"): "o",
+    ("hidden", "ss"): "s",
+    ("noise", "ebm_wd"): "^",
+    ("hidden_noise", "ss"): "D",
+    ("hidden_noise", "ebm_wd"): "v",
+    ("hidden_noise", "ss_ebm_wd"): "*",
+}
 
 
 def _overall_experiments_line(records, approach, split, *, zoom=False):
@@ -1795,7 +1816,7 @@ def _overall_experiments_line(records, approach, split, *, zoom=False):
     if not conditions:
         return None
     palette = _seed_palette(len(conditions))
-    fig = Figure(figsize=(11.0, 6.0))
+    fig = Figure(figsize=(10.0, 5.5) if zoom else (12.0, 6.0))
     ax = fig.subplots()
     all_values = []
     max_rounds = 0
@@ -1810,15 +1831,24 @@ def _overall_experiments_line(records, approach, split, *, zoom=False):
             attack_active = True
         color = _seed_condition_color(representative, palette, index)
         label = _seed_condition_label(representative).replace("\n", " ")
+        if zoom:
+            marker = _ZOOM_MARKERS.get(
+                (representative.environment, representative.effective_mitigation),
+                MARKERS.get(representative.effective_mitigation, "o"),
+            )
+        else:
+            marker = MARKERS.get(representative.effective_mitigation, "o")
         ax.plot(
             rounds,
             history,
             label=label,
             color=color,
-            linewidth=1.8,
-            marker=MARKERS.get(representative.effective_mitigation, "o"),
-            markersize=3,
+            linewidth=2.2,
+            marker=marker,
+            markersize=7,
             markevery=max(1, len(rounds) // 10),
+            markeredgecolor="black",
+            markeredgewidth=0.4,
         )
     if attack_active and max_rounds >= HIDDEN_ATTACK_START_ROUND:
         ax.axvline(HIDDEN_ATTACK_START_ROUND, color="#444444", linestyle=":", linewidth=1.2, zorder=0)
@@ -1827,15 +1857,25 @@ def _overall_experiments_line(records, approach, split, *, zoom=False):
             0.02,
             f" Attack starts (round {HIDDEN_ATTACK_START_ROUND})",
             transform=ax.get_xaxis_transform(),
-            fontsize=6.5,
+            fontsize=10,
             color="#444444",
             rotation=90,
             va="bottom",
             ha="left",
         )
-    ax.set_xlabel("Training Round")
-    ax.set_ylabel("Average Accuracy")
-    ax.legend(fontsize=6, loc="upper left", bbox_to_anchor=(1.01, 1), borderaxespad=0)
+    ax.set_xlabel("Training Round", fontsize=13)
+    ax.set_ylabel("Average Accuracy", fontsize=13)
+    ax.tick_params(axis="both", labelsize=11)
+    ax.legend(
+        fontsize=8,
+        loc="upper left",
+        bbox_to_anchor=(1.01, 1),
+        borderaxespad=0,
+        frameon=False,
+        handlelength=1.4,
+        handletextpad=0.4,
+        labelspacing=0.3,
+    )
     ax.set_xlim(0, max_rounds if max_rounds > 0 else 1)
     if zoom and all_values:
         y_min = max(0.0, min(all_values) - 0.03)
@@ -1845,10 +1885,11 @@ def _overall_experiments_line(records, approach, split, *, zoom=False):
             y_min = max(0.0, center - 0.06)
             y_max = min(1.0, center + 0.06)
         ax.set_ylim(y_min, y_max)
-        ax.set_title(f"Accuracy | CIFAR-10 | {approach.upper()} | Overall Average ({split})")
+        ax.set_title(f"Accuracy | CIFAR-10 | {approach.upper()} | Overall Average ({split})", fontsize=15)
     else:
         ax.set_ylim(0, 1)
-        ax.set_title(f"CIFAR-10 | {approach.upper()} | Overall Average ({split}) | Average Accuracy")
+        ax.set_title(f"CIFAR-10 | {approach.upper()} | Overall Average ({split}) | Average Accuracy", fontsize=15)
+    fig.tight_layout()
     return fig
 
 
@@ -1864,6 +1905,7 @@ def _overall_grid(records, approach, split):
     fig.suptitle(
         f"CIFAR-10 | {approach.upper()} | Overall Average ({split}) | Average Accuracy (mean across seeds)",
         fontweight="bold",
+        fontsize=13,
     )
     for index, condition in enumerate(conditions):
         axis = axes[index]
@@ -1887,18 +1929,19 @@ def _overall_grid(records, approach, split):
             axis.axvline(HIDDEN_ATTACK_START_ROUND, color="#444444", linestyle=":", linewidth=1.0, zorder=0)
         axis.set_title(
             _seed_condition_label(representative).replace("\n", " "),
-            fontsize=7,
+            fontsize=10,
             fontweight="bold",
         )
-        axis.set_xlabel("Round", fontsize=7)
-        axis.set_ylabel("Average Accuracy", fontsize=7)
+        axis.set_xlabel("Round", fontsize=10)
+        axis.set_ylabel("Average Accuracy", fontsize=10)
+        axis.tick_params(axis="both", labelsize=9)
         axis.set_xlim(0, max(len(history) - 1, 1))
         axis.set_ylim(0, 1)
         if len(history):
             axis.annotate(
                 f"{history[-1]:.3f}",
                 xy=(len(history) - 1, history[-1]),
-                fontsize=7,
+                fontsize=9,
                 fontweight="bold",
                 xytext=(-30, 10),
                 textcoords="offset points",
@@ -1936,8 +1979,8 @@ def generate_overall_average_plots(
             seed_label = f"avg of {len({r.seed for r in group_records})} seeds"
             figures = (
                 ("final_accuracy_avg", lambda rec=group_records: _overall_final_accuracy_bar(rec, approach, split_name)),
-                ("ablation_groups_attack_avg", lambda rec=group_records, seed_label=seed_label: _seed_ablation_attack_groups(rec, approach, seed_label, split_name)),
-                ("ablation_groups_noise_avg", lambda rec=group_records, seed_label=seed_label: _seed_ablation_noise_groups(rec, approach, seed_label, split_name)),
+                ("ablation_groups_attack_avg", lambda rec=group_records, seed_label=seed_label: _seed_ablation_attack_groups(rec, approach, seed_label, split_name, large=True)),
+                ("ablation_groups_noise_avg", lambda rec=group_records, seed_label=seed_label: _seed_ablation_noise_groups(rec, approach, seed_label, split_name, large=True)),
                 ("experiments_avg", lambda rec=group_records: _overall_experiments_line(rec, approach, split_name, zoom=False)),
                 ("experiments_avg_zoom", lambda rec=group_records: _overall_experiments_line(rec, approach, split_name, zoom=True)),
                 ("grid_avg", lambda rec=group_records: _overall_grid(rec, approach, split_name)),

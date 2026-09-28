@@ -57,7 +57,7 @@ pool Campaign 3 records.
 
 | Campaign 4 item | Current status |
 |---|---|
-| Config library | 526 generated JSONs: 396 confirmation, 60 static controls, 66 diagnostics, 4 performance cases |
+| Config library | 538 generated JSONs: 396 confirmation, 60 static controls, 78 diagnostics, 4 performance cases |
 | Result root | `experiments/results4/campaign4/` |
 | Plot root | `plots4/campaign4/` |
 | Clean reference | Protocol-matched pairwise ring; optional full-consensus ceiling remains distinctly labeled |
@@ -88,9 +88,9 @@ random accuracy in both float32 and BF16. That collapse remains a method result
 to diagnose; the performance profile does **not** establish that adaptive EBM
 improves accuracy.
 
-The measured queue estimate is about 10 h 43 min for one 33-run diagnostic
-suite and 21 h 26 min for both 66-run Merged+CART diagnostics. The complete
-198-run non-IID confirmation remains about 51 hours on this single GPU.
+The GUI derives the current queue estimate from measured durations and the
+selected execution profile. The complete 198-run non-IID confirmation remains
+about 51 hours on this single GPU.
 
 The exact Campaign 4 run order, equations, acceptance rules, plot catalog, and
 implementation status are in [Campaign 4 Engineering And Evaluation Plan](Campaign4Plan.md).
@@ -1014,7 +1014,7 @@ isolated paths.
 | `build_main_confirmation()` | Returns 396 IID/non-IID, Merged/CART, three-seed confirmations. |
 | `build_split_confirmation()` | Returns the 198 confirmations for one split. |
 | `build_static_controls()` | Returns 60 paired non-IID static EBM controls. |
-| `build_diagnostic()` | Returns 33 high-noise diagnostics per approach, including persistent-versus-reset momentum. |
+| `build_diagnostic()` | Returns 39 high-noise diagnostics per approach, including static/adaptive EBM and adaptive weight-decay tiers. |
 | `build_performance_benchmark()` | Returns four short standard/SS/EBM/CART+joint performance representatives. |
 | `build_preset()` | Dispatches named GUI preset families. |
 | `result_run_dir()`, `result_paths()` | Route every run to split/attack/approach/noise/condition/seed/run-ID storage. |
@@ -1022,7 +1022,7 @@ isolated paths.
 | `apply_performance_profile()` | Applies a validated precision/allocator profile and re-derives content identity without relaxing batch 512 or changing SS/EBM equations. |
 | `current_source_hashes()` | Hashes every declared Campaign 4 provenance file used by the worker and freeze audit. |
 | `adaptive_method_contract()` | Captures exact adaptive/static settings, CART schedule, execution profile, source hashes, and generated diagnostic/confirmation identities. |
-| `diagnostic_completion()` | Verifies all 66 expected Merged+CART diagnostic triples by profiled run ID and current provenance hashes. |
+| `diagnostic_completion()` | Verifies all 78 expected Merged+CART diagnostic triples by profiled run ID and current provenance hashes. |
 | `load_campaign_state()` | Reads the Campaign 4 freeze artifact without accepting malformed JSON. |
 | `freeze_campaign_state()` | Requires complete diagnostics, then atomically records the written rationale, predeclared margin, exact method contract, and completed diagnostic identities. |
 | `is_confirmation_frozen()` | Invalidates confirmation access when diagnostics disappear or the protocol, execution profile, source hashes, method hash, or run matrix changes. |
@@ -1801,11 +1801,11 @@ R2 config, and `_run()` calls the official engine.
 
 | Test group | What it verifies |
 |---|---|
-| Path and matrix tests | New roots never use Campaign 3 paths; counts are 396/60/33/33/4 with unique run IDs. |
+| Path and matrix tests | New roots never use Campaign 3 paths; counts are 396/60/39/39/4 with unique run IDs. |
 | Semantic tests | Clean cannot enable defenses, SS requires hidden attack, EBM requires noise, hidden starts at 20, noise starts at 0, generated configs use float32 baselines, and official EBM remains full-batch under any validated execution profile. |
 | Completion test | A run is complete only with matching metadata, metrics, and telemetry. |
-| Method-freeze test | Confirmation stays locked until all 66 diagnostics exist; the atomic freeze binds the rationale, declared margin, exact run identities, and current method/code hash. |
-| Generated-library test | All 526 checked-in JSONs and manifest match code generation. |
+| Method-freeze test | Confirmation stays locked until all 78 diagnostics exist; the atomic freeze binds the rationale, declared margin, exact run identities, and current method/code hash. |
+| Generated-library test | All 538 checked-in JSONs and manifest match code generation. |
 | Incremental plot test | Synthetic completed records create isolated figures once and skip unchanged outputs next time. |
 | Profile-isolation test | XLA/non-XLA confirmation records are written to separate profile folders rather than pooled. |
 | Network reducer test | A delayed node event cannot overwrite a newer node state. |
@@ -2065,7 +2065,7 @@ included in that focused command.
 8. For Campaign 4, require completed `run.json`, `metrics.npz`, and
    `telemetry.npz`; do not include performance or precision-validation runs in
    paper aggregates.
-9. Complete both 33-run Campaign 4 diagnostic presets using seed 2025, review
+9. Complete both 39-run Campaign 4 diagnostic presets using seed 2025, review
    their diagnostic plots, and click `Freeze Campaign 4 method` before running
    or inspecting confirmation seeds 2026-2028.
 10. Keep `experiments/results4/campaign4/campaign_state.json` with the research
@@ -2078,14 +2078,14 @@ included in that focused command.
 - R2 currently supports CIFAR-10 in the official worker.
 - The stored R2 evidence is non-IID only at this snapshot.
 - Merged confirmation is incomplete even though CART confirmation is complete.
-- Campaign 4 has no completed official 100-round diagnostic evidence at this
-  snapshot. The two 100-round no-save precision canaries validate the execution
-  profile only and are not paper records.
+- The active Campaign 4 result tree contains completed 100-round diagnostics
+  and confirmations. Queue completion alone does not prove coverage of a newly
+  regenerated config library; use the manifest, run IDs, and freeze checks.
 - Campaign 4 adaptive EBM is a project extension, not an unchanged claim from
   the noisy-communication paper. Static EBM remains the paper-derived control.
 - Campaign 4's validated BF16 backend reduced the difficult adaptive-EBM
   canary from about 51 minutes to about 27 minutes. The 10-15 minute per-EBM
-  target remains unmet, although the expected 66-run diagnostic sweep now fits
+  target remains unmet, although the expected 78-run diagnostic sweep now fits
   near the 24-hour target through resource-aware overlap.
 - A simulator coordinator computes consensus and evaluation; there is no
   physical network deployment.

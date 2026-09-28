@@ -254,3 +254,14 @@ experiments/results4/campaign4/performance_profile.json
 # running it from plots/ instead of the repo root writes a stray duplicate tree
 # here instead of the real /plots4/campaign4/.
 /plots/plots4/
+
+# Local prompts and LaTeX build intermediates
+/*_prompt.md
+/paper_review/*.aux
+/paper_review/*.bbl
+/paper_review/*.blg
+/paper_review/*.fdb_latexmk
+/paper_review/*.fls
+/paper_review/*.log
+/paper_review/*.out
+/paper_review/*.synctex.gz

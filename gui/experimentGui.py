@@ -3263,8 +3263,8 @@ class ExperimentGUI:
         )
         campaign4Frame.pack(fill=tk.X, padx=12, pady=(2, 6))
         campaign4Buttons = (
-            ("Diagnose non-IID Merged · 33", "diagnostic_non_iid_merged"),
-            ("Diagnose non-IID CART · 33", "diagnostic_non_iid_cart"),
+            ("Diagnose non-IID Merged · 39", "diagnostic_non_iid_merged"),
+            ("Diagnose non-IID CART · 39", "diagnostic_non_iid_cart"),
             ("Static EBM controls · 60", "static_controls"),
             ("non-IID confirmation · 198", "non_iid_confirmation"),
             ("IID confirmation · 198", "iid_confirmation"),
@@ -4541,7 +4541,7 @@ class ExperimentGUI:
                         ):
                             failedMessage = (
                                 "Campaign 4 confirmation is locked. Complete all "
-                                "66 diagnostics and freeze the method contract first. "
+                                "78 diagnostics and freeze the method contract first. "
                                 "The current queue item was retained."
                             )
                             self.logMessage(f"QUEUE BLOCKED: {failedMessage}")

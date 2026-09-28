@@ -196,13 +196,12 @@ python runGui.py
 
 The GUI's **Profile GPU + lanes** button runs the same sequence and invokes the
 100-round precision validator only when the short benchmark selects a pending
-BF16 candidate. Once validated, the queue ETA is about 10 h 43 min for one
-33-run diagnostic suite and about 21 h 26 min for both 66-run non-IID
-diagnostic suites on this machine. The complete 198-run non-IID confirmation
-matrix is a later stage and is not a 24-hour single-GPU workload.
+BF16 candidate. The GUI calculates the current queue ETA from measured worker
+durations and the selected execution profile. The complete 198-run non-IID
+confirmation matrix is a later stage and is not a 24-hour single-GPU workload.
 
-Start with **Diagnose non-IID Merged - 33**, then run
-**Diagnose non-IID CART - 33** and review both diagnostic suites. After all 66
+Start with **Diagnose non-IID Merged - 39**, then run
+**Diagnose non-IID CART - 39** and review both diagnostic suites. After all 78
 runs finish, use
 **Freeze Campaign 4 method** to record the diagnostic rationale and
 advisor-selected non-inferiority margin. Confirmation preset loading and worker

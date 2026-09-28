@@ -67,7 +67,7 @@ training stage (dispatch vs compute vs H2D).
 
 Each of these changes the execution profile, so it requires the benchmark +
 paired 100-round precision canary gates again, and it would invalidate an
-in-progress diagnostic sweep. Apply only after the current 66-run sweep
+in-progress diagnostic sweep. Apply only after the current 78-run sweep
 completes (or before confirmation starts), then freeze again.
 
 | # | Option | Expected gain | Risk / gate |
@@ -99,7 +99,7 @@ completes (or before confirmation starts), then freeze again.
 
 ```mermaid
 flowchart TD
-    A["Finish current 66-run diagnostic sweep on the frozen profile (~26 h)"]
+    A["Finish current 78-run diagnostic sweep on the frozen profile"]
     B["Run TF profiler on one EBM benchmark rep"]
     C{"Dispatch-bound?"}
     D["Implement fused visit loop; benchmark + canary gates"]
