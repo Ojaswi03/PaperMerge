@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from gui.campaign3 import (
+from gui.baseline_study import (
     CONFIRMATION_SEEDS,
     NOISE_LEVELS,
     build_approach_confirmation,

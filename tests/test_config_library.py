@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 import unittest
 
-from gui.campaign3 import build_approach_confirmation, frozen_cart_schedule
+from gui.baseline_study import build_approach_confirmation, frozen_cart_schedule
 from gui.config_library import (
     APPROACHES,
     CURRENT_CONFIG_ROOT,
@@ -168,7 +168,7 @@ class CurrentConfigLibraryTests(unittest.TestCase):
 
     def test_gui_defaults_to_campaign4_multi_select_library(self):
         source = (
-            Path(__file__).resolve().parents[1] / "gui" / "experimentGui.py"
+            Path(__file__).resolve().parents[1] / "gui" / "experiment_app.py"
         ).read_text(encoding="utf-8")
         self.assertIn("sourceVar2   = tk.StringVar(value='campaign4')", source)
         self.assertIn('(\"Campaign 4\", \"campaign4\")', source)
@@ -178,7 +178,7 @@ class CurrentConfigLibraryTests(unittest.TestCase):
 
     def test_campaign_worker_events_feed_the_log_and_live_chart(self):
         source = (
-            Path(__file__).resolve().parents[1] / "gui" / "experimentGui.py"
+            Path(__file__).resolve().parents[1] / "gui" / "experiment_app.py"
         ).read_text(encoding="utf-8")
         self.assertIn("def _logCampaignConfiguration", source)
         self.assertIn("def _recordCampaignRound", source)

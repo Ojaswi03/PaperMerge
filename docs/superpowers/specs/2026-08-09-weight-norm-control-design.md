@@ -34,7 +34,7 @@ accumulation as the driver.
 
 Channel noise is defined as `relative_l2`: `noise_norm = sigma * ||model||`.
 Because nothing in the current training loop bounds weight norm (no weight
-decay anywhere in `basil_core/campaign4_engine.py`, no BatchNorm in
+decay anywhere in `basil_core/adaptive_experiment_engine.py`, no BatchNorm in
 `CIFARModel`), the following feedback loop is unconstrained: bigger weights
 -> proportionally bigger absolute noise -> more corrupted updates -> weights
 pushed further off course -> still bigger norm. EBM regularizes
@@ -78,7 +78,7 @@ the fix targets the model side of the loop, not the noise side.
 
 1. **Additive control, not a noise-model change.** Weight-norm control acts
    on the model/training side; `relative_l2` noise semantics are frozen as
-   documented in Campaign4Plan.md.
+   documented in ADAPTIVE_STUDY_PLAN.md.
 2. **Separate, orthogonal config field**, not folded into the `mitigation`
    enum (`none`/`ss`/`ebm`/`ss_ebm`). This keeps every existing EBM/SS
    contract test and config hash untouched.
@@ -102,7 +102,7 @@ appends `_wd`, so the condition is unambiguously separate from
 
 ### Engine
 
-`basil_core/campaign4_engine.py`: pass `weight_decay=<coefficient>` directly
+`basil_core/adaptive_experiment_engine.py`: pass `weight_decay=<coefficient>` directly
 into the existing `tf.keras.optimizers.SGD(...)` constructor. TF's SGD
 supports decoupled weight decay natively -- no new gradient computation, no
 new backward pass, no measurable compute cost. This directly opposes
@@ -144,7 +144,7 @@ suppressed, not just infer it from accuracy alone.
 
 Same bounded/EMA-smoothed/rate-limited controller *pattern* already proven
 safe for adaptive EBM (see `_adaptive_requested_coefficient` /
-`_bounded_adaptive_coefficient` in `basil_core/campaign4_engine.py`), but
+`_bounded_adaptive_coefficient` in `basil_core/adaptive_experiment_engine.py`), but
 observing weight-norm growth rate instead of gradient-ratio stress, and
 outputting a dynamically-scaled weight-decay coefficient instead of an EBM
 coefficient. Its target ratio, min/max bounds, and smoothing constants will

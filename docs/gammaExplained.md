@@ -545,12 +545,12 @@ should report the frozen noise-dependent schedule shown above.
 ## Implementation References
 
 - Proximal gradient application:
-  `basil_core/campaign_engine.py`, `SharedModelWorker.apply_step`
+  `basil_core/experiment_engine.py`, `SharedModelWorker.apply_step`
 - Verified class-gap calculation:
-  `basil_core/campaign_engine.py`, `_mean_reference_supported_gap`
+  `basil_core/experiment_engine.py`, `_mean_reference_supported_gap`
 - Gamma-to-mu calculation:
-  `basil_core/campaign_engine.py`, `run_campaign_experiment`
+  `basil_core/experiment_engine.py`, `run_campaign_experiment`
 - Gamma candidates and sigma buckets:
-  `gui/campaign3.py`
+  `gui/baseline_study.py`
 - Frozen selected schedule:
   `experiments/results3/r2/campaign_state.json`

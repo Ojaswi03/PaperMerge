@@ -238,6 +238,15 @@ Thumbs.db
 nohup.out
 *.pid
 
+# Generated experiment artifacts. Campaign 4 is retained as the active study.
+/experiments/results/
+/experiments/results2/
+/experiments/results3/
+/plots/
+/plots2/
+/plots3/
+*.zip
+
 # Machine-local experiment acceleration state
 experiments/cache/
 experiments/results3/r2/workers/

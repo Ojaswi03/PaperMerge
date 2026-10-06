@@ -15,7 +15,7 @@ No existing paper-derived component was changed:
 
 The implementation is based only on the local paper:
 
-`Papers/002-Robust Federated Learning with Noisy Communication.pdf`
+`papers/002-Robust Federated Learning with Noisy Communication.pdf`
 
 ## Paper Mapping
 

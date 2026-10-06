@@ -237,7 +237,7 @@ def _git_revision():
 
 
 def _build_config(args):
-    from gui.campaign3 import make_config
+    from gui.baseline_study import make_config
 
     if args.snapshot_selection and args.environment != "hidden_noise":
         raise ValueError("Snapshot Selection requires hidden_noise.")

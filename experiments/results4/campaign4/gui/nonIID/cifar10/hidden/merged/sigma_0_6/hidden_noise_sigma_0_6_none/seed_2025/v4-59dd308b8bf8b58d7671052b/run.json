@@ -128,13 +128,13 @@
   "serializationSeconds": 0.005788372000097297,
   "sourceHashes": {
     "basil_core/basil.py": "366f5c80e06b44beb248ab9f8dc21dc20e35b578ca5932fc0d4ffc93d2d4324d",
-    "basil_core/campaign4_engine.py": "372692ae57c53d2ea7e6a2e46619e47bbf61f48aa26e5ef870467e80bd955847",
+    "basil_core/adaptive_experiment_engine.py": "372692ae57c53d2ea7e6a2e46619e47bbf61f48aa26e5ef870467e80bd955847",
     "basil_core/class_registry.py": "277cfecef1d24a46e3785756e93fe392602bc6f3177a3aaa17af20867cbe200c",
     "basil_core/data/cifar.py": "9b63489085b1b4451b1edb4202d129b50cd3e70050d429df0aabefdb6dcf3bfa",
     "basil_core/models.py": "cc26e6af278a39e8a93ff289988970df9d99b5c6add5894230cb33ee3f3370be",
     "basil_core/trainer.py": "b04ff4e9c850e8e69e9afc6a8c9428a8ada73184fa88ec1a3a2e0f85a2ac5a8b",
-    "gui/campaign4.py": "82ac9abf8cdd128063521f6cc53dd8bb12bf33db4481ace33abd2ebe46cea63d",
-    "scripts/run_campaign4_worker.py": "046f6515c5e0c3ce14d6ce41a4f352872465f0cada6a8f29368066250e5a86d1"
+    "gui/adaptive_study.py": "82ac9abf8cdd128063521f6cc53dd8bb12bf33db4481ace33abd2ebe46cea63d",
+    "scripts/run_adaptive_worker.py": "046f6515c5e0c3ce14d6ce41a4f352872465f0cada6a8f29368066250e5a86d1"
   },
   "startedAt": "2026-08-19T02:54:38.844392-04:00",
   "status": "completed",

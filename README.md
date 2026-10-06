@@ -19,9 +19,9 @@ Merged and CART are the project additions built on the two main papers.
   map. It starts with what has been tested so far, explains every execution
   stage with diagrams, documents result meaning and runtime, and includes the
   file/function reference.
-- [Campaign 3 R2 Guide](docs/Campaign3Guide.md) contains the exact current
+- [Campaign 3 R2 Guide](docs/BASELINE_STUDY_GUIDE.md) contains the exact current
   protocol, equations, calibration rules, and paper-facing interpretation.
-- [Campaign 4 Engineering And Evaluation Plan](docs/Campaign4Plan.md) documents
+- [Campaign 4 Engineering And Evaluation Plan](docs/ADAPTIVE_STUDY_PLAN.md) documents
   the implemented isolated `results4`/`plots4` campaign, sigma `0.4-0.6`
   diagnosis, adaptive EBM extension, live node-ring GUI, and measured runtime.
 - [Gamma Explained](docs/gammaExplained.md) explains CART `gamma` and the
@@ -47,14 +47,14 @@ Requirements:
 python3 -m venv environment/basil-noise-env
 source environment/basil-noise-env/bin/activate
 pip install -r environment/requirements.txt
-python scripts/testSetup.py
+python scripts/check_setup.py
 ```
 
 ## Run The GUI
 
 ```bash
 source environment/basil-noise-env/bin/activate
-python runGui.py
+python run_gui.py
 ```
 
 The GUI supports:
@@ -148,7 +148,7 @@ run **CART Low-Noise Refinement R2 - 6**. Fresh campaigns can load
 runs. Confirmation buttons remain locked unless `campaign_state.json` is
 `frozen`.
 
-See the [Campaign 3 R2 Guide](docs/Campaign3Guide.md) for the complete
+See the [Campaign 3 R2 Guide](docs/BASELINE_STUDY_GUIDE.md) for the complete
 protocol, equations, diagrams, result layout, pilot findings, and paper-draft
 synchronization notes.
 
@@ -161,7 +161,7 @@ only the bounded coefficient of the same gradient-norm objective using
 receiver-observable stress; it does not use attacker identity or test accuracy.
 
 ```text
-gui/configs/campaign4/                 # 526 selectable configs + manifest
+gui/configs/adaptive_study/                 # 526 selectable configs + manifest
 experiments/results4/campaign4/        # Campaign 4 artifacts only
 plots4/campaign4/                      # Campaign 4 figures/tables only
 ```
@@ -186,12 +186,12 @@ Run the contract check and machine profile before diagnosis:
 
 ```bash
 source environment/basil-noise-env/bin/activate
-python scripts/sync_campaign4_configs.py --check
-python scripts/benchmark_campaign4.py --rounds 2 --repeats 3 \
+python scripts/sync_adaptive_configs.py --check
+python scripts/benchmark_adaptive_study.py --rounds 2 --repeats 3 \
   --include-cuda-malloc-async --include-mixed-bfloat16
-python scripts/validate_campaign4_precision.py
-python scripts/benchmark_campaign4_lanes.py --rounds 2 --repeats 3
-python runGui.py
+python scripts/validate_mixed_precision.py
+python scripts/benchmark_worker_lanes.py --rounds 2 --repeats 3
+python run_gui.py
 ```
 
 The GUI's **Profile GPU + lanes** button runs the same sequence and invokes the
@@ -214,15 +214,15 @@ loader reject any short diagnostic, static-control, or confirmation artifact.
 ### Adaptive Weight-Decay Controller (Weight-Norm Control)
 
 `weightDecayCoefficient` and `adaptiveWeightDecayMode` are a config axis
-orthogonal to `mitigation` (see `basil_core/campaign4_engine.py`'s SGD
-optimizer wiring and `gui/campaign4.py`'s `make_config`). Two runs can both
+orthogonal to `mitigation` (see `basil_core/adaptive_experiment_engine.py`'s SGD
+optimizer wiring and `gui/adaptive_study.py`'s `make_config`). Two runs can both
 report `mitigation="ss_ebm"` while only one also has adaptive weight decay
 engaged. When `adaptiveWeightDecayMode="adaptive"`, a bounded/EMA-smoothed/
 rate-limited controller (the same pattern already used for adaptive EBM)
 adjusts the coefficient online each round in response to observed weight
 norm; the static `weightDecayCoefficient` field always starts at `0.0` for
 adaptive runs and is not a reliable "is weight decay active" signal by
-itself — check `adaptiveWeightDecayMode` too. `plots/plotCampaign4.py`'s
+itself — check `adaptiveWeightDecayMode` too. `reporting/adaptive_study_plots.py`'s
 `RunRecord.effective_mitigation` property encodes this correctly for
 plotting (see below); code reading `mitigation` directly instead of
 `effective_mitigation` will silently conflate weight-decay and non-weight-decay
@@ -230,7 +230,7 @@ runs under the same label.
 
 ### Campaign 4 Plot Phase Gate And Mitigation Tiers
 
-`plots/plotCampaign4.py` only builds the "paper" figure set (evidence
+`reporting/adaptive_study_plots.py` only builds the "paper" figure set (evidence
 hierarchy, defense composition, learning curves, noise robustness, etc.) from
 records whose `phase` is in `SCIENTIFIC_PHASES = {"diagnostic",
 "static_control", "confirmation"}` — all three are already held to the same
@@ -249,7 +249,7 @@ registries together — every accuracy-hierarchy figure keys off
 
 ### Accuracy-Ordering Diagnostic Matrix
 
-`gui/campaign4.py`'s `make_config` builds the non-IID accuracy-ordering
+`gui/adaptive_study.py`'s `make_config` builds the non-IID accuracy-ordering
 diagnostic matrix (clean > single stressor+matched mitigation > joint+partial
 mitigation > joint+full mitigation > joint+no mitigation), run per approach
 (merged, cart) at `phase="diagnostic"`. Each condition is queued at multiple
@@ -269,8 +269,8 @@ in `experiments/results4/campaign4/performance_profile.json`, a machine-local
 file excluded from version control). Two root causes behind an earlier 2-lane
 GPU-memory exhaustion incident were fixed and committed:
 `TF_FORCE_GPU_ALLOW_GROWTH` no longer overrides the per-lane hard memory cap
-in `scripts/run_campaign4_worker.py`'s `_configure_tensorflow`, and
-`gui/campaign_workers.py` persists each worker's full stdout/stderr to a
+in `scripts/run_adaptive_worker.py`'s `_configure_tensorflow`, and
+`gui/worker_pool.py` persists each worker's full stdout/stderr to a
 `.log` file next to its PID sidecar so a native crash leaves a diagnosable
 trace instead of a silent hang. Despite both fixes, 2-lane concurrency is a
 standing, non-negotiable decision to keep disabled based on direct operator
@@ -295,28 +295,28 @@ python scripts/run_single_config.py campaign3:cart:hidden_noise:ss_ebm:0.4 --rou
 
 ```text
 PaperMerge/
-├── runGui.py
+├── run_gui.py
 ├── docs/
 │   ├── GetToKnow.md
-│   ├── Campaign3Guide.md
-│   ├── Campaign4Plan.md
+│   ├── BASELINE_STUDY_GUIDE.md
+│   ├── ADAPTIVE_STUDY_PLAN.md
 │   ├── gammaExplained.md
 │   └── WCM_PILOT.md
 ├── basil_core/
 │   ├── basil.py
 │   ├── cart.py
-│   ├── campaign_engine.py
-│   ├── campaign4_engine.py
+│   ├── experiment_engine.py
+│   ├── adaptive_experiment_engine.py
 │   ├── trainer.py
 │   ├── attacks.py
 │   ├── models.py
 │   └── data/
 ├── gui/
-│   ├── experimentGui.py
+│   ├── experiment_app.py
 │   ├── campaign3.py
 │   ├── campaign4.py
-│   ├── campaign4_execution.py
-│   ├── campaign_workers.py
+│   ├── execution_policy.py
+│   ├── worker_pool.py
 │   ├── network_view.py
 │   ├── config_library.py
 │   ├── runtime_estimator.py
@@ -331,16 +331,16 @@ PaperMerge/
 │   ├── plotCampaign3.py
 │   └── plotCampaign4.py
 ├── scripts/
-│   ├── benchmark_campaign_workers.py
-│   ├── run_campaign_worker.py
-│   ├── run_campaign4_worker.py
-│   ├── benchmark_campaign4.py
-│   ├── validate_campaign4_precision.py
-│   ├── benchmark_campaign4_lanes.py
-│   ├── sync_campaign4_configs.py
+│   ├── benchmark_worker_pool.py
+│   ├── run_baseline_worker.py
+│   ├── run_adaptive_worker.py
+│   ├── benchmark_adaptive_study.py
+│   ├── validate_mixed_precision.py
+│   ├── benchmark_worker_lanes.py
+│   ├── sync_adaptive_configs.py
 │   ├── run_single_config.py
 │   ├── sync_gui_config_library.py
-│   └── testSetup.py
+│   └── check_setup.py
 ├── experiments/results/gui/
 ├── experiments/results3/r2/gui/
 ├── experiments/results4/campaign4/gui/
@@ -456,25 +456,25 @@ Plots are saved into the matching split/dataset/attack/approach folder, and chan
 
 | File | Purpose |
 |---|---|
-| `gui/experimentGui.py` | GUI, configs, queue, experiment execution |
-| `gui/campaign3.py` | Campaign matrix, run IDs, calibration, result paths |
-| `gui/campaign_workers.py` | isolated one/two-lane Campaign 3 process pool |
+| `gui/experiment_app.py` | GUI, configs, queue, experiment execution |
+| `gui/baseline_study.py` | Campaign matrix, run IDs, calibration, result paths |
+| `gui/worker_pool.py` | isolated one/two-lane Campaign 3 process pool |
 | `gui/config_library.py` | versioned individual BASIL/Noisy/Merged/CART config matrices |
 | `gui/runtime_estimator.py` | matched-history per-config and whole-queue ETA |
-| `scripts/run_campaign_worker.py` | one official Campaign 3 run per process |
-| `scripts/benchmark_campaign_workers.py` | deterministic two-lane safety/throughput gate |
+| `scripts/run_baseline_worker.py` | one official Campaign 3 run per process |
+| `scripts/benchmark_worker_pool.py` | deterministic two-lane safety/throughput gate |
 | `scripts/run_single_config.py` | CLI config runner |
 | `basil_core/basil.py` | BASIL ring and FedAvg loops |
 | `basil_core/cart.py` | CART ring loop |
-| `basil_core/campaign_engine.py` | deterministic shared-worker Campaign 3 engine |
+| `basil_core/experiment_engine.py` | deterministic shared-worker Campaign 3 engine |
 | `basil_core/trainer.py` | parameter helpers and training/evaluation |
-| `plots/plotGui.py` | result discovery and plot generation |
-| `plots/plotCampaign3.py` | Campaign 3 paper and diagnostic plots |
+| `reporting/experiment_plots.py` | result discovery and plot generation |
+| `reporting/baseline_study_plots.py` | Campaign 3 paper and diagnostic plots |
 
 ## Validation
 
 ```bash
-environment/basil-noise-env/bin/python -m unittest tests.test_config_library tests.test_campaign3_contracts tests.test_campaign3_engine tests.test_runtime_estimator tests.test_campaign_workers tests.test_cifar_cache -v
-environment/basil-noise-env/bin/python -m py_compile gui/experimentGui.py gui/config_library.py gui/campaign3.py gui/campaign_workers.py gui/runtime_estimator.py plots/plotCampaign3.py scripts/sync_gui_config_library.py scripts/run_single_config.py scripts/run_campaign_worker.py scripts/benchmark_campaign_workers.py basil_core/campaign_engine.py
+environment/basil-noise-env/bin/python -m unittest tests.test_config_library tests.test_baseline_study_contracts tests.test_experiment_engine tests.test_runtime_estimator tests.test_worker_pool tests.test_cifar_cache -v
+environment/basil-noise-env/bin/python -m py_compile gui/experiment_app.py gui/config_library.py gui/baseline_study.py gui/worker_pool.py gui/runtime_estimator.py reporting/baseline_study_plots.py scripts/sync_gui_config_library.py scripts/run_single_config.py scripts/run_baseline_worker.py scripts/benchmark_worker_pool.py basil_core/experiment_engine.py
 git diff --check
 ```

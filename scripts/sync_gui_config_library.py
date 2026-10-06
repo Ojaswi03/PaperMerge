@@ -20,7 +20,7 @@ from gui.config_library import (  # noqa: E402
     build_current_configs,
     config_filename,
 )
-from gui.campaign3 import write_json_atomic  # noqa: E402
+from gui.baseline_study import write_json_atomic  # noqa: E402
 
 
 def sync_library(root: Path = CURRENT_CONFIG_ROOT) -> dict:

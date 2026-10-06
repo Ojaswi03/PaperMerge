@@ -93,7 +93,7 @@ selected execution profile. The complete 198-run non-IID confirmation remains
 about 51 hours on this single GPU.
 
 The exact Campaign 4 run order, equations, acceptance rules, plot catalog, and
-implementation status are in [Campaign 4 Engineering And Evaluation Plan](Campaign4Plan.md).
+implementation status are in [Campaign 4 Engineering And Evaluation Plan](ADAPTIVE_STUDY_PLAN.md).
 
 ### Official Campaign 3 R2 records
 
@@ -148,7 +148,7 @@ missing Merged arms.
 
 ### Where to interpret the results
 
-- [Campaign 3 R2 protocol and interpretation](Campaign3Guide.md) explains the
+- [Campaign 3 R2 protocol and interpretation](BASELINE_STUDY_GUIDE.md) explains the
   experiment environments, equations, calibration gates, and paper-facing
   claims.
 - [Generated non-IID result report](../plots3/r2/tables/nonIID/cifar10/results_report.md)
@@ -250,12 +250,12 @@ and stored in `run.json`.
 
 ```mermaid
 flowchart TD
-    A["User starts runGui.py"] --> B["Watcher launches GUI subprocess"]
+    A["User starts run_gui.py"] --> B["Watcher launches GUI subprocess"]
     B --> C["User builds or loads queue"]
     C --> D["Config validation and duplicate/completion checks"]
     D --> E["Runtime estimator orders and estimates work"]
     E --> F["CampaignWorkerPool starts isolated child"]
-    F --> G["run_campaign_worker.py"]
+    F --> G["run_baseline_worker.py"]
     G --> H["Load/cache CIFAR-10"]
     H --> I["Recreate deterministic IID/non-IID partition"]
     I --> J["Create one shared CIFAR model"]
@@ -479,7 +479,7 @@ node-and-round-specific active strength. See
 
 ### Startup and layout
 
-`runGui.py` is a lightweight watcher. It launches `gui/experimentGui.py` in a
+`run_gui.py` is a lightweight watcher. It launches `gui/experiment_app.py` in a
 child process and watches project Python modification times. A GUI-requested
 reload exits with code 42, causing a clean relaunch with current source.
 
@@ -632,9 +632,9 @@ confusion matrices, CART registry telemetry, snapshot-selection behavior,
 runtime/memory, client class distribution, learning-curve AUC, and calibration
 gamma profiles.
 
-Legacy plotting uses `plots/plotGui.py` and writes only PNG files under
+Legacy plotting uses `reporting/experiment_plots.py` and writes only PNG files under
 `plots/` or `plots2/`. R2 publication plotting uses
-`plots/plotCampaign3.py` and never reads legacy roots.
+`reporting/baseline_study_plots.py` and never reads legacy roots.
 
 <a id="runtime"></a>
 
@@ -696,9 +696,9 @@ measured memory caps and overlap slowdowns to queue execution and ETA math.
 PaperMerge/
   README.md                    Public entry point
   docs/                        Public technical guides
-  Papers/                      Local source papers
+  papers/                      Local source papers
   environment/requirements.txt
-  runGui.py                    GUI watcher/launcher
+  run_gui.py                    GUI watcher/launcher
   basil_core/                  Models, data, attacks, ring engines, CART
   noise_comm/                  EBM/WCM mathematical helpers
   gui/                         Tk GUI, campaign contracts, workers, configs
@@ -717,16 +717,16 @@ The next sections are a file-by-file and function-by-function reference.
 
 ## Entry Points And GUI Function Reference [↑](#section-index)
 
-### `runGui.py`
+### `run_gui.py`
 
 | Callable | Responsibility |
 |---|---|
-| `_run_gui()` | Imports and invokes `gui.experimentGui.main()` without eagerly initializing CUDA; manual legacy execution initializes lazily and isolated campaign workers own their GPU contexts. |
+| `_run_gui()` | Imports and invokes `gui.experiment_app.main()` without eagerly initializing CUDA; manual legacy execution initializes lazily and isolated campaign workers own their GPU contexts. |
 | `_collect_mtimes()` | Scans project Python files and returns modification times used by hot reload. |
 | `_launch_subprocess()` | Starts a fresh Python child running this file in GUI-child mode. |
 | `_run_watcher()` | Supervises the child, watches source changes, handles reload code 42, and relaunches when requested. |
 
-### `gui/experimentGui.py`
+### `gui/experiment_app.py`
 
 `ExperimentGUI` is the main Tkinter controller. It owns widgets, Tk variables,
 the queue, worker pool state, runtime estimates, log routing, live chart data,
@@ -905,7 +905,7 @@ The remaining queue methods are:
 | `generatePlots()` | Calls legacy plotting for one config or the discovered result tree, optionally only when stale/missing. |
 | `main()` | Creates the Tk root and starts the GUI event loop. |
 
-### `gui/campaign_workers.py`
+### `gui/worker_pool.py`
 
 | Callable | Responsibility |
 |---|---|
@@ -941,7 +941,7 @@ The remaining queue methods are:
 | `load_worker_profile()` | Loads benchmark recommendations or safe single-lane defaults. |
 | `format_duration()` | Formats seconds as seconds, minutes, hours, or days. |
 
-### `gui/campaign4_execution.py`
+### `gui/execution_policy.py`
 
 | Callable | Responsibility |
 |---|---|
@@ -960,7 +960,7 @@ The remaining queue methods are:
 | `build_current_configs()` | Returns standalone BASIL/Noisy configs or exact R2 Merged/CART confirmation configs. |
 | `config_filename()` | Produces a deterministic human-readable filename from seed and condition ID. |
 
-### `gui/campaign3.py`
+### `gui/baseline_study.py`
 
 This file is the source of truth for Campaign 3/R2 configuration identity and
 matrix construction. It deliberately imports no TensorFlow or Tkinter code.
@@ -997,7 +997,7 @@ matrix construction. It deliberately imports no TensorFlow or Tkinter code.
 | `write_json_atomic()` | Flushes a temporary JSON file and atomically replaces the destination. |
 | `write_npz_atomic()` | Writes compressed arrays to a temporary archive and atomically replaces the destination. |
 
-### `gui/campaign4.py`
+### `gui/adaptive_study.py`
 
 This is the TensorFlow-free Campaign 4 research contract. It is the only
 source for Campaign 4 identities, legal environment/defense combinations, and
@@ -1082,7 +1082,7 @@ described in their class docstring. Their common methods work identically:
 | `localUpdate()` | Legacy local SGD dispatcher for standard, gradient-scaled EBM, or backward-compatible WCM steps. |
 
 The EBM branch in `localUpdate()` is legacy. Official R2 EBM is implemented in
-`campaign_engine.py`.
+`experiment_engine.py`.
 
 ### `basil_core/attacks.py`
 
@@ -1101,7 +1101,7 @@ The EBM branch in `localUpdate()` is legacy. Official R2 EBM is implemented in
 ### `basil_core/basil.py`
 
 This is the legacy/general BASIL and FedAvg implementation. R2 reuses its
-attack and conceptual behavior but executes through `campaign_engine.py`.
+attack and conceptual behavior but executes through `experiment_engine.py`.
 
 | Callable | Responsibility |
 |---|---|
@@ -1138,7 +1138,7 @@ attack and conceptual behavior but executes through `campaign_engine.py`.
 ### `basil_core/cart.py`
 
 This is the legacy multi-model CART loop. The official R2 CART behavior is in
-`campaign_engine.py`, but both use the same registry/proximal intent.
+`experiment_engine.py`, but both use the same registry/proximal intent.
 
 | Callable | Responsibility |
 |---|---|
@@ -1149,7 +1149,7 @@ This is the legacy multi-model CART loop. The official R2 CART behavior is in
 | `cartLocalTrain()` | Sets class-gap/EMA-derived proximal strength and performs local CART updates. |
 | `cartRingTraining()` | Runs legacy model+registry ring transmission, SS/consensus, verification, local CART, attacks/noise, clean consensus, and evaluation. |
 
-### `basil_core/campaign_engine.py`
+### `basil_core/experiment_engine.py`
 
 This is the deterministic official R2 training engine.
 
@@ -1181,7 +1181,7 @@ This is the deterministic official R2 training engine.
 | `_evaluate_states()` | Loads every logical node and returns limited-test average, worst, and per-node accuracy. |
 | `run_campaign_three()` | Seeds deterministically, initializes shared/logical state, runs clean or sequential ring rounds, applies CART/SS/EBM/attacks/noise, emits callbacks, computes final diagnostics, and returns all metrics. |
 
-### `basil_core/campaign4_engine.py`
+### `basil_core/adaptive_experiment_engine.py`
 
 Campaign 4 is versioned separately from Campaign 3. It keeps logical model,
 optimizer, and snapshot tensors on the GPU, adds full telemetry, and implements
@@ -1251,7 +1251,7 @@ Snapshot Selection ranking rule.
 | `_dirichletPartition()` | Builds a legacy class-wise non-IID index allocation. |
 | `makeLoaders()` | Creates IID or Dirichlet client `tf.data` pipelines and test batches. Nested `toDataset()` converts one index set. |
 
-### `basil_core/data/nMnist.py`
+### `basil_core/data/n_mnist.py`
 
 | Callable | Responsibility |
 |---|---|
@@ -1379,7 +1379,7 @@ local noisy-communication paper. It is not connected to R2.
 | `saveCurve()` | Creates a parent directory and stores a NumPy curve. |
 | `handleGpuMemoryError()` | Detects resource-exhaustion errors and prints practical cleanup guidance. |
 
-### `scripts/run_campaign_worker.py`
+### `scripts/run_baseline_worker.py`
 
 | Callable | Responsibility |
 |---|---|
@@ -1392,7 +1392,7 @@ local noisy-communication paper. It is not connected to R2.
 | `main()` | Owns one R2 config: validates, writes preparing/running state, loads cached data, runs engine, writes metrics/completed state, emits events, handles stop/failure, and always clears/collects. |
 | `request_stop()` | Nested signal handler that asks the engine to stop at a safe callback boundary. |
 
-### `scripts/benchmark_campaign_workers.py`
+### `scripts/benchmark_worker_pool.py`
 
 | Callable | Responsibility |
 |---|---|
@@ -1402,7 +1402,7 @@ local noisy-communication paper. It is not connected to R2.
 | `_load_summary()` | Reads a worker's deterministic JSON summary. |
 | `main()` | Warms cache, times two sequential and two concurrent runs, compares fingerprints, applies the speedup/safety gate, and writes the worker profile. |
 
-### `scripts/run_campaign4_worker.py`
+### `scripts/run_adaptive_worker.py`
 
 | Callable | Responsibility |
 |---|---|
@@ -1418,7 +1418,7 @@ local noisy-communication paper. It is not connected to R2.
 | `main()` | Validate Campaign 4/full-batch/precision contracts, save lifecycle metadata atomically, load CIFAR, run the engine, save all artifacts, emit live events, preserve stop/failure state, clear Keras, collect Python garbage, and exit. |
 | `request_stop()` | Nested signal handler that requests a safe round-boundary stop. |
 
-### `scripts/benchmark_campaign4.py`
+### `scripts/benchmark_adaptive_study.py`
 
 | Callable | Responsibility |
 |---|---|
@@ -1428,7 +1428,7 @@ local noisy-communication paper. It is not connected to R2.
 | `_configured()` | Apply one profile to a short non-research config and recompute run identity. |
 | `main()` | Warm each profile, run standard/SS/EBM/CART+joint representatives, enforce OOM/finite/numerical/repeat gates, and write either a validated backend or a BF16 candidate requiring full validation. |
 
-### `scripts/validate_campaign4_precision.py`
+### `scripts/validate_mixed_precision.py`
 
 | Callable | Responsibility |
 |---|---|
@@ -1438,7 +1438,7 @@ local noisy-communication paper. It is not connected to R2.
 | `_finite()` | Rejects missing or non-finite final, worst, AUC, or runtime values. |
 | `main()` | Compares initialization, final accuracy, AUC, worst-node accuracy, and speed; validates BF16 or restores float32. |
 
-### `scripts/benchmark_campaign4_lanes.py`
+### `scripts/benchmark_worker_lanes.py`
 
 | Callable | Responsibility |
 |---|---|
@@ -1448,7 +1448,7 @@ local noisy-communication paper. It is not connected to R2.
 | `_pair_result()` | Applies exact fingerprint, finite-output, VRAM-headroom, OOM, and throughput gates across repeats. |
 | `main()` | Validates standard+standard, EBM+standard, and EBM+EBM separately and stores the permitted resource policy and measured slowdowns. |
 
-### `scripts/sync_campaign4_configs.py`
+### `scripts/sync_adaptive_configs.py`
 
 | Callable | Responsibility |
 |---|---|
@@ -1502,47 +1502,47 @@ These scripts predate R2 and save under legacy result roots.
 
 | File/callable | Responsibility |
 |---|---|
-| `runBasilOnly.py: runBasilExperiment()` | Runs one dataset/attack BASIL or no-SS legacy ring experiment and saves histories. |
-| `runBasilOnly.py: runBasilTests()` | Iterates requested datasets, attacks, and clean/BASIL modes. |
-| `runNoisyChannel.py: runNoisyChannelExperiment()` | Runs one legacy FedAvg noisy/EBM/WCM condition. |
-| `runNoisyChannel.py: runNoisyChannelTests()` | Iterates configured noisy-channel datasets, attacks, and modes. |
-| `runComprehensiveTest.py: runExperiment()` | Runs one legacy dataset/mode/attack combination and stores results. |
-| `runComprehensiveTest.py: runAllExperiments()` | Iterates the old comprehensive matrix and writes summary data. |
+| `run_basil_only.py: runBasilExperiment()` | Runs one dataset/attack BASIL or no-SS legacy ring experiment and saves histories. |
+| `run_basil_only.py: runBasilTests()` | Iterates requested datasets, attacks, and clean/BASIL modes. |
+| `run_noisy_channel.py: runNoisyChannelExperiment()` | Runs one legacy FedAvg noisy/EBM/WCM condition. |
+| `run_noisy_channel.py: runNoisyChannelTests()` | Iterates configured noisy-channel datasets, attacks, and modes. |
+| `run_comprehensive_test.py: runExperiment()` | Runs one legacy dataset/mode/attack combination and stores results. |
+| `run_comprehensive_test.py: runAllExperiments()` | Iterates the old comprehensive matrix and writes summary data. |
 
 ### Calibration and diagnostic scripts
 
 | File/callable | Responsibility |
 |---|---|
-| `calibrateAttack.py` | Module-level MNIST sweep for model-poison attack parameters. |
-| `calibrateFinal.py` | Module-level full-ring poison-strength calibration. |
-| `calibrateRecover.py` | Module-level Gaussian-corruption and recovery sweep. |
-| `calibrateRing.py` | Module-level short ring calibration with temporary defaults. |
-| `testBasilDebug.py: main()` | Prints every candidate loss to demonstrate legacy Snapshot Selection filtering. |
-| `testBasilPaper.py: runTest()` | Runs one clean/attack/BASIL comparison arm. |
-| `testBasilPaper.py: main()` | Runs three BASIL-paper-style MNIST arms and saves curves. |
-| `testEbmComparison.py: runTest()` | Runs one legacy FedAvg noise model/lambda comparison. |
-| `testEbmComparison.py: main()` | Compares noisy baseline with two gradient-scale values. |
-| `testEbmImproved.py: runImprovedEbm()` | Runs a custom legacy EBM loop with selectable LR, momentum, decay, and rounds. |
-| `testEbmImproved.py: main()` | Sweeps six hand-selected legacy EBM settings. |
-| `testEbmPaper.py: runTest()` | Runs one clean/noisy/legacy-EBM FedAvg arm with matched momentum. |
-| `testEbmPaper.py: main()` | Executes and saves the three paper-comparison arms. |
-| `testEbmRigorous.py: check()` | Records a pass/fail assertion in its module-level integration suite. |
-| `testEbmRigorous.py: makeNodes()` | Builds legacy FedAvg test nodes. |
-| `testEbmRigorous.py: makeRingNodes()` | Builds legacy ring test nodes. |
-| `testEbmWithDecay.py: runTest()` | Runs one legacy EBM decay+momentum experiment and saves its curve. |
-| `testFairComparison.py: runTest()` | Runs one noisy/EBM with/without-momentum arm. |
-| `testFairComparison.py: main()` | Executes the four-way legacy fairness comparison. |
-| `testMerged.py: runTest()` | Runs one legacy joint BASIL/noise/EBM arm. |
-| `testMerged.py: main()` | Executes clean, unprotected joint, BASIL-only, and BASIL+EBM comparisons. |
-| `testSetup.py: testTensorflow()` | Verifies TensorFlow import and a basic tensor operation. |
-| `testSetup.py: testGpuSetup()` | Verifies device setup. |
-| `testSetup.py: testDataLoading()` | Loads MNIST and constructs client loaders. |
-| `testSetup.py: testModelCreation()` | Runs forward passes through all three model wrappers. |
-| `testSetup.py: testTraining()` | Runs a tiny two-node/two-round legacy smoke test. |
-| `testSetup.py: testWcmAvailability()` | Checks the backward-compatible WCM import. |
-| `testSetup.py: runAllTests()` | Runs and summarizes all setup checks. |
+| `calibrate_attack.py` | Module-level MNIST sweep for model-poison attack parameters. |
+| `calibrate_final.py` | Module-level full-ring poison-strength calibration. |
+| `calibrate_recovery.py` | Module-level Gaussian-corruption and recovery sweep. |
+| `calibrate_ring.py` | Module-level short ring calibration with temporary defaults. |
+| `check_basil_debug.py: main()` | Prints every candidate loss to demonstrate legacy Snapshot Selection filtering. |
+| `check_basil_paper.py: runTest()` | Runs one clean/attack/BASIL comparison arm. |
+| `check_basil_paper.py: main()` | Runs three BASIL-paper-style MNIST arms and saves curves. |
+| `check_ebm_comparison.py: runTest()` | Runs one legacy FedAvg noise model/lambda comparison. |
+| `check_ebm_comparison.py: main()` | Compares noisy baseline with two gradient-scale values. |
+| `check_ebm_improved.py: runImprovedEbm()` | Runs a custom legacy EBM loop with selectable LR, momentum, decay, and rounds. |
+| `check_ebm_improved.py: main()` | Sweeps six hand-selected legacy EBM settings. |
+| `check_ebm_paper.py: runTest()` | Runs one clean/noisy/legacy-EBM FedAvg arm with matched momentum. |
+| `check_ebm_paper.py: main()` | Executes and saves the three paper-comparison arms. |
+| `check_ebm_rigorous.py: check()` | Records a pass/fail assertion in its module-level integration suite. |
+| `check_ebm_rigorous.py: makeNodes()` | Builds legacy FedAvg test nodes. |
+| `check_ebm_rigorous.py: makeRingNodes()` | Builds legacy ring test nodes. |
+| `check_ebm_decay.py: runTest()` | Runs one legacy EBM decay+momentum experiment and saves its curve. |
+| `check_fair_comparison.py: runTest()` | Runs one noisy/EBM with/without-momentum arm. |
+| `check_fair_comparison.py: main()` | Executes the four-way legacy fairness comparison. |
+| `check_merged.py: runTest()` | Runs one legacy joint BASIL/noise/EBM arm. |
+| `check_merged.py: main()` | Executes clean, unprotected joint, BASIL-only, and BASIL+EBM comparisons. |
+| `check_setup.py: testTensorflow()` | Verifies TensorFlow import and a basic tensor operation. |
+| `check_setup.py: testGpuSetup()` | Verifies device setup. |
+| `check_setup.py: testDataLoading()` | Loads MNIST and constructs client loaders. |
+| `check_setup.py: testModelCreation()` | Runs forward passes through all three model wrappers. |
+| `check_setup.py: testTraining()` | Runs a tiny two-node/two-round legacy smoke test. |
+| `check_setup.py: testWcmAvailability()` | Checks the backward-compatible WCM import. |
+| `check_setup.py: runAllTests()` | Runs and summarizes all setup checks. |
 
-`testEbmRigorous.py` and `tests/test_convergence.py` execute substantial work
+`check_ebm_rigorous.py` and `tests/test_convergence.py` execute substantial work
 at import/module execution time. They are integration experiments, not quick
 unit-test modules.
 
@@ -1550,8 +1550,8 @@ unit-test modules.
 
 | File | Responsibility |
 |---|---|
-| `generate_cart_configs.py` | Module-level generator for an old 48-config CART matrix with a hard-coded legacy output directory. |
-| `update_configs.py` | Bulk-mutates every legacy config to older rounds/LR/SS-memory/non-IID rules. It is not the source of Current R2 configs. |
+| `scripts/generate_cart_configs.py` | Module-level generator for an old 48-config CART matrix with a hard-coded legacy output directory. |
+| `scripts/update_configs.py` | Bulk-mutates every legacy config to older rounds/LR/SS-memory/non-IID rules. It is not the source of Current R2 configs. |
 | `experiments/configs/basil_ebm_mnist.yaml` | Human-readable legacy preset; no current parser consumes it. |
 
 Do not run the two bulk top-level scripts as part of R2 reproduction. Use
@@ -1569,7 +1569,7 @@ present. These three wrappers are stale archival entry points.
 
 ## Plot Function Reference [↑](#section-index)
 
-### `plots/plotCampaign3.py`
+### `reporting/baseline_study_plots.py`
 
 This is the only plotter for official R2 records.
 
@@ -1657,7 +1657,7 @@ This is the only plotter for official R2 records.
 | `generate_campaign3_plots()` | Serializes plot generation with a process lock. |
 | `generate_campaign3_live_plots()` | Requests changed PNG previews only after a completed experiment. |
 
-### `plots/plotCampaign4.py`
+### `reporting/adaptive_study_plots.py`
 
 This plotter discovers only validated Campaign 4 triples (`run.json`,
 `metrics.npz`, `telemetry.npz`). It writes incremental PNG previews and final
@@ -1686,7 +1686,7 @@ PNG/PDF/EPS outputs without modifying measured values.
 | `generate_campaign4_plots()` | Dispatch profile-separated paper/diagnostic suites and return generated/skipped/error/notice lists. |
 | `generate_campaign4_live_plots()` | Generate changed PNG previews after one completed queue item. |
 
-### `plots/plotGui.py`
+### `reporting/experiment_plots.py`
 
 This is the legacy/result2 GUI plotter.
 
@@ -1756,7 +1756,7 @@ This is the legacy/result2 GUI plotter.
 
 ## Automated Test Function Reference [↑](#section-index)
 
-### `tests/test_campaign3_contracts.py`
+### `tests/test_baseline_study_contracts.py`
 
 `CampaignConfigTests`, `ClassRegistryTests`, and `CampaignPlotTests` group the
 configuration, registry, and plotting contracts below.
@@ -1781,7 +1781,7 @@ configuration, registry, and plotting contracts below.
 | `test_live_plotter_requests_changed_png_previews_only()` | Verifies automatic per-run refresh is incremental PNG-only. |
 | `test_plotter_isolated_formats_and_incremental_manifest()` | Verifies output roots/formats and manifest skip behavior. |
 
-### `tests/test_campaign3_engine.py`
+### `tests/test_experiment_engine.py`
 
 `CampaignEngineTests` owns the engine tests. The nested
 `TinyModel.__init__()`, `trainable_weights`, and `__call__()` create
@@ -1797,7 +1797,7 @@ R2 config, and `_run()` calls the official engine.
 | `test_cart_gap_requires_reference_to_reproduce_registry_claim()` | Historical registry claims are capped by current reference capability. |
 | `test_ss_guard_filters_implausible_low_loss_neighbor()` | The integration guard removes an implausible candidate that would otherwise win local-loss ranking. Nested `FakeWorker.batch_loss()` supplies controlled scores. |
 
-### `tests/test_campaign4_contracts.py`
+### `tests/test_adaptive_study_contracts.py`
 
 | Test group | What it verifies |
 |---|---|
@@ -1810,7 +1810,7 @@ R2 config, and `_run()` calls the official engine.
 | Profile-isolation test | XLA/non-XLA confirmation records are written to separate profile folders rather than pooled. |
 | Network reducer test | A delayed node event cannot overwrite a newer node state. |
 
-### `tests/test_campaign4_engine.py`
+### `tests/test_adaptive_experiment_engine.py`
 
 The nested tiny model/data helpers run Campaign 4 without CIFAR-scale cost.
 
@@ -1821,7 +1821,7 @@ The nested tiny model/data helpers run Campaign 4 without CIFAR-scale cost.
 | `test_relative_noise_is_deterministic_and_has_requested_norm()` | Stateless link noise repeats by key and realizes the configured relative norm. |
 | `test_run_emits_node_events_and_complete_telemetry()` | A tiny hidden+noise+SS+adaptive EBM run returns complete shapes and JSON-bounded events with no parameters. |
 
-### `tests/test_campaign_workers.py`
+### `tests/test_worker_pool.py`
 
 `CampaignWorkerPoolTests` exercises subprocess scheduling and stop behavior.
 
@@ -1911,8 +1911,8 @@ test discovery.
 |---|---|
 | `README.md` | Public setup, run commands, current campaign summary, and navigation. |
 | `docs/GetToKnow.md` | Complete advisor-facing repository and callable map. |
-| `docs/Campaign3Guide.md` | Detailed R2 protocol, equations, calibration, diagrams, and interpretation. |
-| `docs/Campaign4Plan.md` | Implemented Campaign 4 protocol, adaptive/static boundary, diagnostics, GUI, plots, run order, and pending evidence. |
+| `docs/BASELINE_STUDY_GUIDE.md` | Detailed R2 protocol, equations, calibration, diagrams, and interpretation. |
+| `docs/ADAPTIVE_STUDY_PLAN.md` | Implemented Campaign 4 protocol, adaptive/static boundary, diagnostics, GUI, plots, run order, and pending evidence. |
 | `docs/gammaExplained.md` | Worked explanation of CART gamma and mu. |
 | `docs/WCM_PILOT.md` | Isolated WCM design, safety, commands, and decision rule. |
 | `docs/cart_presentation.md` / `.txt` | Private ignored presentation drafts, not part of a pushed advisor package. |
@@ -1940,14 +1940,14 @@ declared split, approach, environment, mitigation, sigma, seed, gamma, or
 protocol patch:
 
 - `gui/configs/current/` contains 636 experiment configs plus one manifest.
-- `gui/configs/campaign4/` contains 526 Campaign 4 configs plus one manifest.
+- `gui/configs/adaptive_study/` contains 526 Campaign 4 configs plus one manifest.
 - Legacy/custom config directories contain 616 JSON records.
 - `gui/presets/preset1_queue.json` is an older 36-entry queue snapshot.
 - `gui/queue_state.json` is machine-local mutable UI state and is ignored.
 
 Every Current file can be regenerated from `gui/config_library.py` and
-`gui/campaign3.py`. Campaign 4 files are generated from `gui/campaign4.py` by
-`scripts/sync_campaign4_configs.py`; checked-in JSON keeps GUI selection
+`gui/baseline_study.py`. Campaign 4 files are generated from `gui/adaptive_study.py` by
+`scripts/sync_adaptive_configs.py`; checked-in JSON keeps GUI selection
 transparent and reviewable.
 
 ### Environment and caches
@@ -1980,14 +1980,14 @@ blanket-ignored.
 python3 -m venv environment/basil-noise-env
 source environment/basil-noise-env/bin/activate
 pip install -r environment/requirements.txt
-python scripts/testSetup.py
+python scripts/check_setup.py
 ```
 
 ### GUI
 
 ```bash
 source environment/basil-noise-env/bin/activate
-python runGui.py
+python run_gui.py
 ```
 
 ### Regenerate the Current config library
@@ -2000,20 +2000,20 @@ environment/basil-noise-env/bin/python scripts/sync_gui_config_library.py
 
 ```bash
 MPLCONFIGDIR=/tmp/papermerge-mpl \
-environment/basil-noise-env/bin/python plots/plotCampaign3.py
+environment/basil-noise-env/bin/python reporting/baseline_study_plots.py
 ```
 
 ### Verify and run Campaign 4
 
 ```bash
-environment/basil-noise-env/bin/python scripts/sync_campaign4_configs.py --check
-environment/basil-noise-env/bin/python scripts/benchmark_campaign4.py \
+environment/basil-noise-env/bin/python scripts/sync_adaptive_configs.py --check
+environment/basil-noise-env/bin/python scripts/benchmark_adaptive_study.py \
   --rounds 2 --repeats 3 \
   --include-cuda-malloc-async --include-mixed-bfloat16
-environment/basil-noise-env/bin/python scripts/validate_campaign4_precision.py
-environment/basil-noise-env/bin/python scripts/benchmark_campaign4_lanes.py \
+environment/basil-noise-env/bin/python scripts/validate_mixed_precision.py
+environment/basil-noise-env/bin/python scripts/benchmark_worker_lanes.py \
   --rounds 2 --repeats 3
-python runGui.py
+python run_gui.py
 ```
 
 The GUI's **Profile GPU + lanes** button runs this flow and calls the precision
@@ -2026,7 +2026,7 @@ formats with:
 
 ```bash
 MPLCONFIGDIR=/tmp/papermerge-mpl \
-environment/basil-noise-env/bin/python plots/plotCampaign4.py --mode both
+environment/basil-noise-env/bin/python reporting/adaptive_study_plots.py --mode both
 ```
 
 ### Run focused automated checks
@@ -2034,21 +2034,21 @@ environment/basil-noise-env/bin/python plots/plotCampaign4.py --mode both
 ```bash
 environment/basil-noise-env/bin/python -m unittest \
   tests.test_config_library \
-  tests.test_campaign3_contracts \
-  tests.test_campaign3_engine \
+  tests.test_baseline_study_contracts \
+  tests.test_experiment_engine \
   tests.test_runtime_estimator \
-  tests.test_campaign_workers \
+  tests.test_worker_pool \
   tests.test_cifar_cache \
-  tests.test_campaign4_contracts \
-  tests.test_campaign4_engine \
-  tests.test_campaign4_execution \
-  tests.test_campaign4_performance_profiles \
-  tests.test_campaign4_worker \
+  tests.test_adaptive_study_contracts \
+  tests.test_adaptive_experiment_engine \
+  tests.test_execution_policy \
+  tests.test_performance_profiles \
+  tests.test_adaptive_worker \
   tests.test_wcm -v
 ```
 
 Some engine/WCM tests invoke TensorFlow. `tests/test_convergence.py` and
-`scripts/testEbmRigorous.py` are longer module-level integrations and are not
+`scripts/check_ebm_rigorous.py` are longer module-level integrations and are not
 included in that focused command.
 
 ### Before using results in the paper
@@ -2121,5 +2121,5 @@ tracked queue file, session log, checkpoint, or virtual-environment launcher is
 not included accidentally.
 
 Start from the public [README](../README.md), use this guide for code
-orientation, and use [Campaign3Guide.md](Campaign3Guide.md) for the precise
+orientation, and use [BASELINE_STUDY_GUIDE.md](BASELINE_STUDY_GUIDE.md) for the precise
 paper protocol and interpretation.

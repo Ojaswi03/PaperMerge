@@ -51,12 +51,12 @@ architecture summary to navigate.
   (high-noise accumulation, then extended into weight-norm control and the
   accuracy-ordering hypothesis below). Results in
   `experiments/results4/campaign4/gui/`, plots in `plots4/campaign4/`,
-  configs built by `gui/campaign4.py`. **All of this session's work is
+  configs built by `gui/adaptive_study.py`. **All of this session's work is
   Campaign 4.**
 
 Never let a plotting or config change for one campaign silently touch the
 other; they have separate result roots, separate plot generators
-(`plots/plotCampaign3.py` vs `plots/plotCampaign4.py`), and separate
+(`reporting/baseline_study_plots.py` vs `reporting/adaptive_study_plots.py`), and separate
 `campaign_state.json` freeze gates.
 
 ## 3. The Adaptive Weight-Decay Controller (Weight-Norm Control)
@@ -72,7 +72,7 @@ orthogonal to `mitigation`) then **Phase C** (an adaptive controller,
 `adaptiveWeightDecayMode="adaptive"`, that adjusts the coefficient online
 each round — bounded, EMA-smoothed, rate-limited — reacting to observed
 weight norm, following the same design pattern already proven for adaptive
-EBM in `basil_core/campaign4_engine.py`).
+EBM in `basil_core/adaptive_experiment_engine.py`).
 
 **Critical implementation detail that caused two real bugs this session:**
 for adaptive runs, the static `weightDecayCoefficient` field in the config
@@ -81,7 +81,7 @@ the config's static field is just the starting point. Any code (plotting,
 analysis, filtering) that checks `weightDecayCoefficient > 0` to decide "is
 weight decay active" will silently return false for every adaptive run. You
 must check `adaptiveWeightDecayMode != "none"` too. This is now handled
-correctly in `plots/plotCampaign4.py`'s `RunRecord.effective_mitigation`
+correctly in `reporting/adaptive_study_plots.py`'s `RunRecord.effective_mitigation`
 property (see §5) — if you write new code that needs to know whether weight
 decay is active, use that pattern, don't reinvent it.
 
@@ -98,7 +98,7 @@ mitigation > joint stressors + full mitigation > joint stressors + no
 mitigation (worst case)`, and CART should generally outperform Merged at each
 tier.
 
-**Config generation:** `gui/campaign4.py`'s `make_config()` (keyword args:
+**Config generation:** `gui/adaptive_study.py`'s `make_config()` (keyword args:
 `split`, `approach`, `environment`, `mitigation`, `seed`, `sigma`, `ebm_mode`,
 `phase`, `weight_decay_coefficient`, `adaptive_weight_decay_mode`, etc. — see
 the function docstring and full signature for every field, it validates
@@ -140,7 +140,7 @@ baseline. A **new, genuinely SS-only tier** (`mitigation="ss"`,
 worst-case**. This tier has run to completion (see §7, current state).
 
 **Seed ablation:** the project's own seed convention already existed in
-`gui/campaign4.py`: `DIAGNOSTIC_SEED = 2025`, `CONFIRMATION_SEEDS = (2026,
+`gui/adaptive_study.py`: `DIAGNOSTIC_SEED = 2025`, `CONFIRMATION_SEEDS = (2026,
 2027, 2028)`. This session built a full second copy of the 28-config matrix
 at `seed=2026` (identical parameters otherwise) to get real seed-to-seed
 variance for `seed_profiles.png` and error bars on every other figure — with
@@ -158,7 +158,7 @@ into whether this is a genuine EBM/weight-decay interaction effect. Do not
 assume this is settled; only two seeds' worth of data exists so far, and
 `CONFIRMATION_SEEDS` still has 2027/2028 unused if more evidence is wanted.
 
-## 5. Two Real Bugs Found And Fixed In `plots/plotCampaign4.py` This Session
+## 5. Two Real Bugs Found And Fixed In `reporting/adaptive_study_plots.py` This Session
 
 Both were caught by the user's direct scrutiny of "some plots don't look
 right" — not by any automated check. Read this section carefully before
@@ -236,7 +236,7 @@ that produces a plausible-looking, publication-quality chart with an
 incorrect conclusion. This already happened twice in one session.
 
 **How to regenerate plots correctly:** `generate_campaign4_plots()` in
-`plots/plotCampaign4.py` resolves `RESULT_ROOT`/`PLOT_ROOT` relative to the
+`reporting/adaptive_study_plots.py` resolves `RESULT_ROOT`/`PLOT_ROOT` relative to the
 current working directory (`experiments/results4/campaign4/gui` and
 `plots4/campaign4`). **Always run it from the repository root**, not from
 inside `plots/` — running it from `plots/` silently writes a duplicate tree
@@ -248,14 +248,14 @@ stray directory was deleted and `.gitignore` now has a defensive
 cd /home/ojaswi/PaperMerge
 environment/basil-noise-env/bin/python -c "
 import sys; sys.path.insert(0, 'plots')
-from plotCampaign4 import generate_campaign4_plots
+from reporting.adaptive_study_plots import generate_campaign4_plots
 result = generate_campaign4_plots(mode='both', only_changed=False)
 print(result['records'], len(result['generated']), result['errors'])
 "
 ```
 
 In normal GUI operation this is handled automatically and correctly by
-`gui/experimentGui.py`'s `_scheduleCampaign4PlotRefresh`/queue-boundary hooks
+`gui/experiment_app.py`'s `_scheduleCampaign4PlotRefresh`/queue-boundary hooks
 — the cwd issue only bites when invoking the plotting module standalone from
 a shell, as was done for the manual verification this session.
 
@@ -265,16 +265,16 @@ This is now stable and shouldn't need revisiting unless something breaks
 again. Full detail in `README.md`'s "Execution Reliability" subsection and in
 the auto-memory file `campaign4_single_lane_only.md`. Summary:
 
-- Campaign 4 runs isolated GPU subprocess workers (`gui/campaign_workers.py`'s
+- Campaign 4 runs isolated GPU subprocess workers (`gui/worker_pool.py`'s
   `CampaignWorkerPool`), tracked via PID sidecar files for orphan detection.
 - An earlier 2-lane run caused an unkillable hang with no diagnosable trace:
   GPU memory silently hit 11.8/12.28 GB against a configured 5.3 GB sum, and
   no crash log existed anywhere. Root-caused (via the
   `systematic-debugging` skill) to two things: (1) `TF_FORCE_GPU_ALLOW_GROWTH`
   being set unconditionally, fighting the per-lane hard memory cap — fixed in
-  `scripts/run_campaign4_worker.py`'s `_configure_tensorflow` (only force
+  `scripts/run_adaptive_worker.py`'s `_configure_tensorflow` (only force
   growth when no cap is requested); (2) worker stdout/stderr wasn't persisted
-  to disk — fixed in `gui/campaign_workers.py` (`.log` files next to PID
+  to disk — fixed in `gui/worker_pool.py` (`.log` files next to PID
   sidecars, preserved on non-zero exit for post-mortem, cleaned up on success).
 - **Despite both fixes being confirmed correct, 2-lane concurrency is a
   standing, non-negotiable decision to keep disabled**, based on the user's
@@ -286,7 +286,7 @@ the auto-memory file `campaign4_single_lane_only.md`. Summary:
 - A separate, smaller bug: the Manage Queue dialog's "Total remaining" banner
   and its per-row table used two different estimation code paths (a static
   `estimate()` vs. a live makespan-simulating `estimate_queue()`), so they
-  drifted out of sync. Fixed in `gui/experimentGui.py` (commit `8160dc9`) by
+  drifted out of sync. Fixed in `gui/experiment_app.py` (commit `8160dc9`) by
   having the per-row table subtract live elapsed time and refresh on a 10s
   timer while the queue runs.
 - GPU/CPU/RAM headroom investigation (not a bug, just an analysis): this
@@ -295,7 +295,7 @@ the auto-memory file `campaign4_single_lane_only.md`. Summary:
   low-risk "use the idle hardware" lever available — the two real levers are
   a larger batch size (changes training dynamics, a research decision) or
   retrying XLA after a CUDA/TF stack upgrade (already flagged in
-  `docs/Campaign4RuntimeResearch.md` as blocked on a stack upgrade, the
+  `docs/ADAPTIVE_RUNTIME_RESEARCH.md` as blocked on a stack upgrade, the
   single biggest documented pending speedup, 1.5-2x on EBM paths via kernel
   fusion). A GPU hardware upgrade (RTX 5080 recommended over 5090 for this
   workload's actual VRAM needs) would likely force that stack upgrade as a
@@ -344,22 +344,22 @@ be depressed for a reason not yet understood).
 ## 8. File Map — Where To Look
 
 ```
-gui/campaign4.py            # make_config(), condition/experiment naming, config_hash/runId, seed constants
-gui/campaign4_execution.py  # settings_from_profile(), select_next_config() concurrency scheduling
-gui/campaign_workers.py     # CampaignWorkerPool: subprocess launch, PID sidecars, .log persistence, orphan cleanup
-gui/experimentGui.py        # GUI: queue, manual runs, live plot scheduling, Manage Queue dialog
+gui/adaptive_study.py            # make_config(), condition/experiment naming, config_hash/runId, seed constants
+gui/execution_policy.py  # settings_from_profile(), select_next_config() concurrency scheduling
+gui/worker_pool.py     # CampaignWorkerPool: subprocess launch, PID sidecars, .log persistence, orphan cleanup
+gui/experiment_app.py        # GUI: queue, manual runs, live plot scheduling, Manage Queue dialog
 gui/runtime_estimator.py    # per-config and whole-queue ETA (estimate() vs estimate_queue())
-basil_core/campaign4_engine.py  # SGD optimizer, adaptive EBM controller, adaptive weight-decay controller
+basil_core/adaptive_experiment_engine.py  # SGD optimizer, adaptive EBM controller, adaptive weight-decay controller
 basil_core/cart.py          # CART ring training
 basil_core/basil.py         # BASIL ring / FedAvg loops
-plots/plotCampaign4.py      # RunRecord, effective_mitigation, all Campaign 4 figures (paper + diagnostics)
-scripts/run_campaign4_worker.py  # one isolated Campaign 4 run per subprocess; GPU memory-cap config
+reporting/adaptive_study_plots.py      # RunRecord, effective_mitigation, all Campaign 4 figures (paper + diagnostics)
+scripts/run_adaptive_worker.py  # one isolated Campaign 4 run per subprocess; GPU memory-cap config
 experiments/results4/campaign4/gui/   # Campaign 4 result artifacts (run.json, metrics.npz, telemetry.npz)
 experiments/results4/campaign4/performance_profile.json  # machine-local, gitignored — lanes, memory caps
 plots4/campaign4/           # Campaign 4 figures (paper/, diagnostics/) and run_summary.csv
 docs/superpowers/specs/     # weight-norm-control and Phase C design docs
 docs/superpowers/plans/     # Phase A / Phase C implementation plans
-docs/Campaign4RuntimeResearch.md  # GPU benchmarking history, XLA status, runtime levers
+docs/ADAPTIVE_RUNTIME_RESEARCH.md  # GPU benchmarking history, XLA status, runtime levers
 docs/SessionHandoff.md       # this file
 ```
 
@@ -367,9 +367,9 @@ docs/SessionHandoff.md       # this file
 
 ```bash
 source environment/basil-noise-env/bin/activate
-environment/basil-noise-env/bin/python -m py_compile gui/experimentGui.py plots/plotGui.py plots/plotCampaign4.py \
-    scripts/run_single_config.py scripts/run_campaign4_worker.py basil_core/basil.py basil_core/cart.py gui/campaign4.py
-environment/basil-noise-env/bin/python -m unittest tests.test_campaign_workers -v
+environment/basil-noise-env/bin/python -m py_compile gui/experiment_app.py reporting/experiment_plots.py reporting/adaptive_study_plots.py \
+    scripts/run_single_config.py scripts/run_adaptive_worker.py basil_core/basil.py basil_core/cart.py gui/adaptive_study.py
+environment/basil-noise-env/bin/python -m unittest tests.test_worker_pool -v
 git diff --check
 ```
 
@@ -380,7 +380,7 @@ matters):
 cd /home/ojaswi/PaperMerge
 environment/basil-noise-env/bin/python -c "
 import sys; sys.path.insert(0, 'plots')
-from plotCampaign4 import generate_campaign4_plots
+from reporting.adaptive_study_plots import generate_campaign4_plots
 print(generate_campaign4_plots(mode='both', only_changed=False))
 "
 ```

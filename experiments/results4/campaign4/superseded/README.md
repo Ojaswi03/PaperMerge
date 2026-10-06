@@ -19,12 +19,12 @@ bounds (`adaptiveEbmTargetRatioBase=0.05`, `adaptiveEbmRatioMax=0.35`,
 the static schedule's calibrated values (active ratio ~0.20-0.30 vs static's
 incidental ~0.02-0.04), producing pre-clip gradient-norm spikes up to 1484 at
 sigma=0.6 and no accuracy benefit over no mitigation at any tested sigma.
-`gui/campaign4.py` was edited to tighten the adaptive bounds
+`gui/adaptive_study.py` was edited to tighten the adaptive bounds
 (`adaptiveEbmTargetRatioBase=0.015`, `adaptiveEbmStressGain=0.05`,
 `adaptiveEbmRatioMin=0.005`, `adaptiveEbmRatioMax=0.08`,
 `adaptiveEbmCoefficientMax=0.0025`).
 
-Since `gui/campaign4.py` is one of the 8 `PROVENANCE_FILES`, this edit
+Since `gui/adaptive_study.py` is one of the 8 `PROVENANCE_FILES`, this edit
 changes `current_source_hashes()` for every run regardless of environment,
 so **all 66 diagnostics became stale for the freeze gate**, not just the
 EBM-related ones. The full 66-run diagnostic sweep must be re-run on the

@@ -104,13 +104,13 @@
   "schemaVersion": 4,
   "sourceHashes": {
     "basil_core/basil.py": "366f5c80e06b44beb248ab9f8dc21dc20e35b578ca5932fc0d4ffc93d2d4324d",
-    "basil_core/campaign4_engine.py": "2f7334f7dd19853361b5fe5e16f490dfcb52a1b627fc3c586e413c6a99b0daf6",
+    "basil_core/adaptive_experiment_engine.py": "2f7334f7dd19853361b5fe5e16f490dfcb52a1b627fc3c586e413c6a99b0daf6",
     "basil_core/class_registry.py": "277cfecef1d24a46e3785756e93fe392602bc6f3177a3aaa17af20867cbe200c",
     "basil_core/data/cifar.py": "9b63489085b1b4451b1edb4202d129b50cd3e70050d429df0aabefdb6dcf3bfa",
     "basil_core/models.py": "cc26e6af278a39e8a93ff289988970df9d99b5c6add5894230cb33ee3f3370be",
     "basil_core/trainer.py": "b04ff4e9c850e8e69e9afc6a8c9428a8ada73184fa88ec1a3a2e0f85a2ac5a8b",
-    "gui/campaign4.py": "0986d719239d0c985c86af99aa32c1d72bb00efb21b3b22985ecc418c02f8589",
-    "scripts/run_campaign4_worker.py": "fcfcdeae3e054b20e27619243e5fbc8c7a6924148a51126824f44b98480c64c1"
+    "gui/adaptive_study.py": "0986d719239d0c985c86af99aa32c1d72bb00efb21b3b22985ecc418c02f8589",
+    "scripts/run_adaptive_worker.py": "fcfcdeae3e054b20e27619243e5fbc8c7a6924148a51126824f44b98480c64c1"
   },
   "startedAt": "2026-08-03T15:08:18.683454-04:00",
   "status": "stopped",

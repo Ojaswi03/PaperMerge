@@ -17,9 +17,9 @@ from basil_core.data.mnist  import loadMnist,   makeLoaders as makeMnistLoaders
 from basil_core.models      import CIFARModel, MNISTModel
 from basil_core.basil       import BasilNode, basilRingTrainingWithAttack, fedAvgTrainingWithNoise
 from basil_core.cart        import CARTNode, cartRingTraining
-from basil_core.campaign_engine import run_campaign_three
+from basil_core.experiment_engine import run_campaign_three
 from basil_core.trainer     import getParams, setParams, evaluateAll
-from gui.campaign3 import make_config as makeCampaign3Config
+from gui.baseline_study import make_config as makeCampaign3Config
 
 parser = argparse.ArgumentParser()
 parser.add_argument(

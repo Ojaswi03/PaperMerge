@@ -3,7 +3,7 @@ from pathlib import Path
 import tempfile
 import unittest
 
-from gui.campaign3 import make_config
+from gui.baseline_study import make_config
 from gui.runtime_estimator import RuntimeEstimator
 
 

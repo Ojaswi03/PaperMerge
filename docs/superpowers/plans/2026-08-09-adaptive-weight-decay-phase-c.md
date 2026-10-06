@@ -17,22 +17,22 @@
 - The controller updates once per round, not per step -- no new per-step compute.
 - Validation configs use `approach=merged`, `nonIID`, `optimizerStateMode=persistent`, `mitigation=none`, `phase=diagnostic`, seed 2025, 100 rounds (spec's "Validation plan").
 - Do not launch GPU training directly -- build and queue configs into `gui/queue_state.json` for the user to run via the GUI (established practice this session).
-- Editing `gui/campaign4.py` and `basil_core/campaign4_engine.py` touches two `PROVENANCE_FILES` entries; regenerating the config library and re-running `sync_campaign4_configs.py --check` afterward is required (same precedent as the 2026-08-08 adaptive-EBM retune and Phase A).
+- Editing `gui/adaptive_study.py` and `basil_core/adaptive_experiment_engine.py` touches two `PROVENANCE_FILES` entries; regenerating the config library and re-running `sync_adaptive_configs.py --check` afterward is required (same precedent as the 2026-08-08 adaptive-EBM retune and Phase A).
 
 ---
 
 ### Task 1: Add `adaptiveWeightDecay*` config fields, validation, and contract test
 
 **Files:**
-- Modify: `gui/campaign4.py:240-318` (`make_config` signature, validation, dict)
-- Test: `tests/test_campaign4_contracts.py`
+- Modify: `gui/adaptive_study.py:240-318` (`make_config` signature, validation, dict)
+- Test: `tests/test_adaptive_study_contracts.py`
 
 **Interfaces:**
 - Produces: `make_config(..., adaptive_weight_decay_mode: str = "none", adaptive_weight_decay_target_ratio: float = 2.0, adaptive_weight_decay_gain: float = 0.025, adaptive_weight_decay_coefficient_min: float = 1e-6, adaptive_weight_decay_coefficient_max: float = 0.05, adaptive_weight_decay_beta: float = 0.9, adaptive_weight_decay_max_change_factor: float = 2.0)` -- stored on the config dict with the exact camelCase keys listed in Step 3 below.
 
 - [ ] **Step 1: Write the failing contract test**
 
-Add to `tests/test_campaign4_contracts.py` (near `test_weight_decay_defaults_to_zero_and_is_named_when_enabled`, reusing the same `make_config` import already present):
+Add to `tests/test_adaptive_study_contracts.py` (near `test_weight_decay_defaults_to_zero_and_is_named_when_enabled`, reusing the same `make_config` import already present):
 
 ```python
     def test_adaptive_weight_decay_defaults_off_and_requires_noise(self):
@@ -77,13 +77,13 @@ Add to `tests/test_campaign4_contracts.py` (near `test_weight_decay_defaults_to_
 
 - [ ] **Step 2: Run the test to verify it fails**
 
-Run: `environment/basil-noise-env/bin/python -m unittest tests.test_campaign4_contracts.Campaign4ContractTests.test_adaptive_weight_decay_defaults_off_and_requires_noise -v`
+Run: `environment/basil-noise-env/bin/python -m unittest tests.test_adaptive_study_contracts.Campaign4ContractTests.test_adaptive_weight_decay_defaults_off_and_requires_noise -v`
 
 Expected: FAIL with `KeyError: 'adaptiveWeightDecayMode'`.
 
 - [ ] **Step 3: Add the parameters to `make_config` and wire them through**
 
-In `gui/campaign4.py`, in the `make_config` signature (currently ends `weight_decay_coefficient: float = 0.0,` at line 256), add:
+In `gui/adaptive_study.py`, in the `make_config` signature (currently ends `weight_decay_coefficient: float = 0.0,` at line 256), add:
 
 ```python
     weight_decay_coefficient: float = 0.0,
@@ -132,20 +132,20 @@ In the config dict literal, add the new fields right after the existing `"weight
 
 - [ ] **Step 4: Run the test to verify it passes**
 
-Run: `environment/basil-noise-env/bin/python -m unittest tests.test_campaign4_contracts.Campaign4ContractTests.test_adaptive_weight_decay_defaults_off_and_requires_noise -v`
+Run: `environment/basil-noise-env/bin/python -m unittest tests.test_adaptive_study_contracts.Campaign4ContractTests.test_adaptive_weight_decay_defaults_off_and_requires_noise -v`
 
 Expected: PASS
 
 - [ ] **Step 5: Run the full contract test suite to check for regressions**
 
-Run: `environment/basil-noise-env/bin/python -m unittest tests.test_campaign4_contracts -v`
+Run: `environment/basil-noise-env/bin/python -m unittest tests.test_adaptive_study_contracts -v`
 
 Expected: all tests PASS except `test_generated_manifest_matches_library`, which is expected to fail here (library not yet regenerated -- Task 5 handles that; do not fix it in this task).
 
 - [ ] **Step 6: Commit**
 
 ```bash
-git add gui/campaign4.py tests/test_campaign4_contracts.py
+git add gui/adaptive_study.py tests/test_adaptive_study_contracts.py
 git commit -m "feat: add adaptiveWeightDecay config fields for Phase C controller
 
 Orthogonal, default-off (adaptiveWeightDecayMode=none everywhere unless
@@ -159,15 +159,15 @@ use_ebm-requires-noise validation exactly."
 ### Task 2: Add the plain-Python control-law function and its unit test
 
 **Files:**
-- Modify: `basil_core/campaign4_engine.py` (new module-level function, placed near `_bounded_adaptive_coefficient`, currently ending around line 316)
-- Test: `tests/test_campaign4_engine.py`
+- Modify: `basil_core/adaptive_experiment_engine.py` (new module-level function, placed near `_bounded_adaptive_coefficient`, currently ending around line 316)
+- Test: `tests/test_adaptive_experiment_engine.py`
 
 **Interfaces:**
 - Produces: `_weight_decay_control_step(*, previous_coefficient: float, previous_smoothed_ratio: float, model_norm: float, model_norm_round0: float, target_ratio: float, gain: float, coefficient_min: float, coefficient_max: float, beta: float, max_change_factor: float) -> tuple[float, float]` -- returns `(applied_coefficient, smoothed_ratio)`.
 
 - [ ] **Step 1: Write the failing unit test**
 
-Add to `tests/test_campaign4_engine.py`, inside `Campaign4EngineTests` (near `test_adaptive_coefficient_is_bounded_and_rate_limited`; add `_weight_decay_control_step` to the existing `from basil_core.campaign4_engine import (...)` block at the top of the file):
+Add to `tests/test_adaptive_experiment_engine.py`, inside `Campaign4EngineTests` (near `test_adaptive_coefficient_is_bounded_and_rate_limited`; add `_weight_decay_control_step` to the existing `from basil_core.adaptive_experiment_engine import (...)` block at the top of the file):
 
 ```python
     def test_weight_decay_control_step_is_bounded_and_rate_limited(self):
@@ -226,13 +226,13 @@ Add to `tests/test_campaign4_engine.py`, inside `Campaign4EngineTests` (near `te
 
 - [ ] **Step 2: Run the test to verify it fails**
 
-Run: `environment/basil-noise-env/bin/python -m unittest tests.test_campaign4_engine.Campaign4EngineTests.test_weight_decay_control_step_is_bounded_and_rate_limited -v`
+Run: `environment/basil-noise-env/bin/python -m unittest tests.test_adaptive_experiment_engine.Campaign4EngineTests.test_weight_decay_control_step_is_bounded_and_rate_limited -v`
 
 Expected: FAIL with `ImportError` or `NameError` (`_weight_decay_control_step` doesn't exist yet).
 
 - [ ] **Step 3: Implement the control-law function**
 
-In `basil_core/campaign4_engine.py`, add this function immediately after `_bounded_adaptive_coefficient` (which currently ends around line 316, just before the `class LogicalNode` dataclass):
+In `basil_core/adaptive_experiment_engine.py`, add this function immediately after `_bounded_adaptive_coefficient` (which currently ends around line 316, just before the `class LogicalNode` dataclass):
 
 ```python
 def _weight_decay_control_step(
@@ -273,20 +273,20 @@ def _weight_decay_control_step(
 
 - [ ] **Step 4: Run the test to verify it passes**
 
-Run: `environment/basil-noise-env/bin/python -m unittest tests.test_campaign4_engine.Campaign4EngineTests.test_weight_decay_control_step_is_bounded_and_rate_limited -v`
+Run: `environment/basil-noise-env/bin/python -m unittest tests.test_adaptive_experiment_engine.Campaign4EngineTests.test_weight_decay_control_step_is_bounded_and_rate_limited -v`
 
 Expected: PASS
 
 - [ ] **Step 5: Run the full engine test suite to check for regressions**
 
-Run: `environment/basil-noise-env/bin/python -m unittest tests.test_campaign4_engine -v`
+Run: `environment/basil-noise-env/bin/python -m unittest tests.test_adaptive_experiment_engine -v`
 
 Expected: all tests PASS (this function is standalone, not yet wired into `run_campaign_four` -- Task 4 does that).
 
 - [ ] **Step 6: Commit**
 
 ```bash
-git add basil_core/campaign4_engine.py tests/test_campaign4_engine.py
+git add basil_core/adaptive_experiment_engine.py tests/test_adaptive_experiment_engine.py
 git commit -m "feat: add plain-Python weight-decay control-law function
 
 Bounded, EMA-smoothed, rate-limited -- same pattern as
@@ -301,8 +301,8 @@ there forever, verified by the zero-previous unit test case."
 ### Task 3: Make `SharedDeviceWorker`'s weight decay a mutable `tf.Variable`
 
 **Files:**
-- Modify: `basil_core/campaign4_engine.py:369-389` (`SharedDeviceWorker.__init__`), `basil_core/campaign4_engine.py:567-596` (`SharedDeviceWorker.train`)
-- Test: `tests/test_campaign4_engine.py`
+- Modify: `basil_core/adaptive_experiment_engine.py:369-389` (`SharedDeviceWorker.__init__`), `basil_core/adaptive_experiment_engine.py:567-596` (`SharedDeviceWorker.train`)
+- Test: `tests/test_adaptive_experiment_engine.py`
 
 **Interfaces:**
 - Consumes: nothing new from prior tasks (independent of Task 2's function).
@@ -312,7 +312,7 @@ there forever, verified by the zero-previous unit test case."
 
 - [ ] **Step 1: Write the failing regression test for the reassignment mechanism**
 
-Add to `tests/test_campaign4_engine.py`, inside `Campaign4EngineTests`:
+Add to `tests/test_adaptive_experiment_engine.py`, inside `Campaign4EngineTests`:
 
 ```python
     def test_weight_decay_variable_updates_live_without_retrace(self):
@@ -375,13 +375,13 @@ Add to `tests/test_campaign4_engine.py`, inside `Campaign4EngineTests`:
 
 - [ ] **Step 2: Run the test to verify it fails**
 
-Run: `environment/basil-noise-env/bin/python -m unittest tests.test_campaign4_engine.Campaign4EngineTests.test_weight_decay_variable_updates_live_without_retrace -v`
+Run: `environment/basil-noise-env/bin/python -m unittest tests.test_adaptive_experiment_engine.Campaign4EngineTests.test_weight_decay_variable_updates_live_without_retrace -v`
 
 Expected: FAIL with `TypeError: train() got an unexpected keyword argument 'weight_decay_coefficient'`.
 
 - [ ] **Step 3: Make `weight_decay` a `tf.Variable` in `__init__`**
 
-In `basil_core/campaign4_engine.py`, replace the `__init__` signature and optimizer construction (currently lines 369-389):
+In `basil_core/adaptive_experiment_engine.py`, replace the `__init__` signature and optimizer construction (currently lines 369-389):
 
 ```python
     def __init__(
@@ -413,7 +413,7 @@ Note: this removes the `if float(weight_decay) > 0.0 else None` guard from Phase
 
 - [ ] **Step 4: Add the `weight_decay_coefficient` parameter to `train()`**
 
-In `basil_core/campaign4_engine.py`, in the `train()` signature (currently lines 567-580), add the new parameter after `prox_mu: float,`:
+In `basil_core/adaptive_experiment_engine.py`, in the `train()` signature (currently lines 567-580), add the new parameter after `prox_mu: float,`:
 
 ```python
     def train(
@@ -443,7 +443,7 @@ In `basil_core/campaign4_engine.py`, in the `train()` signature (currently lines
 
 - [ ] **Step 5: Update `run_campaign_four`'s two existing `.train(...)` call sites**
 
-In `basil_core/campaign4_engine.py`, `run_campaign_four`'s `full_consensus` branch (`worker.train(...)` call, currently passing `prox_mu=0.0,` as its last argument) -- add immediately after:
+In `basil_core/adaptive_experiment_engine.py`, `run_campaign_four`'s `full_consensus` branch (`worker.train(...)` call, currently passing `prox_mu=0.0,` as its last argument) -- add immediately after:
 
 ```python
                     prox_mu=0.0,
@@ -461,20 +461,20 @@ And the pairwise branch's `worker.train(...)` call (currently ending `prox_mu=mu
 
 - [ ] **Step 6: Run the test to verify it passes**
 
-Run: `environment/basil-noise-env/bin/python -m unittest tests.test_campaign4_engine.Campaign4EngineTests.test_weight_decay_variable_updates_live_without_retrace -v`
+Run: `environment/basil-noise-env/bin/python -m unittest tests.test_adaptive_experiment_engine.Campaign4EngineTests.test_weight_decay_variable_updates_live_without_retrace -v`
 
 Expected: PASS
 
 - [ ] **Step 7: Run the full engine test suite, and Phase A's weight-decay test specifically, to confirm no regression**
 
-Run: `environment/basil-noise-env/bin/python -m unittest tests.test_campaign4_engine -v`
+Run: `environment/basil-noise-env/bin/python -m unittest tests.test_adaptive_experiment_engine -v`
 
 Expected: all tests PASS, including `test_weight_decay_reduces_final_model_norm` (Phase A's own test) -- confirms the `tf.Variable` refactor produces identical behavior to Phase A's original `float | None` construction-time approach.
 
 - [ ] **Step 8: Commit**
 
 ```bash
-git add basil_core/campaign4_engine.py tests/test_campaign4_engine.py
+git add basil_core/adaptive_experiment_engine.py tests/test_adaptive_experiment_engine.py
 git commit -m "refactor: make SharedDeviceWorker.weight_decay a mutable tf.Variable
 
 Serves both Phase A's static case (same value every train() call, behavior
@@ -490,8 +490,8 @@ effect on the next call, without retracing."
 ### Task 4: Wire the controller into the round loop, with telemetry
 
 **Files:**
-- Modify: `basil_core/campaign4_engine.py` (`LogicalNode` dataclass, `run_campaign_four`'s round loop and telemetry dict)
-- Test: `tests/test_campaign4_engine.py`
+- Modify: `basil_core/adaptive_experiment_engine.py` (`LogicalNode` dataclass, `run_campaign_four`'s round loop and telemetry dict)
+- Test: `tests/test_adaptive_experiment_engine.py`
 
 **Interfaces:**
 - Consumes: `_weight_decay_control_step` (Task 2), `SharedDeviceWorker.train(..., weight_decay_coefficient=...)` (Task 3).
@@ -499,7 +499,7 @@ effect on the next call, without retracing."
 
 - [ ] **Step 1: Write the failing integration test**
 
-Add to `tests/test_campaign4_engine.py`, inside `Campaign4EngineTests` (uses the existing `self._config`/`self._data`/`self.TinyModel` helpers):
+Add to `tests/test_adaptive_experiment_engine.py`, inside `Campaign4EngineTests` (uses the existing `self._config`/`self._data`/`self.TinyModel` helpers):
 
 ```python
     def test_adaptive_weight_decay_ramps_up_when_norm_grows(self):
@@ -562,13 +562,13 @@ Add to `tests/test_campaign4_engine.py`, inside `Campaign4EngineTests` (uses the
 
 - [ ] **Step 2: Run the tests to verify they fail**
 
-Run: `environment/basil-noise-env/bin/python -m unittest tests.test_campaign4_engine.Campaign4EngineTests.test_adaptive_weight_decay_ramps_up_when_norm_grows tests.test_campaign4_engine.Campaign4EngineTests.test_adaptive_weight_decay_off_matches_mode_none_exactly -v`
+Run: `environment/basil-noise-env/bin/python -m unittest tests.test_adaptive_experiment_engine.Campaign4EngineTests.test_adaptive_weight_decay_ramps_up_when_norm_grows tests.test_adaptive_experiment_engine.Campaign4EngineTests.test_adaptive_weight_decay_off_matches_mode_none_exactly -v`
 
 Expected: FAIL with `KeyError: 'adaptive_weight_decay_coefficient'` (telemetry key doesn't exist yet).
 
 - [ ] **Step 3: Add new fields to `LogicalNode`**
 
-In `basil_core/campaign4_engine.py`, in the `LogicalNode` dataclass (currently lines 340-360), add after the existing `adaptive_coefficient: float = 0.0,` line:
+In `basil_core/adaptive_experiment_engine.py`, in the `LogicalNode` dataclass (currently lines 340-360), add after the existing `adaptive_coefficient: float = 0.0,` line:
 
 ```python
     adaptive_coefficient: float = 0.0
@@ -582,7 +582,7 @@ In `basil_core/campaign4_engine.py`, in the `LogicalNode` dataclass (currently l
 
 - [ ] **Step 4: Add the two new telemetry arrays**
 
-In `basil_core/campaign4_engine.py`, in the telemetry dict initialization (currently around line 786-789, alongside `"model_norm": np.zeros(shape, dtype=np.float32),`), add:
+In `basil_core/adaptive_experiment_engine.py`, in the telemetry dict initialization (currently around line 786-789, alongside `"model_norm": np.zeros(shape, dtype=np.float32),`), add:
 
 ```python
         "model_norm": np.zeros(shape, dtype=np.float32),
@@ -592,7 +592,7 @@ In `basil_core/campaign4_engine.py`, in the telemetry dict initialization (curre
 
 - [ ] **Step 5: Compute the coefficient before training, and record telemetry after**
 
-In `basil_core/campaign4_engine.py`'s pairwise round loop (`run_campaign_four`, the `else:` branch handling non-`full_consensus` rounds), immediately before the `optimizer_state = (...)` block that precedes the `worker.train(...)` call (i.e., right after the CART block that currently ends around `telemetry["cart_seconds"][round_id, node_id] = (...)`), add:
+In `basil_core/adaptive_experiment_engine.py`'s pairwise round loop (`run_campaign_four`, the `else:` branch handling non-`full_consensus` rounds), immediately before the `optimizer_state = (...)` block that precedes the `worker.train(...)` call (i.e., right after the CART block that currently ends around `telemetry["cart_seconds"][round_id, node_id] = (...)`), add:
 
 ```python
                 adaptive_wd_mode = str(config.get("adaptiveWeightDecayMode", "none"))
@@ -648,24 +648,24 @@ And in the telemetry recording block (currently the lines starting `telemetry["m
                 )
 ```
 
-**Note on the `full_consensus` branch:** that branch's `worker.train(...)` call (Task 3 Step 5) keeps `weight_decay_coefficient=float(config.get("weightDecayCoefficient", 0.0))` unchanged -- `adaptiveWeightDecayMode` only activates in the pairwise (non-full-consensus) path, matching how the parent spec's validation set and every existing adaptive-EBM diagnostic already only exercises the pairwise ring. Full consensus stays Phase-A-only, consistent with Campaign4Plan.md's existing scoping of the "ideal ceiling" reference as a separate, simpler protocol.
+**Note on the `full_consensus` branch:** that branch's `worker.train(...)` call (Task 3 Step 5) keeps `weight_decay_coefficient=float(config.get("weightDecayCoefficient", 0.0))` unchanged -- `adaptiveWeightDecayMode` only activates in the pairwise (non-full-consensus) path, matching how the parent spec's validation set and every existing adaptive-EBM diagnostic already only exercises the pairwise ring. Full consensus stays Phase-A-only, consistent with ADAPTIVE_STUDY_PLAN.md's existing scoping of the "ideal ceiling" reference as a separate, simpler protocol.
 
 - [ ] **Step 6: Run the tests to verify they pass**
 
-Run: `environment/basil-noise-env/bin/python -m unittest tests.test_campaign4_engine.Campaign4EngineTests.test_adaptive_weight_decay_ramps_up_when_norm_grows tests.test_campaign4_engine.Campaign4EngineTests.test_adaptive_weight_decay_off_matches_mode_none_exactly -v`
+Run: `environment/basil-noise-env/bin/python -m unittest tests.test_adaptive_experiment_engine.Campaign4EngineTests.test_adaptive_weight_decay_ramps_up_when_norm_grows tests.test_adaptive_experiment_engine.Campaign4EngineTests.test_adaptive_weight_decay_off_matches_mode_none_exactly -v`
 
 Expected: PASS
 
 - [ ] **Step 7: Run the full engine test suite and the full contract test suite to check for regressions**
 
-Run: `environment/basil-noise-env/bin/python -m unittest tests.test_campaign4_engine tests.test_campaign4_contracts tests.test_campaign4_execution tests.test_campaign4_worker tests.test_campaign4_performance_profiles -v`
+Run: `environment/basil-noise-env/bin/python -m unittest tests.test_adaptive_experiment_engine tests.test_adaptive_study_contracts tests.test_execution_policy tests.test_adaptive_worker tests.test_performance_profiles -v`
 
 Expected: all tests PASS.
 
 - [ ] **Step 8: Commit**
 
 ```bash
-git add basil_core/campaign4_engine.py tests/test_campaign4_engine.py
+git add basil_core/adaptive_experiment_engine.py tests/test_adaptive_experiment_engine.py
 git commit -m "feat: wire the adaptive weight-decay controller into the round loop
 
 Computes each node's coefficient once per round, before its local training,
@@ -682,36 +682,36 @@ mirrors the existing ebm_coefficient/stress_ema shape exactly."
 ### Task 5: Regenerate the config library
 
 **Files:**
-- Modify: `gui/configs/campaign4/**/*.json` (526 files), `gui/configs/campaign4/manifest.json`
+- Modify: `gui/configs/adaptive_study/**/*.json` (526 files), `gui/configs/adaptive_study/manifest.json`
 
 - [ ] **Step 1: Confirm the library is out of date**
 
-Run: `environment/basil-noise-env/bin/python scripts/sync_campaign4_configs.py --check`
+Run: `environment/basil-noise-env/bin/python scripts/sync_adaptive_configs.py --check`
 
 Expected: `Campaign 4 config library: out of date (526 configs)`, nonzero exit code.
 
 - [ ] **Step 2: Regenerate**
 
-Run: `environment/basil-noise-env/bin/python scripts/sync_campaign4_configs.py`
+Run: `environment/basil-noise-env/bin/python scripts/sync_adaptive_configs.py`
 
-Expected: `Wrote 526 Campaign 4 configs under .../gui/configs/campaign4`
+Expected: `Wrote 526 Campaign 4 configs under .../gui/configs/adaptive_study`
 
 - [ ] **Step 3: Confirm the library is now current**
 
-Run: `environment/basil-noise-env/bin/python scripts/sync_campaign4_configs.py --check`
+Run: `environment/basil-noise-env/bin/python scripts/sync_adaptive_configs.py --check`
 
 Expected: `Campaign 4 config library: current (526 configs)`, exit code 0.
 
 - [ ] **Step 4: Run the full Campaign 4 test suite**
 
-Run: `environment/basil-noise-env/bin/python -m unittest tests.test_campaign4_contracts tests.test_campaign4_engine tests.test_campaign4_execution tests.test_campaign4_worker tests.test_campaign4_performance_profiles -v`
+Run: `environment/basil-noise-env/bin/python -m unittest tests.test_adaptive_study_contracts tests.test_adaptive_experiment_engine tests.test_execution_policy tests.test_adaptive_worker tests.test_performance_profiles -v`
 
 Expected: all tests PASS, including `test_generated_manifest_matches_library`.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add gui/configs/campaign4/
+git add gui/configs/adaptive_study/
 git commit -m "chore: regenerate Campaign 4 config library with adaptiveWeightDecay fields
 
 Every config gains the new default-off fields; runId hashes change for all
@@ -745,7 +745,7 @@ Run:
 import json
 import sys
 sys.path.insert(0, ".")
-from gui.campaign4 import make_config, apply_performance_profile, is_completed
+from gui.adaptive_study import make_config, apply_performance_profile, is_completed
 from gui.runtime_estimator import load_worker_profile
 
 def phase_c_config(sigma):
@@ -784,7 +784,7 @@ Run:
 python3 -c "
 import json, sys
 sys.path.insert(0, '.')
-from gui.campaign4 import is_completed
+from gui.adaptive_study import is_completed
 q = json.load(open('gui/queue_state.json'))
 assert len(q) == 3
 for c in q:
@@ -804,7 +804,7 @@ Expected: 3 lines (sigma 0.6, 0.4, 0.2), then `all 3 configs verified`.
 
 - [ ] **Step 4: Hand off to the user**
 
-Tell the user the queue is ready and ask them to run it via `python runGui.py` -> **Run Queue**. Do not create a git commit for this task -- `gui/queue_state.json` is a runtime artifact (see the Phase A plan's Task 4 for the same convention; note it is git-tracked despite `.gitignore:235`, a pre-existing housekeeping inconsistency documented in Phase A's ledger, not something to fix here).
+Tell the user the queue is ready and ask them to run it via `python run_gui.py` -> **Run Queue**. Do not create a git commit for this task -- `gui/queue_state.json` is a runtime artifact (see the Phase A plan's Task 4 for the same convention; note it is git-tracked despite `.gitignore:235`, a pre-existing housekeeping inconsistency documented in Phase A's ledger, not something to fix here).
 
 ---
 
