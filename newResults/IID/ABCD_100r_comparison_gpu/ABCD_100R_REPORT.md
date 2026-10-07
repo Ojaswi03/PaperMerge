@@ -1,0 +1,112 @@
+# Four-condition 100-round IID BASIL
+
+All runs use BASIL. A/B measures attacks under BASIL; B/C measures channel noise; C/D is the matched EBM comparison; A/D is the total robustness gap.
+
+Differences are right minus left in accuracy units; multiply by 100 for percentage points. No ordering or improvement is assumed. One paired seed is not evidence of statistical significance.
+
+## A — completed
+
+{
+  "final_accuracy": 0.5882999897003174,
+  "best_accuracy": 0.5882999897003174,
+  "best_round": 99,
+  "mean_rounds_0_19": 0.3560299873352051,
+  "mean_rounds_20_99": 0.5497199892997742,
+  "attack_applicable": false,
+  "mean_rounds_80_89": 0.5755299925804138,
+  "late_round_mean": 0.5830300450325012,
+  "late_round_change": 0.007500052452087402,
+  "final_worst_node_accuracy": 0.5699999928474426
+}
+
+## B — completed
+
+{
+  "final_accuracy": 0.5831999778747559,
+  "best_accuracy": 0.5835999846458435,
+  "best_round": 95,
+  "mean_rounds_0_19": 0.3560299873352051,
+  "mean_rounds_20_99": 0.5448862314224243,
+  "attack_applicable": true,
+  "mean_rounds_80_89": 0.5691200494766235,
+  "late_round_mean": 0.5767199993133545,
+  "late_round_change": 0.007599949836730957,
+  "final_worst_node_accuracy": 0.569100022315979
+}
+
+## C — completed
+
+{
+  "final_accuracy": 0.5008999705314636,
+  "best_accuracy": 0.5175999999046326,
+  "best_round": 65,
+  "mean_rounds_0_19": 0.40136003494262695,
+  "mean_rounds_20_99": 0.504069983959198,
+  "attack_applicable": true,
+  "mean_rounds_80_89": 0.49678000807762146,
+  "late_round_mean": 0.4992099404335022,
+  "late_round_change": 0.0024299323558807373,
+  "final_worst_node_accuracy": 0.49630001187324524
+}
+
+## D — completed
+
+{
+  "final_accuracy": 0.5026000142097473,
+  "best_accuracy": 0.5113999843597412,
+  "best_round": 93,
+  "mean_rounds_0_19": 0.39061498641967773,
+  "mean_rounds_20_99": 0.49665123224258423,
+  "attack_applicable": true,
+  "mean_rounds_80_89": 0.5006700158119202,
+  "late_round_mean": 0.5049900412559509,
+  "late_round_change": 0.004320025444030762,
+  "final_worst_node_accuracy": 0.4699999988079071
+}
+
+## Scientific contrasts
+
+{
+  "attack_effect": {
+    "comparison": "B minus A",
+    "meaning": "Attacks while BASIL is active; not the cost of BASIL",
+    "differences": {
+      "final_accuracy": -0.0051000118255615234,
+      "best_accuracy": -0.004700005054473877,
+      "late_round_mean": -0.0063100457191467285,
+      "final_worst_node_accuracy": -0.000899970531463623
+    }
+  },
+  "noise_effect": {
+    "comparison": "C minus B",
+    "meaning": "Absolute Gaussian channel effect under CE",
+    "differences": {
+      "final_accuracy": -0.08230000734329224,
+      "best_accuracy": -0.06599998474121094,
+      "late_round_mean": -0.0775100588798523,
+      "final_worst_node_accuracy": -0.07280001044273376
+    }
+  },
+  "ebm_effect": {
+    "comparison": "D minus C",
+    "meaning": "Source EBM effect under the matched noisy channel",
+    "differences": {
+      "final_accuracy": 0.0017000436782836914,
+      "best_accuracy": -0.006200015544891357,
+      "late_round_mean": 0.0057801008224487305,
+      "final_worst_node_accuracy": -0.026300013065338135
+    }
+  },
+  "total_robustness_gap": {
+    "comparison": "D minus A",
+    "meaning": "Combined attacker/noise/EBM condition versus clean BASIL",
+    "differences": {
+      "final_accuracy": -0.08569997549057007,
+      "best_accuracy": -0.07690000534057617,
+      "late_round_mean": -0.07804000377655029,
+      "final_worst_node_accuracy": -0.09999999403953552
+    }
+  }
+}
+
+Round means 80–89 and 90–99 describe late trends only. They never extend or stop the fixed 100-round horizon.

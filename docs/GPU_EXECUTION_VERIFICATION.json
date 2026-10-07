@@ -1,0 +1,144 @@
+{
+  "status": "passed",
+  "purpose": "synthetic_hardware_verification",
+  "researchValid": false,
+  "researchRunsStarted": 0,
+  "numericalExecution": {
+    "policyRevision": "iid_serial_float32_v1",
+    "device": "GPU",
+    "gpuName": "NVIDIA GeForce RTX 4070 Ti",
+    "tensorflowVersion": "2.18.0",
+    "tensorFloat32": false,
+    "intraOpThreads": 1,
+    "interOpThreads": 1,
+    "cudaVersion": "12.5.1",
+    "cudnnVersion": "9",
+    "gpuWorkerSha256": "6fdf21ca164bb7c79bbe05fa42325e2592d2a128b42aa34995c03f10d90f0f0f",
+    "gpuMemoryLimitMb": 4096
+  },
+  "implementationSha256": {
+    "basil_core/models.py": "e1428016bef1169414dc0c8f3d765128a930715cd3395e5ab1e1f95087ee0cef",
+    "basil_core/attacks.py": "f1123cc3276b3f655f8fe0feab6b3b34758c1588445d5d38fab2ace89dd70c18",
+    "basil_core/trainer.py": "b04ff4e9c850e8e69e9afc6a8c9428a8ada73184fa88ec1a3a2e0f85a2ac5a8b",
+    "basil_core/data/cifar.py": "9697daf5f7e0007c56c182c5ef8d611c3b73e30a4fefb5b50812a56248006a4a",
+    "basil_core/research_protocol.py": "fb5644947641d23054854798f3c3f4fe9e7ef6ccdffc1f1d357c18f90b65b913",
+    "basil_core/iid_study.py": "1ebbd15859abdb9e027bc04c17ab2e2cbbc86825a02a9ee93b3eadeaa7e7af08"
+  },
+  "parameterCount": 117706,
+  "initialModelHash": "7c717dbbd9bd1f2f230b1ff3d288bd8fec33dcd3ec730eb43e8a14e496cdc2df",
+  "batchSize": 512,
+  "analyticEbm": {
+    "CPU": {
+      "gradientMaxAbsoluteError": 2.7677891756283657e-8,
+      "correctionNorm": 0.000016990662763435474,
+      "coefficient": 0.0001
+    },
+    "GPU": {
+      "gradientMaxAbsoluteError": 4.668898476167804e-8,
+      "correctionNorm": 0.000016990662763435474,
+      "coefficient": 0.0001
+    }
+  },
+  "sameDeviceRepeatability": {
+    "CPU/none": "bit_identical; legacy lambda ignored",
+    "CPU/gradient_norm_objective": "bit_identical; legacy lambda ignored",
+    "GPU/none": "bit_identical; legacy lambda ignored",
+    "GPU/gradient_norm_objective": "bit_identical; legacy lambda ignored"
+  },
+  "cpuGpuComparison": {
+    "none": {
+      "gradientRelativeL2Difference": 0.002993859350681305,
+      "gradientMaxAbsoluteDifference": 0.00001647310273256153,
+      "lossMaxAbsoluteDifference": 1.5657860785722733e-8,
+      "updateMaxAbsoluteDifference": 8.236552275775466e-7,
+      "auditedStepSpeedup": 2.317353487447585
+    },
+    "gradient_norm_objective": {
+      "gradientRelativeL2Difference": 0.0029938954394310713,
+      "gradientMaxAbsoluteDifference": 0.000016473233699798584,
+      "lossMaxAbsoluteDifference": 1.56724127009511e-8,
+      "updateMaxAbsoluteDifference": 8.23661594040459e-7,
+      "auditedStepSpeedup": 5.708913909115351
+    }
+  },
+  "measurements": {
+    "CPU": {
+      "none": {
+        "auditedStepMedianSeconds": 0.16101604899995436,
+        "measuredSteps": 5,
+        "parametersDevice": "/job:localhost/replica:0/task:0/device:CPU:0",
+        "gradientDevice": "/job:localhost/replica:0/task:0/device:CPU:0"
+      },
+      "gradient_norm_objective": {
+        "auditedStepMedianSeconds": 0.31086288200003764,
+        "measuredSteps": 5,
+        "parametersDevice": "/job:localhost/replica:0/task:0/device:CPU:0",
+        "gradientDevice": "/job:localhost/replica:0/task:0/device:CPU:0"
+      },
+      "evaluationBatchMedianSeconds": 0.03395609600011085
+    },
+    "GPU": {
+      "none": {
+        "auditedStepMedianSeconds": 0.06948273099988,
+        "measuredSteps": 5,
+        "parametersDevice": "/job:localhost/replica:0/task:0/device:GPU:0",
+        "gradientDevice": "/job:localhost/replica:0/task:0/device:GPU:0"
+      },
+      "gradient_norm_objective": {
+        "auditedStepMedianSeconds": 0.0544521930000883,
+        "measuredSteps": 5,
+        "parametersDevice": "/job:localhost/replica:0/task:0/device:GPU:0",
+        "gradientDevice": "/job:localhost/replica:0/task:0/device:GPU:0"
+      },
+      "evaluationBatchMedianSeconds": 0.0005563175000133924
+    }
+  },
+  "gpuAdapterEquivalence": {
+    "none": "bit_identical to original GPU objective",
+    "gradient_norm_objective": "bit_identical to original GPU objective"
+  },
+  "testedTrainingBatchSizes": [
+    512,
+    392
+  ],
+  "testedEvaluationBatchSizes": [
+    512,
+    272
+  ],
+  "gpuMemory": {
+    "current": 114146816,
+    "peak": 396165376
+  },
+  "gpuMemorySafetyMarginBytes": 3898801920,
+  "logitMaxAbsoluteDifference": 2.0489096641540527e-8,
+  "predictionsIdentical": true,
+  "forwardLayerMaxAbsoluteDifferences": [
+    1.7881393432617188e-7,
+    1.7881393432617188e-7,
+    4.470348358154297e-7,
+    4.172325134277344e-7,
+    4.172325134277344e-7,
+    1.2665987014770508e-7,
+    6.332993507385254e-8,
+    2.0489096641540527e-8
+  ],
+  "maxPoolArgmaxDifferences": [
+    0,
+    0
+  ],
+  "evaluationSpeedup": 61.03726019636882,
+  "tolerances": {
+    "gradientRelativeL2": 0.01,
+    "lossAtol": 3e-7,
+    "updateAtol": 0.000002,
+    "analyticGradientAtol": 2e-7,
+    "updateRtol": 0.00001,
+    "logitAtol": 0.00001,
+    "logitRtol": 0.0001
+  },
+  "limitations": [
+    "Synthetic batch only; not full CIFAR convergence or whole-queue timing",
+    "CPU/GPU are tolerance-equivalent, not bit-identical; device transitions must preserve state and record provenance",
+    "Multiprocessing remains unverified and is not used"
+  ]
+}

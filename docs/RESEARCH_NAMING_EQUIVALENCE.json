@@ -1,0 +1,118 @@
+{
+  "seed": 2025,
+  "device": "CPU",
+  "tensorflowIntraOpThreads": 1,
+  "tensorflowInterOpThreads": 1,
+  "oneDnn": false,
+  "deterministicOps": true,
+  "coordinateSigma": 0.01,
+  "ebmCoefficient": 0.0001,
+  "learningRate": 0.05,
+  "localEpochs": 5,
+  "fixture": "Four deterministic Gaussian CIFAR-shaped images, labels 0..3; keyed stream rename_fixture; BASIL paper CNN initialization; EBM gradient and SGD update; 11-round scalar memory rollover; keyed absolute-noise link; full five-epoch augmented activation.",
+  "allArraysByteIdentical": true,
+  "arrays": {
+    "initial": {
+      "shape": [
+        117706
+      ],
+      "dtype": "float32",
+      "byteIdentical": true,
+      "maximumAbsoluteDifference": 0.0,
+      "beforeSha256": "5b12ed4d165b66233f75748791e352b288f1220af4d56c6fc8593053563046d3",
+      "afterSha256": "5b12ed4d165b66233f75748791e352b288f1220af4d56c6fc8593053563046d3"
+    },
+    "gradient": {
+      "shape": [
+        117706
+      ],
+      "dtype": "float32",
+      "byteIdentical": true,
+      "maximumAbsoluteDifference": 0.0,
+      "beforeSha256": "1686d84aa925ef3eae8c1af0988ddf67da3b73f831e7990f4765e9a9fa32ab37",
+      "afterSha256": "1686d84aa925ef3eae8c1af0988ddf67da3b73f831e7990f4765e9a9fa32ab37"
+    },
+    "loss": {
+      "shape": [
+        4
+      ],
+      "dtype": "float32",
+      "byteIdentical": true,
+      "maximumAbsoluteDifference": 0.0,
+      "beforeSha256": "264dc3b6b2c1eb52e97bda5558873778fab87d5c7cf0e75b48ea2f83faf99e9c",
+      "afterSha256": "264dc3b6b2c1eb52e97bda5558873778fab87d5c7cf0e75b48ea2f83faf99e9c"
+    },
+    "update": {
+      "shape": [
+        117706
+      ],
+      "dtype": "float32",
+      "byteIdentical": true,
+      "maximumAbsoluteDifference": 0.0,
+      "beforeSha256": "c34fcb90a768e4b65fe220898960c4bb8083062a929c4181256d4c47a28da8a6",
+      "afterSha256": "c34fcb90a768e4b65fe220898960c4bb8083062a929c4181256d4c47a28da8a6"
+    },
+    "logits": {
+      "shape": [
+        4,
+        10
+      ],
+      "dtype": "float32",
+      "byteIdentical": true,
+      "maximumAbsoluteDifference": 0.0,
+      "beforeSha256": "d19b2471d594ae3105d2fe91dc745eaa8023baacd5b919c56ae3e7cdc4c8ddca",
+      "afterSha256": "d19b2471d594ae3105d2fe91dc745eaa8023baacd5b919c56ae3e7cdc4c8ddca"
+    },
+    "noisy": {
+      "shape": [
+        117706
+      ],
+      "dtype": "float32",
+      "byteIdentical": true,
+      "maximumAbsoluteDifference": 0.0,
+      "beforeSha256": "895b71c3bf50706db3836401b55f99c3c1504d6ae6110d3e98de725711d8afb3",
+      "afterSha256": "895b71c3bf50706db3836401b55f99c3c1504d6ae6110d3e98de725711d8afb3"
+    },
+    "memory": {
+      "shape": [
+        10,
+        2
+      ],
+      "dtype": "int64",
+      "byteIdentical": true,
+      "maximumAbsoluteDifference": 0.0,
+      "beforeSha256": "75907b1671c4888687005986d0b04a2e4998ad95ea3f2798e1276f45935eb5d2",
+      "afterSha256": "75907b1671c4888687005986d0b04a2e4998ad95ea3f2798e1276f45935eb5d2"
+    },
+    "selection": {
+      "shape": [
+        2
+      ],
+      "dtype": "int64",
+      "byteIdentical": true,
+      "maximumAbsoluteDifference": 0.0,
+      "beforeSha256": "a81ad4eaad6bf6dbd0dc925503fb0118b28d27354affd9e40f0528baeaaa1ab2",
+      "afterSha256": "a81ad4eaad6bf6dbd0dc925503fb0118b28d27354affd9e40f0528baeaaa1ab2"
+    },
+    "five_epoch_update": {
+      "shape": [
+        117706
+      ],
+      "dtype": "float32",
+      "byteIdentical": true,
+      "maximumAbsoluteDifference": 0.0,
+      "beforeSha256": "15ec3758d88af2d3757545ba492ddfd7663a08d6b7dda8ec1a4dd2efacaae6fa",
+      "afterSha256": "15ec3758d88af2d3757545ba492ddfd7663a08d6b7dda8ec1a4dd2efacaae6fa"
+    },
+    "epoch_losses": {
+      "shape": [
+        5
+      ],
+      "dtype": "float64",
+      "byteIdentical": true,
+      "maximumAbsoluteDifference": 0.0,
+      "beforeSha256": "621d95de436d3d076943c42621d370639a855c3d04ecc7c05a5d7ec42b2a3a74",
+      "afterSha256": "621d95de436d3d076943c42621d370639a855c3d04ecc7c05a5d7ec42b2a3a74"
+    }
+  }
+}

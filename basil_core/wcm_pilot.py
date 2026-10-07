@@ -15,7 +15,7 @@ import tensorflow as tf
 from noise_comm.wcm import WcmState, wcmLocalUpdate
 
 from .attacks import applyAttack
-from .campaign_engine import (
+from .experiment_engine import (
     LogicalNode,
     RingSnapshot,
     _accuracy_from_confusion,

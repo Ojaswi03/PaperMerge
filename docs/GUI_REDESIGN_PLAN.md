@@ -1,4 +1,37 @@
-# GUI redesign plan
+# GUI redesign implementation
+
+## Current architecture
+
+The redesign is implemented as a persistent Tkinter workspace. `gui/app.py`
+owns application lifecycle and composes a small set of layers:
+
+- `gui/state/` contains the canonical experiment model, camelCase schema
+  adapter, centralized validation, application/execution states, and queue
+  transitions. These modules do not import Tkinter.
+- `gui/services/` owns atomic configuration and queue persistence, isolated
+  worker/event adaptation, lazy retained-result discovery, metric loading, and
+  guarded plot output.
+- `gui/components/` contains the command bar, navigation rail, empty state,
+  and scroll container.
+- `gui/views/` contains Dashboard, Experiment Builder, Queue, Results,
+  application shell, and integration of the existing Network view.
+
+The old `gui/experiment_app.py` path remains only as a compatibility import.
+There is one GUI implementation.
+
+## Compatibility boundaries
+
+Persisted configuration keys remain camelCase and schema versions 1–4 are
+accepted. Unknown compatible fields are retained in the model's `extra`
+mapping and restored on save. Queue persistence accepts both the historical
+list-of-config-dictionaries form and the enriched status form. Versioned
+baseline/adaptive runs continue to execute in isolated workers and graceful
+stop still sends SIGTERM through the established worker pool.
+
+The Results service reads only `run.json` during discovery. `metrics.npz` and
+`telemetry.npz` are loaded on selection or replay. The retained
+`experiments/results4/` and `plots4/` trees are read-only application inputs;
+the plot service rejects output beneath the protected plot root.
 
 ## Product direction
 
@@ -24,6 +57,11 @@ Keep global Run, Stop, Save, and queue-state controls in one top command bar.
 Hide advanced parameters until their parent feature is enabled.
 
 ## Architecture
+
+The default entry point now implements this state/service/view structure.
+The research protocol adds schema-5 adapters, explicit channel/EBM controls,
+read-only result/replay integration and a production-launch gate. Its algorithm
+remains in `basil_core/research_protocol.py`, not in widget callbacks.
 
 - Split `experiment_app.py` into `app`, `state`, `services`, and `views`.
 - Use one typed experiment model as the source of truth. Tk variables should

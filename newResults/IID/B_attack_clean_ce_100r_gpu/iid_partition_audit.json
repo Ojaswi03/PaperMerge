@@ -1,0 +1,196 @@
+{
+  "assignedSamples": 50000,
+  "deterministic": true,
+  "nodes": [
+    {
+      "classCounts": [
+        515,
+        493,
+        490,
+        461,
+        477,
+        494,
+        522,
+        527,
+        527,
+        494
+      ],
+      "nodeId": 0,
+      "samples": 5000
+    },
+    {
+      "classCounts": [
+        521,
+        485,
+        450,
+        494,
+        505,
+        507,
+        497,
+        512,
+        532,
+        497
+      ],
+      "nodeId": 1,
+      "samples": 5000
+    },
+    {
+      "classCounts": [
+        484,
+        480,
+        511,
+        496,
+        484,
+        523,
+        493,
+        514,
+        500,
+        515
+      ],
+      "nodeId": 2,
+      "samples": 5000
+    },
+    {
+      "classCounts": [
+        488,
+        511,
+        487,
+        541,
+        501,
+        503,
+        518,
+        466,
+        497,
+        488
+      ],
+      "nodeId": 3,
+      "samples": 5000
+    },
+    {
+      "classCounts": [
+        477,
+        497,
+        532,
+        508,
+        523,
+        489,
+        477,
+        495,
+        470,
+        532
+      ],
+      "nodeId": 4,
+      "samples": 5000
+    },
+    {
+      "classCounts": [
+        525,
+        512,
+        503,
+        470,
+        473,
+        500,
+        511,
+        494,
+        530,
+        482
+      ],
+      "nodeId": 5,
+      "samples": 5000
+    },
+    {
+      "classCounts": [
+        501,
+        489,
+        499,
+        500,
+        545,
+        477,
+        495,
+        489,
+        514,
+        491
+      ],
+      "nodeId": 6,
+      "samples": 5000
+    },
+    {
+      "classCounts": [
+        484,
+        517,
+        519,
+        530,
+        478,
+        489,
+        503,
+        487,
+        469,
+        524
+      ],
+      "nodeId": 7,
+      "samples": 5000
+    },
+    {
+      "classCounts": [
+        514,
+        499,
+        510,
+        489,
+        537,
+        497,
+        496,
+        508,
+        459,
+        491
+      ],
+      "nodeId": 8,
+      "samples": 5000
+    },
+    {
+      "classCounts": [
+        491,
+        517,
+        499,
+        511,
+        477,
+        521,
+        488,
+        508,
+        502,
+        486
+      ],
+      "nodeId": 9,
+      "samples": 5000
+    }
+  ],
+  "partitionHash": "db79edd6b35d709b0a40fcc9ca5b5253e1da52a414cfba30a87de6aff4339b29",
+  "rngStream": "iid_partition",
+  "seed": 2025,
+  "strategy": "existing_seeded_random_disjoint_equal_split",
+  "testClassCounts": [
+    1000,
+    1000,
+    1000,
+    1000,
+    1000,
+    1000,
+    1000,
+    1000,
+    1000,
+    1000
+  ],
+  "testUsage": "evaluation_only; partition and selection receive training indices only",
+  "trainClassCounts": [
+    5000,
+    5000,
+    5000,
+    5000,
+    5000,
+    5000,
+    5000,
+    5000,
+    5000,
+    5000
+  ],
+  "uniqueSamples": 50000
+}

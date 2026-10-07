@@ -1,0 +1,4002 @@
+{
+  "auditDate": "2026-10-07",
+  "trainingStartedByAudit": false,
+  "conditions": {
+    "A": {
+      "folder": "A_clean_no_attack_ce_100r_gpu",
+      "manifest": {
+        "S": 5,
+        "actualAttackerCount": 0,
+        "attackActiveActivations": 0,
+        "attackStartRound": 20,
+        "attackType": "delayed_hidden_parameter_attack_v1",
+        "attackerSeed": 2025,
+        "augmentationSeed": 2025,
+        "b": 4,
+        "batchSize": 512,
+        "bestAverageAccuracy": 0.5836799740791321,
+        "bestFullTestAccuracy": 0.5882999897003174,
+        "bestFullTestRound": 99,
+        "bestRound": 98,
+        "channelNoiseSeed": 2025,
+        "channelNoiseSemantics": "paper_absolute_gaussian",
+        "completedRounds": 100,
+        "conditionId": "A",
+        "dataSha256": {
+          "testImagesHash": "dac0788d34d9b59a63f3a2d46655800799e0ceae172f8a5a455435e765308fec",
+          "testLabelsHash": "ba952d26b7b18c07e2fbc1bbeffd492695c3d5b6363c6bc27cafc278ce907b57",
+          "trainImagesHash": "d19735cf221788d49df2f38c4d3af9071706747477a27e6989c36f7de8d73f05",
+          "trainLabelsHash": "4c9831f34f3dce6c71f21ea7cb5a9dd00a3eb96ee17d068a26a939cf1df79df4"
+        },
+        "device": "GPU",
+        "deviceName": "NVIDIA GeForce RTX 4070 Ti",
+        "ebmMode": "none",
+        "evaluationClassCounts": [
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000
+        ],
+        "evaluationSamples": 10000,
+        "executionMode": "deterministic_single_process",
+        "executionStartMode": "fresh",
+        "experimentName": "A_iid_basil_clean_no_attack_ce_100r_gpu",
+        "experimentProtocol": "sequential_basil_iid_v1",
+        "finalAverageAccuracy": 0.5825099945068359,
+        "finalFullTestAccuracy": 0.5882999897003174,
+        "finalWorstAccuracy": 0.5699999928474426,
+        "fullDatasetPartitionHash": "db79edd6b35d709b0a40fcc9ca5b5253e1da52a414cfba30a87de6aff4339b29",
+        "gitCommit": "09132877c69473785bbd9f6eb8b69538e663db32",
+        "gitWorktreeDirty": true,
+        "gpuVerificationScope": "synthetic batch CE/EBM, SGD, evaluation and same-device repeatability",
+        "gpuVerified": true,
+        "hiddenAttackParameters": {
+          "attackStrength": 1.4,
+          "blendRatio": 0.55
+        },
+        "iidCampaignId": "iid_abcd_100r_v1",
+        "iidPartitionHash": "db79edd6b35d709b0a40fcc9ca5b5253e1da52a414cfba30a87de6aff4339b29",
+        "implementationSha256": {
+          "basil_core/attacks.py": "f1123cc3276b3f655f8fe0feab6b3b34758c1588445d5d38fab2ace89dd70c18",
+          "basil_core/data/cifar.py": "9697daf5f7e0007c56c182c5ef8d611c3b73e30a4fefb5b50812a56248006a4a",
+          "basil_core/iid_study.py": "1ebbd15859abdb9e027bc04c17ab2e2cbbc86825a02a9ee93b3eadeaa7e7af08",
+          "basil_core/models.py": "e1428016bef1169414dc0c8f3d765128a930715cd3395e5ab1e1f95087ee0cef",
+          "basil_core/research_audit.py": "4c0bba2f51869416fbc22332cd421dd7cd0cfa27c7ec35d64629a6fc0c2b27e7",
+          "basil_core/research_protocol.py": "fb5644947641d23054854798f3c3f4fe9e7ef6ccdffc1f1d357c18f90b65b913",
+          "basil_core/trainer.py": "b04ff4e9c850e8e69e9afc6a8c9428a8ada73184fa88ec1a3a2e0f85a2ac5a8b",
+          "scripts/run_iid_basil_pair.py": "3f92654692e4133612239891f1ff4a08ff61f32d69a44c78f8d1b086e04bce39"
+        },
+        "initialGlobalAccuracy": 0.0901,
+        "initialModelHash": "7c717dbbd9bd1f2f230b1ff3d288bd8fec33dcd3ec730eb43e8a14e496cdc2df",
+        "initializationSeed": 480415301,
+        "interOpThreads": 1,
+        "intraOpThreads": 1,
+        "latestRound": {
+          "attacked_source_selection_rate": 0,
+          "byzantine_selection_rate": 0,
+          "channel_noise_norm": 0,
+          "class_0_accuracy": 0.6399999856948853,
+          "class_1_accuracy": 0.6809999942779541,
+          "class_2_accuracy": 0.47099998593330383,
+          "class_3_accuracy": 0.36500000953674316,
+          "class_4_accuracy": 0.5320000052452087,
+          "class_5_accuracy": 0.5189999938011169,
+          "class_6_accuracy": 0.7089999914169312,
+          "class_7_accuracy": 0.6039999723434448,
+          "class_8_accuracy": 0.6919999718666077,
+          "class_9_accuracy": 0.6700000166893005,
+          "ebm_correction_norm": 0,
+          "ebm_correction_ratio": 0,
+          "ebm_penalty": 0,
+          "full_test_accuracy": 0.5882999897003174,
+          "full_test_loss": 1.1811904153823853,
+          "honest_selection_rate": 1,
+          "mean_local_ce": 1.2233108626060485,
+          "mean_node_accuracy": 0.5825099945068359,
+          "mean_snapshot_age": 0.4,
+          "noise_to_model_norm_ratio": 0,
+          "ordinary_gradient_norm": 2.0979619114398957,
+          "round": 99,
+          "worst_node_accuracy": 0.5699999928474426
+        },
+        "learningRate": 0.05,
+        "learningRateSchedule": "basil_round_decay",
+        "legacyLambdaIgnored": true,
+        "localEpochs": 5,
+        "localObjective": "cross_entropy",
+        "localSampleCounts": [
+          5000,
+          5000,
+          5000,
+          5000,
+          5000,
+          5000,
+          5000,
+          5000,
+          5000,
+          5000
+        ],
+        "metricDefinitions": {
+          "full_test_accuracy": "End-of-ring Node 9 honest trained model on all 10000 test images, before outbound noise",
+          "full_test_loss": "Mean full-test CE of end-of-ring Node 9 model",
+          "mean_node_accuracy": "Arithmetic mean of full-test accuracy of ten stored node trained states; no model averaging",
+          "per_class_accuracy": "Node 9 class-conditional full-test accuracy",
+          "worst_node_accuracy": "Minimum full-test accuracy of ten stored node trained states"
+        },
+        "multiprocessingUsed": false,
+        "nNodes": 10,
+        "nRounds": 100,
+        "numericalExecution": {
+          "cudaVersion": "12.5.1",
+          "cudnnVersion": "9",
+          "device": "GPU",
+          "gpuMemoryLimitMb": 4096,
+          "gpuName": "NVIDIA GeForce RTX 4070 Ti",
+          "gpuWorkerSha256": "6fdf21ca164bb7c79bbe05fa42325e2592d2a128b42aa34995c03f10d90f0f0f",
+          "interOpThreads": 1,
+          "intraOpThreads": 1,
+          "policyRevision": "iid_serial_float32_v1",
+          "tensorFloat32": false,
+          "tensorflowVersion": "2.18.0"
+        },
+        "optimizer": "sgd",
+        "partitionSeed": 2025,
+        "prePostChannelAccuracy": "not_measured; channel norms and hashes are recorded per link",
+        "preflightChecks": {
+          "accuracyAboveInitialization": true,
+          "attackSchedule": true,
+          "basilSelectionMinimum": true,
+          "channelSchedule": true,
+          "coefficient": true,
+          "finiteTraining": true,
+          "fiveFullEpochs": true,
+          "rollingDistinctMemory": true
+        },
+        "preflightPassed": true,
+        "pythonVersion": "3.12.3",
+        "researchValid": true,
+        "resolvedAttackerIds": [],
+        "resumeSupported": true,
+        "rngDerivation": "SHA256(seed|stream|round|node|epoch|batch or sender|receiver), separate streams",
+        "runtimeSeconds": 4383.528848487003,
+        "seed": 2025,
+        "seedStreams": {
+          "attacker": 2025,
+          "augmentation": 2025,
+          "initialization": 2025,
+          "partition": 2025,
+          "shuffle": 2025
+        },
+        "selectedByzantine": 0,
+        "selectedHonest": 1000,
+        "shuffleSeed": 2025,
+        "sigmaChoiceReason": "A-priori moderate middle calibration value; explicitly authorized before Test 2 outcomes",
+        "sigma_e": 0,
+        "sigma_e_squared": 0,
+        "status": "completed",
+        "tensorflowDevice": "/GPU:0",
+        "tensorflowVersion": "2.18.0",
+        "timestamp": "2026-10-07T14:12:57.110645+00:00",
+        "trainingSamplesUsed": 50000
+      },
+      "config": {
+        "actualAttackerCount": 0,
+        "adaptiveWeightDecayMode": "off",
+        "aggregationMode": "strict_sequential_handoff",
+        "approach": "basil",
+        "assumedByzantineCount": 4,
+        "attackHidden": false,
+        "attackHiddenStart": 20,
+        "attackStartRound": 20,
+        "attackType": "delayed_hidden_parameter_attack_v1",
+        "attackerCount": 0,
+        "attackerIds": "",
+        "attackerSelection": "seeded_random_without_replacement",
+        "attackerSelectionSeed": 2025,
+        "augmentation": "seeded_flip_pad_crop",
+        "authorizedByzantineCount": 4,
+        "basilMemorySize": 5,
+        "batchSize": 512,
+        "channelNoiseSemantics": "paper_absolute_gaussian",
+        "channelNoiseSigmaAbsolute": 0,
+        "channelNoiseSigmaRelative": 0,
+        "channelNoiseStartRound": 0,
+        "classAssignment": "partition_rng",
+        "comparisonPlotsDirectory": "newPlots/IID/ABCD_100r_comparison_gpu",
+        "comparisonResultsDirectory": "newResults/IID/ABCD_100r_comparison_gpu",
+        "conditionId": "A",
+        "dataset": "cifar10",
+        "dirichletAlpha": 0.2,
+        "displayName": "A — Clean / No attack / No noise / CE — Fresh R0→R99 — GPU",
+        "ebmCoefficientSemantics": "channel_coordinate_variance",
+        "ebmMode": "none",
+        "epochSemantics": "full_local_dataset",
+        "executionDevice": "GPU",
+        "executionMode": "deterministic_single_process_gpu",
+        "executionStartMode": "fresh",
+        "expectedInitialModelHash": "7c717dbbd9bd1f2f230b1ff3d288bd8fec33dcd3ec730eb43e8a14e496cdc2df",
+        "expectedPartitionHash": "db79edd6b35d709b0a40fcc9ca5b5253e1da52a414cfba30a87de6aff4339b29",
+        "experimentName": "A_iid_basil_clean_no_attack_ce_100r_gpu",
+        "experimentProtocol": "sequential_basil_iid_v1",
+        "gradientClipNorm": null,
+        "iidCampaignId": "iid_abcd_100r_v1",
+        "learningRate": 0.05,
+        "learningRateSchedule": "basil_round_decay",
+        "localEpochs": 5,
+        "localObjective": "cross_entropy",
+        "modelArchitecture": "basil_paper_cnn",
+        "momentum": 0,
+        "monteCarloNoiseSamples": 0,
+        "nNodes": 10,
+        "nRounds": 100,
+        "nonIID": false,
+        "optimizer": "sgd",
+        "optimizerStateMode": "reset_each_activation",
+        "partitionStrategy": "iid",
+        "plotDirectory": "newPlots/IID/A_clean_no_attack_ce_100r_gpu",
+        "protocolRevision": "iid_basil_source_ebm_v1",
+        "purpose": "iid_abcd_research",
+        "researchValid": true,
+        "resolvedAttackerIds": [],
+        "resultDirectory": "newResults/IID/A_clean_no_attack_ce_100r_gpu",
+        "ringOrder": "fixed_0_to_9",
+        "roundEvaluationMetrics": true,
+        "runId": "A_iid_basil_clean_no_attack_ce_100r_gpu",
+        "schemaVersion": 5,
+        "seed": 2025,
+        "sigmaApproval": "a_priori_calibration_0.010",
+        "snapshotAnchorMu": 0,
+        "snapshotAnchorMuMax": 0,
+        "snapshotPlausibilityGuard": "none",
+        "snapshotSelection": true,
+        "snapshotSelectionRule": "lowest_receiver_local_loss",
+        "useBasil": true,
+        "useChannelNoise": false,
+        "weightDecayCoefficient": 0
+      },
+      "accuracy": {
+        "final": 0.5882999897003174,
+        "best": 0.5882999897003174,
+        "bestRound": 99,
+        "round49": 0.5504000186920166,
+        "mean0_19": 0.3560300000011921,
+        "mean20_79": 0.5398666674892107,
+        "mean20_99": 0.5497200001031161,
+        "mean80_89": 0.5755299925804138,
+        "mean90_99": 0.5830300033092499,
+        "lateChange": 0.007500010728836104,
+        "lateSlope": 0.0006757891715917321,
+        "round19": 0.4408999979496002,
+        "round20": 0.4779999852180481,
+        "round21": 0.4733000099658966,
+        "maxPostDropFromRound19": -0.024399995803833008
+      },
+      "finalMean": 0.5825099945068359,
+      "finalWorst": 0.5699999928474426,
+      "finalLoss": 1.1811904153823853,
+      "perClass": [
+        0.6399999856948853,
+        0.6809999942779541,
+        0.47099998593330383,
+        0.36500000953674316,
+        0.5320000052452087,
+        0.5189999938011169,
+        0.7089999914169312,
+        0.6039999723434448,
+        0.6919999718666077,
+        0.6700000166893005
+      ],
+      "perNode": [
+        0.5699999928474426,
+        0.57669997215271,
+        0.5863999724388123,
+        0.5856000185012817,
+        0.5813999772071838,
+        0.5819000005722046,
+        0.5879999995231628,
+        0.5805000066757202,
+        0.5863000154495239,
+        0.5882999897003174
+      ],
+      "nodeStd": 0.005464516580104828,
+      "nodeSpread": 0.018299996852874756,
+      "designatedSelections": 0,
+      "corruptedSelections": 0,
+      "corruptedReceivers": [],
+      "corruptedRounds": [],
+      "postDesignatedSelections": 0,
+      "selectionCounts": [
+        104,
+        78,
+        118,
+        117,
+        117,
+        91,
+        77,
+        78,
+        85,
+        135
+      ],
+      "selectionDistances": [
+        0,
+        242,
+        184,
+        203,
+        165,
+        206
+      ],
+      "selectionTies": 1,
+      "snapshotAges": {
+        "mean": 0.28928928928928926,
+        "min": 0,
+        "max": 1,
+        "median": 0,
+        "p95": 1
+      },
+      "partitionHistogram": [
+        [
+          515,
+          493,
+          490,
+          461,
+          477,
+          494,
+          522,
+          527,
+          527,
+          494
+        ],
+        [
+          521,
+          485,
+          450,
+          494,
+          505,
+          507,
+          497,
+          512,
+          532,
+          497
+        ],
+        [
+          484,
+          480,
+          511,
+          496,
+          484,
+          523,
+          493,
+          514,
+          500,
+          515
+        ],
+        [
+          488,
+          511,
+          487,
+          541,
+          501,
+          503,
+          518,
+          466,
+          497,
+          488
+        ],
+        [
+          477,
+          497,
+          532,
+          508,
+          523,
+          489,
+          477,
+          495,
+          470,
+          532
+        ],
+        [
+          525,
+          512,
+          503,
+          470,
+          473,
+          500,
+          511,
+          494,
+          530,
+          482
+        ],
+        [
+          501,
+          489,
+          499,
+          500,
+          545,
+          477,
+          495,
+          489,
+          514,
+          491
+        ],
+        [
+          484,
+          517,
+          519,
+          530,
+          478,
+          489,
+          503,
+          487,
+          469,
+          524
+        ],
+        [
+          514,
+          499,
+          510,
+          489,
+          537,
+          497,
+          496,
+          508,
+          459,
+          491
+        ],
+        [
+          491,
+          517,
+          499,
+          511,
+          477,
+          521,
+          488,
+          508,
+          502,
+          486
+        ]
+      ],
+      "partitionBytesHash": "db79edd6b35d709b0a40fcc9ca5b5253e1da52a414cfba30a87de6aff4339b29",
+      "dataAugmentationDigest": "ccda0799bc77e7753e56679a3a7566162c200bf203e6798461121fbc157dc3b0",
+      "batches": 50000,
+      "unchangedUpdates": 0,
+      "transmissions": 5000,
+      "checkpointWeightStates": 10,
+      "predictionHistogram": [
+        1039,
+        1002,
+        942,
+        825,
+        919,
+        1009,
+        1069,
+        941,
+        1117,
+        1137
+      ],
+      "confusion": [
+        [
+          640,
+          47,
+          64,
+          15,
+          14,
+          7,
+          10,
+          11,
+          152,
+          40
+        ],
+        [
+          41,
+          681,
+          15,
+          15,
+          9,
+          12,
+          12,
+          12,
+          54,
+          149
+        ],
+        [
+          80,
+          16,
+          471,
+          61,
+          98,
+          90,
+          77,
+          48,
+          27,
+          32
+        ],
+        [
+          24,
+          21,
+          97,
+          365,
+          67,
+          198,
+          99,
+          55,
+          30,
+          44
+        ],
+        [
+          33,
+          17,
+          82,
+          58,
+          532,
+          41,
+          96,
+          88,
+          36,
+          17
+        ],
+        [
+          17,
+          12,
+          85,
+          155,
+          43,
+          519,
+          32,
+          77,
+          20,
+          40
+        ],
+        [
+          6,
+          10,
+          63,
+          70,
+          69,
+          27,
+          709,
+          23,
+          7,
+          16
+        ],
+        [
+          44,
+          22,
+          33,
+          49,
+          62,
+          90,
+          15,
+          604,
+          15,
+          66
+        ],
+        [
+          119,
+          55,
+          16,
+          17,
+          14,
+          13,
+          5,
+          6,
+          692,
+          63
+        ],
+        [
+          35,
+          121,
+          16,
+          20,
+          11,
+          12,
+          14,
+          17,
+          84,
+          670
+        ]
+      ],
+      "roundAggregates": {
+        "full_test_accuracy": {
+          "mean": 0.5109820000827312,
+          "min": 0.14000000059604645,
+          "max": 0.5882999897003174,
+          "median": 0.5498499870300293,
+          "p95": 0.5827000141143799
+        },
+        "mean_node_accuracy": {
+          "mean": 0.5073147020488977,
+          "min": 0.1171099916100502,
+          "max": 0.5836799740791321,
+          "median": 0.5465100109577179,
+          "p95": 0.5822240024805069
+        },
+        "worst_node_accuracy": {
+          "mean": 0.49227300062775614,
+          "min": 0.09839999675750732,
+          "max": 0.5800999999046326,
+          "median": 0.5333000123500824,
+          "p95": 0.5756250262260437
+        },
+        "full_test_loss": {
+          "mean": 1.3734525531291961,
+          "min": 1.1811904153823853,
+          "max": 2.2885935821533203,
+          "median": 1.2831061725616455,
+          "p95": 1.8831537210845946
+        },
+        "class_0_accuracy": {
+          "mean": 0.5532300010323524,
+          "min": 0.10899999737739563,
+          "max": 0.7440000176429749,
+          "median": 0.5774999856948853,
+          "p95": 0.6905999988317489
+        },
+        "class_1_accuracy": {
+          "mean": 0.6253000022470951,
+          "min": 0.13199999928474426,
+          "max": 0.7620000243186951,
+          "median": 0.656499981880188,
+          "p95": 0.721050015091896
+        },
+        "class_2_accuracy": {
+          "mean": 0.383469999069348,
+          "min": 0.00800000037997961,
+          "max": 0.5370000004768372,
+          "median": 0.42149999737739563,
+          "p95": 0.5111999779939651
+        },
+        "class_3_accuracy": {
+          "mean": 0.27404999965219756,
+          "min": 0,
+          "max": 0.39500001072883606,
+          "median": 0.3114999979734421,
+          "p95": 0.3790500074625015
+        },
+        "class_4_accuracy": {
+          "mean": 0.4032399979303591,
+          "min": 0.0010000000474974513,
+          "max": 0.5979999899864197,
+          "median": 0.46800000965595245,
+          "p95": 0.5622499763965606
+        },
+        "class_5_accuracy": {
+          "mean": 0.4648500011255965,
+          "min": 0.003000000026077032,
+          "max": 0.6000000238418579,
+          "median": 0.4724999964237213,
+          "p95": 0.5571499824523926
+        },
+        "class_6_accuracy": {
+          "mean": 0.6926400017738342,
+          "min": 0,
+          "max": 0.8489999771118164,
+          "median": 0.7149999737739563,
+          "p95": 0.8151999980211257
+        },
+        "class_7_accuracy": {
+          "mean": 0.5292899982631206,
+          "min": 0,
+          "max": 0.6859999895095825,
+          "median": 0.5645000040531158,
+          "p95": 0.633100014925003
+        },
+        "class_8_accuracy": {
+          "mean": 0.6309499983489514,
+          "min": 0,
+          "max": 0.7889999747276306,
+          "median": 0.6639999747276306,
+          "p95": 0.76039999127388
+        },
+        "class_9_accuracy": {
+          "mean": 0.5527999997138977,
+          "min": 0.1770000010728836,
+          "max": 0.7279999852180481,
+          "median": 0.5724999904632568,
+          "p95": 0.6961999803781509
+        },
+        "mean_local_ce": {
+          "mean": 1.4123324716835788,
+          "min": 1.2233108626060485,
+          "max": 2.2984838609924316,
+          "median": 1.3232306867961885,
+          "p95": 1.9221177595649714
+        },
+        "honest_selection_rate": {
+          "mean": 1,
+          "min": 1,
+          "max": 1,
+          "median": 1,
+          "p95": 1
+        },
+        "byzantine_selection_rate": {
+          "mean": 0,
+          "min": 0,
+          "max": 0,
+          "median": 0,
+          "p95": 0
+        },
+        "attacked_source_selection_rate": {
+          "mean": 0,
+          "min": 0,
+          "max": 0,
+          "median": 0,
+          "p95": 0
+        },
+        "mean_snapshot_age": {
+          "mean": 0.2889999999999999,
+          "min": 0,
+          "max": 0.5,
+          "median": 0.3,
+          "p95": 0.5
+        },
+        "ebm_penalty": {
+          "mean": 0,
+          "min": 0,
+          "max": 0,
+          "median": 0,
+          "p95": 0
+        },
+        "ordinary_gradient_norm": {
+          "mean": 2.034520628647096,
+          "min": 0.06051518637314439,
+          "max": 2.3074318872690203,
+          "median": 2.120782324373722,
+          "p95": 2.2644734060883525
+        },
+        "ebm_correction_norm": {
+          "mean": 0,
+          "min": 0,
+          "max": 0,
+          "median": 0,
+          "p95": 0
+        },
+        "ebm_correction_ratio": {
+          "mean": 0,
+          "min": 0,
+          "max": 0,
+          "median": 0,
+          "p95": 0
+        },
+        "channel_noise_norm": {
+          "mean": 0,
+          "min": 0,
+          "max": 0,
+          "median": 0,
+          "p95": 0
+        },
+        "noise_to_model_norm_ratio": {
+          "mean": 0,
+          "min": 0,
+          "max": 0,
+          "median": 0,
+          "p95": 0
+        }
+      },
+      "stepAggregates": {
+        "baseCrossEntropy": {
+          "mean": 1.4123384431910515,
+          "min": 1.034685730934143,
+          "max": 2.341050148010254,
+          "median": 1.3361846804618835,
+          "p95": 1.952839988470077
+        },
+        "trainingBatchAccuracy": {
+          "mean": 0.49417783217519523,
+          "min": 0.060546875,
+          "max": 0.6581632494926453,
+          "median": 0.525390625,
+          "p95": 0.5867347121238708
+        },
+        "ebmPenalty": {
+          "mean": 0,
+          "min": 0,
+          "max": 0,
+          "median": 0,
+          "p95": 0
+        },
+        "baseGradientNorm": {
+          "mean": 2.0345206286470963,
+          "min": 0.0247510839253664,
+          "max": 6.217327117919922,
+          "median": 1.9613752961158752,
+          "p95": 3.3769102334976178
+        },
+        "ebmCorrectionNorm": {
+          "mean": 0,
+          "min": 0,
+          "max": 0,
+          "median": 0,
+          "p95": 0
+        },
+        "ebmCorrectionRatio": {
+          "mean": 0,
+          "min": 0,
+          "max": 0,
+          "median": 0,
+          "p95": 0
+        },
+        "robustObjectiveGradientNorm": {
+          "mean": 2.0345206286470963,
+          "min": 0.0247510839253664,
+          "max": 6.217327117919922,
+          "median": 1.9613752961158752,
+          "p95": 3.3769102334976178
+        },
+        "parameterNorm": {
+          "mean": 18.102630314094974,
+          "min": 15.079364323149592,
+          "max": 19.209699466262045,
+          "median": 18.446978073510227,
+          "p95": 19.146485703013898
+        }
+      },
+      "lateStepAggregates": {
+        "baseCrossEntropy": {
+          "mean": 1.2298183455705642,
+          "min": 1.034685730934143,
+          "max": 1.448667287826538,
+          "median": 1.228618323802948,
+          "p95": 1.3147243082523346
+        },
+        "trainingBatchAccuracy": {
+          "mean": 0.5679378670692444,
+          "min": 0.46875,
+          "max": 0.6581632494926453,
+          "median": 0.568359375,
+          "p95": 0.60546875
+        },
+        "ebmPenalty": {
+          "mean": 0,
+          "min": 0,
+          "max": 0,
+          "median": 0,
+          "p95": 0
+        },
+        "ebmCorrectionRatio": {
+          "mean": 0,
+          "min": 0,
+          "max": 0,
+          "median": 0,
+          "p95": 0
+        }
+      },
+      "noiseStats": {
+        "noiseL2Norm": {
+          "mean": 0,
+          "min": 0,
+          "max": 0,
+          "median": 0,
+          "p95": 0
+        },
+        "relativeNoiseL2": {
+          "mean": 0,
+          "min": 0,
+          "max": 0,
+          "median": 0,
+          "p95": 0
+        },
+        "modelL2Norm": {
+          "mean": 18.107792434007216,
+          "min": 15.079648897383766,
+          "max": 19.209699466262045,
+          "median": 18.450550506954873,
+          "p95": 19.146953600721297
+        }
+      },
+      "noiseHonest": {
+        "mean": 0,
+        "min": 0,
+        "max": 0,
+        "median": 0,
+        "p95": 0
+      },
+      "noiseAttacked": null,
+      "failureFiles": [],
+      "maxCorrectionContext": {
+        "round": 0,
+        "node": 0,
+        "epoch": 1,
+        "batch": 0,
+        "samples": 512,
+        "baseCrossEntropy": 2.3033578395843506,
+        "gradientNormSquared": 0.002137326868250966,
+        "ebmObjective": 2.3033578395843506,
+        "ebmCoefficient": 0,
+        "effectiveCoordinateSigma": 0,
+        "baseGradientNorm": 0.0462312325835228,
+        "robustObjectiveGradientNorm": 0.0462312325835228,
+        "ebmCorrectionNorm": 0,
+        "trainingBatchAccuracy": 0.07421875,
+        "parameterNorm": 15.079369585484937,
+        "ebmPenalty": 0,
+        "ebmCorrectionRatio": 0,
+        "configuredSigma": 0,
+        "sigmaSquared": 0
+      }
+    },
+    "B": {
+      "folder": "B_attack_clean_ce_100r_gpu",
+      "manifest": {
+        "S": 5,
+        "actualAttackerCount": 4,
+        "attackActiveActivations": 320,
+        "attackStartRound": 20,
+        "attackType": "delayed_hidden_parameter_attack_v1",
+        "attackerSeed": 2025,
+        "augmentationSeed": 2025,
+        "b": 4,
+        "batchSize": 512,
+        "bestAverageAccuracy": 0.5775600075721741,
+        "bestFullTestAccuracy": 0.5835999846458435,
+        "bestFullTestRound": 95,
+        "bestRound": 98,
+        "channelNoiseSeed": 2025,
+        "channelNoiseSemantics": "paper_absolute_gaussian",
+        "completedRounds": 100,
+        "conditionId": "B",
+        "dataSha256": {
+          "testImagesHash": "dac0788d34d9b59a63f3a2d46655800799e0ceae172f8a5a455435e765308fec",
+          "testLabelsHash": "ba952d26b7b18c07e2fbc1bbeffd492695c3d5b6363c6bc27cafc278ce907b57",
+          "trainImagesHash": "d19735cf221788d49df2f38c4d3af9071706747477a27e6989c36f7de8d73f05",
+          "trainLabelsHash": "4c9831f34f3dce6c71f21ea7cb5a9dd00a3eb96ee17d068a26a939cf1df79df4"
+        },
+        "device": "GPU",
+        "deviceName": "NVIDIA GeForce RTX 4070 Ti",
+        "ebmMode": "none",
+        "evaluationClassCounts": [
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000
+        ],
+        "evaluationSamples": 10000,
+        "executionMode": "deterministic_single_process",
+        "executionStartMode": "fresh",
+        "experimentName": "B_iid_basil_attack_clean_ce_100r_gpu",
+        "experimentProtocol": "sequential_basil_iid_v1",
+        "finalAverageAccuracy": 0.5763800144195557,
+        "finalFullTestAccuracy": 0.5831999778747559,
+        "finalWorstAccuracy": 0.569100022315979,
+        "fullDatasetPartitionHash": "db79edd6b35d709b0a40fcc9ca5b5253e1da52a414cfba30a87de6aff4339b29",
+        "gitCommit": "09132877c69473785bbd9f6eb8b69538e663db32",
+        "gitWorktreeDirty": true,
+        "gpuVerificationScope": "synthetic batch CE/EBM, SGD, evaluation and same-device repeatability",
+        "gpuVerified": true,
+        "hiddenAttackParameters": {
+          "attackStrength": 1.4,
+          "blendRatio": 0.55
+        },
+        "iidCampaignId": "iid_abcd_100r_v1",
+        "iidPartitionHash": "db79edd6b35d709b0a40fcc9ca5b5253e1da52a414cfba30a87de6aff4339b29",
+        "implementationSha256": {
+          "basil_core/attacks.py": "f1123cc3276b3f655f8fe0feab6b3b34758c1588445d5d38fab2ace89dd70c18",
+          "basil_core/data/cifar.py": "9697daf5f7e0007c56c182c5ef8d611c3b73e30a4fefb5b50812a56248006a4a",
+          "basil_core/iid_study.py": "1ebbd15859abdb9e027bc04c17ab2e2cbbc86825a02a9ee93b3eadeaa7e7af08",
+          "basil_core/models.py": "e1428016bef1169414dc0c8f3d765128a930715cd3395e5ab1e1f95087ee0cef",
+          "basil_core/research_audit.py": "4c0bba2f51869416fbc22332cd421dd7cd0cfa27c7ec35d64629a6fc0c2b27e7",
+          "basil_core/research_protocol.py": "fb5644947641d23054854798f3c3f4fe9e7ef6ccdffc1f1d357c18f90b65b913",
+          "basil_core/trainer.py": "b04ff4e9c850e8e69e9afc6a8c9428a8ada73184fa88ec1a3a2e0f85a2ac5a8b",
+          "scripts/run_iid_basil_pair.py": "3f92654692e4133612239891f1ff4a08ff61f32d69a44c78f8d1b086e04bce39"
+        },
+        "initialGlobalAccuracy": 0.0901,
+        "initialModelHash": "7c717dbbd9bd1f2f230b1ff3d288bd8fec33dcd3ec730eb43e8a14e496cdc2df",
+        "initializationSeed": 480415301,
+        "interOpThreads": 1,
+        "intraOpThreads": 1,
+        "latestRound": {
+          "attacked_source_selection_rate": 0,
+          "byzantine_selection_rate": 0,
+          "channel_noise_norm": 0,
+          "class_0_accuracy": 0.6259999871253967,
+          "class_1_accuracy": 0.6869999766349792,
+          "class_2_accuracy": 0.47600001096725464,
+          "class_3_accuracy": 0.3709999918937683,
+          "class_4_accuracy": 0.5130000114440918,
+          "class_5_accuracy": 0.5080000162124634,
+          "class_6_accuracy": 0.7009999752044678,
+          "class_7_accuracy": 0.597000002861023,
+          "class_8_accuracy": 0.6909999847412109,
+          "class_9_accuracy": 0.6620000004768372,
+          "ebm_correction_norm": 0,
+          "ebm_correction_ratio": 0,
+          "ebm_penalty": 0,
+          "full_test_accuracy": 0.5831999778747559,
+          "full_test_loss": 1.1993617725372314,
+          "honest_selection_rate": 1,
+          "mean_local_ce": 1.2400785970077515,
+          "mean_node_accuracy": 0.5763800144195557,
+          "mean_snapshot_age": 0.4,
+          "noise_to_model_norm_ratio": 0,
+          "ordinary_gradient_norm": 2.1325555090904236,
+          "round": 99,
+          "worst_node_accuracy": 0.569100022315979
+        },
+        "learningRate": 0.05,
+        "learningRateSchedule": "basil_round_decay",
+        "legacyLambdaIgnored": true,
+        "localEpochs": 5,
+        "localObjective": "cross_entropy",
+        "localSampleCounts": [
+          5000,
+          5000,
+          5000,
+          5000,
+          5000,
+          5000,
+          5000,
+          5000,
+          5000,
+          5000
+        ],
+        "metricDefinitions": {
+          "full_test_accuracy": "End-of-ring Node 9 honest trained model on all 10000 test images, before outbound noise",
+          "full_test_loss": "Mean full-test CE of end-of-ring Node 9 model",
+          "mean_node_accuracy": "Arithmetic mean of full-test accuracy of ten stored node trained states; no model averaging",
+          "per_class_accuracy": "Node 9 class-conditional full-test accuracy",
+          "worst_node_accuracy": "Minimum full-test accuracy of ten stored node trained states"
+        },
+        "multiprocessingUsed": false,
+        "nNodes": 10,
+        "nRounds": 100,
+        "numericalExecution": {
+          "cudaVersion": "12.5.1",
+          "cudnnVersion": "9",
+          "device": "GPU",
+          "gpuMemoryLimitMb": 4096,
+          "gpuName": "NVIDIA GeForce RTX 4070 Ti",
+          "gpuWorkerSha256": "6fdf21ca164bb7c79bbe05fa42325e2592d2a128b42aa34995c03f10d90f0f0f",
+          "interOpThreads": 1,
+          "intraOpThreads": 1,
+          "policyRevision": "iid_serial_float32_v1",
+          "tensorFloat32": false,
+          "tensorflowVersion": "2.18.0"
+        },
+        "optimizer": "sgd",
+        "partitionSeed": 2025,
+        "prePostChannelAccuracy": "not_measured; channel norms and hashes are recorded per link",
+        "preflightChecks": {
+          "accuracyAboveInitialization": true,
+          "attackSchedule": true,
+          "basilSelectionMinimum": true,
+          "channelSchedule": true,
+          "coefficient": true,
+          "finiteTraining": true,
+          "fiveFullEpochs": true,
+          "rollingDistinctMemory": true
+        },
+        "preflightPassed": true,
+        "pythonVersion": "3.12.3",
+        "researchValid": true,
+        "resolvedAttackerIds": [
+          0,
+          1,
+          5,
+          7
+        ],
+        "resumeSupported": true,
+        "rngDerivation": "SHA256(seed|stream|round|node|epoch|batch or sender|receiver), separate streams",
+        "runtimeSeconds": 4617.344673246003,
+        "seed": 2025,
+        "seedStreams": {
+          "attacker": 2025,
+          "augmentation": 2025,
+          "initialization": 2025,
+          "partition": 2025,
+          "shuffle": 2025
+        },
+        "selectedByzantine": 73,
+        "selectedHonest": 927,
+        "shuffleSeed": 2025,
+        "sigmaChoiceReason": "A-priori moderate middle calibration value; explicitly authorized before Test 2 outcomes",
+        "sigma_e": 0,
+        "sigma_e_squared": 0,
+        "status": "completed",
+        "tensorflowDevice": "/GPU:0",
+        "tensorflowVersion": "2.18.0",
+        "timestamp": "2026-10-07T07:56:46.821630+00:00",
+        "trainingSamplesUsed": 50000
+      },
+      "config": {
+        "actualAttackerCount": 4,
+        "adaptiveWeightDecayMode": "off",
+        "aggregationMode": "strict_sequential_handoff",
+        "approach": "basil",
+        "assumedByzantineCount": 4,
+        "attackHidden": true,
+        "attackHiddenStart": 20,
+        "attackStartRound": 20,
+        "attackType": "delayed_hidden_parameter_attack_v1",
+        "attackerCount": 4,
+        "attackerIds": "0,1,5,7",
+        "attackerSelection": "seeded_random_without_replacement",
+        "attackerSelectionSeed": 2025,
+        "augmentation": "seeded_flip_pad_crop",
+        "authorizedByzantineCount": 4,
+        "basilMemorySize": 5,
+        "batchSize": 512,
+        "channelNoiseSemantics": "paper_absolute_gaussian",
+        "channelNoiseSigmaAbsolute": 0,
+        "channelNoiseSigmaRelative": 0,
+        "channelNoiseStartRound": 0,
+        "classAssignment": "partition_rng",
+        "comparisonPlotsDirectory": "newPlots/IID/ABCD_100r_comparison_gpu",
+        "comparisonResultsDirectory": "newResults/IID/ABCD_100r_comparison_gpu",
+        "conditionId": "B",
+        "dataset": "cifar10",
+        "dirichletAlpha": 0.2,
+        "displayName": "B — Attack / Clean channel / CE — Fresh R0→R99 — GPU",
+        "ebmCoefficientSemantics": "channel_coordinate_variance",
+        "ebmMode": "none",
+        "epochSemantics": "full_local_dataset",
+        "executionDevice": "GPU",
+        "executionMode": "deterministic_single_process_gpu",
+        "executionStartMode": "fresh",
+        "expectedInitialModelHash": "7c717dbbd9bd1f2f230b1ff3d288bd8fec33dcd3ec730eb43e8a14e496cdc2df",
+        "expectedPartitionHash": "db79edd6b35d709b0a40fcc9ca5b5253e1da52a414cfba30a87de6aff4339b29",
+        "experimentName": "B_iid_basil_attack_clean_ce_100r_gpu",
+        "experimentProtocol": "sequential_basil_iid_v1",
+        "gradientClipNorm": null,
+        "iidCampaignId": "iid_abcd_100r_v1",
+        "learningRate": 0.05,
+        "learningRateSchedule": "basil_round_decay",
+        "localEpochs": 5,
+        "localObjective": "cross_entropy",
+        "modelArchitecture": "basil_paper_cnn",
+        "momentum": 0,
+        "monteCarloNoiseSamples": 0,
+        "nNodes": 10,
+        "nRounds": 100,
+        "nonIID": false,
+        "optimizer": "sgd",
+        "optimizerStateMode": "reset_each_activation",
+        "partitionStrategy": "iid",
+        "plotDirectory": "newPlots/IID/B_attack_clean_ce_100r_gpu",
+        "protocolRevision": "iid_basil_source_ebm_v1",
+        "purpose": "iid_abcd_research",
+        "researchValid": true,
+        "resolvedAttackerIds": [
+          0,
+          1,
+          5,
+          7
+        ],
+        "resultDirectory": "newResults/IID/B_attack_clean_ce_100r_gpu",
+        "ringOrder": "fixed_0_to_9",
+        "roundEvaluationMetrics": true,
+        "runId": "B_iid_basil_attack_clean_ce_100r_gpu",
+        "schemaVersion": 5,
+        "seed": 2025,
+        "sigmaApproval": "a_priori_calibration_0.010",
+        "snapshotAnchorMu": 0,
+        "snapshotAnchorMuMax": 0,
+        "snapshotPlausibilityGuard": "none",
+        "snapshotSelection": true,
+        "snapshotSelectionRule": "lowest_receiver_local_loss",
+        "useBasil": true,
+        "useChannelNoise": false,
+        "weightDecayCoefficient": 0
+      },
+      "accuracy": {
+        "final": 0.5831999778747559,
+        "best": 0.5835999846458435,
+        "bestRound": 95,
+        "round49": 0.5400000214576721,
+        "mean0_19": 0.3560300000011921,
+        "mean20_79": 0.5355416675408681,
+        "mean20_99": 0.5448862493038178,
+        "mean80_89": 0.5691199898719788,
+        "mean90_99": 0.5767199993133545,
+        "lateChange": 0.007600009441375732,
+        "lateSlope": 0.0006906771122064804,
+        "round19": 0.4408999979496002,
+        "round20": 0.47530001401901245,
+        "round21": 0.47620001435279846,
+        "maxPostDropFromRound19": -0.021699994802474976
+      },
+      "finalMean": 0.5763800144195557,
+      "finalWorst": 0.569100022315979,
+      "finalLoss": 1.1993617725372314,
+      "perClass": [
+        0.6259999871253967,
+        0.6869999766349792,
+        0.47600001096725464,
+        0.3709999918937683,
+        0.5130000114440918,
+        0.5080000162124634,
+        0.7009999752044678,
+        0.597000002861023,
+        0.6909999847412109,
+        0.6620000004768372
+      ],
+      "perNode": [
+        0.569100022315979,
+        0.5710999965667725,
+        0.5745000243186951,
+        0.582099974155426,
+        0.5785999894142151,
+        0.5734999775886536,
+        0.57669997215271,
+        0.5730000138282776,
+        0.5820000171661377,
+        0.5831999778747559
+      ],
+      "nodeStd": 0.004690151195973158,
+      "nodeSpread": 0.014099955558776855,
+      "designatedSelections": 73,
+      "corruptedSelections": 0,
+      "corruptedReceivers": [],
+      "corruptedRounds": [],
+      "postDesignatedSelections": 0,
+      "selectionCounts": [
+        14,
+        17,
+        159,
+        154,
+        154,
+        22,
+        104,
+        20,
+        145,
+        211
+      ],
+      "selectionDistances": [
+        0,
+        258,
+        214,
+        189,
+        164,
+        175
+      ],
+      "selectionTies": 1,
+      "snapshotAges": {
+        "mean": 0.36236236236236236,
+        "min": 0,
+        "max": 1,
+        "median": 0,
+        "p95": 1
+      },
+      "partitionHistogram": [
+        [
+          515,
+          493,
+          490,
+          461,
+          477,
+          494,
+          522,
+          527,
+          527,
+          494
+        ],
+        [
+          521,
+          485,
+          450,
+          494,
+          505,
+          507,
+          497,
+          512,
+          532,
+          497
+        ],
+        [
+          484,
+          480,
+          511,
+          496,
+          484,
+          523,
+          493,
+          514,
+          500,
+          515
+        ],
+        [
+          488,
+          511,
+          487,
+          541,
+          501,
+          503,
+          518,
+          466,
+          497,
+          488
+        ],
+        [
+          477,
+          497,
+          532,
+          508,
+          523,
+          489,
+          477,
+          495,
+          470,
+          532
+        ],
+        [
+          525,
+          512,
+          503,
+          470,
+          473,
+          500,
+          511,
+          494,
+          530,
+          482
+        ],
+        [
+          501,
+          489,
+          499,
+          500,
+          545,
+          477,
+          495,
+          489,
+          514,
+          491
+        ],
+        [
+          484,
+          517,
+          519,
+          530,
+          478,
+          489,
+          503,
+          487,
+          469,
+          524
+        ],
+        [
+          514,
+          499,
+          510,
+          489,
+          537,
+          497,
+          496,
+          508,
+          459,
+          491
+        ],
+        [
+          491,
+          517,
+          499,
+          511,
+          477,
+          521,
+          488,
+          508,
+          502,
+          486
+        ]
+      ],
+      "partitionBytesHash": "db79edd6b35d709b0a40fcc9ca5b5253e1da52a414cfba30a87de6aff4339b29",
+      "dataAugmentationDigest": "ccda0799bc77e7753e56679a3a7566162c200bf203e6798461121fbc157dc3b0",
+      "batches": 50000,
+      "unchangedUpdates": 0,
+      "transmissions": 5000,
+      "checkpointWeightStates": 14,
+      "predictionHistogram": [
+        1008,
+        1021,
+        957,
+        830,
+        930,
+        997,
+        1064,
+        948,
+        1123,
+        1122
+      ],
+      "confusion": [
+        [
+          626,
+          45,
+          75,
+          15,
+          15,
+          6,
+          10,
+          9,
+          156,
+          43
+        ],
+        [
+          46,
+          687,
+          16,
+          13,
+          7,
+          15,
+          12,
+          14,
+          53,
+          137
+        ],
+        [
+          77,
+          20,
+          476,
+          58,
+          94,
+          95,
+          78,
+          40,
+          31,
+          31
+        ],
+        [
+          23,
+          22,
+          85,
+          371,
+          76,
+          192,
+          94,
+          60,
+          34,
+          43
+        ],
+        [
+          34,
+          13,
+          83,
+          67,
+          513,
+          37,
+          102,
+          96,
+          38,
+          17
+        ],
+        [
+          12,
+          12,
+          88,
+          154,
+          52,
+          508,
+          34,
+          78,
+          22,
+          40
+        ],
+        [
+          2,
+          8,
+          65,
+          68,
+          81,
+          27,
+          701,
+          25,
+          6,
+          17
+        ],
+        [
+          38,
+          28,
+          37,
+          43,
+          70,
+          94,
+          12,
+          597,
+          13,
+          68
+        ],
+        [
+          116,
+          58,
+          14,
+          22,
+          12,
+          9,
+          6,
+          8,
+          691,
+          64
+        ],
+        [
+          34,
+          128,
+          18,
+          19,
+          10,
+          14,
+          15,
+          21,
+          79,
+          662
+        ]
+      ],
+      "roundAggregates": {
+        "full_test_accuracy": {
+          "mean": 0.5071149994432926,
+          "min": 0.14000000059604645,
+          "max": 0.5835999846458435,
+          "median": 0.5427500009536743,
+          "p95": 0.5773250102996826
+        },
+        "mean_node_accuracy": {
+          "mean": 0.5036237043887377,
+          "min": 0.1171099916100502,
+          "max": 0.5775600075721741,
+          "median": 0.5400199890136719,
+          "p95": 0.5761899828910828
+        },
+        "worst_node_accuracy": {
+          "mean": 0.48845599934458733,
+          "min": 0.09839999675750732,
+          "max": 0.5738000273704529,
+          "median": 0.5275499820709229,
+          "p95": 0.568809974193573
+        },
+        "full_test_loss": {
+          "mean": 1.3850465875816347,
+          "min": 1.1993617725372314,
+          "max": 2.2885935821533203,
+          "median": 1.3008168482780458,
+          "p95": 1.8831537210845946
+        },
+        "class_0_accuracy": {
+          "mean": 0.545480001270771,
+          "min": 0.10899999737739563,
+          "max": 0.7459999918937683,
+          "median": 0.5689999759197235,
+          "p95": 0.6852000027894973
+        },
+        "class_1_accuracy": {
+          "mean": 0.6267700015008449,
+          "min": 0.13199999928474426,
+          "max": 0.7620000243186951,
+          "median": 0.6570000052452087,
+          "p95": 0.7221000015735626
+        },
+        "class_2_accuracy": {
+          "mean": 0.38258000009693205,
+          "min": 0.00800000037997961,
+          "max": 0.5410000085830688,
+          "median": 0.42249999940395355,
+          "p95": 0.5080500155687332
+        },
+        "class_3_accuracy": {
+          "mean": 0.2777699998894241,
+          "min": 0,
+          "max": 0.41499999165534973,
+          "median": 0.31450000405311584,
+          "p95": 0.39315000623464585
+        },
+        "class_4_accuracy": {
+          "mean": 0.39418000117642804,
+          "min": 0.0010000000474974513,
+          "max": 0.6029999852180481,
+          "median": 0.46150000393390656,
+          "p95": 0.5441500276327134
+        },
+        "class_5_accuracy": {
+          "mean": 0.45854000040795656,
+          "min": 0.003000000026077032,
+          "max": 0.6000000238418579,
+          "median": 0.46399998664855957,
+          "p95": 0.5450000166893005
+        },
+        "class_6_accuracy": {
+          "mean": 0.6870899993181229,
+          "min": 0,
+          "max": 0.8420000076293945,
+          "median": 0.7069999873638153,
+          "p95": 0.8190500050783157
+        },
+        "class_7_accuracy": {
+          "mean": 0.5266199980676174,
+          "min": 0,
+          "max": 0.6890000104904175,
+          "median": 0.5580000281333923,
+          "p95": 0.6273499757051467
+        },
+        "class_8_accuracy": {
+          "mean": 0.6261399991810321,
+          "min": 0,
+          "max": 0.7900000214576721,
+          "median": 0.6489999890327454,
+          "p95": 0.7630000114440918
+        },
+        "class_9_accuracy": {
+          "mean": 0.5459800004959107,
+          "min": 0.1770000010728836,
+          "max": 0.7250000238418579,
+          "median": 0.5659999847412109,
+          "p95": 0.6941000044345855
+        },
+        "mean_local_ce": {
+          "mean": 1.4235203402878571,
+          "min": 1.2400785970077515,
+          "max": 2.2984838609924316,
+          "median": 1.3401495201950073,
+          "p95": 1.9221177595649714
+        },
+        "honest_selection_rate": {
+          "mean": 0.927,
+          "min": 0.2,
+          "max": 1,
+          "median": 1,
+          "p95": 1
+        },
+        "byzantine_selection_rate": {
+          "mean": 0.07300000000000001,
+          "min": 0,
+          "max": 0.8,
+          "median": 0,
+          "p95": 0.4099999999999995
+        },
+        "attacked_source_selection_rate": {
+          "mean": 0,
+          "min": 0,
+          "max": 0,
+          "median": 0,
+          "p95": 0
+        },
+        "mean_snapshot_age": {
+          "mean": 0.36199999999999993,
+          "min": 0,
+          "max": 0.5,
+          "median": 0.4,
+          "p95": 0.5
+        },
+        "ebm_penalty": {
+          "mean": 0,
+          "min": 0,
+          "max": 0,
+          "median": 0,
+          "p95": 0
+        },
+        "ordinary_gradient_norm": {
+          "mean": 2.0433883386318756,
+          "min": 0.06051518637314439,
+          "max": 2.376049345254898,
+          "median": 2.1103320567607877,
+          "p95": 2.3013313019096855
+        },
+        "ebm_correction_norm": {
+          "mean": 0,
+          "min": 0,
+          "max": 0,
+          "median": 0,
+          "p95": 0
+        },
+        "ebm_correction_ratio": {
+          "mean": 0,
+          "min": 0,
+          "max": 0,
+          "median": 0,
+          "p95": 0
+        },
+        "channel_noise_norm": {
+          "mean": 0,
+          "min": 0,
+          "max": 0,
+          "median": 0,
+          "p95": 0
+        },
+        "noise_to_model_norm_ratio": {
+          "mean": 0,
+          "min": 0,
+          "max": 0,
+          "median": 0,
+          "p95": 0
+        }
+      },
+      "stepAggregates": {
+        "baseCrossEntropy": {
+          "mean": 1.4235238981556892,
+          "min": 1.071553349494934,
+          "max": 2.341050148010254,
+          "median": 1.3517677187919617,
+          "p95": 1.952839988470077
+        },
+        "trainingBatchAccuracy": {
+          "mean": 0.4898011021921039,
+          "min": 0.060546875,
+          "max": 0.6632652878761292,
+          "median": 0.51953125,
+          "p95": 0.580078125
+        },
+        "ebmPenalty": {
+          "mean": 0,
+          "min": 0,
+          "max": 0,
+          "median": 0,
+          "p95": 0
+        },
+        "baseGradientNorm": {
+          "mean": 2.0433883386318756,
+          "min": 0.0247510839253664,
+          "max": 6.3433122634887695,
+          "median": 1.9662503004074097,
+          "p95": 3.4056636333465575
+        },
+        "ebmCorrectionNorm": {
+          "mean": 0,
+          "min": 0,
+          "max": 0,
+          "median": 0,
+          "p95": 0
+        },
+        "ebmCorrectionRatio": {
+          "mean": 0,
+          "min": 0,
+          "max": 0,
+          "median": 0,
+          "p95": 0
+        },
+        "robustObjectiveGradientNorm": {
+          "mean": 2.0433883386318756,
+          "min": 0.0247510839253664,
+          "max": 6.3433122634887695,
+          "median": 1.9662503004074097,
+          "p95": 3.4056636333465575
+        },
+        "parameterNorm": {
+          "mean": 18.043561751442112,
+          "min": 15.079364323149592,
+          "max": 19.11567667528837,
+          "median": 18.356869899366444,
+          "p95": 19.057546148606615
+        }
+      },
+      "lateStepAggregates": {
+        "baseCrossEntropy": {
+          "mean": 1.2472726561784744,
+          "min": 1.0719796419143677,
+          "max": 1.4519360065460205,
+          "median": 1.246966302394867,
+          "p95": 1.3346550643444062
+        },
+        "trainingBatchAccuracy": {
+          "mean": 0.5614204241633415,
+          "min": 0.4765625,
+          "max": 0.6632652878761292,
+          "median": 0.5625,
+          "p95": 0.599609375
+        },
+        "ebmPenalty": {
+          "mean": 0,
+          "min": 0,
+          "max": 0,
+          "median": 0,
+          "p95": 0
+        },
+        "ebmCorrectionRatio": {
+          "mean": 0,
+          "min": 0,
+          "max": 0,
+          "median": 0,
+          "p95": 0
+        }
+      },
+      "noiseStats": {
+        "noiseL2Norm": {
+          "mean": 0,
+          "min": 0,
+          "max": 0,
+          "median": 0,
+          "p95": 0
+        },
+        "relativeNoiseL2": {
+          "mean": 0,
+          "min": 0,
+          "max": 0,
+          "median": 0,
+          "p95": 0
+        },
+        "modelL2Norm": {
+          "mean": 14.036628344809372,
+          "min": 5.589722797641406,
+          "max": 19.11560745504461,
+          "median": 17.257362447415506,
+          "p95": 19.02053448455526
+        }
+      },
+      "noiseHonest": {
+        "mean": 0,
+        "min": 0,
+        "max": 0,
+        "median": 0,
+        "p95": 0
+      },
+      "noiseAttacked": {
+        "mean": 0,
+        "min": 0,
+        "max": 0,
+        "median": 0,
+        "p95": 0
+      },
+      "failureFiles": [],
+      "maxCorrectionContext": {
+        "round": 0,
+        "node": 0,
+        "epoch": 1,
+        "batch": 0,
+        "samples": 512,
+        "baseCrossEntropy": 2.3033578395843506,
+        "gradientNormSquared": 0.002137326868250966,
+        "ebmObjective": 2.3033578395843506,
+        "ebmCoefficient": 0,
+        "effectiveCoordinateSigma": 0,
+        "baseGradientNorm": 0.0462312325835228,
+        "robustObjectiveGradientNorm": 0.0462312325835228,
+        "ebmCorrectionNorm": 0,
+        "trainingBatchAccuracy": 0.07421875,
+        "parameterNorm": 15.079369585484937,
+        "ebmPenalty": 0,
+        "ebmCorrectionRatio": 0,
+        "configuredSigma": 0,
+        "sigmaSquared": 0
+      }
+    },
+    "C": {
+      "folder": "C_attack_noise_ce_100r_gpu",
+      "manifest": {
+        "S": 5,
+        "actualAttackerCount": 4,
+        "attackActiveActivations": 320,
+        "attackStartRound": 20,
+        "attackType": "delayed_hidden_parameter_attack_v1",
+        "attackerSeed": 2025,
+        "augmentationSeed": 2025,
+        "b": 4,
+        "batchSize": 512,
+        "bestAverageAccuracy": 0.5125299692153931,
+        "bestFullTestAccuracy": 0.5175999999046326,
+        "bestFullTestRound": 65,
+        "bestRound": 41,
+        "channelNoiseSeed": 2025,
+        "channelNoiseSemantics": "paper_absolute_gaussian",
+        "completedRounds": 100,
+        "conditionId": "C",
+        "dataSha256": {
+          "testImagesHash": "dac0788d34d9b59a63f3a2d46655800799e0ceae172f8a5a455435e765308fec",
+          "testLabelsHash": "ba952d26b7b18c07e2fbc1bbeffd492695c3d5b6363c6bc27cafc278ce907b57",
+          "trainImagesHash": "d19735cf221788d49df2f38c4d3af9071706747477a27e6989c36f7de8d73f05",
+          "trainLabelsHash": "4c9831f34f3dce6c71f21ea7cb5a9dd00a3eb96ee17d068a26a939cf1df79df4"
+        },
+        "device": "GPU",
+        "deviceName": "NVIDIA GeForce RTX 4070 Ti",
+        "ebmMode": "none",
+        "evaluationClassCounts": [
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000
+        ],
+        "evaluationSamples": 10000,
+        "executionMode": "deterministic_single_process",
+        "executionStartMode": "fresh",
+        "experimentName": "C_iid_basil_attack_noise_ce_100r_gpu",
+        "experimentProtocol": "sequential_basil_iid_v1",
+        "finalAverageAccuracy": 0.501069962978363,
+        "finalFullTestAccuracy": 0.5008999705314636,
+        "finalWorstAccuracy": 0.49630001187324524,
+        "fullDatasetPartitionHash": "db79edd6b35d709b0a40fcc9ca5b5253e1da52a414cfba30a87de6aff4339b29",
+        "gitCommit": "09132877c69473785bbd9f6eb8b69538e663db32",
+        "gitWorktreeDirty": true,
+        "gpuVerificationScope": "synthetic batch CE/EBM, SGD, evaluation and same-device repeatability",
+        "gpuVerified": true,
+        "hiddenAttackParameters": {
+          "attackStrength": 1.4,
+          "blendRatio": 0.55
+        },
+        "iidCampaignId": "iid_abcd_100r_v1",
+        "iidPartitionHash": "db79edd6b35d709b0a40fcc9ca5b5253e1da52a414cfba30a87de6aff4339b29",
+        "implementationSha256": {
+          "basil_core/attacks.py": "f1123cc3276b3f655f8fe0feab6b3b34758c1588445d5d38fab2ace89dd70c18",
+          "basil_core/data/cifar.py": "9697daf5f7e0007c56c182c5ef8d611c3b73e30a4fefb5b50812a56248006a4a",
+          "basil_core/iid_study.py": "1ebbd15859abdb9e027bc04c17ab2e2cbbc86825a02a9ee93b3eadeaa7e7af08",
+          "basil_core/models.py": "e1428016bef1169414dc0c8f3d765128a930715cd3395e5ab1e1f95087ee0cef",
+          "basil_core/research_audit.py": "4c0bba2f51869416fbc22332cd421dd7cd0cfa27c7ec35d64629a6fc0c2b27e7",
+          "basil_core/research_protocol.py": "fb5644947641d23054854798f3c3f4fe9e7ef6ccdffc1f1d357c18f90b65b913",
+          "basil_core/trainer.py": "b04ff4e9c850e8e69e9afc6a8c9428a8ada73184fa88ec1a3a2e0f85a2ac5a8b",
+          "scripts/run_iid_basil_pair.py": "3f92654692e4133612239891f1ff4a08ff61f32d69a44c78f8d1b086e04bce39"
+        },
+        "initialGlobalAccuracy": 0.0901,
+        "initialModelHash": "7c717dbbd9bd1f2f230b1ff3d288bd8fec33dcd3ec730eb43e8a14e496cdc2df",
+        "initializationSeed": 480415301,
+        "interOpThreads": 1,
+        "intraOpThreads": 1,
+        "latestRound": {
+          "attacked_source_selection_rate": 0,
+          "byzantine_selection_rate": 0,
+          "channel_noise_norm": 3.4308205289257283,
+          "class_0_accuracy": 0.5929999947547913,
+          "class_1_accuracy": 0.6110000014305115,
+          "class_2_accuracy": 0.42399999499320984,
+          "class_3_accuracy": 0.3100000023841858,
+          "class_4_accuracy": 0.3720000088214874,
+          "class_5_accuracy": 0.4659999907016754,
+          "class_6_accuracy": 0.6380000114440918,
+          "class_7_accuracy": 0.5429999828338623,
+          "class_8_accuracy": 0.5460000038146973,
+          "class_9_accuracy": 0.5059999823570251,
+          "ebm_correction_norm": 0,
+          "ebm_correction_ratio": 0,
+          "ebm_penalty": 0,
+          "full_test_accuracy": 0.5008999705314636,
+          "full_test_loss": 1.4045843631744386,
+          "honest_selection_rate": 1,
+          "mean_local_ce": 1.4620944298591614,
+          "mean_node_accuracy": 0.501069962978363,
+          "mean_snapshot_age": 0.3,
+          "noise_to_model_norm_ratio": 0.09929735605298871,
+          "ordinary_gradient_norm": 3.0475880951881407,
+          "round": 99,
+          "worst_node_accuracy": 0.49630001187324524
+        },
+        "learningRate": 0.05,
+        "learningRateSchedule": "basil_round_decay",
+        "legacyLambdaIgnored": true,
+        "localEpochs": 5,
+        "localObjective": "cross_entropy",
+        "localSampleCounts": [
+          5000,
+          5000,
+          5000,
+          5000,
+          5000,
+          5000,
+          5000,
+          5000,
+          5000,
+          5000
+        ],
+        "metricDefinitions": {
+          "full_test_accuracy": "End-of-ring Node 9 honest trained model on all 10000 test images, before outbound noise",
+          "full_test_loss": "Mean full-test CE of end-of-ring Node 9 model",
+          "mean_node_accuracy": "Arithmetic mean of full-test accuracy of ten stored node trained states; no model averaging",
+          "per_class_accuracy": "Node 9 class-conditional full-test accuracy",
+          "worst_node_accuracy": "Minimum full-test accuracy of ten stored node trained states"
+        },
+        "multiprocessingUsed": false,
+        "nNodes": 10,
+        "nRounds": 100,
+        "numericalExecution": {
+          "cudaVersion": "12.5.1",
+          "cudnnVersion": "9",
+          "device": "GPU",
+          "gpuMemoryLimitMb": 4096,
+          "gpuName": "NVIDIA GeForce RTX 4070 Ti",
+          "gpuWorkerSha256": "6fdf21ca164bb7c79bbe05fa42325e2592d2a128b42aa34995c03f10d90f0f0f",
+          "interOpThreads": 1,
+          "intraOpThreads": 1,
+          "policyRevision": "iid_serial_float32_v1",
+          "tensorFloat32": false,
+          "tensorflowVersion": "2.18.0"
+        },
+        "optimizer": "sgd",
+        "partitionSeed": 2025,
+        "prePostChannelAccuracy": "not_measured; channel norms and hashes are recorded per link",
+        "preflightChecks": {
+          "accuracyAboveInitialization": true,
+          "attackSchedule": true,
+          "basilSelectionMinimum": true,
+          "channelSchedule": true,
+          "coefficient": true,
+          "finiteTraining": true,
+          "fiveFullEpochs": true,
+          "rollingDistinctMemory": true
+        },
+        "preflightPassed": true,
+        "pythonVersion": "3.12.3",
+        "researchValid": true,
+        "resolvedAttackerIds": [
+          0,
+          1,
+          5,
+          7
+        ],
+        "resumeSupported": true,
+        "rngDerivation": "SHA256(seed|stream|round|node|epoch|batch or sender|receiver), separate streams",
+        "runtimeSeconds": 4647.561312651,
+        "seed": 2025,
+        "seedStreams": {
+          "attacker": 2025,
+          "augmentation": 2025,
+          "initialization": 2025,
+          "partition": 2025,
+          "shuffle": 2025
+        },
+        "selectedByzantine": 74,
+        "selectedHonest": 926,
+        "shuffleSeed": 2025,
+        "sigmaChoiceReason": "A-priori moderate middle calibration value; explicitly authorized before Test 2 outcomes",
+        "sigma_e": 0.01,
+        "sigma_e_squared": 0.0001,
+        "status": "completed",
+        "tensorflowDevice": "/GPU:0",
+        "tensorflowVersion": "2.18.0",
+        "timestamp": "2026-10-07T09:13:52.418498+00:00",
+        "trainingSamplesUsed": 50000
+      },
+      "config": {
+        "actualAttackerCount": 4,
+        "adaptiveWeightDecayMode": "off",
+        "aggregationMode": "strict_sequential_handoff",
+        "approach": "basil",
+        "assumedByzantineCount": 4,
+        "attackHidden": true,
+        "attackHiddenStart": 20,
+        "attackStartRound": 20,
+        "attackType": "delayed_hidden_parameter_attack_v1",
+        "attackerCount": 4,
+        "attackerIds": "0,1,5,7",
+        "attackerSelection": "seeded_random_without_replacement",
+        "attackerSelectionSeed": 2025,
+        "augmentation": "seeded_flip_pad_crop",
+        "authorizedByzantineCount": 4,
+        "basilMemorySize": 5,
+        "batchSize": 512,
+        "channelNoiseSemantics": "paper_absolute_gaussian",
+        "channelNoiseSigmaAbsolute": 0.01,
+        "channelNoiseSigmaRelative": 0,
+        "channelNoiseStartRound": 0,
+        "classAssignment": "partition_rng",
+        "comparisonPlotsDirectory": "newPlots/IID/ABCD_100r_comparison_gpu",
+        "comparisonResultsDirectory": "newResults/IID/ABCD_100r_comparison_gpu",
+        "conditionId": "C",
+        "dataset": "cifar10",
+        "dirichletAlpha": 0.2,
+        "displayName": "C — Attack / Noise sigma 0.010 / CE — Fresh R0→R99 — GPU",
+        "ebmCoefficientSemantics": "channel_coordinate_variance",
+        "ebmMode": "none",
+        "epochSemantics": "full_local_dataset",
+        "executionDevice": "GPU",
+        "executionMode": "deterministic_single_process_gpu",
+        "executionStartMode": "fresh",
+        "expectedInitialModelHash": "7c717dbbd9bd1f2f230b1ff3d288bd8fec33dcd3ec730eb43e8a14e496cdc2df",
+        "expectedPartitionHash": "db79edd6b35d709b0a40fcc9ca5b5253e1da52a414cfba30a87de6aff4339b29",
+        "experimentName": "C_iid_basil_attack_noise_ce_100r_gpu",
+        "experimentProtocol": "sequential_basil_iid_v1",
+        "gradientClipNorm": null,
+        "iidCampaignId": "iid_abcd_100r_v1",
+        "learningRate": 0.05,
+        "learningRateSchedule": "basil_round_decay",
+        "localEpochs": 5,
+        "localObjective": "cross_entropy",
+        "modelArchitecture": "basil_paper_cnn",
+        "momentum": 0,
+        "monteCarloNoiseSamples": 0,
+        "nNodes": 10,
+        "nRounds": 100,
+        "nonIID": false,
+        "optimizer": "sgd",
+        "optimizerStateMode": "reset_each_activation",
+        "partitionStrategy": "iid",
+        "plotDirectory": "newPlots/IID/C_attack_noise_ce_100r_gpu",
+        "protocolRevision": "iid_basil_source_ebm_v1",
+        "purpose": "iid_abcd_research",
+        "researchValid": true,
+        "resolvedAttackerIds": [
+          0,
+          1,
+          5,
+          7
+        ],
+        "resultDirectory": "newResults/IID/C_attack_noise_ce_100r_gpu",
+        "ringOrder": "fixed_0_to_9",
+        "roundEvaluationMetrics": true,
+        "runId": "C_iid_basil_attack_noise_ce_100r_gpu",
+        "schemaVersion": 5,
+        "seed": 2025,
+        "sigmaApproval": "a_priori_calibration_0.010",
+        "snapshotAnchorMu": 0,
+        "snapshotAnchorMuMax": 0,
+        "snapshotPlausibilityGuard": "none",
+        "snapshotSelection": true,
+        "snapshotSelectionRule": "lowest_receiver_local_loss",
+        "useBasil": true,
+        "useChannelNoise": true,
+        "weightDecayCoefficient": 0
+      },
+      "accuracy": {
+        "final": 0.5008999705314636,
+        "best": 0.5175999999046326,
+        "bestRound": 65,
+        "round49": 0.5162000060081482,
+        "mean0_19": 0.4013600006699562,
+        "mean20_79": 0.5060949996113777,
+        "mean20_99": 0.5040699992328882,
+        "mean80_89": 0.49678000509738923,
+        "mean90_99": 0.49920999109745023,
+        "lateChange": 0.002429986000061002,
+        "lateSlope": 0.0002492469952518712,
+        "round19": 0.46799999475479126,
+        "round20": 0.4932999908924103,
+        "round21": 0.492900013923645,
+        "maxPostDropFromRound19": -0.015900015830993652
+      },
+      "finalMean": 0.501069962978363,
+      "finalWorst": 0.49630001187324524,
+      "finalLoss": 1.4045843631744386,
+      "perClass": [
+        0.5929999947547913,
+        0.6110000014305115,
+        0.42399999499320984,
+        0.3100000023841858,
+        0.3720000088214874,
+        0.4659999907016754,
+        0.6380000114440918,
+        0.5429999828338623,
+        0.5460000038146973,
+        0.5059999823570251
+      ],
+      "perNode": [
+        0.49630001187324524,
+        0.5045999884605408,
+        0.5069000124931335,
+        0.5037000179290771,
+        0.4966999888420105,
+        0.5005999803543091,
+        0.49790000915527344,
+        0.4975999891757965,
+        0.5055000185966492,
+        0.5008999705314636
+      ],
+      "nodeStd": 0.0037038002628833055,
+      "nodeSpread": 0.010600000619888306,
+      "designatedSelections": 74,
+      "corruptedSelections": 0,
+      "corruptedReceivers": [],
+      "corruptedRounds": [],
+      "postDesignatedSelections": 1,
+      "selectionCounts": [
+        20,
+        17,
+        162,
+        177,
+        140,
+        15,
+        123,
+        22,
+        136,
+        188
+      ],
+      "selectionDistances": [
+        0,
+        245,
+        178,
+        182,
+        201,
+        194
+      ],
+      "selectionTies": 3,
+      "snapshotAges": {
+        "mean": 0.35807422266800404,
+        "min": 0,
+        "max": 1,
+        "median": 0,
+        "p95": 1
+      },
+      "partitionHistogram": [
+        [
+          515,
+          493,
+          490,
+          461,
+          477,
+          494,
+          522,
+          527,
+          527,
+          494
+        ],
+        [
+          521,
+          485,
+          450,
+          494,
+          505,
+          507,
+          497,
+          512,
+          532,
+          497
+        ],
+        [
+          484,
+          480,
+          511,
+          496,
+          484,
+          523,
+          493,
+          514,
+          500,
+          515
+        ],
+        [
+          488,
+          511,
+          487,
+          541,
+          501,
+          503,
+          518,
+          466,
+          497,
+          488
+        ],
+        [
+          477,
+          497,
+          532,
+          508,
+          523,
+          489,
+          477,
+          495,
+          470,
+          532
+        ],
+        [
+          525,
+          512,
+          503,
+          470,
+          473,
+          500,
+          511,
+          494,
+          530,
+          482
+        ],
+        [
+          501,
+          489,
+          499,
+          500,
+          545,
+          477,
+          495,
+          489,
+          514,
+          491
+        ],
+        [
+          484,
+          517,
+          519,
+          530,
+          478,
+          489,
+          503,
+          487,
+          469,
+          524
+        ],
+        [
+          514,
+          499,
+          510,
+          489,
+          537,
+          497,
+          496,
+          508,
+          459,
+          491
+        ],
+        [
+          491,
+          517,
+          499,
+          511,
+          477,
+          521,
+          488,
+          508,
+          502,
+          486
+        ]
+      ],
+      "partitionBytesHash": "db79edd6b35d709b0a40fcc9ca5b5253e1da52a414cfba30a87de6aff4339b29",
+      "dataAugmentationDigest": "ccda0799bc77e7753e56679a3a7566162c200bf203e6798461121fbc157dc3b0",
+      "batches": 50000,
+      "unchangedUpdates": 0,
+      "transmissions": 5000,
+      "checkpointWeightStates": 60,
+      "predictionHistogram": [
+        1160,
+        972,
+        1128,
+        849,
+        737,
+        1194,
+        1131,
+        1075,
+        939,
+        815
+      ],
+      "confusion": [
+        [
+          593,
+          46,
+          97,
+          11,
+          17,
+          16,
+          20,
+          24,
+          150,
+          26
+        ],
+        [
+          90,
+          611,
+          31,
+          16,
+          7,
+          18,
+          28,
+          31,
+          59,
+          109
+        ],
+        [
+          80,
+          17,
+          424,
+          67,
+          77,
+          138,
+          94,
+          65,
+          22,
+          16
+        ],
+        [
+          25,
+          22,
+          115,
+          310,
+          55,
+          225,
+          123,
+          90,
+          19,
+          16
+        ],
+        [
+          30,
+          9,
+          126,
+          89,
+          372,
+          79,
+          141,
+          122,
+          22,
+          10
+        ],
+        [
+          21,
+          10,
+          127,
+          146,
+          45,
+          466,
+          33,
+          123,
+          12,
+          17
+        ],
+        [
+          5,
+          10,
+          85,
+          93,
+          79,
+          52,
+          638,
+          24,
+          5,
+          9
+        ],
+        [
+          36,
+          18,
+          60,
+          58,
+          58,
+          149,
+          22,
+          543,
+          15,
+          41
+        ],
+        [
+          213,
+          58,
+          32,
+          31,
+          15,
+          20,
+          10,
+          10,
+          546,
+          65
+        ],
+        [
+          67,
+          171,
+          31,
+          28,
+          12,
+          31,
+          22,
+          43,
+          89,
+          506
+        ]
+      ],
+      "roundAggregates": {
+        "full_test_accuracy": {
+          "mean": 0.48352799952030184,
+          "min": 0.12389999628067017,
+          "max": 0.5175999999046326,
+          "median": 0.5023499727249146,
+          "p95": 0.5132699847221375
+        },
+        "mean_node_accuracy": {
+          "mean": 0.48007489934563635,
+          "min": 0.11561000347137451,
+          "max": 0.5125299692153931,
+          "median": 0.5025200247764587,
+          "p95": 0.5097720354795456
+        },
+        "worst_node_accuracy": {
+          "mean": 0.4635640005767345,
+          "min": 0.09839999675750732,
+          "max": 0.5066999793052673,
+          "median": 0.48980000615119934,
+          "p95": 0.5019150167703629
+        },
+        "full_test_loss": {
+          "mean": 1.4530098495273591,
+          "min": 1.3673428281784057,
+          "max": 2.2941400871276856,
+          "median": 1.4046036869049072,
+          "p95": 1.7585512820911406
+        },
+        "class_0_accuracy": {
+          "mean": 0.5213299998268485,
+          "min": 0.017000000923871994,
+          "max": 0.7160000205039978,
+          "median": 0.535999983549118,
+          "p95": 0.6391999989748001
+        },
+        "class_1_accuracy": {
+          "mean": 0.5880299998819828,
+          "min": 0.1679999977350235,
+          "max": 0.7300000190734863,
+          "median": 0.601500004529953,
+          "p95": 0.7042499959468841
+        },
+        "class_2_accuracy": {
+          "mean": 0.39012000035494565,
+          "min": 0.019999999552965164,
+          "max": 0.5220000147819519,
+          "median": 0.4059999883174896,
+          "p95": 0.4770499974489212
+        },
+        "class_3_accuracy": {
+          "mean": 0.2726599995768629,
+          "min": 0.0020000000949949026,
+          "max": 0.4099999964237213,
+          "median": 0.28700000047683716,
+          "p95": 0.3720000088214874
+        },
+        "class_4_accuracy": {
+          "mean": 0.37148999931290744,
+          "min": 0,
+          "max": 0.49300000071525574,
+          "median": 0.3790000081062317,
+          "p95": 0.45505001246929166
+        },
+        "class_5_accuracy": {
+          "mean": 0.42662999994587153,
+          "min": 0.004000000189989805,
+          "max": 0.5699999928474426,
+          "median": 0.4424999952316284,
+          "p95": 0.5419999957084656
+        },
+        "class_6_accuracy": {
+          "mean": 0.6292299991846084,
+          "min": 0,
+          "max": 0.7879999876022339,
+          "median": 0.6504999995231628,
+          "p95": 0.7536000192165374
+        },
+        "class_7_accuracy": {
+          "mean": 0.5187199990451336,
+          "min": 0,
+          "max": 0.7020000219345093,
+          "median": 0.5304999947547913,
+          "p95": 0.6052000194787979
+        },
+        "class_8_accuracy": {
+          "mean": 0.5901799992611632,
+          "min": 0.003000000026077032,
+          "max": 0.7480000257492065,
+          "median": 0.6114999949932098,
+          "p95": 0.6923499733209609
+        },
+        "class_9_accuracy": {
+          "mean": 0.5268900029361248,
+          "min": 0.2160000056028366,
+          "max": 0.7440000176429749,
+          "median": 0.5394999980926514,
+          "p95": 0.6661500096321106
+        },
+        "mean_local_ce": {
+          "mean": 1.4979761083970258,
+          "min": 1.42470124105072,
+          "max": 2.300282079895019,
+          "median": 1.443617832162857,
+          "p95": 1.8028915229568478
+        },
+        "honest_selection_rate": {
+          "mean": 0.9259999999999999,
+          "min": 0.2,
+          "max": 1,
+          "median": 1,
+          "p95": 1
+        },
+        "byzantine_selection_rate": {
+          "mean": 0.07400000000000001,
+          "min": 0,
+          "max": 0.8,
+          "median": 0,
+          "p95": 0.4
+        },
+        "attacked_source_selection_rate": {
+          "mean": 0,
+          "min": 0,
+          "max": 0,
+          "median": 0,
+          "p95": 0
+        },
+        "mean_snapshot_age": {
+          "mean": 0.3569999999999998,
+          "min": 0,
+          "max": 0.5,
+          "median": 0.4,
+          "p95": 0.5
+        },
+        "ebm_penalty": {
+          "mean": 0,
+          "min": 0,
+          "max": 0,
+          "median": 0,
+          "p95": 0
+        },
+        "ordinary_gradient_norm": {
+          "mean": 2.343766668627933,
+          "min": 0.06047402558475733,
+          "max": 3.3983947188854216,
+          "median": 2.3062063852548595,
+          "p95": 3.112128130888939
+        },
+        "ebm_correction_norm": {
+          "mean": 0,
+          "min": 0,
+          "max": 0,
+          "median": 0,
+          "p95": 0
+        },
+        "ebm_correction_ratio": {
+          "mean": 0,
+          "min": 0,
+          "max": 0,
+          "median": 0,
+          "p95": 0
+        },
+        "channel_noise_norm": {
+          "mean": 3.430777872957902,
+          "min": 3.4286572651910485,
+          "max": 3.432758228871103,
+          "median": 3.4308045093270296,
+          "p95": 3.4322338264651484
+        },
+        "noise_to_model_norm_ratio": {
+          "mean": 0.12654283242200454,
+          "min": 0.09503636179335016,
+          "max": 0.2163493942986015,
+          "median": 0.12137318113148984,
+          "p95": 0.16701373557393107
+        }
+      },
+      "stepAggregates": {
+        "baseCrossEntropy": {
+          "mean": 1.4979618426847459,
+          "min": 1.221184253692627,
+          "max": 2.3042867183685303,
+          "median": 1.4583244323730469,
+          "p95": 1.8364840745925897
+        },
+        "trainingBatchAccuracy": {
+          "mean": 0.46322053885281084,
+          "min": 0.060546875,
+          "max": 0.581632673740387,
+          "median": 0.478515625,
+          "p95": 0.521484375
+        },
+        "ebmPenalty": {
+          "mean": 0,
+          "min": 0,
+          "max": 0,
+          "median": 0,
+          "p95": 0
+        },
+        "baseGradientNorm": {
+          "mean": 2.3437666686279326,
+          "min": 0.024901267141103745,
+          "max": 9.08588695526123,
+          "median": 2.206655740737915,
+          "p95": 3.9971158146858214
+        },
+        "ebmCorrectionNorm": {
+          "mean": 0,
+          "min": 0,
+          "max": 0,
+          "median": 0,
+          "p95": 0
+        },
+        "ebmCorrectionRatio": {
+          "mean": 0,
+          "min": 0,
+          "max": 0,
+          "median": 0,
+          "p95": 0
+        },
+        "robustObjectiveGradientNorm": {
+          "mean": 2.3437666686279326,
+          "min": 0.024901267141103745,
+          "max": 9.08588695526123,
+          "median": 2.206655740737915,
+          "p95": 3.9971158146858214
+        },
+        "parameterNorm": {
+          "mean": 46.62853323652445,
+          "min": 15.079358093402869,
+          "max": 63.871589031495496,
+          "median": 48.02728624063833,
+          "p95": 62.44337574216352
+        }
+      },
+      "lateStepAggregates": {
+        "baseCrossEntropy": {
+          "mean": 1.460346053647995,
+          "min": 1.2676334381103516,
+          "max": 1.7133586406707764,
+          "median": 1.458438754081726,
+          "p95": 1.5605295598506927
+        },
+        "trainingBatchAccuracy": {
+          "mean": 0.48097084668278695,
+          "min": 0.390625,
+          "max": 0.55859375,
+          "median": 0.48046875,
+          "p95": 0.521484375
+        },
+        "ebmPenalty": {
+          "mean": 0,
+          "min": 0,
+          "max": 0,
+          "median": 0,
+          "p95": 0
+        },
+        "ebmCorrectionRatio": {
+          "mean": 0,
+          "min": 0,
+          "max": 0,
+          "median": 0,
+          "p95": 0
+        }
+      },
+      "noiseStats": {
+        "noiseL2Norm": {
+          "mean": 3.430777872957902,
+          "min": 3.4059444663037697,
+          "max": 3.4554921243822814,
+          "median": 3.430683045191147,
+          "p95": 3.442407398320675
+        },
+        "relativeNoiseL2": {
+          "mean": 0.12654283242200454,
+          "min": 0.05358293907997138,
+          "max": 0.2961730482662592,
+          "median": 0.09646061801299997,
+          "p95": 0.2537798357667579
+        },
+        "modelL2Norm": {
+          "mean": 35.553802755172335,
+          "min": 11.614781629485533,
+          "max": 63.86826315983955,
+          "median": 35.601557568202395,
+          "p95": 61.227968288282966
+        }
+      },
+      "noiseHonest": {
+        "mean": 0.08506367091887332,
+        "min": 0.05358293907997138,
+        "max": 0.22807997526703286,
+        "median": 0.0753716527221894,
+        "p95": 0.14776782279511758
+      },
+      "noiseAttacked": {
+        "mean": 0.2146860506161584,
+        "min": 0.1668696349270339,
+        "max": 0.2961730482662592,
+        "median": 0.20777981561684608,
+        "p95": 0.28019619217452524
+      },
+      "failureFiles": [],
+      "maxCorrectionContext": {
+        "round": 0,
+        "node": 0,
+        "epoch": 1,
+        "batch": 0,
+        "samples": 512,
+        "baseCrossEntropy": 2.3033578395843506,
+        "gradientNormSquared": 0.002137326868250966,
+        "ebmObjective": 2.3033578395843506,
+        "ebmCoefficient": 0,
+        "effectiveCoordinateSigma": 0.009999999873689375,
+        "baseGradientNorm": 0.0462312325835228,
+        "robustObjectiveGradientNorm": 0.0462312325835228,
+        "ebmCorrectionNorm": 0,
+        "trainingBatchAccuracy": 0.07421875,
+        "parameterNorm": 15.079369585484937,
+        "ebmPenalty": 0,
+        "ebmCorrectionRatio": 0,
+        "configuredSigma": 0.01,
+        "sigmaSquared": 0.0001
+      }
+    },
+    "D": {
+      "folder": "D_attack_noise_ebm_100r_gpu",
+      "manifest": {
+        "S": 5,
+        "actualAttackerCount": 4,
+        "attackActiveActivations": 320,
+        "attackStartRound": 20,
+        "attackType": "delayed_hidden_parameter_attack_v1",
+        "attackerSeed": 2025,
+        "augmentationSeed": 2025,
+        "b": 4,
+        "batchSize": 512,
+        "bestAverageAccuracy": 0.5068100094795227,
+        "bestFullTestAccuracy": 0.5113999843597412,
+        "bestFullTestRound": 93,
+        "bestRound": 93,
+        "channelNoiseSeed": 2025,
+        "channelNoiseSemantics": "paper_absolute_gaussian",
+        "completedRounds": 100,
+        "conditionId": "D",
+        "dataSha256": {
+          "testImagesHash": "dac0788d34d9b59a63f3a2d46655800799e0ceae172f8a5a455435e765308fec",
+          "testLabelsHash": "ba952d26b7b18c07e2fbc1bbeffd492695c3d5b6363c6bc27cafc278ce907b57",
+          "trainImagesHash": "d19735cf221788d49df2f38c4d3af9071706747477a27e6989c36f7de8d73f05",
+          "trainLabelsHash": "4c9831f34f3dce6c71f21ea7cb5a9dd00a3eb96ee17d068a26a939cf1df79df4"
+        },
+        "device": "GPU",
+        "deviceName": "NVIDIA GeForce RTX 4070 Ti",
+        "ebmMode": "gradient_norm_objective",
+        "evaluationClassCounts": [
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000,
+          1000
+        ],
+        "evaluationSamples": 10000,
+        "executionMode": "deterministic_single_process",
+        "executionStartMode": "fresh",
+        "experimentName": "D_iid_basil_attack_noise_ebm_100r_gpu",
+        "experimentProtocol": "sequential_basil_iid_v1",
+        "finalAverageAccuracy": 0.497700035572052,
+        "finalFullTestAccuracy": 0.5026000142097473,
+        "finalWorstAccuracy": 0.4699999988079071,
+        "fullDatasetPartitionHash": "db79edd6b35d709b0a40fcc9ca5b5253e1da52a414cfba30a87de6aff4339b29",
+        "gitCommit": "09132877c69473785bbd9f6eb8b69538e663db32",
+        "gitWorktreeDirty": true,
+        "gpuVerificationScope": "synthetic batch CE/EBM, SGD, evaluation and same-device repeatability",
+        "gpuVerified": true,
+        "hiddenAttackParameters": {
+          "attackStrength": 1.4,
+          "blendRatio": 0.55
+        },
+        "iidCampaignId": "iid_abcd_100r_v1",
+        "iidPartitionHash": "db79edd6b35d709b0a40fcc9ca5b5253e1da52a414cfba30a87de6aff4339b29",
+        "implementationSha256": {
+          "basil_core/attacks.py": "f1123cc3276b3f655f8fe0feab6b3b34758c1588445d5d38fab2ace89dd70c18",
+          "basil_core/data/cifar.py": "9697daf5f7e0007c56c182c5ef8d611c3b73e30a4fefb5b50812a56248006a4a",
+          "basil_core/iid_study.py": "1ebbd15859abdb9e027bc04c17ab2e2cbbc86825a02a9ee93b3eadeaa7e7af08",
+          "basil_core/models.py": "e1428016bef1169414dc0c8f3d765128a930715cd3395e5ab1e1f95087ee0cef",
+          "basil_core/research_audit.py": "4c0bba2f51869416fbc22332cd421dd7cd0cfa27c7ec35d64629a6fc0c2b27e7",
+          "basil_core/research_protocol.py": "fb5644947641d23054854798f3c3f4fe9e7ef6ccdffc1f1d357c18f90b65b913",
+          "basil_core/trainer.py": "b04ff4e9c850e8e69e9afc6a8c9428a8ada73184fa88ec1a3a2e0f85a2ac5a8b",
+          "scripts/run_iid_basil_pair.py": "3f92654692e4133612239891f1ff4a08ff61f32d69a44c78f8d1b086e04bce39"
+        },
+        "initialGlobalAccuracy": 0.0901,
+        "initialModelHash": "7c717dbbd9bd1f2f230b1ff3d288bd8fec33dcd3ec730eb43e8a14e496cdc2df",
+        "initializationSeed": 480415301,
+        "interOpThreads": 1,
+        "intraOpThreads": 1,
+        "latestRound": {
+          "attacked_source_selection_rate": 0,
+          "byzantine_selection_rate": 0,
+          "channel_noise_norm": 3.4308205289257283,
+          "class_0_accuracy": 0.5519999861717224,
+          "class_1_accuracy": 0.5720000267028809,
+          "class_2_accuracy": 0.41999998688697815,
+          "class_3_accuracy": 0.2800000011920929,
+          "class_4_accuracy": 0.3700000047683716,
+          "class_5_accuracy": 0.5,
+          "class_6_accuracy": 0.5699999928474426,
+          "class_7_accuracy": 0.5720000267028809,
+          "class_8_accuracy": 0.6150000095367432,
+          "class_9_accuracy": 0.574999988079071,
+          "ebm_correction_norm": 0.09251108592696483,
+          "ebm_correction_ratio": 0.03115755174928497,
+          "ebm_penalty": 0.000860778223632453,
+          "full_test_accuracy": 0.5026000142097473,
+          "full_test_loss": 1.3944512392044068,
+          "honest_selection_rate": 1,
+          "mean_local_ce": 1.460745725391388,
+          "mean_node_accuracy": 0.497700035572052,
+          "mean_snapshot_age": 0.4,
+          "noise_to_model_norm_ratio": 0.09925893313321225,
+          "ordinary_gradient_norm": 2.7806739521026613,
+          "round": 99,
+          "worst_node_accuracy": 0.4699999988079071
+        },
+        "learningRate": 0.05,
+        "learningRateSchedule": "basil_round_decay",
+        "legacyLambdaIgnored": true,
+        "localEpochs": 5,
+        "localObjective": "source_ebm",
+        "localSampleCounts": [
+          5000,
+          5000,
+          5000,
+          5000,
+          5000,
+          5000,
+          5000,
+          5000,
+          5000,
+          5000
+        ],
+        "metricDefinitions": {
+          "full_test_accuracy": "End-of-ring Node 9 honest trained model on all 10000 test images, before outbound noise",
+          "full_test_loss": "Mean full-test CE of end-of-ring Node 9 model",
+          "mean_node_accuracy": "Arithmetic mean of full-test accuracy of ten stored node trained states; no model averaging",
+          "per_class_accuracy": "Node 9 class-conditional full-test accuracy",
+          "worst_node_accuracy": "Minimum full-test accuracy of ten stored node trained states"
+        },
+        "multiprocessingUsed": false,
+        "nNodes": 10,
+        "nRounds": 100,
+        "numericalExecution": {
+          "cudaVersion": "12.5.1",
+          "cudnnVersion": "9",
+          "device": "GPU",
+          "gpuMemoryLimitMb": 4096,
+          "gpuName": "NVIDIA GeForce RTX 4070 Ti",
+          "gpuWorkerSha256": "6fdf21ca164bb7c79bbe05fa42325e2592d2a128b42aa34995c03f10d90f0f0f",
+          "interOpThreads": 1,
+          "intraOpThreads": 1,
+          "policyRevision": "iid_serial_float32_v1",
+          "tensorFloat32": false,
+          "tensorflowVersion": "2.18.0"
+        },
+        "optimizer": "sgd",
+        "partitionSeed": 2025,
+        "prePostChannelAccuracy": "not_measured; channel norms and hashes are recorded per link",
+        "preflightChecks": {
+          "accuracyAboveInitialization": true,
+          "attackSchedule": true,
+          "basilSelectionMinimum": true,
+          "channelSchedule": true,
+          "coefficient": true,
+          "finiteTraining": true,
+          "fiveFullEpochs": true,
+          "rollingDistinctMemory": true
+        },
+        "preflightPassed": true,
+        "pythonVersion": "3.12.3",
+        "researchValid": true,
+        "resolvedAttackerIds": [
+          0,
+          1,
+          5,
+          7
+        ],
+        "resumeSupported": true,
+        "rngDerivation": "SHA256(seed|stream|round|node|epoch|batch or sender|receiver), separate streams",
+        "runtimeSeconds": 4605.3782777060005,
+        "seed": 2025,
+        "seedStreams": {
+          "attacker": 2025,
+          "augmentation": 2025,
+          "initialization": 2025,
+          "partition": 2025,
+          "shuffle": 2025
+        },
+        "selectedByzantine": 70,
+        "selectedHonest": 930,
+        "shuffleSeed": 2025,
+        "sigmaChoiceReason": "A-priori moderate middle calibration value; explicitly authorized before Test 2 outcomes",
+        "sigma_e": 0.01,
+        "sigma_e_squared": 0.0001,
+        "status": "completed",
+        "tensorflowDevice": "/GPU:0",
+        "tensorflowVersion": "2.18.0",
+        "timestamp": "2026-10-07T10:31:28.632550+00:00",
+        "trainingSamplesUsed": 50000
+      },
+      "config": {
+        "actualAttackerCount": 4,
+        "adaptiveWeightDecayMode": "off",
+        "aggregationMode": "strict_sequential_handoff",
+        "approach": "basil",
+        "assumedByzantineCount": 4,
+        "attackHidden": true,
+        "attackHiddenStart": 20,
+        "attackStartRound": 20,
+        "attackType": "delayed_hidden_parameter_attack_v1",
+        "attackerCount": 4,
+        "attackerIds": "0,1,5,7",
+        "attackerSelection": "seeded_random_without_replacement",
+        "attackerSelectionSeed": 2025,
+        "augmentation": "seeded_flip_pad_crop",
+        "authorizedByzantineCount": 4,
+        "basilMemorySize": 5,
+        "batchSize": 512,
+        "channelNoiseSemantics": "paper_absolute_gaussian",
+        "channelNoiseSigmaAbsolute": 0.01,
+        "channelNoiseSigmaRelative": 0,
+        "channelNoiseStartRound": 0,
+        "classAssignment": "partition_rng",
+        "comparisonPlotsDirectory": "newPlots/IID/ABCD_100r_comparison_gpu",
+        "comparisonResultsDirectory": "newResults/IID/ABCD_100r_comparison_gpu",
+        "conditionId": "D",
+        "dataset": "cifar10",
+        "dirichletAlpha": 0.2,
+        "displayName": "D — Attack / Noise sigma 0.010 / EBM — Fresh R0→R99 — GPU",
+        "ebmCoefficientSemantics": "channel_coordinate_variance",
+        "ebmMode": "gradient_norm_objective",
+        "epochSemantics": "full_local_dataset",
+        "executionDevice": "GPU",
+        "executionMode": "deterministic_single_process_gpu",
+        "executionStartMode": "fresh",
+        "expectedInitialModelHash": "7c717dbbd9bd1f2f230b1ff3d288bd8fec33dcd3ec730eb43e8a14e496cdc2df",
+        "expectedPartitionHash": "db79edd6b35d709b0a40fcc9ca5b5253e1da52a414cfba30a87de6aff4339b29",
+        "experimentName": "D_iid_basil_attack_noise_ebm_100r_gpu",
+        "experimentProtocol": "sequential_basil_iid_v1",
+        "gradientClipNorm": null,
+        "iidCampaignId": "iid_abcd_100r_v1",
+        "learningRate": 0.05,
+        "learningRateSchedule": "basil_round_decay",
+        "localEpochs": 5,
+        "localObjective": "source_ebm",
+        "modelArchitecture": "basil_paper_cnn",
+        "momentum": 0,
+        "monteCarloNoiseSamples": 0,
+        "nNodes": 10,
+        "nRounds": 100,
+        "nonIID": false,
+        "optimizer": "sgd",
+        "optimizerStateMode": "reset_each_activation",
+        "partitionStrategy": "iid",
+        "plotDirectory": "newPlots/IID/D_attack_noise_ebm_100r_gpu",
+        "protocolRevision": "iid_basil_source_ebm_v1",
+        "purpose": "iid_abcd_research",
+        "researchValid": true,
+        "resolvedAttackerIds": [
+          0,
+          1,
+          5,
+          7
+        ],
+        "resultDirectory": "newResults/IID/D_attack_noise_ebm_100r_gpu",
+        "ringOrder": "fixed_0_to_9",
+        "roundEvaluationMetrics": true,
+        "runId": "D_iid_basil_attack_noise_ebm_100r_gpu",
+        "schemaVersion": 5,
+        "seed": 2025,
+        "sigmaApproval": "a_priori_calibration_0.010",
+        "snapshotAnchorMu": 0,
+        "snapshotAnchorMuMax": 0,
+        "snapshotPlausibilityGuard": "none",
+        "snapshotSelection": true,
+        "snapshotSelectionRule": "lowest_receiver_local_loss",
+        "useBasil": true,
+        "useChannelNoise": true,
+        "weightDecayCoefficient": 0
+      },
+      "accuracy": {
+        "final": 0.5026000142097473,
+        "best": 0.5113999843597412,
+        "bestRound": 93,
+        "round49": 0.4982999861240387,
+        "mean0_19": 0.39061499647796155,
+        "mean20_79": 0.49459166526794435,
+        "mean20_99": 0.49665124900639057,
+        "mean80_89": 0.5006699949502945,
+        "mean90_99": 0.5049900054931641,
+        "lateChange": 0.004320010542869568,
+        "lateSlope": 0.0003763922847303172,
+        "round19": 0.45879998803138733,
+        "round20": 0.47209998965263367,
+        "round21": 0.47099998593330383,
+        "maxPostDropFromRound19": -0.012199997901916504
+      },
+      "finalMean": 0.497700035572052,
+      "finalWorst": 0.4699999988079071,
+      "finalLoss": 1.3944512392044068,
+      "perClass": [
+        0.5519999861717224,
+        0.5720000267028809,
+        0.41999998688697815,
+        0.2800000011920929,
+        0.3700000047683716,
+        0.5,
+        0.5699999928474426,
+        0.5720000267028809,
+        0.6150000095367432,
+        0.574999988079071
+      ],
+      "perNode": [
+        0.5069000124931335,
+        0.4966999888420105,
+        0.4950999915599823,
+        0.5115000009536743,
+        0.49380001425743103,
+        0.5052000284194946,
+        0.4909000098705292,
+        0.4699999988079071,
+        0.5042999982833862,
+        0.5026000142097473
+      ],
+      "nodeStd": 0.011114858090877533,
+      "nodeSpread": 0.04150000214576721,
+      "designatedSelections": 70,
+      "corruptedSelections": 0,
+      "corruptedReceivers": [],
+      "corruptedRounds": [],
+      "postDesignatedSelections": 1,
+      "selectionCounts": [
+        25,
+        11,
+        155,
+        157,
+        139,
+        17,
+        135,
+        17,
+        149,
+        195
+      ],
+      "selectionDistances": [
+        0,
+        226,
+        199,
+        203,
+        192,
+        180
+      ],
+      "selectionTies": 3,
+      "snapshotAges": {
+        "mean": 0.3691073219658977,
+        "min": 0,
+        "max": 1,
+        "median": 0,
+        "p95": 1
+      },
+      "partitionHistogram": [
+        [
+          515,
+          493,
+          490,
+          461,
+          477,
+          494,
+          522,
+          527,
+          527,
+          494
+        ],
+        [
+          521,
+          485,
+          450,
+          494,
+          505,
+          507,
+          497,
+          512,
+          532,
+          497
+        ],
+        [
+          484,
+          480,
+          511,
+          496,
+          484,
+          523,
+          493,
+          514,
+          500,
+          515
+        ],
+        [
+          488,
+          511,
+          487,
+          541,
+          501,
+          503,
+          518,
+          466,
+          497,
+          488
+        ],
+        [
+          477,
+          497,
+          532,
+          508,
+          523,
+          489,
+          477,
+          495,
+          470,
+          532
+        ],
+        [
+          525,
+          512,
+          503,
+          470,
+          473,
+          500,
+          511,
+          494,
+          530,
+          482
+        ],
+        [
+          501,
+          489,
+          499,
+          500,
+          545,
+          477,
+          495,
+          489,
+          514,
+          491
+        ],
+        [
+          484,
+          517,
+          519,
+          530,
+          478,
+          489,
+          503,
+          487,
+          469,
+          524
+        ],
+        [
+          514,
+          499,
+          510,
+          489,
+          537,
+          497,
+          496,
+          508,
+          459,
+          491
+        ],
+        [
+          491,
+          517,
+          499,
+          511,
+          477,
+          521,
+          488,
+          508,
+          502,
+          486
+        ]
+      ],
+      "partitionBytesHash": "db79edd6b35d709b0a40fcc9ca5b5253e1da52a414cfba30a87de6aff4339b29",
+      "dataAugmentationDigest": "ccda0799bc77e7753e56679a3a7566162c200bf203e6798461121fbc157dc3b0",
+      "batches": 50000,
+      "unchangedUpdates": 0,
+      "transmissions": 5000,
+      "checkpointWeightStates": 60,
+      "predictionHistogram": [
+        964,
+        987,
+        935,
+        878,
+        732,
+        1226,
+        937,
+        1086,
+        1164,
+        1091
+      ],
+      "confusion": [
+        [
+          552,
+          50,
+          64,
+          18,
+          12,
+          15,
+          13,
+          17,
+          215,
+          44
+        ],
+        [
+          51,
+          572,
+          19,
+          22,
+          6,
+          11,
+          9,
+          28,
+          88,
+          194
+        ],
+        [
+          74,
+          35,
+          420,
+          82,
+          92,
+          104,
+          64,
+          74,
+          31,
+          24
+        ],
+        [
+          25,
+          38,
+          79,
+          280,
+          58,
+          283,
+          97,
+          70,
+          26,
+          44
+        ],
+        [
+          26,
+          13,
+          120,
+          99,
+          370,
+          74,
+          112,
+          119,
+          42,
+          25
+        ],
+        [
+          16,
+          19,
+          84,
+          141,
+          44,
+          500,
+          39,
+          117,
+          15,
+          25
+        ],
+        [
+          9,
+          18,
+          73,
+          122,
+          87,
+          63,
+          570,
+          31,
+          6,
+          21
+        ],
+        [
+          24,
+          25,
+          43,
+          59,
+          47,
+          137,
+          12,
+          572,
+          19,
+          62
+        ],
+        [
+          139,
+          74,
+          18,
+          26,
+          10,
+          19,
+          8,
+          14,
+          615,
+          77
+        ],
+        [
+          48,
+          143,
+          15,
+          29,
+          6,
+          20,
+          13,
+          44,
+          107,
+          575
+        ]
+      ],
+      "roundAggregates": {
+        "full_test_accuracy": {
+          "mean": 0.4754439985007048,
+          "min": 0.12380000203847885,
+          "max": 0.5113999843597412,
+          "median": 0.49720001220703125,
+          "p95": 0.5071149855852127
+        },
+        "mean_node_accuracy": {
+          "mean": 0.4711076014488935,
+          "min": 0.11568000167608261,
+          "max": 0.5068100094795227,
+          "median": 0.49570000171661377,
+          "p95": 0.5035629808902741
+        },
+        "worst_node_accuracy": {
+          "mean": 0.45634699933230877,
+          "min": 0.09839999675750732,
+          "max": 0.5030999779701233,
+          "median": 0.48215000331401825,
+          "p95": 0.49594000428915025
+        },
+        "full_test_loss": {
+          "mean": 1.467086791051865,
+          "min": 1.382856202697754,
+          "max": 2.29413833694458,
+          "median": 1.4110445931434632,
+          "p95": 1.744205525074005
+        },
+        "class_0_accuracy": {
+          "mean": 0.5092300009354949,
+          "min": 0.017000000923871994,
+          "max": 0.6710000038146973,
+          "median": 0.5394999980926514,
+          "p95": 0.6292000085115432
+        },
+        "class_1_accuracy": {
+          "mean": 0.5751100006699562,
+          "min": 0.18299999833106995,
+          "max": 0.7549999952316284,
+          "median": 0.5875000059604645,
+          "p95": 0.6802000075578689
+        },
+        "class_2_accuracy": {
+          "mean": 0.37885999981313945,
+          "min": 0.019999999552965164,
+          "max": 0.5130000114440918,
+          "median": 0.398499995470047,
+          "p95": 0.47374999076128
+        },
+        "class_3_accuracy": {
+          "mean": 0.2760199995106086,
+          "min": 0.003000000026077032,
+          "max": 0.4350000023841858,
+          "median": 0.2919999957084656,
+          "p95": 0.38415000289678575
+        },
+        "class_4_accuracy": {
+          "mean": 0.362490001488477,
+          "min": 0,
+          "max": 0.49799999594688416,
+          "median": 0.3815000057220459,
+          "p95": 0.45704998821020126
+        },
+        "class_5_accuracy": {
+          "mean": 0.4330300017585978,
+          "min": 0.003000000026077032,
+          "max": 0.6499999761581421,
+          "median": 0.44050000607967377,
+          "p95": 0.5456500172615051
+        },
+        "class_6_accuracy": {
+          "mean": 0.6158799999952316,
+          "min": 0,
+          "max": 0.7730000019073486,
+          "median": 0.6155000030994415,
+          "p95": 0.7230499893426895
+        },
+        "class_7_accuracy": {
+          "mean": 0.5131499987840652,
+          "min": 0,
+          "max": 0.703000009059906,
+          "median": 0.5249999761581421,
+          "p95": 0.6090500265359878
+        },
+        "class_8_accuracy": {
+          "mean": 0.5915200004866347,
+          "min": 0.003000000026077032,
+          "max": 0.7450000047683716,
+          "median": 0.6060000061988831,
+          "p95": 0.694350004196167
+        },
+        "class_9_accuracy": {
+          "mean": 0.49915000289678574,
+          "min": 0.2409999966621399,
+          "max": 0.6830000281333923,
+          "median": 0.5104999840259552,
+          "p95": 0.6226499795913696
+        },
+        "mean_local_ce": {
+          "mean": 1.5162213479172513,
+          "min": 1.4422569245300294,
+          "max": 2.3002821214904787,
+          "median": 1.455971773103714,
+          "p95": 1.817371206679535
+        },
+        "honest_selection_rate": {
+          "mean": 0.93,
+          "min": 0.4,
+          "max": 1,
+          "median": 1,
+          "p95": 1
+        },
+        "byzantine_selection_rate": {
+          "mean": 0.07,
+          "min": 0,
+          "max": 0.6,
+          "median": 0,
+          "p95": 0.4
+        },
+        "attacked_source_selection_rate": {
+          "mean": 0,
+          "min": 0,
+          "max": 0,
+          "median": 0,
+          "p95": 0
+        },
+        "mean_snapshot_age": {
+          "mean": 0.368,
+          "min": 0,
+          "max": 0.5,
+          "median": 0.4,
+          "p95": 0.5
+        },
+        "ebm_penalty": {
+          "mean": 0.0005887882756212786,
+          "min": 3.895394623477401e-7,
+          "max": 0.0009616144023442723,
+          "median": 0.0005487343507546748,
+          "p95": 0.000860868118041746
+        },
+        "ordinary_gradient_norm": {
+          "mean": 2.2703630022844674,
+          "min": 0.060474787764251234,
+          "max": 2.951012447357178,
+          "median": 2.242804775118828,
+          "p95": 2.7731661998391153
+        },
+        "ebm_correction_norm": {
+          "mean": 0.04675721578400942,
+          "min": 0.0000024577605726663144,
+          "max": 0.09948366843447104,
+          "median": 0.04248271455556592,
+          "p95": 0.08525241843739922
+        },
+        "ebm_correction_ratio": {
+          "mean": 0.018385124154763628,
+          "min": 0.000038399583656717096,
+          "max": 0.03197668253054707,
+          "median": 0.017808165298242598,
+          "p95": 0.029015748728027622
+        },
+        "channel_noise_norm": {
+          "mean": 3.430777872957902,
+          "min": 3.4286572651910485,
+          "max": 3.432758228871103,
+          "median": 3.4308045093270296,
+          "p95": 3.4322338264651484
+        },
+        "noise_to_model_norm_ratio": {
+          "mean": 0.12805332209945236,
+          "min": 0.09925893313321225,
+          "max": 0.21634940303501835,
+          "median": 0.12191394016437898,
+          "p95": 0.1730044663162582
+        }
+      },
+      "stepAggregates": {
+        "baseCrossEntropy": {
+          "mean": 1.5161803178024291,
+          "min": 1.2565114498138428,
+          "max": 2.3142800331115723,
+          "median": 1.4749781489372253,
+          "p95": 1.850085473060607
+        },
+        "trainingBatchAccuracy": {
+          "mean": 0.45529001749709247,
+          "min": 0.060546875,
+          "max": 0.572265625,
+          "median": 0.4719387888908386,
+          "p95": 0.515625
+        },
+        "ebmPenalty": {
+          "mean": 0.0005887882756212786,
+          "min": 6.200704799784234e-8,
+          "max": 0.007935715284146105,
+          "median": 0.00046259218477847676,
+          "p95": 0.001468547307109137
+        },
+        "baseGradientNorm": {
+          "mean": 2.2703630022844674,
+          "min": 0.024901214987039566,
+          "max": 8.908262252807617,
+          "median": 2.1507954597473145,
+          "p95": 3.832162976264953
+        },
+        "ebmCorrectionNorm": {
+          "mean": 0.04675721578400941,
+          "min": 6.050673589776048e-7,
+          "max": 0.419621095732457,
+          "median": 0.03612487012031091,
+          "p95": 0.11949649321580452
+        },
+        "ebmCorrectionRatio": {
+          "mean": 0.018385124154763628,
+          "min": 0.000024015637223719503,
+          "max": 0.056457869692078895,
+          "median": 0.016825993846590122,
+          "p95": 0.034095842315278214
+        },
+        "robustObjectiveGradientNorm": {
+          "mean": 2.312014021527432,
+          "min": 0.024901609867811203,
+          "max": 9.316879272460938,
+          "median": 2.184019088745117,
+          "p95": 3.935853576660153
+        },
+        "parameterNorm": {
+          "mean": 46.26187687914087,
+          "min": 15.079358057477164,
+          "max": 63.91106125631197,
+          "median": 47.86319827616647,
+          "p95": 62.30733242070254
+        }
+      },
+      "lateStepAggregates": {
+        "baseCrossEntropy": {
+          "mean": 1.4575871883392335,
+          "min": 1.2704704999923706,
+          "max": 1.6968120336532593,
+          "median": 1.4559383392333984,
+          "p95": 1.551678967475891
+        },
+        "trainingBatchAccuracy": {
+          "mean": 0.48034786344766617,
+          "min": 0.390625,
+          "max": 0.572265625,
+          "median": 0.48046875,
+          "p95": 0.51953125
+        },
+        "ebmPenalty": {
+          "mean": 0.0008256695194588915,
+          "min": 0.00014737465009322624,
+          "max": 0.005872249073456265,
+          "median": 0.0006507754161466997,
+          "p95": 0.0019904741833437125
+        },
+        "ebmCorrectionRatio": {
+          "mean": 0.029388556858240315,
+          "min": 0.008628273899212198,
+          "max": 0.056457869692078895,
+          "median": 0.029650417651490568,
+          "p95": 0.04118819777705402
+        }
+      },
+      "noiseStats": {
+        "noiseL2Norm": {
+          "mean": 3.430777872957902,
+          "min": 3.4059444663037697,
+          "max": 3.4554921243822814,
+          "median": 3.430683045191147,
+          "p95": 3.442407398320675
+        },
+        "relativeNoiseL2": {
+          "mean": 0.12805332209945236,
+          "min": 0.053598700266909695,
+          "max": 0.3082118854756233,
+          "median": 0.10148194319116588,
+          "p95": 0.26230721864466205
+        },
+        "modelL2Norm": {
+          "mean": 35.23540663533551,
+          "min": 11.161297668681721,
+          "max": 63.908538062099616,
+          "median": 33.82017778192001,
+          "p95": 61.57350354235746
+        }
+      },
+      "noiseHonest": {
+        "mean": 0.08642289641823406,
+        "min": 0.053598700266909695,
+        "max": 0.22807997680551695,
+        "median": 0.07557819815969642,
+        "p95": 0.14777522178350624
+      },
+      "noiseAttacked": {
+        "mean": 0.21651797667204126,
+        "min": 0.16653033888007532,
+        "max": 0.3082118854756233,
+        "median": 0.2082022252390266,
+        "p95": 0.28930317201368094
+      },
+      "failureFiles": [],
+      "maxCorrectionContext": {
+        "round": 96,
+        "node": 6,
+        "epoch": 1,
+        "batch": 2,
+        "samples": 512,
+        "baseCrossEntropy": 1.4612351655960083,
+        "gradientNormSquared": 26.164785385131836,
+        "ebmObjective": 1.4638516902923584,
+        "ebmCoefficient": 0.00009999999747378752,
+        "effectiveCoordinateSigma": 0.009999999873689375,
+        "baseGradientNorm": 5.115152359008789,
+        "robustObjectiveGradientNorm": 5.3921003341674805,
+        "ebmCorrectionNorm": 0.28879060534010464,
+        "trainingBatchAccuracy": 0.486328125,
+        "parameterNorm": 62.919422765486665,
+        "ebmPenalty": 0.002616478472415376,
+        "ebmCorrectionRatio": 0.056457869692078895,
+        "configuredSigma": 0.01,
+        "sigmaSquared": 0.0001
+      }
+    }
+  },
+  "pairedNoiseHashes": 5000,
+  "pairedBatchesPerCondition": 50000,
+  "distinctNoiseHashesPerCondition": 5000,
+  "artifactIntegrityBefore": {
+    "experiments/professor_protocol_results": {
+      "files": 842,
+      "sha256ManifestDigest": "cc5d32cfee8568867c0f933afdca3da85baaa4873d2542251e9b1f3f6267f1e4"
+    },
+    "experiments/professor_validation_results": {
+      "files": 845,
+      "sha256ManifestDigest": "54e8329c3ae19e6d4d98ae47f42f1abf4b63bcd434304924eeeaf21282d23ea0"
+    },
+    "experiments/results4": {
+      "files": 2153,
+      "sha256ManifestDigest": "956de589718992632138b554387189ef2c44f35563040783ce49e5c996c9b3a2"
+    },
+    "newPlots/IID/ABCD_100r_comparison": {
+      "files": 0,
+      "sha256ManifestDigest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "newPlots/IID/A_clean_no_attack_ce_100r": {
+      "files": 0,
+      "sha256ManifestDigest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "newPlots/IID/A_clean_no_attack_ce_100r_gpu": {
+      "files": 26,
+      "sha256ManifestDigest": "31930a61a5a1da4b65f47d22ce83c97227ac4d8cb80c7f89246a199e28526a96"
+    },
+    "newPlots/IID/B_attack_clean_ce_100r": {
+      "files": 0,
+      "sha256ManifestDigest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "newPlots/IID/B_attack_clean_ce_100r_gpu": {
+      "files": 26,
+      "sha256ManifestDigest": "792be6b5986aa28fb01cec416a357622e19fd819adf58383bbdc46ae48d7eee3"
+    },
+    "newPlots/IID/C_attack_noise_ce_100r": {
+      "files": 0,
+      "sha256ManifestDigest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "newPlots/IID/C_attack_noise_ce_100r_gpu": {
+      "files": 28,
+      "sha256ManifestDigest": "cae4837e1647ad260ad0bf50214afe496904ec587b00b2ad8df088ec8fdcb040"
+    },
+    "newPlots/IID/D_attack_noise_ebm_100r": {
+      "files": 0,
+      "sha256ManifestDigest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "newPlots/IID/D_attack_noise_ebm_100r_gpu": {
+      "files": 32,
+      "sha256ManifestDigest": "ff9708110cf970d9bf038572a3bb18cef65cde6eb6944659e39fb8bce07d6dba"
+    },
+    "newPlots/IID/comparison": {
+      "files": 7,
+      "sha256ManifestDigest": "affe338b888c6644d239efe5c3000599c36b7226e655e387c76f4abfb3c115bc"
+    },
+    "newPlots/IID/reference_archive": {
+      "files": 30,
+      "sha256ManifestDigest": "5b23e42b65a768a5e316ee291b3cdd2b0c9b47af5bb87bc42d08bcc6dc877be6"
+    },
+    "newPlots/IID/test_01_basil_iid_no_noise_ce": {
+      "files": 25,
+      "sha256ManifestDigest": "9094f3ae186e9ce16be81bfaff1dbffcdc0000fbfcdd8938a9cf6f457ccec377"
+    },
+    "newPlots/IID/test_02_basil_iid_noise_ebm": {
+      "files": 31,
+      "sha256ManifestDigest": "8391d7e800d13ea0ce676c084014711de06d03227a2fad05d9d655fa07f4678a"
+    },
+    "newResults/IID/ABCD_100r_comparison": {
+      "files": 2,
+      "sha256ManifestDigest": "20388885750916647f977f46efc59df247bcce42e77e5d002651bd5f3c5adeb8"
+    },
+    "newResults/IID/A_clean_no_attack_ce_100r": {
+      "files": 19,
+      "sha256ManifestDigest": "2d7333c30f04395f8208e5f487b01e2d7e4c849fdeda3b710ad4cdde2116f6ea"
+    },
+    "newResults/IID/A_clean_no_attack_ce_100r_gpu": {
+      "files": 26,
+      "sha256ManifestDigest": "2f2593a8347792d98086e9585319c9a237811139d61984dd98664157972dffdc"
+    },
+    "newResults/IID/B_attack_clean_ce_100r": {
+      "files": 9,
+      "sha256ManifestDigest": "1e8c019580b5a44ff03709afe462baa27b694234976038caeba695e7af52e496"
+    },
+    "newResults/IID/B_attack_clean_ce_100r_gpu": {
+      "files": 26,
+      "sha256ManifestDigest": "07edc719c30403c58e0015d1b42c87a7f8c8f902f25bea77be63e17f77a05523"
+    },
+    "newResults/IID/C_attack_noise_ce_100r": {
+      "files": 11,
+      "sha256ManifestDigest": "9193c89b82bfbd505a59871e6fa20bea897990dc537fc1cac82100126ece6a4b"
+    },
+    "newResults/IID/C_attack_noise_ce_100r_gpu": {
+      "files": 26,
+      "sha256ManifestDigest": "ed0a4d93c32a7ab61fa01ff9ba9e4ebc918813716bb960f82b9efb434eff0a63"
+    },
+    "newResults/IID/D_attack_noise_ebm_100r": {
+      "files": 0,
+      "sha256ManifestDigest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "newResults/IID/D_attack_noise_ebm_100r_gpu": {
+      "files": 26,
+      "sha256ManifestDigest": "ab6befb0a57dd2dac5dd9248a62735bc283412461af86ac18a62489bfc0f685f"
+    },
+    "newResults/IID/comparison": {
+      "files": 10,
+      "sha256ManifestDigest": "419932cf162bcea65590b7d3b389f1f12f07c9f881af8df6a5fffcd6eaecac72"
+    },
+    "newResults/IID/recovery_archive": {
+      "files": 9,
+      "sha256ManifestDigest": "3a222b225c2538a317d635aae663f28d18126868c1f0b8f2843f219930ddd8c3"
+    },
+    "newResults/IID/reference_archive": {
+      "files": 33,
+      "sha256ManifestDigest": "e5b9d3d858a045b0813997d6fedf1dc7d83df2c6cc52c47c91e9c3ae8429464f"
+    },
+    "newResults/IID/test_01_basil_iid_no_noise_ce": {
+      "files": 24,
+      "sha256ManifestDigest": "4ca0420703bffad340373d6204566b633dafd39e0804d24cfe3e5390ee555ed3"
+    },
+    "newResults/IID/test_02_basil_iid_noise_ebm": {
+      "files": 24,
+      "sha256ManifestDigest": "a259549c8deb4cb6fd22c5acc65b752973bde89470cf2809b19633938a54c433"
+    },
+    "plots/professor_protocol": {
+      "files": 726,
+      "sha256ManifestDigest": "e94bc242c1a678439bb39cce01392f06af7919570c1d41f37f92ec27d5c95382"
+    },
+    "plots/professor_validation": {
+      "files": 60,
+      "sha256ManifestDigest": "99bc8f81d0149459d72ba05c918118ae1f764cf0da47b54890729ec572169670"
+    },
+    "plots4": {
+      "files": 737,
+      "sha256ManifestDigest": "5030097b82065b326509134236ff455812ad8d36ee563ab6834d8abafc2a521f"
+    }
+  },
+  "artifactIntegrityAfter": {
+    "experiments/professor_protocol_results": {
+      "files": 842,
+      "sha256ManifestDigest": "cc5d32cfee8568867c0f933afdca3da85baaa4873d2542251e9b1f3f6267f1e4"
+    },
+    "experiments/professor_validation_results": {
+      "files": 845,
+      "sha256ManifestDigest": "54e8329c3ae19e6d4d98ae47f42f1abf4b63bcd434304924eeeaf21282d23ea0"
+    },
+    "experiments/results4": {
+      "files": 2153,
+      "sha256ManifestDigest": "956de589718992632138b554387189ef2c44f35563040783ce49e5c996c9b3a2"
+    },
+    "newPlots/IID/ABCD_100r_comparison": {
+      "files": 0,
+      "sha256ManifestDigest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "newPlots/IID/A_clean_no_attack_ce_100r": {
+      "files": 0,
+      "sha256ManifestDigest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "newPlots/IID/A_clean_no_attack_ce_100r_gpu": {
+      "files": 26,
+      "sha256ManifestDigest": "31930a61a5a1da4b65f47d22ce83c97227ac4d8cb80c7f89246a199e28526a96"
+    },
+    "newPlots/IID/B_attack_clean_ce_100r": {
+      "files": 0,
+      "sha256ManifestDigest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "newPlots/IID/B_attack_clean_ce_100r_gpu": {
+      "files": 26,
+      "sha256ManifestDigest": "792be6b5986aa28fb01cec416a357622e19fd819adf58383bbdc46ae48d7eee3"
+    },
+    "newPlots/IID/C_attack_noise_ce_100r": {
+      "files": 0,
+      "sha256ManifestDigest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "newPlots/IID/C_attack_noise_ce_100r_gpu": {
+      "files": 28,
+      "sha256ManifestDigest": "cae4837e1647ad260ad0bf50214afe496904ec587b00b2ad8df088ec8fdcb040"
+    },
+    "newPlots/IID/D_attack_noise_ebm_100r": {
+      "files": 0,
+      "sha256ManifestDigest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "newPlots/IID/D_attack_noise_ebm_100r_gpu": {
+      "files": 32,
+      "sha256ManifestDigest": "ff9708110cf970d9bf038572a3bb18cef65cde6eb6944659e39fb8bce07d6dba"
+    },
+    "newPlots/IID/comparison": {
+      "files": 7,
+      "sha256ManifestDigest": "affe338b888c6644d239efe5c3000599c36b7226e655e387c76f4abfb3c115bc"
+    },
+    "newPlots/IID/reference_archive": {
+      "files": 30,
+      "sha256ManifestDigest": "5b23e42b65a768a5e316ee291b3cdd2b0c9b47af5bb87bc42d08bcc6dc877be6"
+    },
+    "newPlots/IID/test_01_basil_iid_no_noise_ce": {
+      "files": 25,
+      "sha256ManifestDigest": "9094f3ae186e9ce16be81bfaff1dbffcdc0000fbfcdd8938a9cf6f457ccec377"
+    },
+    "newPlots/IID/test_02_basil_iid_noise_ebm": {
+      "files": 31,
+      "sha256ManifestDigest": "8391d7e800d13ea0ce676c084014711de06d03227a2fad05d9d655fa07f4678a"
+    },
+    "newResults/IID/ABCD_100r_comparison": {
+      "files": 2,
+      "sha256ManifestDigest": "20388885750916647f977f46efc59df247bcce42e77e5d002651bd5f3c5adeb8"
+    },
+    "newResults/IID/A_clean_no_attack_ce_100r": {
+      "files": 19,
+      "sha256ManifestDigest": "2d7333c30f04395f8208e5f487b01e2d7e4c849fdeda3b710ad4cdde2116f6ea"
+    },
+    "newResults/IID/A_clean_no_attack_ce_100r_gpu": {
+      "files": 26,
+      "sha256ManifestDigest": "2f2593a8347792d98086e9585319c9a237811139d61984dd98664157972dffdc"
+    },
+    "newResults/IID/B_attack_clean_ce_100r": {
+      "files": 9,
+      "sha256ManifestDigest": "1e8c019580b5a44ff03709afe462baa27b694234976038caeba695e7af52e496"
+    },
+    "newResults/IID/B_attack_clean_ce_100r_gpu": {
+      "files": 26,
+      "sha256ManifestDigest": "07edc719c30403c58e0015d1b42c87a7f8c8f902f25bea77be63e17f77a05523"
+    },
+    "newResults/IID/C_attack_noise_ce_100r": {
+      "files": 11,
+      "sha256ManifestDigest": "9193c89b82bfbd505a59871e6fa20bea897990dc537fc1cac82100126ece6a4b"
+    },
+    "newResults/IID/C_attack_noise_ce_100r_gpu": {
+      "files": 26,
+      "sha256ManifestDigest": "ed0a4d93c32a7ab61fa01ff9ba9e4ebc918813716bb960f82b9efb434eff0a63"
+    },
+    "newResults/IID/D_attack_noise_ebm_100r": {
+      "files": 0,
+      "sha256ManifestDigest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "newResults/IID/D_attack_noise_ebm_100r_gpu": {
+      "files": 26,
+      "sha256ManifestDigest": "ab6befb0a57dd2dac5dd9248a62735bc283412461af86ac18a62489bfc0f685f"
+    },
+    "newResults/IID/comparison": {
+      "files": 10,
+      "sha256ManifestDigest": "419932cf162bcea65590b7d3b389f1f12f07c9f881af8df6a5fffcd6eaecac72"
+    },
+    "newResults/IID/recovery_archive": {
+      "files": 9,
+      "sha256ManifestDigest": "3a222b225c2538a317d635aae663f28d18126868c1f0b8f2843f219930ddd8c3"
+    },
+    "newResults/IID/reference_archive": {
+      "files": 33,
+      "sha256ManifestDigest": "e5b9d3d858a045b0813997d6fedf1dc7d83df2c6cc52c47c91e9c3ae8429464f"
+    },
+    "newResults/IID/test_01_basil_iid_no_noise_ce": {
+      "files": 24,
+      "sha256ManifestDigest": "4ca0420703bffad340373d6204566b633dafd39e0804d24cfe3e5390ee555ed3"
+    },
+    "newResults/IID/test_02_basil_iid_noise_ebm": {
+      "files": 24,
+      "sha256ManifestDigest": "a259549c8deb4cb6fd22c5acc65b752973bde89470cf2809b19633938a54c433"
+    },
+    "plots/professor_protocol": {
+      "files": 726,
+      "sha256ManifestDigest": "e94bc242c1a678439bb39cce01392f06af7919570c1d41f37f92ec27d5c95382"
+    },
+    "plots/professor_validation": {
+      "files": 60,
+      "sha256ManifestDigest": "99bc8f81d0149459d72ba05c918118ae1f764cf0da47b54890729ec572169670"
+    },
+    "plots4": {
+      "files": 737,
+      "sha256ManifestDigest": "5030097b82065b326509134236ff455812ad8d36ee563ab6834d8abafc2a521f"
+    }
+  },
+  "changedRoots": [],
+  "filesBefore": 5813,
+  "filesAfter": 5813,
+  "historicalFileCount": 5363,
+  "historicalChanged": 0
+}

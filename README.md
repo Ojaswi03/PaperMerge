@@ -1,47 +1,52 @@
 # PaperMerge
 
-PaperMerge is a TensorFlow research framework for Byzantine-resilient federated learning with noisy communication channels. It includes a Tkinter GUI, JSON experiment configs, CLI config execution, automatic result saving, and plot generation.
+## Latest completed results — 100-round IID BASIL
 
-The project compares four approaches:
+| Start here | Contents |
+|---|---|
+| [Latest A/B/C/D results and scientific analysis](newResults/IID/ABCD_100r_comparison_gpu/FINAL_ABCD_100R_ANALYSIS.md) | Ten evidence tables, comparison plots, convergence, attack filtering, noise/EBM diagnostics, and the accuracy-limit discussion |
+| [Code changes and training mathematics](docs/IID_CODE_CHANGES_AND_TRAINING_MATHEMATICS.md) | Actual Python excerpts, current source line ranges, diagrams, and mathematical/training explanations |
+| [Repository and study handoff](docs/RESEARCH_HANDOFF_PROMPT.md) | Complete context to accompany a repository ZIP |
 
-| Approach | Topology | Main purpose |
+All four fresh GPU conditions completed **100 measured rounds**. Final fixed
+Node-9 full-test accuracies: **A 58.83% · B 58.32% · C 50.09% · D 50.26%**.
+These are one-seed results, not universal accuracy or robustness guarantees.
+
+The committed sharing bundle includes the reports, verification summary,
+per-run configs/manifests, CSV/NPZ metrics, partition audits, compressed
+activation telemetry, final node weights, execution logs, and current PNGs.
+Large activation-boundary checkpoints, raw batch traces, datasets, caches,
+machine-local worker state, and earlier ignored archives remain local. A
+GitHub ZIP is therefore a review bundle, not a complete checkpoint-resume
+backup or a self-contained rerun of every deep raw-trace audit.
+
+## Project overview
+
+PaperMerge is a Python and TensorFlow research framework for studying
+Byzantine-resilient decentralized and federated learning over noisy
+communication channels. It combines experiment configuration, isolated worker
+execution, queue management, runtime estimation, telemetry, result inspection,
+and research plotting in a Tkinter desktop application.
+
+The framework supports four approaches:
+
+| Approach | Topology | Purpose |
 |---|---|---|
-| BASIL | decentralized ring | Snapshot Selection for Byzantine resilience |
-| Noisy Channel | FedAvg/server-client | EBM/WCM for channel-noise mitigation |
-| Merged | decentralized ring | combines BASIL-style Byzantine defense with EBM noise mitigation |
-| CART | decentralized ring | class-aware ring training for non-IID data, with optional SS and EBM |
+| BASIL | Decentralized ring | Byzantine resilience through Snapshot Selection |
+| Noisy Channel | Server/client | Communication-noise experiments and EBM/WCM mitigation |
+| Merged | Decentralized ring | BASIL-style resilience combined with noise mitigation |
+| CART | Decentralized ring | Class-aware training for non-IID data, with optional SS and EBM |
 
-Merged and CART are the project additions built on the two main papers.
-
-## Documentation
-
-- [Get To Know PaperMerge](docs/GetToKnow.md) is the advisor-facing repository
-  map. It starts with what has been tested so far, explains every execution
-  stage with diagrams, documents result meaning and runtime, and includes the
-  file/function reference.
-- [Campaign 3 R2 Guide](docs/BASELINE_STUDY_GUIDE.md) contains the exact current
-  protocol, equations, calibration rules, and paper-facing interpretation.
-- [Campaign 4 Engineering And Evaluation Plan](docs/ADAPTIVE_STUDY_PLAN.md) documents
-  the implemented isolated `results4`/`plots4` campaign, sigma `0.4-0.6`
-  diagnosis, adaptive EBM extension, live node-ring GUI, and measured runtime.
-- [Gamma Explained](docs/gammaExplained.md) explains CART `gamma` and the
-  active proximal coefficient `mu`.
-- [WCM Pilot](docs/WCM_PILOT.md) documents the isolated WCM implementation,
-  safety boundary, and evaluation plan.
-- [Documentation index](docs/README.md) links the guides and generated result
-  report/tables.
-- [Session Handoff](docs/SessionHandoff.md) is a full-context summary for
-  picking up the weight-norm-control / accuracy-ordering diagnostic work —
-  thesis context, architecture, exact bugs found and fixed this session,
-  current queue state, and open questions.
-
-## Setup
+## Quick start
 
 Requirements:
 
 - Python 3.12
-- NVIDIA GPU with CUDA/cuDNN recommended
-- CPU fallback works but is slow
+- Tkinter
+- Dependencies from `environment/requirements.txt`
+- NVIDIA GPU with compatible CUDA/cuDNN recommended for full experiments
+
+Create the environment:
 
 ```bash
 python3 -m venv environment/basil-noise-env
@@ -50,431 +55,356 @@ pip install -r environment/requirements.txt
 python scripts/check_setup.py
 ```
 
-## Run The GUI
+Start the desktop application:
+
+```bash
+python run_gui.py
+```
+
+CPU execution is supported but full experiments can be substantially slower.
+
+## Four-condition IID BASIL configurations and manual execution
+
+Four fixed 100-round configurations are available in the Builder presets and
+the saved GUI queue: A clean/no attack/CE, B attack/clean/CE,
+C attack/absolute noise/CE, D attack/absolute noise/source EBM.
+All use the same IID data, initialization, five full epochs, batch 512,
+approved SGD round decay, receiver-local Snapshot Selection and BASIL memory S=5.
+C/D use coordinate Gaussian standard deviation 0.010 (variance 0.0001).
+D alone differentiates `CE + 0.0001 ||grad CE||²`, without lambda or anchoring.
+
+The queue starts only when you press **Run Queue**. Interrupted runs now restore
+activation-boundary checkpoints containing all node weights and BASIL memories.
+Older interrupted runs without checkpoints require deterministic reconstruction:
+saved activations are replayed and checked against their original hashes and
+telemetry before continuation. This costs training time; it is not an instant
+weights-only resume. Completed 50-round reference results remain untouched.
 
 ```bash
 source environment/basil-noise-env/bin/activate
 python run_gui.py
 ```
 
-The GUI supports:
+The latest **fresh GPU A rerun and fresh GPU B/C/D are complete**. The saved
+queue presets remain available for explicitly authorized future runs; loading
+a preset never starts training. Do not start them merely to inspect the
+completed evidence. `gui/queues/iid_abcd_100r_gpu_fresh.json` describes the
+fresh four-condition setup; `gui/queues/iid_a_100r_gpu_fresh.json` describes
+the now-completed A-only rerun. Open **Queue → Load Queue** only when you
+intend to prepare a new execution, inspect its entries and paths, and use
+**Run Queue** only after separately authorizing that execution.
+No CPU-trained prefix was restored in the current completed comparison.
+The previous mixed-device A results/plots and comparisons are preserved in
+`reference_archive/`; see [fresh A rerun instructions](docs/IID_FRESH_A_GPU_QUEUE.md).
+The earlier `iid_abcd_100r_gpu.json` remains a CPU-continuation preset and should
+not be loaded for this fresh run. The prior B/C/D preparation is documented in
+[fresh GPU queue instructions](docs/IID_FRESH_GPU_QUEUE.md).
+Dashboard names the running experiment and separates experiment elapsed/ETA
+from queue-session elapsed/ETA. Accuracy uses blue dotted (latest node), green
+solid (round mean), and orange dashed (round worst) lines.
 
-- IID and non-IID config loading
-- BASIL, Noisy, Merged, and CART approaches
-- a dark interface across the main window, queue, pickers, log, and live chart
-- manual runs and queue runs
-- automatic result saving
-- Campaign 3 plot generation at manual-run and queue-batch boundaries
-- persistent queue state in `gui/queue_state.json`
-- lane-aware live average/worst accuracy charts for isolated Campaign 3 workers
-- a complete per-run configuration block in the Output experiment log
-- Campaign 4 presets and individual versioned config selection
-- a Campaign 4 Network tab with live directed-ring state, node inspection,
-  SS candidates, outgoing noise, and completed-run telemetry replay
-- incremental Campaign 4 PNG previews and final PNG/PDF/EPS output
-- empirical per-config durations plus total queue ETA, uncertainty range, and
-  projected completion time
+GPU outputs use the existing A/B/C/D 100-round directory names with an **`_gpu`**
+suffix under `newResults/IID/` and `newPlots/IID/`; originals remain unchanged.
+Four-way GPU plots/reports use `ABCD_100r_comparison_gpu/`. Regenerate these
+without training with `python scripts/report_iid_campaign.py --device GPU`.
+TensorFlow is capped at 4 GiB, requires 5 GiB free before launch, and allows only
+one IID GPU process. Synthetic 512-image CE/EBM checks peaked at about 378 MiB.
+Other applications can still consume VRAM; no absolute OOM guarantee is possible.
+See [GPU execution and recovery](docs/IID_GPU_EXECUTION.md) for measured speed,
+verification scope, memory safeguards and CPU→GPU provenance limitations.
+A/B measures attacks under BASIL, B/C measures channel noise, and C/D is the
+matched EBM comparison. No outcome is assumed in advance.
+See [preparation, pairing and manual execution](docs/IID_ABCD_100R_PREPARATION.md).
+See [interrupted-run recovery](docs/IID_QUEUE_RECOVERY.md) before restarting a stopped queue.
 
-The queue can be edited while it is running. New configs are appended to the bottom and picked up after earlier items finish.
-`Paper Core 101 · Add / Restore Missing` reconstructs only unfinished paper
-runs without replacing custom queue items. Custom selections can be moved to
-the top and run next while the paper campaign remains persisted underneath.
+## Completed paired 50-round IID BASIL reference
 
-Use **Queue > Add from File** to choose individual configurations. The picker
-defaults to the isolated **Campaign 4** library, supports multi-selection, and
-also exposes Campaign 3 R2 Current plus legacy/custom sources. When the
-queue is stopped, adding selected files automatically sorts the resulting queue
-by ascending estimated runtime. During a run, the selected block is sorted and
-appended at the bottom without disturbing active work. **Shortest First** can
-repeat the full sort, and stopped rows can be dragged into any manual order.
-**Legacy / Custom** remains available as an explicit archive choice; it is
-never mixed into the Current list.
+The separate `sequential_basil_iid_v1` protocol pairs clean-channel BASIL with
+ordinary cross-entropy against absolute-Gaussian-channel BASIL with
+`CE + sigma_e² ||grad CE||²`. Both use ten IID nodes, the same four seeded
+Hidden attackers, five-predecessor memory, receiver-local Snapshot Selection,
+strict handoff, and five complete local epochs. No anchoring or legacy lambda
+is used. The existing one-class protocol is unchanged.
 
-The generated Current library contains:
+The standard deviation is 0.010; variance/EBM coefficient is 0.0001.
+This moderate calibration-based value was declared before the research results,
+not selected by test accuracy. Do not overwrite this completed evidence to
+prepare the new four-condition queue; it uses separate 100-round paths.
+Execution is deterministic single-process CPU; GPU equivalence is not asserted.
 
-| Split | BASIL | Noisy | Merged | CART |
-|---|---:|---:|---:|---:|
-| non-IID | 54 | 66 | 99 | 99 |
-| IID | 54 | 66 | 99 | 99 |
+Results and plots are routed exclusively to `newResults/IID/` and
+`newPlots/IID/`; the corresponding `nonIID/` directories remain empty.
+Primary figures represent full research runs, not three-round preflights.
+Full-test accuracy/loss use the fixed end-of-ring Node 9 model. Mean-node
+accuracy averages the ten model accuracies, without parameter averaging.
+Both authorized 50-round full-data runs completed: final full-test accuracy
+was 54.35% for clean CE and 50.57% for noisy EBM (fixed Node 9 reference).
+This two-condition comparison does not isolate EBM's causal benefit.
+See [the study summary](newResults/IID/IID_TWO_TEST_SUMMARY.md) for measured
+evidence and [the accuracy comparison](newPlots/IID/comparison/full_test_accuracy_comparison.png).
 
-Merged and CART files are exact Campaign 3 R2 confirmation configs and write
-to `experiments/results3/r2` and `plots3/r2`. BASIL and Noisy files are
-deterministic standalone paper-baseline configs and retain their existing
-standalone result routes. Regenerate the checked-in library after changing its
-source contract with:
-
-```bash
-python scripts/sync_gui_config_library.py
-```
-
-This config-picker and theme work does not change the SS selection rule, the
-EBM objective, their coefficients, CART, attack timing, or training batch size.
-
-## Campaign 3 R2
-
-Campaign 3 R2 is the isolated hidden-attack study used for new conference-paper
-experiments. Its Queue buttons load CART Low-Noise Refinement (6), Low-Noise
-Repair (6), Calibration (49), Merged Core (99), CART Add-on (99), IID Controls
-(48), CART Non-IID Controls (9), the Full Campaign (246), or the paper-focused
-Core Confirmation matrix (105). The Paper Core button appends only missing runs
-without replacing custom items; an explicit confirmed replacement action is
-also available. Four current confirmation results are reused, leaving 101
-pending. It uses deterministic seeds, one shared GPU model per experiment,
-atomic run metadata, and a blocking CART calibration gate.
-
-Campaign queue items run in isolated child processes. TensorFlow state is
-cleared explicitly and then the child exits, guaranteeing CUDA allocator
-release before the next item. Normalized CIFAR arrays and deterministic
-partition indices are cached on CPU/disk; model, optimizer, iterator, registry,
-and snapshot state are never reused between experiments.
-
-The Queue window can benchmark one versus two GPU workers. Two lanes are
-enabled only when both workers fit the configured memory cap, produce identical
-result fingerprints, and deliver at least 1.4x measured throughput. On the
-current RTX 4070 Ti setup the measured speedup was 1.01x, so one lane is used.
-Each queue row shows its estimated duration. The queue summary reports remaining
-wall-clock time and, when multiple lanes are active, summed config work
-separately. Completion logs preserve the measured wall time for each run.
-
-```text
-experiments/results3/r2/   # corrected R2 results only
-plots3/r2/                 # corrected R2 plots, diagnostics, and tables only
-```
-
-The original `results3`/`plots3` campaign is preserved outside `r2`; R2 never
-mixes those records with corrected runs. After completing the first repair,
-run **CART Low-Noise Refinement R2 - 6**. Fresh campaigns can load
-**Calibration R2 - 49**, which skips completed records and adds only missing
-runs. Confirmation buttons remain locked unless `campaign_state.json` is
-`frozen`.
-
-See the [Campaign 3 R2 Guide](docs/BASELINE_STUDY_GUIDE.md) for the complete
-protocol, equations, diagrams, result layout, pilot findings, and paper-draft
-synchronization notes.
-
-## Campaign 4
-
-Campaign 4 is a separate, versioned investigation of high-noise accumulation.
-It preserves the BASIL-derived Snapshot Selection rule and the original static
-EBM path as a control. Its separately labeled adaptive EBM controller changes
-only the bounded coefficient of the same gradient-norm objective using
-receiver-observable stress; it does not use attacker identity or test accuracy.
-
-```text
-gui/configs/adaptive_study/                 # 526 selectable configs + manifest
-experiments/results4/campaign4/        # Campaign 4 artifacts only
-plots4/campaign4/                      # Campaign 4 figures/tables only
-```
-
-Official EBM configs keep batch size 512 and evaluate the second-order term on
-that full batch. An OOM stops Campaign 4, leaves the unchanged queue item in
-place, and requires the machine profile to be rerun; the GUI never lowers the
-batch or silently changes the EBM objective. Incompatible execution profiles
-are written to separate plot subfolders instead of being pooled.
-
-The validated local RTX 4070 Ti profile uses `mixed_bfloat16` Tensor Core
-compute with float32 model variables, gradient accumulation, EBM norms, noise,
-CART state, and reported metrics. Two independent 100-round no-save canaries
-measured 1.77x and 1.87x speedups while passing the declared final-accuracy,
-learning-curve, worst-node, initialization, and finite-value gates. This is a
-numerical execution profile; it does not change Snapshot Selection or the EBM
-objective. Resource profiling also permits two workers only when at most one
-is an EBM worker. Two simultaneous EBM workers were measured and rejected for
-insufficient throughput.
-
-Run the contract check and machine profile before diagnosis:
+Verify completed artifacts without training:
 
 ```bash
-source environment/basil-noise-env/bin/activate
-python scripts/sync_adaptive_configs.py --check
-python scripts/benchmark_adaptive_study.py --rounds 2 --repeats 3 \
-  --include-cuda-malloc-async --include-mixed-bfloat16
-python scripts/validate_mixed_precision.py
-python scripts/benchmark_worker_lanes.py --rounds 2 --repeats 3
-python run_gui.py
+python scripts/verify_iid_research_outputs.py --write-evidence
+```
+These historical two tests do not isolate EBM's causal benefit. The completed
+four-condition study now supplies that matched noisy-channel/CE-only control
+as C; C versus D is the primary EBM comparison. No further run starts
+automatically.
+
+## Desktop application
+
+PaperMerge uses a persistent five-workspace shell with a shared command bar.
+
+- **Dashboard** shows active-run progress, rounds, elapsed time, estimated
+  completion, accuracy, worker count, queue length, recent runs, and a live
+  accuracy chart.
+- **Experiment Builder** provides grouped experiment settings, presets,
+  validation, conditional controls, defaults, and a human-readable summary.
+- **Queue** provides filtering, multi-selection, ordering, retry, removal,
+  runtime estimates, configuration-library loading, and persistent execution.
+- **Results** discovers retained runs lazily and provides filters, metadata,
+  convergence charts, comparison, export, plot generation, and output access.
+- **Network** visualizes the directed ring, Byzantine nodes, Snapshot Selection
+  candidates, selected sources, channel state, per-node accuracy, and telemetry
+  replay for compatible runs.
+
+Live IID accuracy updates after each completed node activation; round mean and
+worst-node accuracy update after a complete ring traversal. They are distinct
+metrics. The first sample is visible immediately. Dashboard widgets and queue
+rows update in place, preserving focus/selection, rather than rebuilding on
+every event. Network telemetry uses the same read-only adapter as replay.
+
+The interface uses a light slate theme. Entries, dropdown fields, popup lists,
+selected rows, disabled controls, and keyboard focus states have explicit
+foreground and background colors to remain readable across operating systems.
+
+## Experiment configuration
+
+The GUI uses a typed internal experiment model while preserving the existing
+JSON contract:
+
+- Persisted keys remain camelCase.
+- Schema versions 1–5 are supported; version 5 adds the explicit research protocol.
+- Unknown compatible fields survive load/save round trips.
+- Invalid numeric or conditional values remain visible and block Run/Queue.
+- Tkinter variables are not used as the business model.
+
+Configuration libraries are stored under:
+
+```text
+gui/configs/current/
+gui/configs/adaptive_study/
+gui/configs/IID/
+gui/configs/nonIID/
+gui/configs/sequential_basil/
 ```
 
-The GUI's **Profile GPU + lanes** button runs the same sequence and invokes the
-100-round precision validator only when the short benchmark selects a pending
-BF16 candidate. The GUI calculates the current queue ETA from measured worker
-durations and the selected execution profile. The complete 198-run non-IID
-confirmation matrix is a later stage and is not a 24-hour single-GPU workload.
+Historical campaign or study identifiers inside persisted metadata are
+experimental provenance and are intentionally not renamed.
 
-Start with **Diagnose non-IID Merged - 39**, then run
-**Diagnose non-IID CART - 39** and review both diagnostic suites. After all 78
-runs finish, use
-**Freeze Campaign 4 method** to record the diagnostic rationale and
-advisor-selected non-inferiority margin. Confirmation preset loading and worker
-launch remain locked until this exact method/code contract is recorded in
-`experiments/results4/campaign4/campaign_state.json`. GPU profiling and the
-100-round no-save precision canaries verify execution behavior only; they are
-not saved as scientific Campaign 4 evidence. The worker and Campaign 4 plot
-loader reject any short diagnostic, static-control, or confirmation artifact.
+## Execution and queue safety
 
-### Adaptive Weight-Decay Controller (Weight-Norm Control)
+Versioned studies run in isolated child processes. The application preserves:
 
-`weightDecayCoefficient` and `adaptiveWeightDecayMode` are a config axis
-orthogonal to `mitigation` (see `basil_core/adaptive_experiment_engine.py`'s SGD
-optimizer wiring and `gui/adaptive_study.py`'s `make_config`). Two runs can both
-report `mitigation="ss_ebm"` while only one also has adaptive weight decay
-engaged. When `adaptiveWeightDecayMode="adaptive"`, a bounded/EMA-smoothed/
-rate-limited controller (the same pattern already used for adaptive EBM)
-adjusts the coefficient online each round in response to observed weight
-norm; the static `weightDecayCoefficient` field always starts at `0.0` for
-adaptive runs and is not a reliable "is weight decay active" signal by
-itself — check `adaptiveWeightDecayMode` too. `reporting/adaptive_study_plots.py`'s
-`RunRecord.effective_mitigation` property encodes this correctly for
-plotting (see below); code reading `mitigation` directly instead of
-`effective_mitigation` will silently conflate weight-decay and non-weight-decay
-runs under the same label.
+- atomic queue persistence,
+- duplicate-run prevention,
+- structured worker events,
+- main-thread-only Tkinter updates,
+- graceful stop requests,
+- stopped and failed queue recovery,
+- orphan-worker detection,
+- worker crash logs,
+- conservative single- or multi-lane execution policy,
+- runtime estimates based on compatible historical runs.
 
-### Campaign 4 Plot Phase Gate And Mitigation Tiers
+Closing the application during active work requests a graceful stop and waits
+for managed workers instead of immediately destroying the process tree.
 
-`reporting/adaptive_study_plots.py` only builds the "paper" figure set (evidence
-hierarchy, defense composition, learning curves, noise robustness, etc.) from
-records whose `phase` is in `SCIENTIFIC_PHASES = {"diagnostic",
-"static_control", "confirmation"}` — all three are already held to the same
-completeness bar by `_validated_record` (100-round history required). Do not
-narrow this back to `phase == "confirmation"` only; that was a bug that
-silently produced zero paper figures for every Campaign 4 result until fixed.
+## Results and plots
 
-`RunRecord.effective_mitigation` distinguishes weight-decay-augmented tiers
-from their plain counterparts for plotting purposes: `mitigation="ss"` with
-weight decay active reports as `"ss_wd"`, and `mitigation="ss_ebm"` with
-weight decay active reports as `"ss_ebm_wd"`. `MITIGATIONS`,
-`MITIGATION_LABELS`, `COLORS`, and `MARKERS` all carry these tiers. When
-adding new mitigation combinations, extend `effective_mitigation` and these
-registries together — every accuracy-hierarchy figure keys off
-`effective_mitigation`, not the raw `mitigation` field.
+Result discovery reads lightweight `run.json` metadata first. Large metric and
+telemetry arrays are loaded only when a run is selected or replayed.
 
-### Accuracy-Ordering Diagnostic Matrix
+The retained research artifacts are:
 
-`gui/adaptive_study.py`'s `make_config` builds the non-IID accuracy-ordering
-diagnostic matrix (clean > single stressor+matched mitigation > joint+partial
-mitigation > joint+full mitigation > joint+no mitigation), run per approach
-(merged, cart) at `phase="diagnostic"`. Each condition is queued at multiple
-seeds (`2025`, and `CONFIRMATION_SEEDS = (2026, 2027, 2028)` as needed) for
-seed-ablation plots (`seed_profiles.png`). The matrix intentionally includes a
-true SS-only tier (`mitigation="ss"`, `adaptiveWeightDecayMode="none"`, noise
-left unmitigated) alongside an SS+adaptive-weight-decay tier
-(`mitigation="ss"`, `adaptiveWeightDecayMode="adaptive"`) and an
-SS+EBM+adaptive-weight-decay tier (`mitigation="ss_ebm"`,
-`adaptiveWeightDecayMode="adaptive"`) — these are three distinct experimental
-conditions that must not be pooled under the same plotted label.
+```text
+experiments/results4/
+plots4/
+```
 
-### Execution Reliability (Single-Lane, Crash Forensics)
+These directories are protected historical evidence. Application code must
+not rename, normalize, or overwrite their contents. New plot generation must
+use a separate output directory selected by the user.
 
-Campaign 4 queues currently run **single-lane only** (`recommendedLanes: 1`
-in `experiments/results4/campaign4/performance_profile.json`, a machine-local
-file excluded from version control). Two root causes behind an earlier 2-lane
-GPU-memory exhaustion incident were fixed and committed:
-`TF_FORCE_GPU_ALLOW_GROWTH` no longer overrides the per-lane hard memory cap
-in `scripts/run_adaptive_worker.py`'s `_configure_tensorflow`, and
-`gui/worker_pool.py` persists each worker's full stdout/stderr to a
-`.log` file next to its PID sidecar so a native crash leaves a diagnosable
-trace instead of a silent hang. Despite both fixes, 2-lane concurrency is a
-standing, non-negotiable decision to keep disabled based on direct operator
-experience — do not re-enable it without being asked.
+Plotting implementations remain in:
 
-## Run One Config From CLI
+```text
+reporting/adaptive_study_plots.py
+reporting/baseline_study_plots.py
+```
+
+## Architecture
+
+```text
+run_gui.py
+gui/
+├── app.py                    # application lifecycle and service composition
+├── experiment_app.py         # compatibility import only
+├── theme.py                  # shared visual design system
+├── state/                    # typed experiment, queue, navigation, execution state
+├── services/                 # config, queue, execution, results, and plot operations
+├── views/                    # Dashboard, Builder, Queue, Results, Network shell
+├── components/               # command bar, navigation, scrolling, empty states
+├── worker_pool.py            # isolated worker lifecycle
+├── network_view.py           # live ring and telemetry replay
+├── runtime_estimator.py      # per-run and queue estimates
+├── baseline_study.py         # baseline-study protocol and identifiers
+└── adaptive_study.py         # retained adaptive-study protocol and identifiers
+
+basil_core/
+├── experiment_engine.py
+├── adaptive_experiment_engine.py
+├── basil.py
+├── cart.py
+├── attacks.py
+├── trainer.py
+├── models.py
+└── data/
+
+reporting/
+├── adaptive_study_plots.py
+├── baseline_study_plots.py
+├── experiment_plots.py
+└── comparison_plots.py
+```
+
+Research algorithms remain in `basil_core/`; GUI services call those modules
+without duplicating experiment mathematics in visual components.
+
+## Command-line execution
+
+Run a compatible JSON configuration directly:
 
 ```bash
-source environment/basil-noise-env/bin/activate
-python scripts/run_single_config.py \
-  "gui/configs/current/nonIID/cart/2026 - clean_no_mitigation.json" \
-  --rounds 30
+python scripts/run_single_config.py path/to/config.json
 ```
 
-Campaign 3 pilots can be run without creating official result files:
+Use a temporary round override for a lightweight check:
 
 ```bash
-python scripts/run_single_config.py campaign3:cart:hidden_noise:ss_ebm:0.4 --rounds 10
+python scripts/run_single_config.py path/to/config.json --rounds 2
 ```
 
-## Directory Layout
+Do not use a shortened run as scientific evidence.
 
-```text
-PaperMerge/
-├── run_gui.py
-├── docs/
-│   ├── GetToKnow.md
-│   ├── BASELINE_STUDY_GUIDE.md
-│   ├── ADAPTIVE_STUDY_PLAN.md
-│   ├── gammaExplained.md
-│   └── WCM_PILOT.md
-├── basil_core/
-│   ├── basil.py
-│   ├── cart.py
-│   ├── experiment_engine.py
-│   ├── adaptive_experiment_engine.py
-│   ├── trainer.py
-│   ├── attacks.py
-│   ├── models.py
-│   └── data/
-├── gui/
-│   ├── experiment_app.py
-│   ├── campaign3.py
-│   ├── campaign4.py
-│   ├── execution_policy.py
-│   ├── worker_pool.py
-│   ├── network_view.py
-│   ├── config_library.py
-│   ├── runtime_estimator.py
-│   ├── queue_state.json
-│   └── configs/
-│       ├── current/{IID,nonIID}/{basil,noisy,merged,cart}/
-│       ├── campaign4/{IID,nonIID}/{merged,cart}/
-│       ├── IID/{basil,noisy,merged,cart}/
-│       └── nonIID/{basil,noisy,merged,cart}/
-├── plots/
-│   ├── plotGui.py
-│   ├── plotCampaign3.py
-│   └── plotCampaign4.py
-├── scripts/
-│   ├── benchmark_worker_pool.py
-│   ├── run_baseline_worker.py
-│   ├── run_adaptive_worker.py
-│   ├── benchmark_adaptive_study.py
-│   ├── validate_mixed_precision.py
-│   ├── benchmark_worker_lanes.py
-│   ├── sync_adaptive_configs.py
-│   ├── run_single_config.py
-│   ├── sync_gui_config_library.py
-│   └── check_setup.py
-├── experiments/results/gui/
-├── experiments/results3/r2/gui/
-├── experiments/results4/campaign4/gui/
-└── plots4/campaign4/
-```
+## Separate one-class sequential BASIL protocol — paused
 
-## Outputs
+The earlier one-class/high-relative-noise verdict is **NOT READY FOR
+PRODUCTION**. That numerical/reproducibility
+audit records high-relative-noise failures and residual cross-process gradient
+differences. See [production readiness](docs/RESEARCH_PRODUCTION_READINESS.md)
+before launching that separate protocol. This does not replace the completed
+IID evidence linked above. The IID GPU path has representative synthetic
+[hardware verification](docs/IID_GPU_EXECUTION.md) and completed 100-round
+results; neither establishes bit-identical CPU/GPU execution or resolves the
+separate multiprocessing discrepancy.
 
-No-channel-noise runs save here:
+The new protocol has its own engine and outputs, leaving historical studies
+unchanged. It uses 10 CIFAR-10 nodes, one complete class per node, strict weight
+handoff, five full local epochs, batch 512, reset SGD, and rolling BASIL memory
+from five distinct predecessors. Each full-data activation performs 50 updates,
+including the final 392-image batch of each epoch.
 
-```text
-experiments/results/gui/{IID|nonIID}/{dataset}/{attackKey}/{approach}/
-plots/images/gui/{IID|nonIID}/{dataset}/{attackKey}/{approach}/
-```
+Channel noise and training defenses are separate settings. Choose **Paper
+absolute Gaussian** (coordinate standard deviation) or **Relative-L2 Gaussian**
+(model-relative perturbation). Full gradient-norm EBM uses nested autodiff;
+legacy gradient scaling is a separate comparison, not the same loss.
 
-Channel-noise runs are bucketed by sigma:
-
-```text
-experiments/results/gui/{IID|nonIID}/{dataset}/{attackKey}/{approach}/sigma_0_4/
-plots/images/gui/{IID|nonIID}/{dataset}/{attackKey}/{approach}/sigma_0_4/
-```
-
-This keeps IID/non-IID, approach, attack type, and noise level separated.
-
-## Experiment Semantics
-
-Clean environment means:
-
-- 0 Byzantine nodes
-- no channel noise
-- no mitigation
-
-Mitigations are independent:
-
-- SS / `useBasil=true` is only for Byzantine attacks.
-- EBM/WCM is only for channel noise.
-- CART class-aware proximal regularization is for non-IID forgetting.
-- Clean runs should not use SS or EBM just to improve accuracy.
-
-Campaign 3 R2 clean runs use exact all-node consensus and no mitigation. Other
-Campaign 3 R2 arms use pairwise consensus before local training. Consensus is
-normal decentralized aggregation, not SS mitigation.
-
-R2 SS first rejects received snapshots outside a declared relative-L2
-plausibility budget and then applies BASIL's lowest-local-loss rule to the
-remaining received neighbors. The plausibility guard and pairwise consensus are
-project integration mechanisms; they are not claimed as unchanged BASIL.
-
-## Aggregation Mode
-
-Configs may include:
-
-```json
-"aggregationMode": "consensus"
-```
-
-Defaults:
-
-- `useBasil=true` -> `handoff`
-- `approach=merged|cart` and `useBasil=false` -> `consensus`
-- other cases -> `handoff`
-
-`handoff` matches the BASIL ring handoff behavior. `consensus` averages current and received models before training.
-
-## Channel Noise Sweeps
-
-Legacy JSON sweeps may use the older fixed-scale shortcut:
-
-```text
-scale = 1 + lambda * sigma^2
-lambda = 1 / sigma^2
-```
-
-Current values:
-
-| sigma | lambda |
-|---:|---:|
-| 0.2 | 25.0 |
-| 0.3 | 11.111111 |
-| 0.4 | 6.25 |
-| 0.5 | 4.0 |
-| 0.6 | 2.777778 |
-
-The sigma-specific legacy configs are generated for IID/non-IID, CART/Merged,
-0-Byzantine channel-noise cases, and 4-hidden-Byzantine channel-noise cases.
-
-Campaign 3 R2 does **not** use that shortcut. It differentiates the
-noisy-communication objective
-`F + lambda * sigma^2 * ||grad F||^2` with bounded second-order microbatches.
-The configured effective batch remains 512. Its predeclared objective
-coefficient is `0.00100` for sigma 0.2, `0.00025` for sigma 0.3-0.4, and
-`0.00010` for sigma 0.5-0.6; `lambda` is derived by dividing that coefficient
-by `sigma^2`. The bounded CART low-noise refinement separately tests
-coefficient `0.00025` at sigma 0.2 because CART's proximal term changes the
-combined optimization problem. The selected CART confirmation configs preserve
-that coefficient (`lambda=0.00625`) at sigma 0.2. The objective and SS rule are
-unchanged.
-
-## Plot Outputs
-
-The plot button and automatic post-run plotting generate:
-
-- `experiments_avg.png`
-- `experiments_avg_zoom.png`
-- `grid_avg.png`
-- `final_accuracy_avg.png`
-- `improvement_over_no_mitigation_avg.png`
-- `ablation_groups_avg.png`
-
-Plots are saved into the matching split/dataset/attack/approach folder, and channel-noise plots are additionally separated by `sigma_*` folders.
-
-## Key Source Files
-
-| File | Purpose |
-|---|---|
-| `gui/experiment_app.py` | GUI, configs, queue, experiment execution |
-| `gui/baseline_study.py` | Campaign matrix, run IDs, calibration, result paths |
-| `gui/worker_pool.py` | isolated one/two-lane Campaign 3 process pool |
-| `gui/config_library.py` | versioned individual BASIL/Noisy/Merged/CART config matrices |
-| `gui/runtime_estimator.py` | matched-history per-config and whole-queue ETA |
-| `scripts/run_baseline_worker.py` | one official Campaign 3 run per process |
-| `scripts/benchmark_worker_pool.py` | deterministic two-lane safety/throughput gate |
-| `scripts/run_single_config.py` | CLI config runner |
-| `basil_core/basil.py` | BASIL ring and FedAvg loops |
-| `basil_core/cart.py` | CART ring loop |
-| `basil_core/experiment_engine.py` | deterministic shared-worker Campaign 3 engine |
-| `basil_core/trainer.py` | parameter helpers and training/evaluation |
-| `reporting/experiment_plots.py` | result discovery and plot generation |
-| `reporting/baseline_study_plots.py` | Campaign 3 paper and diagnostic plots |
-
-## Validation
+Generate configs and run the bounded diagnostic gate:
 
 ```bash
-environment/basil-noise-env/bin/python -m unittest tests.test_config_library tests.test_baseline_study_contracts tests.test_experiment_engine tests.test_runtime_estimator tests.test_worker_pool tests.test_cifar_cache -v
-environment/basil-noise-env/bin/python -m py_compile gui/experiment_app.py gui/config_library.py gui/baseline_study.py gui/worker_pool.py gui/runtime_estimator.py reporting/baseline_study_plots.py scripts/sync_gui_config_library.py scripts/run_single_config.py scripts/run_baseline_worker.py scripts/benchmark_worker_pool.py basil_core/experiment_engine.py
-git diff --check
+python scripts/generate_research_protocol_configs.py
+python scripts/calibrate_channel_noise.py --semantics relative_l2_gaussian --evaluate
+python scripts/calibrate_channel_noise.py --semantics paper_absolute_gaussian --evaluate
+python scripts/run_research_diagnostics.py --family smoke --jobs 2
+python scripts/run_research_diagnostics.py --family preflight
+python scripts/report_research_diagnostics.py --plots
 ```
+
+The 47 smoke configurations use three rounds and reduced data, **not reduced
+epochs**. Three clean full-data preflights use five rounds. Production configs
+are prepared but require explicit CLI approval via `--allow-production` after
+reviewing the baseline; the GUI cannot silently launch the 100-round matrix.
+
+New outputs live in `experiments/research_protocol_results/` and
+`plots/research_protocol/`, separated into smoke, preflight, and production.
+Results include before-training and five-epoch class metrics, outgoing-link
+noise statistics, candidate losses, optimizer-step objectives, and all ten final
+node checkpoints. Results browsing, plotting, and network replay support them.
+
+See the [protocol guide](docs/SEQUENTIAL_BASIL_PROTOCOL.md),
+[source-equation note](docs/SOURCE_EQUATIONS.md), and
+[measured diagnostic report](docs/RESEARCH_DIAGNOSTIC_REPORT.md).
+[Verification commands and artifact hashes](docs/RESEARCH_PROTOCOL_VERIFICATION.md)
+record the actual checks and environment boundaries. The >50%
+worst-node target is a research objective, never a software correctness test.
+
+The sequential BASIL research protocol uses five complete local epochs, strict
+snapshot handoff, bounded five-snapshot memory, receiver-local Snapshot Selection,
+and optional Gaussian channel noise. Old saved protocol identifiers are accepted
+as deprecated compatibility aliases; new configurations use
+`sequential_basil_one_class_v1`. Historical results remain read-only and retain
+their original provenance. See [the naming migration](docs/RESEARCH_NAMING_MIGRATION.md).
+
+## Testing
+
+Latest publication checks: compilation passed; the focused IID/protocol,
+recovery, GPU-policy, GUI-state, configuration-library, runtime-estimator and
+worker suites completed with **178 passed, 2 display-dependent skips and
+644 subtests passed**. This is not a claim that the entire legacy suite passed.
+No new scientific condition was executed for publication.
+
+Compile the active source tree:
+
+```bash
+python -m compileall -q gui basil_core reporting scripts tests
+```
+
+Run the display-independent suite without unrelated globally installed pytest
+plugins:
+
+```bash
+PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python -m pytest -q \
+  --ignore=tests/test_convergence.py
+```
+
+Run the fast GUI architecture contracts:
+
+```bash
+PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python -m pytest -q \
+  tests/test_gui_architecture.py \
+  tests/test_config_library.py \
+  tests/test_runtime_estimator.py \
+  tests/test_worker_pool.py
+```
+
+`tests/test_convergence.py` loads MNIST during collection and may require
+network access when the dataset is not already cached. Tests should not launch
+full research campaigns merely to verify the GUI.
+
+## Documentation
+
+- [Documentation index](docs/README.md)
+- [Repository overview](docs/GetToKnow.md)
+- [GUI architecture](docs/GUI_REDESIGN_PLAN.md)
+- [Repository audit](docs/REPOSITORY_AUDIT.md)
+- [Baseline study protocol](docs/BASELINE_STUDY_GUIDE.md)
+- [Adaptive study plan](docs/ADAPTIVE_STUDY_PLAN.md)
+- [Adaptive runtime research](docs/ADAPTIVE_RUNTIME_RESEARCH.md)
+- [CART gamma explanation](docs/gammaExplained.md)
+- [WCM pilot](docs/WCM_PILOT.md)
+
+Detailed experimental rationale, equations, protocol gates, and historical
+findings belong in these documents rather than in this README.

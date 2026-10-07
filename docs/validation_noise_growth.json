@@ -1,0 +1,35 @@
+{
+  "purpose": "channel_only_numerical_diagnostic",
+  "researchValid": false,
+  "parameterCount": 117706,
+  "initialNorm": 15.07938301577573,
+  "rows": [
+    {
+      "sigmaRelative": 0.2,
+      "transmissions": 30,
+      "replicates": 20,
+      "expectedSquaredNormRatio": 3.2433975100275414,
+      "sqrtExpectedSquaredNormRatio": 1.8009435055069165,
+      "observedNormRatioMean": 1.8020909107111371,
+      "observedNormRatioStd": 0.0055949331866962035
+    },
+    {
+      "sigmaRelative": 0.4,
+      "transmissions": 30,
+      "replicates": 20,
+      "expectedSquaredNormRatio": 85.84987690876324,
+      "sqrtExpectedSquaredNormRatio": 9.265520865486367,
+      "observedNormRatioMean": 9.27143727359228,
+      "observedNormRatioStd": 0.050921007232021406
+    },
+    {
+      "sigmaRelative": 0.6,
+      "transmissions": 30,
+      "replicates": 20,
+      "expectedSquaredNormRatio": 10143.01928249852,
+      "sqrtExpectedSquaredNormRatio": 100.71255771997114,
+      "observedNormRatioMean": 100.75018793276823,
+      "observedNormRatioStd": 0.7317849694703276
+    }
+  ]
+}

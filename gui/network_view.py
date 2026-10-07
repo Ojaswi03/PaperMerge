@@ -1,4 +1,4 @@
-"""Live Campaign 4 ring visualization and bounded telemetry inspector."""
+"""Live research ring visualization and bounded telemetry inspector."""
 
 from __future__ import annotations
 
@@ -9,22 +9,23 @@ import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 
 import numpy as np
+from gui.theme import COLORS
 
 
-BG = "#080d14"
-PANEL = "#101823"
-SURFACE = "#172231"
-BORDER = "#2b3a4d"
-TEXT = "#e6edf7"
-MUTED = "#91a0b5"
-ACCENT = "#4f8cff"
-SUCCESS = "#3ecf8e"
-WARNING = "#f0ad4e"
-DANGER = "#ef5b67"
+BG = COLORS["surface_alt"]
+PANEL = COLORS["surface"]
+SURFACE = COLORS["input"]
+BORDER = COLORS["border"]
+TEXT = COLORS["text"]
+MUTED = COLORS["muted"]
+ACCENT = COLORS["accent"]
+SUCCESS = COLORS["success"]
+WARNING = COLORS["warning"]
+DANGER = COLORS["danger"]
 
 
-class CampaignNetworkView:
-    """Reduce Campaign 4 events into a live ring and selected-node inspector."""
+class NetworkView:
+    """Reduce run events into a live ring and selected-node inspector."""
 
     def __init__(self, parent):
         self.parent = parent
@@ -36,6 +37,8 @@ class CampaignNetworkView:
         self._redraw_pending = False
         self._node_positions = {}
         self._replay = None
+        self._inspector_selection = None
+        self._inspector_payload = object()
         self._build()
 
     def _build(self):
@@ -51,7 +54,7 @@ class CampaignNetworkView:
         self.lane_combo.current(0)
         self.lane_combo.pack(side=tk.LEFT, padx=(6, 14))
         self.lane_combo.bind("<<ComboboxSelected>>", self._on_lane)
-        self.status_label = ttk.Label(toolbar, text="No Campaign 4 run active", foreground=MUTED)
+        self.status_label = ttk.Label(toolbar, text="No research run active", foreground=MUTED)
         self.status_label.pack(side=tk.LEFT, fill=tk.X, expand=True)
         ttk.Button(toolbar, text="Replay telemetry", command=self._choose_replay).pack(side=tk.RIGHT)
 
@@ -74,7 +77,7 @@ class CampaignNetworkView:
 
         summary = ttk.LabelFrame(inspector, text="Run", padding=8)
         summary.pack(fill=tk.X, padx=(8, 0), pady=(0, 6))
-        self.run_text = tk.StringVar(value="Waiting for a Campaign 4 worker event.")
+        self.run_text = tk.StringVar(value="Waiting for a research run event.")
         ttk.Label(summary, textvariable=self.run_text, wraplength=340, justify=tk.LEFT).pack(fill=tk.X)
 
         node_header = ttk.Frame(inspector)
@@ -131,7 +134,7 @@ class CampaignNetworkView:
             ("source", "Source", 60),
             ("distance", "Distance", 76),
             ("loss", "Loss", 76),
-            ("valid", "Plausible", 72),
+            ("valid", "Eligible", 72),
             ("selected", "Selected", 66),
         ):
             self.candidate_tree.heading(key, text=title)
@@ -185,6 +188,8 @@ class CampaignNetworkView:
         if int(payload.get("round", -1)) < int(previous.get("round", -1)):
             return
         state["nodes"][node_id] = dict(payload)
+        if payload.get('globalTestAccuracy') is not None:
+            state['perNode'][node_id]=float(payload['globalTestAccuracy'])
         state["activeNode"] = node_id
         state["round"] = max(state["round"], int(payload.get("round", 0)))
         if lane == self.active_lane.get():
@@ -201,7 +206,7 @@ class CampaignNetworkView:
         state["lastRoundEvent"] = incoming_round
         state["round"] = int(payload.get("round", state["round"]))
         state["average"] = float(payload.get("averageAccuracy", 0.0))
-        state["worst"] = float(payload.get("worstAccuracy", 0.0))
+        state["worst"] = float(payload.get("worstNodeAccuracy",payload.get("worstAccuracy", 0.0)))
         state["perNode"] = list(payload.get("perNodeAccuracy", state["perNode"]))
         if lane == self.active_lane.get():
             self.request_redraw()
@@ -229,7 +234,7 @@ class CampaignNetworkView:
             self.canvas.create_text(
                 max(20, self.canvas.winfo_width() / 2),
                 max(20, self.canvas.winfo_height() / 2),
-                text="Start a Campaign 4 queue item to inspect the ring.",
+                text="Start a queued experiment to inspect the live ring, or replay a completed run.",
                 fill=MUTED,
                 font=("Segoe UI", 11),
             )
@@ -314,7 +319,7 @@ class CampaignNetworkView:
                     )
 
         selected = self.selected_node.get()
-        attackers = {int(value) for value in str(config.get("attackerIds", "")).split(",") if value}
+        attackers = set(config.get("resolvedAttackerIds",[])) or {int(value) for value in str(config.get("attackerIds", "")).split(",") if value}
         for node, (x, y) in enumerate(positions):
             payload = state["nodes"].get(node, {})
             attack_active = bool(payload.get("attack", {}).get("active", False))
@@ -323,26 +328,30 @@ class CampaignNetworkView:
             outline = ACCENT if node == selected else WARNING if node == active_node else TEXT
             width_value = 4 if node in (selected, active_node) else 2
             self.canvas.create_oval(x - 25, y - 25, x + 25, y + 25, fill=fill, outline=outline, width=width_value)
-            self.canvas.create_text(x, y, text=str(node), fill="#071016", font=("Segoe UI", 10, "bold"))
+            self.canvas.create_text(x, y, text=str(node), fill="#ffffff", font=("Segoe UI", 10, "bold"))
             accuracy = state["perNode"][node] if node < len(state["perNode"]) else None
             if accuracy is not None:
                 self.canvas.create_text(x, y + 37, text=f"{float(accuracy):.1%}", fill=TEXT, font=("Segoe UI", 8))
 
+        channel_label=config.get('channelNoiseSemantics','noisy channel') if config.get('useChannelNoise') else 'clean channel'
         summary = (
-            f"{config.get('approach', '?').upper()} | {config.get('split', '?')} | "
-            f"{config.get('environment', '?')} | round {state['round']}/{config.get('nRounds', '?')}"
+            f"{config.get('approach', 'BASIL').upper()} | {config.get('partitionStrategy',config.get('split', '?'))} | "
+            f"{channel_label} | round {state['round']}/{config.get('nRounds', '?')}"
         )
         if state["average"] is not None:
             summary += f" | avg {state['average']:.1%} | worst {state['worst']:.1%}"
         self.status_label.configure(text=summary)
         self.run_text.set(
-            f"{config.get('experimentName', 'Campaign 4 run')}\n"
+            f"{config.get('experimentName', 'Research run')}\n"
             f"Status: {state['status']} | EBM: {config.get('ebmMode', 'none')} | "
-            f"sigma={float(config.get('channelNoiseSigma', 0.0)):.1f}"
+            f"channel={config.get('channelNoiseSemantics','historical')} "
+            f"sigma={float(config.get('channelNoiseSigmaAbsolute',0.0) if config.get('channelNoiseSemantics')=='paper_absolute_gaussian' else config.get('channelNoiseSigmaRelative',config.get('channelNoiseSigma',0.0))):g}"
         )
         self._refresh_inspector(state["nodes"].get(selected))
 
     def _refresh_inspector(self, payload):
+        if payload is self._inspector_payload and self.selected_node.get()==self._inspector_selection:return
+        self._inspector_payload=payload; self._inspector_selection=self.selected_node.get()
         self.details.configure(state=tk.NORMAL)
         self.details.delete("1.0", tk.END)
         for tree in (self.candidate_tree, self.link_tree):
@@ -355,6 +364,7 @@ class CampaignNetworkView:
             cart = payload.get("cart", {})
             lines = [
                 f"ROUND {payload.get('round')}  NODE {payload.get('nodeId')}",
+                "Global test accuracy: "+('—' if payload.get('globalTestAccuracy') is None else f"{payload['globalTestAccuracy']:.2%}"),
                 "",
                 f"Attack configured : {attack.get('configured', False)}",
                 f"Attack active     : {attack.get('active', False)}",
@@ -374,17 +384,15 @@ class CampaignNetworkView:
                 f"Clip fraction     : {float(training.get('clipFraction', 0.0)):.3f}",
                 "",
                 f"EBM mode          : {ebm.get('mode', 'none')}",
-                f"Stress EMA        : {float(ebm.get('stress', 0.0)):.5f}",
-                f"EBM requested     : {float(ebm.get('requestedCoefficient', 0.0)):.8g}",
                 f"EBM coefficient   : {float(ebm.get('coefficient', 0.0)):.8g}",
-                f"EBM active ratio  : {float(ebm.get('activeRatio', 0.0)):.5f}",
-                "",
-                f"CART gap          : {float(cart.get('gap', 0.0)):.5f}",
-                f"CART mu           : {float(cart.get('mu', 0.0)):.8g}",
-                f"Registry coverage : {float(cart.get('coverage', 0.0)):.1%}",
-                f"Claims accepted   : {cart.get('accepted', 0)}",
-                f"Claims rejected   : {cart.get('rejected', 0)}",
             ]
+            for key,label in (('stress','Stress EMA'),('requestedCoefficient','EBM requested'),('activeRatio','EBM active ratio'),('effectiveCoordinateSigma','Coordinate sigma')):
+                if key in ebm:lines.append(f'{label}: {float(ebm[key]):.8g}')
+            if cart:
+                lines += ['',f"CART gap: {cart.get('gap','—')}",f"CART mu: {cart.get('mu','—')}",
+                    f"Registry coverage: {cart.get('coverage','—')}",f"Claims accepted: {cart.get('accepted','—')}",f"Claims rejected: {cart.get('rejected','—')}"]
+            if payload.get('telemetryComplete') is False:
+                lines=['This older worker event includes accuracy only. Candidate/link details are unavailable.']
             self.details.insert("1.0", "\n".join(lines))
             for candidate in payload.get("selection", {}).get("candidates", []):
                 self.candidate_tree.insert(
@@ -452,8 +460,8 @@ class CampaignNetworkView:
     def _choose_replay(self):
         path = filedialog.askopenfilename(
             parent=self.root,
-            title="Select Campaign 4 run metadata",
-            filetypes=(("Campaign run", "run.json"), ("JSON", "*.json")),
+            title="Select research run metadata",
+            filetypes=(("Run metadata", "run.json"), ("JSON", "*.json")),
         )
         if path:
             try:
@@ -464,8 +472,17 @@ class CampaignNetworkView:
     def load_replay(self, run_path):
         run_path = Path(run_path)
         metadata = json.loads(run_path.read_text(encoding="utf-8"))
+        from basil_core.protocol_compatibility import is_research_protocol
+        if is_research_protocol(metadata.get("experimentProtocol", metadata.get("config", {}).get("experimentProtocol"))):
+            from gui.services.research_telemetry import load_replay
+            replay=load_replay(run_path)
+            self.start_run(0,replay["config"]);self._replay=replay
+            rounds=len(replay["metrics"]["avg_history"])
+            self.round_scale.configure(from_=0,to=max(0,rounds-1));self.round_scale.set(max(0,rounds-1))
+            self._show_replay_round(max(0,rounds-1))
+            return
         if int(metadata.get("config", {}).get("campaignVersion", 0)) != 4:
-            raise ValueError("The selected run is not a Campaign 4 result.")
+            raise ValueError("Network replay is unavailable for this result format.")
         telemetry_path = run_path.with_name("telemetry.npz")
         metrics_path = run_path.with_name("metrics.npz")
         if not telemetry_path.exists() or not metrics_path.exists():
@@ -501,6 +518,11 @@ class CampaignNetworkView:
         state["average"] = float(metrics["avg_history"][round_index])
         state["worst"] = float(metrics["worst_history"][round_index])
         state["perNode"] = metrics.get("per_node_history", np.zeros((rounds, int(config["nNodes"]))))[round_index].tolist()
+        if "researchRecords" in self._replay:
+            state["nodes"]={node:self._replay["researchRecords"][(round_index,node)] for node in range(10)}
+            state["activeNode"]=9;self.round_label.configure(text=f"Round {round_index+1}/{rounds}")
+            self.request_redraw()
+            return
         for node in range(int(config["nNodes"])):
             senders = telemetry.get("candidate_senders", np.empty((0,)))[round_index, node] if "candidate_senders" in telemetry else []
             distances = telemetry.get("candidate_distances", np.empty((0,)))[round_index, node] if "candidate_distances" in telemetry else []
@@ -570,4 +592,6 @@ class CampaignNetworkView:
         self.request_redraw()
 
 
-__all__ = ["CampaignNetworkView"]
+# Deprecated import alias for existing integrations, not a user-facing label.
+CampaignNetworkView = NetworkView
+__all__ = ["NetworkView", "CampaignNetworkView"]

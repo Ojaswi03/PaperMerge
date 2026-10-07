@@ -23,7 +23,7 @@ def _run_gui():
     """Run the actual GUI. Invoked when --gui flag is present."""
     os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
-    from gui.experiment_app import main
+    from gui.app import main
 
     print("""
 ====================================================================
@@ -79,7 +79,7 @@ def _stop_gui_tree(proc):
     Workers trap SIGTERM as a graceful stop request, so the whole group is
     hard-killed once the GUI is gone. Worker saves are atomic and stopped
     runs stay in the queue, so this loses at most the in-flight round.
-    Without this, campaign workers survive the GUI and keep training on the
+    Without this, research workers survive the GUI and keep training on the
     GPU invisibly.
     """
     import signal

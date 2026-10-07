@@ -1,0 +1,215 @@
+{
+  "status": "prepared_idle",
+  "researchRunsStarted": false,
+  "conditions": [
+    "B",
+    "C",
+    "D"
+  ],
+  "queuePreset": "gui/queues/iid_bcd_100r_gpu_fresh.json",
+  "startMode": "fresh_gpu_round_0",
+  "rounds": 100,
+  "configValidation": "all three CLI dry runs exited 0; executionStarted=false; startMode=fresh; device=GPU",
+  "tests": {
+    "passed": 46,
+    "skipped": 2,
+    "skipReason": "GUI integration tests require a display",
+    "compile": "passed"
+  },
+  "gpuVerificationFingerprintsUnchanged": true,
+  "protectedAndPreservedEvidence": {
+    "filesBefore": 5585,
+    "filesAfter": 5585,
+    "changedRoots": [],
+    "before": {
+      "experiments/professor_protocol_results": {
+        "files": 842,
+        "sha256ManifestDigest": "cc5d32cfee8568867c0f933afdca3da85baaa4873d2542251e9b1f3f6267f1e4"
+      },
+      "experiments/professor_validation_results": {
+        "files": 845,
+        "sha256ManifestDigest": "54e8329c3ae19e6d4d98ae47f42f1abf4b63bcd434304924eeeaf21282d23ea0"
+      },
+      "experiments/results4": {
+        "files": 2153,
+        "sha256ManifestDigest": "956de589718992632138b554387189ef2c44f35563040783ce49e5c996c9b3a2"
+      },
+      "newPlots/IID/A_clean_no_attack_ce_100r": {
+        "files": 0,
+        "sha256ManifestDigest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "newPlots/IID/A_clean_no_attack_ce_100r_gpu": {
+        "files": 26,
+        "sha256ManifestDigest": "dc077377ab505d6a94c0d6a75beb6f7d884167e9c29ac459fec7b89d591207fc"
+      },
+      "newPlots/IID/B_attack_clean_ce_100r": {
+        "files": 0,
+        "sha256ManifestDigest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "newPlots/IID/C_attack_noise_ce_100r": {
+        "files": 0,
+        "sha256ManifestDigest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "newPlots/IID/D_attack_noise_ebm_100r": {
+        "files": 0,
+        "sha256ManifestDigest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "newPlots/IID/comparison": {
+        "files": 7,
+        "sha256ManifestDigest": "affe338b888c6644d239efe5c3000599c36b7226e655e387c76f4abfb3c115bc"
+      },
+      "newPlots/IID/test_01_basil_iid_no_noise_ce": {
+        "files": 25,
+        "sha256ManifestDigest": "9094f3ae186e9ce16be81bfaff1dbffcdc0000fbfcdd8938a9cf6f457ccec377"
+      },
+      "newPlots/IID/test_02_basil_iid_noise_ebm": {
+        "files": 31,
+        "sha256ManifestDigest": "8391d7e800d13ea0ce676c084014711de06d03227a2fad05d9d655fa07f4678a"
+      },
+      "newResults/IID/A_clean_no_attack_ce_100r": {
+        "files": 19,
+        "sha256ManifestDigest": "2d7333c30f04395f8208e5f487b01e2d7e4c849fdeda3b710ad4cdde2116f6ea"
+      },
+      "newResults/IID/A_clean_no_attack_ce_100r_gpu": {
+        "files": 29,
+        "sha256ManifestDigest": "f98879f030539ef197803ef269b9a876069c5187452ec73d906beb5b4803248c"
+      },
+      "newResults/IID/B_attack_clean_ce_100r": {
+        "files": 9,
+        "sha256ManifestDigest": "1e8c019580b5a44ff03709afe462baa27b694234976038caeba695e7af52e496"
+      },
+      "newResults/IID/B_attack_clean_ce_100r_gpu": {
+        "files": 7,
+        "sha256ManifestDigest": "3c94374e1cdcfcf9ccc143a2319887077d893237e8d56dce9515ba035ca57881"
+      },
+      "newResults/IID/C_attack_noise_ce_100r": {
+        "files": 11,
+        "sha256ManifestDigest": "9193c89b82bfbd505a59871e6fa20bea897990dc537fc1cac82100126ece6a4b"
+      },
+      "newResults/IID/D_attack_noise_ebm_100r": {
+        "files": 0,
+        "sha256ManifestDigest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "newResults/IID/comparison": {
+        "files": 10,
+        "sha256ManifestDigest": "419932cf162bcea65590b7d3b389f1f12f07c9f881af8df6a5fffcd6eaecac72"
+      },
+      "newResults/IID/test_01_basil_iid_no_noise_ce": {
+        "files": 24,
+        "sha256ManifestDigest": "4ca0420703bffad340373d6204566b633dafd39e0804d24cfe3e5390ee555ed3"
+      },
+      "newResults/IID/test_02_basil_iid_noise_ebm": {
+        "files": 24,
+        "sha256ManifestDigest": "a259549c8deb4cb6fd22c5acc65b752973bde89470cf2809b19633938a54c433"
+      },
+      "plots/professor_protocol": {
+        "files": 726,
+        "sha256ManifestDigest": "e94bc242c1a678439bb39cce01392f06af7919570c1d41f37f92ec27d5c95382"
+      },
+      "plots/professor_validation": {
+        "files": 60,
+        "sha256ManifestDigest": "99bc8f81d0149459d72ba05c918118ae1f764cf0da47b54890729ec572169670"
+      },
+      "plots4": {
+        "files": 737,
+        "sha256ManifestDigest": "5030097b82065b326509134236ff455812ad8d36ee563ab6834d8abafc2a521f"
+      }
+    },
+    "after": {
+      "experiments/professor_protocol_results": {
+        "files": 842,
+        "sha256ManifestDigest": "cc5d32cfee8568867c0f933afdca3da85baaa4873d2542251e9b1f3f6267f1e4"
+      },
+      "experiments/professor_validation_results": {
+        "files": 845,
+        "sha256ManifestDigest": "54e8329c3ae19e6d4d98ae47f42f1abf4b63bcd434304924eeeaf21282d23ea0"
+      },
+      "experiments/results4": {
+        "files": 2153,
+        "sha256ManifestDigest": "956de589718992632138b554387189ef2c44f35563040783ce49e5c996c9b3a2"
+      },
+      "newPlots/IID/A_clean_no_attack_ce_100r": {
+        "files": 0,
+        "sha256ManifestDigest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "newPlots/IID/A_clean_no_attack_ce_100r_gpu": {
+        "files": 26,
+        "sha256ManifestDigest": "dc077377ab505d6a94c0d6a75beb6f7d884167e9c29ac459fec7b89d591207fc"
+      },
+      "newPlots/IID/B_attack_clean_ce_100r": {
+        "files": 0,
+        "sha256ManifestDigest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "newPlots/IID/C_attack_noise_ce_100r": {
+        "files": 0,
+        "sha256ManifestDigest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "newPlots/IID/D_attack_noise_ebm_100r": {
+        "files": 0,
+        "sha256ManifestDigest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "newPlots/IID/comparison": {
+        "files": 7,
+        "sha256ManifestDigest": "affe338b888c6644d239efe5c3000599c36b7226e655e387c76f4abfb3c115bc"
+      },
+      "newPlots/IID/test_01_basil_iid_no_noise_ce": {
+        "files": 25,
+        "sha256ManifestDigest": "9094f3ae186e9ce16be81bfaff1dbffcdc0000fbfcdd8938a9cf6f457ccec377"
+      },
+      "newPlots/IID/test_02_basil_iid_noise_ebm": {
+        "files": 31,
+        "sha256ManifestDigest": "8391d7e800d13ea0ce676c084014711de06d03227a2fad05d9d655fa07f4678a"
+      },
+      "newResults/IID/A_clean_no_attack_ce_100r": {
+        "files": 19,
+        "sha256ManifestDigest": "2d7333c30f04395f8208e5f487b01e2d7e4c849fdeda3b710ad4cdde2116f6ea"
+      },
+      "newResults/IID/A_clean_no_attack_ce_100r_gpu": {
+        "files": 29,
+        "sha256ManifestDigest": "f98879f030539ef197803ef269b9a876069c5187452ec73d906beb5b4803248c"
+      },
+      "newResults/IID/B_attack_clean_ce_100r": {
+        "files": 9,
+        "sha256ManifestDigest": "1e8c019580b5a44ff03709afe462baa27b694234976038caeba695e7af52e496"
+      },
+      "newResults/IID/B_attack_clean_ce_100r_gpu": {
+        "files": 7,
+        "sha256ManifestDigest": "3c94374e1cdcfcf9ccc143a2319887077d893237e8d56dce9515ba035ca57881"
+      },
+      "newResults/IID/C_attack_noise_ce_100r": {
+        "files": 11,
+        "sha256ManifestDigest": "9193c89b82bfbd505a59871e6fa20bea897990dc537fc1cac82100126ece6a4b"
+      },
+      "newResults/IID/D_attack_noise_ebm_100r": {
+        "files": 0,
+        "sha256ManifestDigest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "newResults/IID/comparison": {
+        "files": 10,
+        "sha256ManifestDigest": "419932cf162bcea65590b7d3b389f1f12f07c9f881af8df6a5fffcd6eaecac72"
+      },
+      "newResults/IID/test_01_basil_iid_no_noise_ce": {
+        "files": 24,
+        "sha256ManifestDigest": "4ca0420703bffad340373d6204566b633dafd39e0804d24cfe3e5390ee555ed3"
+      },
+      "newResults/IID/test_02_basil_iid_noise_ebm": {
+        "files": 24,
+        "sha256ManifestDigest": "a259549c8deb4cb6fd22c5acc65b752973bde89470cf2809b19633938a54c433"
+      },
+      "plots/professor_protocol": {
+        "files": 726,
+        "sha256ManifestDigest": "e94bc242c1a678439bb39cce01392f06af7919570c1d41f37f92ec27d5c95382"
+      },
+      "plots/professor_validation": {
+        "files": 60,
+        "sha256ManifestDigest": "99bc8f81d0149459d72ba05c918118ae1f764cf0da47b54890729ec572169670"
+      },
+      "plots4": {
+        "files": 737,
+        "sha256ManifestDigest": "5030097b82065b326509134236ff455812ad8d36ee563ab6834d8abafc2a521f"
+      }
+    }
+  },
+  "archiveDirectory": "newResults/IID/recovery_archive/B_attack_clean_ce_100r_gpu_before_fresh",
+  "deviceHistoryQualification": "A retains its 38-activation CPU prefix; fresh B/C/D start on GPU. No CPU/GPU equivalence is claimed."
+}

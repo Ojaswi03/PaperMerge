@@ -166,27 +166,21 @@ class CurrentConfigLibraryTests(unittest.TestCase):
 
         self.assertEqual(manifest["counts"], expected_manifest_counts)
 
-    def test_gui_defaults_to_campaign4_multi_select_library(self):
-        source = (
-            Path(__file__).resolve().parents[1] / "gui" / "experiment_app.py"
-        ).read_text(encoding="utf-8")
-        self.assertIn("sourceVar2   = tk.StringVar(value='campaign4')", source)
-        self.assertIn('(\"Campaign 4\", \"campaign4\")', source)
-        self.assertIn("selectmode=tk.EXTENDED", source)
-        self.assertIn("self._configsByEstimatedDuration", source)
-        self.assertIn("tree.bind('<B1-Motion>', dragRow", source)
+    def test_gui_defaults_to_prepared_iid_multi_select_library(self):
+        source = (Path(__file__).resolve().parents[1] / "gui" / "app.py").read_text(encoding="utf-8")
+        queue_source = (Path(__file__).resolve().parents[1] / "gui" / "views" / "queue_view.py").read_text(encoding="utf-8")
+        self.assertIn('initialdir=CONFIG_ROOT', source)
+        self.assertIn('load_queue', source)
+        self.assertIn("askopenfilenames", source)
+        self.assertIn('selectmode="extended"', queue_source)
+        self.assertIn("Move to top", queue_source)
 
     def test_campaign_worker_events_feed_the_log_and_live_chart(self):
-        source = (
-            Path(__file__).resolve().parents[1] / "gui" / "experiment_app.py"
-        ).read_text(encoding="utf-8")
-        self.assertIn("def _logCampaignConfiguration", source)
-        self.assertIn("def _recordCampaignRound", source)
-        self.assertIn('float(payload["worstAccuracy"])', source)
-        self.assertIn("self._recordCampaignRound,", source)
-        self.assertIn("self._startCampaignLiveRun,", source)
-        self.assertIn("STARTING CAMPAIGN {campaignVersion} EXPERIMENT", source)
-        self.assertIn("self.networkView.apply_node_update", source)
+        source = (Path(__file__).resolve().parents[1] / "gui" / "services" / "execution_service.py").read_text(encoding="utf-8")
+        self.assertIn('event=="round_complete"', source)
+        self.assertIn('float(payload.get("worstAccuracy",0))', source)
+        self.assertIn('ExecutionEvent("network_updated"', source)
+        self.assertIn("pool.drain_events", source)
 
 
 if __name__ == "__main__":

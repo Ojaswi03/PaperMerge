@@ -132,6 +132,7 @@ class CampaignWorkerPool:
         work_dir: Path | str = WORK_DIR,
         worker_script: Path | str | None = None,
         python_executable: str | None = None,
+        worker_arguments: tuple[str, ...] = (),
     ):
         self.lanes = max(1, int(lanes))
         self.gpu_memory_limit_mb = max(0, int(gpu_memory_limit_mb))
@@ -141,6 +142,7 @@ class CampaignWorkerPool:
             PROJECT_ROOT / "scripts" / "run_baseline_worker.py"
         )
         self.python_executable = python_executable or sys.executable
+        self.worker_arguments = tuple(worker_arguments)
         self.active: dict[int, ActiveWorker] = {}
         self.events: queue.Queue = queue.Queue()
         self._lock = threading.RLock()
@@ -195,7 +197,7 @@ class CampaignWorkerPool:
             str(config_path),
             "--gpu-memory-mb",
             str(memory_limit),
-        ]
+        ] + list(self.worker_arguments)
         environment = os.environ.copy()
         environment["PYTHONUNBUFFERED"] = "1"
         process = subprocess.Popen(

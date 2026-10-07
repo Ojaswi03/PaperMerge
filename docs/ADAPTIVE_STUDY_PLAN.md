@@ -234,7 +234,7 @@ flowchart TD
 | Relative noise growth | [`trainer.py`](../basil_core/trainer.py) | Noise norm is proportional to current model norm | Model norm and actual noise norm for every link |
 | Repeated injection | [`experiment_engine.py`](../basil_core/experiment_engine.py) | A selected noisy snapshot is mixed 50/50 before each node update | Consensus innovation before local training |
 | Momentum accumulation | [`experiment_engine.py`](../basil_core/experiment_engine.py), [`basil.py`](../basil_core/basil.py), [`cart.py`](../basil_core/cart.py) | Campaign 3 persists logical-node optimizer slots; legacy paths reset them | Momentum norm and reset-versus-persistent ablation |
-| Weak EBM schedule | [`campaign3.py`](../gui/baseline_study.py) | Objective coefficient is `0.00025` at 0.4 and `0.00010` at 0.5/0.6 | Base gradient, regularizer gradient, and their ratio |
+| Weak EBM schedule | [`baseline_study.py`](../gui/baseline_study.py) | Objective coefficient is `0.00025` at 0.4 and `0.00010` at 0.5/0.6 | Base gradient, regularizer gradient, and their ratio |
 | Gradient clipping | [`experiment_engine.py`](../basil_core/experiment_engine.py) | The combined EBM gradient is clipped to global norm 5 | Pre-clip norm, post-clip norm, and clip frequency |
 | SS guard behavior | [`experiment_engine.py`](../basil_core/experiment_engine.py) | Allowed distance rises with sigma; fallback is not saved | Candidate distance, plausibility, loss, and fallback telemetry |
 | Non-IID selection ambiguity | [`experiment_engine.py`](../basil_core/experiment_engine.py) | SS scores models on local data that may have strong class skew | Selected-source class support and per-node loss distribution |

@@ -1,0 +1,41 @@
+[
+  {
+    "channelNoiseSemantics": "relative_l2_gaussian",
+    "checkpointSupplied": false,
+    "requestedSigma": 0.2,
+    "parameterCount": 117706,
+    "modelL2Norm": 15.079383315319932,
+    "perCoordinateNoiseStd": 0.008790514123502813,
+    "realizedNoiseL2NormMean": 3.015915422002509,
+    "realizedNoiseModelRatioMean": 0.20000257032649893,
+    "realizedNoiseModelRatioStd": 0.0003001124971531454,
+    "accuracyBefore": 0.0901,
+    "accuracyAfterOnePerturbation": 0.1001
+  },
+  {
+    "channelNoiseSemantics": "relative_l2_gaussian",
+    "checkpointSupplied": false,
+    "requestedSigma": 0.4,
+    "parameterCount": 117706,
+    "modelL2Norm": 15.079383315319932,
+    "perCoordinateNoiseStd": 0.017581028247005626,
+    "realizedNoiseL2NormMean": 6.032850213238271,
+    "realizedNoiseModelRatioMean": 0.4000727408467152,
+    "realizedNoiseModelRatioStd": 0.0008113967980588193,
+    "accuracyBefore": 0.0901,
+    "accuracyAfterOnePerturbation": 0.0954
+  },
+  {
+    "channelNoiseSemantics": "relative_l2_gaussian",
+    "checkpointSupplied": false,
+    "requestedSigma": 0.6,
+    "parameterCount": 117706,
+    "modelL2Norm": 15.079383315319932,
+    "perCoordinateNoiseStd": 0.026371542370508434,
+    "realizedNoiseL2NormMean": 9.034930198217307,
+    "realizedNoiseModelRatioMean": 0.599157804353859,
+    "realizedNoiseModelRatioStd": 0.0012914369038566215,
+    "accuracyBefore": 0.0901,
+    "accuracyAfterOnePerturbation": 0.0999
+  }
+]

@@ -257,6 +257,19 @@ experiments/results4/campaign4/performance_profile.json
 
 # Isolated exploratory outputs and transient plot locks
 /experiments/wcm_pilot/
+/experiments/research_protocol_results/
+/experiments/research_validation_results/
+# Deprecated compatibility locations; retained historical artifacts are read-only.
+/experiments/professor_protocol_results/
+/experiments/professor_validation_results/
+# Generated paired IID study artifacts
+/newResults/
+/newPlots/
+/experiments/worker_state/
+# Machine-local GUI process records and GPU leases are not queue presets.
+/gui/worker_state/
+# Local queue snapshots taken before recovery/fresh-run preparation.
+/gui/queues/*_before_*.json
 /plots3/.campaign3_plot.lock
 
 # Defensive: plotCampaign4.py resolves PLOT_ROOT/RESULT_ROOT relative to cwd;

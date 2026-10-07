@@ -1,0 +1,27 @@
+{
+  "removedRegenerableBytecode": [
+    "scripts/__pycache__/report_professor_validation.cpython-312.pyc",
+    "scripts/__pycache__/generate_professor_protocol_configs.cpython-312.pyc",
+    "scripts/__pycache__/plot_professor_protocol.cpython-312.pyc",
+    "scripts/__pycache__/smoke_professor_gui.cpython-312.pyc",
+    "scripts/__pycache__/professor_inference_demo.cpython-312.pyc",
+    "scripts/__pycache__/analyze_professor_noise_growth.cpython-312.pyc",
+    "scripts/__pycache__/run_professor_validation.cpython-312.pyc",
+    "scripts/__pycache__/report_professor_diagnostics.cpython-312.pyc",
+    "scripts/__pycache__/calibrate_professor_noise.cpython-312.pyc",
+    "scripts/__pycache__/run_professor_diagnostics.cpython-312.pyc",
+    "scripts/__pycache__/replay_professor_failure.cpython-312.pyc",
+    "scripts/__pycache__/audit_professor_protocol.cpython-312.pyc",
+    "scripts/__pycache__/run_professor_protocol.cpython-312.pyc",
+    "scripts/__pycache__/verify_professor_results.cpython-312.pyc",
+    "basil_core/__pycache__/professor_audit.cpython-312.pyc",
+    "basil_core/__pycache__/professor_protocol.cpython-312.pyc",
+    "tests/__pycache__/test_professor_audit.cpython-312-pytest-9.1.1.pyc",
+    "tests/__pycache__/test_professor_audit.cpython-312.pyc",
+    "tests/__pycache__/test_professor_protocol.cpython-312-pytest-9.1.1.pyc",
+    "tests/__pycache__/test_professor_protocol.cpython-312.pyc",
+    "reporting/__pycache__/professor_protocol_plots.cpython-312.pyc",
+    "gui/services/__pycache__/professor_telemetry.cpython-312.pyc",
+    "gui/__pycache__/professor_protocol.cpython-312.pyc"
+  ]
+}

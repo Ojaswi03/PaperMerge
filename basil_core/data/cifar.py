@@ -203,6 +203,28 @@ def _dirichletPartition(labels, nClients, alpha, rng=None):
     return [np.array(indices) for indices in clientIndices]
 
 
+def oneClassPerNodePartition(labels, nClients=10):
+    """Return the deterministic CIFAR node-id equals class-id partition."""
+    labels = np.asarray(labels, dtype=np.int32).reshape(-1)
+    if int(nClients) != 10:
+        raise ValueError("one_class_per_node requires exactly 10 nodes.")
+    classes = set(np.unique(labels).tolist())
+    if classes != set(range(10)):
+        raise ValueError("one_class_per_node requires all ten CIFAR-10 classes.")
+    return [np.flatnonzero(labels == node).astype(np.int64) for node in range(10)]
+
+
+def fullLocalEpochBatches(sampleCount, batchSize, localEpochs):
+    """Return finite batch sizes; the final partial batch is never discarded."""
+    sampleCount, batchSize, localEpochs = map(int, (sampleCount, batchSize, localEpochs))
+    if sampleCount <= 0 or batchSize <= 0 or localEpochs <= 0:
+        raise ValueError("sampleCount, batchSize, and localEpochs must be positive.")
+    oneEpoch = [batchSize] * (sampleCount // batchSize)
+    if sampleCount % batchSize:
+        oneEpoch.append(sampleCount % batchSize)
+    return oneEpoch * localEpochs
+
+
 def _partitionCachePath(cacheDir, *, iid, nClients, alpha, seed, dataSize):
     payload = json.dumps(
         {
