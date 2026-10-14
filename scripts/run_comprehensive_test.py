@@ -7,7 +7,6 @@ Tests all combinations of:
 """
 import os
 import sys
-import numpy as np
 import pickle
 
 # Robust import
@@ -246,6 +245,7 @@ def runAllExperiments(datasetsToRun=None, modesToRun=None, attacksToRun=None):
         modesToRun: list of mode names (None = all)
         attacksToRun: list of attack names (None = all)
     """
+    import numpy as np
     setupGpu()
     ensureDirs()
 

@@ -147,7 +147,8 @@ def test_gpu_report_routing_cannot_overwrite_cpu_report(tmp_path):
 
 def test_insufficient_gpu_memory_refuses_start(monkeypatch):
     monkeypatch.setattr(runtime.subprocess,'run',lambda *args,**kwargs:SimpleNamespace(stdout='4000\n'))
-    with pytest.raises(RuntimeError,match='at least 5120'):runtime.free_gpu_memory()
+    required=runtime.GPU_MEMORY_LIMIT_MB+runtime.GPU_HEADROOM_MB
+    with pytest.raises(RuntimeError,match=f'at least {required}'):runtime.free_gpu_memory()
     monkeypatch.setattr(runtime.subprocess,'run',lambda *args,**kwargs:SimpleNamespace(stdout='9000\n'))
     assert runtime.free_gpu_memory()==9000
 

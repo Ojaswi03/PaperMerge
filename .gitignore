@@ -238,7 +238,7 @@ Thumbs.db
 nohup.out
 *.pid
 
-# Generated experiment artifacts. Campaign 4 is retained as the active study.
+# Generated experiment artifacts are kept out of source publication.
 /experiments/results/
 /experiments/results2/
 /experiments/results3/
@@ -270,6 +270,22 @@ experiments/results4/campaign4/performance_profile.json
 /gui/worker_state/
 # Local queue snapshots taken before recovery/fresh-run preparation.
 /gui/queues/*_before_*.json
+
+# Handoff/context documents are local-only. Hooks also reject force-added files.
+*[Hh][Aa][Nn][Dd][Oo][Ff][Ff]*.md
+*[Hh][Aa][Nn][Dd][Oo][Ff][Ff]*.txt
+*[Hh][Aa][Nn][Dd][Oo][Ff][Ff]*.rst
+*[Hh][Aa][Nn][Dd][Oo][Ff][Ff]*.pdf
+*[Hh][Aa][Nn][Dd][Oo][Ff][Ff]*.docx
+*[Hh][Aa][Nn][Dd][Oo][Ff][Ff]*.html
+/local_notes/
+*[Cc][Hh][Aa][Tt][Gg][Pp][Tt]*[Pp][Rr][Oo][Mm][Pp][Tt]*.md
+*[Cc][Ll][Aa][Uu][Dd][Ee]*[Hh][Aa][Nn][Dd][Oo][Ff][Ff]*.md
+.firecrawl/
+/wandb/
+.env
+.env.*
+!.env.example
 /plots3/.campaign3_plot.lock
 
 # Defensive: plotCampaign4.py resolves PLOT_ROOT/RESULT_ROOT relative to cwd;

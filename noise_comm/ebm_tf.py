@@ -1,8 +1,7 @@
-import numpy as np
-import tensorflow as tf
 
 def add_gaussian_noise_weights(model, sigma):
     # no-op when sigma is zero or negative
+    import tensorflow as tf
     if not sigma or sigma <= 0:
         return
     for w in model.trainable_variables:
@@ -11,6 +10,7 @@ def add_gaussian_noise_weights(model, sigma):
 
 def add_gaussian_noise_numpy(params, sigma):
     # return copies without noise when sigma is not positive
+    import numpy as np
     if not sigma or sigma <= 0:
         return [p.copy() for p in params]
     noisy = []
@@ -21,6 +21,7 @@ def add_gaussian_noise_numpy(params, sigma):
 
 def ebm_regularized_loss(loss_fn, model, x, y, sigma):
     # compute base loss and add sigma^2 * grad_norm_sq regularizer
+    import tensorflow as tf
     x_t = tf.convert_to_tensor(x, dtype=tf.float32)
     y_t = tf.convert_to_tensor(y, dtype=tf.int32)
 

@@ -23,11 +23,11 @@ class PaperMergeApp:
         try:self.queue_state=self.queue_service.load()
         except ValueError as error:self.queue_state=QueueState(); self.state.status=str(error)
         self.queue_service.describe_recovery(self.queue_state,PROJECT_ROOT)
-        self.results=ResultService(PROJECT_ROOT/"experiments"/"results4",(PROJECT_ROOT/"newResults/IID",PROJECT_ROOT/"experiments/research_protocol_results", *(PROJECT_ROOT/path for path in LEGACY_RESULT_ROOTS))); self.plot_service=PlotService(PROJECT_ROOT/"plots4"); self.execution=ExecutionService(self.state,launcher=self._launch); self._worker_handle=None; self._active_queue_entry=None; self._queue_running=False
-        if self.queue_state.entries and self.queue_state.entries[0].config.extra.get('iidCampaignId'):
+        self.results=ResultService(PROJECT_ROOT/"newResults/IID",additional_roots=(PROJECT_ROOT/'newResults/nonIID',)); self.plot_service=PlotService(); self.execution=ExecutionService(self.state,launcher=self._launch); self._worker_handle=None; self._active_queue_entry=None; self._queue_running=False
+        if self.queue_state.entries and (self.queue_state.entries[0].config.extra.get('iidCampaignId') or self.queue_state.entries[0].config.extra.get('noniidStudyId')):
             self.state.experiment=self.queue_state.entries[0].config
         commands={"save":self.save_config,"load":self.load_config,"queue":self.add_to_queue,"run":self.run,"stop":self.stop,"queue_changed":self.queue_changed,"library":self.add_from_library,"plot":self.generate_plots,'load_queue':self.load_queue}
-        self.runtime_estimator=RuntimeEstimator((PROJECT_ROOT/"experiments"/"results4",))
+        self.runtime_estimator=RuntimeEstimator((PROJECT_ROOT/"newResults/IID",))
         self.shell=ApplicationShell(root,self.state,self.queue_state,self.results,commands,self.runtime_estimator); self.state.subscribe(self.shell.refresh)
         root.bind("<Control-s>",lambda _e:self.save_config()); root.bind("<Control-l>",lambda _e:self.load_config()); root.bind("<Control-r>",lambda _e:self.run()); root.bind("<Escape>",lambda _e:self.stop()); root.protocol("WM_DELETE_WINDOW",self.close); self._poll()
     def save_config(self):
@@ -51,7 +51,10 @@ class PaperMergeApp:
         self.state.notify()
     def add_from_library(self):
         from basil_core.iid_campaign import CONFIG_ROOT
-        paths=filedialog.askopenfilenames(parent=self.root,title="Add configurations",initialdir=CONFIG_ROOT,filetypes=(("JSON","*.json"),))
+        latest=(PROJECT_ROOT/'gui/configs/nonIID/cart_verified_30r' if self.state.experiment.extra.get('noniidStudyId') else PROJECT_ROOT/'gui/configs/IID/sequential_basil_500r/gpu/fresh')
+        if self.state.experiment.extra.get('experimentProtocol')=='sequential_basil_dirichlet_v1':
+            latest=PROJECT_ROOT/'gui/configs/nonIID/dirichlet_alpha02_30r'
+        paths=filedialog.askopenfilenames(parent=self.root,title="Add configurations",initialdir=latest if latest.exists() else CONFIG_ROOT,filetypes=(("JSON","*.json"),))
         added=0
         for path in paths:
             try:self.queue_state.add(self.config_service.load(path)); added+=1
@@ -97,10 +100,12 @@ class PaperMergeApp:
         if pending is not None:self.state.experiment=pending.config
         config=to_persisted(self.state.experiment)
         from basil_core.iid_campaign import gui_approved
-        if int(config.get("campaignVersion",0)) not in {3,4} and config.get("experimentProtocol")!="sequential_basil_one_class_v1" and not gui_approved(config):
+        from basil_core.noniid_verified_study import gui_approved as noniid_approved
+        from basil_core.dirichlet_study import gui_approved as dirichlet_approved
+        if int(config.get("campaignVersion",0)) not in {3,4} and config.get("experimentProtocol")!="sequential_basil_one_class_v1" and not gui_approved(config) and not noniid_approved(config) and not dirichlet_approved(config):
             self._queue_running=False; self.state.end_queue(); messagebox.showinfo("Run configuration","Add or load a versioned baseline/adaptive-study configuration before starting isolated execution. This prevents silently assigning research protocol fields.",parent=self.root); return
         orphans=[]
-        for root in (PROJECT_ROOT/'gui/worker_state/iid',PROJECT_ROOT/"experiments"/"results3"/"r2"/"workers",PROJECT_ROOT/"experiments"/"results4"/"campaign4"/"workers",PROJECT_ROOT/"experiments/worker_state/adaptive",PROJECT_ROOT/"experiments/worker_state/baseline",PROJECT_ROOT/"experiments/research_protocol_results/workers", *(PROJECT_ROOT/path/"workers" for path in LEGACY_RESULT_ROOTS)): orphans.extend(find_orphan_workers(root))
+        for root in (PROJECT_ROOT/'gui/worker_state/dirichlet',PROJECT_ROOT/'gui/worker_state/noniid_verified',PROJECT_ROOT/'gui/worker_state/iid',PROJECT_ROOT/"experiments"/"results3"/"r2"/"workers",PROJECT_ROOT/"experiments"/"results4"/"campaign4"/"workers",PROJECT_ROOT/"experiments/worker_state/adaptive",PROJECT_ROOT/"experiments/worker_state/baseline",PROJECT_ROOT/"experiments/research_protocol_results/workers", *(PROJECT_ROOT/path/"workers" for path in LEGACY_RESULT_ROOTS)): orphans.extend(find_orphan_workers(root))
         if orphans:
             names=", ".join(f"{item.get('runId','?')} (pid {item.get('pid','?')})" for item in orphans)
             if not messagebox.askyesno("Orphaned workers",f"Active workers from an earlier session were found:\n\n{names}\n\nRequest graceful termination before starting?",parent=self.root): self._queue_running=False; self.state.end_queue(); return
@@ -116,13 +121,29 @@ class PaperMergeApp:
             LOG.exception("Execution start failed"); messagebox.showerror("Execution error",str(error),parent=self.root)
     def stop(self): self._queue_running=False; self.state.end_queue(); self.execution.request_stop(); self.state.status="Graceful stop requested"; self.state.notify()
     def _launch(self,config):
-        if config.get('iidCampaignId'):
+        if config.get('experimentProtocol')=='sequential_basil_dirichlet_v1':
+            from gui.services.dirichlet_execution_service import DirichletExecutionHandle
+            self._worker_handle=DirichletExecutionHandle(config,self.execution.post)
+        elif config.get('noniidStudyId'):
+            from gui.services.noniid_execution_service import NoniidExecutionHandle
+            self._worker_handle=NoniidExecutionHandle(config,self.execution.post)
+        elif config.get('iidCampaignId'):
             from gui.services.iid_execution_service import IidExecutionHandle
             self._worker_handle=IidExecutionHandle(config,self.execution.post)
         else:self._worker_handle=IsolatedWorkerHandle(config,self.execution.post)
         (PROJECT_ROOT/'gui/.queue_active.json').write_text(__import__('json').dumps({'runId':config.get('runId'),'pid':__import__('os').getpid()}))
         return self._worker_handle
     def _poll(self):
+        try:
+            self._poll_once()
+        except Exception:
+            # A display/event error must not permanently disable live telemetry,
+            # worker completion handling or serial queue advancement. Do not
+            # signal/restart the worker or claim that research failed here.
+            LOG.exception('GUI polling update failed; polling will retry')
+        finally:
+            self.root.after(150,self._poll)
+    def _poll_once(self):
         self.state.tick()
         if self._worker_handle and self._worker_handle.active:self._worker_handle.poll()
         self.execution.dispatch_pending()
@@ -144,7 +165,6 @@ class PaperMergeApp:
                 self._queue_running=False; self.state.end_queue()
         if not self._queue_running and self.state.execution.value in {'completed','failed','stopped'} and not (self._worker_handle and self._worker_handle.active):
             (PROJECT_ROOT/'gui/.queue_active.json').unlink(missing_ok=True)
-        self.root.after(150,self._poll)
     def close(self):
         if self.state.execution.value in {"preparing","running","stopping"} or (self._worker_handle and self._worker_handle.active):
             if self.state.execution.value!="stopping":

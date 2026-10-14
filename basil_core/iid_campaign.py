@@ -20,22 +20,32 @@ CONTRAST_FIELDS = {
 }
 
 
-def campaign_configs(partition_hash, initial_hash, *, device='CPU', continue_existing=False):
+def study_layout(rounds=100):
+    """Keep prior identifiers compatible; isolate the newly approved horizon."""
+    if isinstance(rounds, bool) or rounds not in (100, 500):
+        raise ValueError('The fixed IID study horizon must be 100 or 500 rounds.')
+    conditions={letter:tuple(value.replace('_100r', f'_{rounds}r') if isinstance(value,str) else value
+        for value in item) for letter,item in CONDITIONS.items()}
+    return f'iid_abcd_{rounds}r_v1', conditions, COMPARISON.replace('_100r',f'_{rounds}r')
+
+
+def campaign_configs(partition_hash, initial_hash, *, device='CPU', continue_existing=False, rounds=100):
+    study_id, conditions, comparison = study_layout(rounds)
     from basil_core.iid_runtime import execution_device
     execution_device({'executionDevice':device})
-    if continue_existing and device!='GPU':raise ValueError('Device transition is only for the explicit GPU queue.')
+    if continue_existing and (device!='GPU' or rounds!=100):raise ValueError('Device transition is only for the prior 100-round GPU queue.')
     from basil_core.iid_study import paired_configs
-    common=paired_configs(.01,rounds=100)[0]
-    common.update(iidCampaignId=CAMPAIGN_ID,roundEvaluationMetrics=True,approach='basil',nonIID=False,
+    common=paired_configs(.01,rounds=rounds)[0]
+    common.update(iidCampaignId=study_id,roundEvaluationMetrics=True,approach='basil',nonIID=False,
         useBasil=True,attackHiddenStart=20,purpose='iid_abcd_research',executionStartMode='fresh',
         expectedPartitionHash=partition_hash,expectedInitialModelHash=initial_hash,
-        sigmaApproval='a_priori_calibration_0.010',comparisonResultsDirectory=f'newResults/IID/{COMPARISON}',
-        comparisonPlotsDirectory=f'newPlots/IID/{COMPARISON}')
+        sigmaApproval='a_priori_calibration_0.010',comparisonResultsDirectory=f'newResults/IID/{comparison}',
+        comparisonPlotsDirectory=f'newPlots/IID/{comparison}')
     configs=[]
-    for letter,(name,folder,attack,noise,objective,label) in CONDITIONS.items():
+    for letter,(name,folder,attack,noise,objective,label) in conditions.items():
         ids=[0,1,5,7] if attack else []
         configs.append(dict(common,conditionId=letter,experimentName=name,runId=name,
-            displayName=f'{letter} — {label} — Fresh R0→R99',
+            displayName=f'{letter} — {label} — Fresh R0→R{rounds-1}',
             resultDirectory=f'newResults/IID/{folder}',plotDirectory=f'newPlots/IID/{folder}',
             attackerCount=len(ids),actualAttackerCount=len(ids),resolvedAttackerIds=ids,
             attackerIds=','.join(map(str,ids)),attackHidden=attack,useChannelNoise=noise,
@@ -56,26 +66,31 @@ def campaign_configs(partition_hash, initial_hash, *, device='CPU', continue_exi
 
 
 def validate_campaign_condition(config):
-    if config.get('iidCampaignId')!=CAMPAIGN_ID:raise ValueError('Unknown IID campaign identifier.')
+    rounds=config.get('nRounds')
+    study_id,conditions,comparison=study_layout(rounds)
+    if config.get('iidCampaignId')!=study_id:raise ValueError('Unknown IID study identifier or horizon mismatch.')
     letter=config.get('conditionId')
     if letter not in CONDITIONS:raise ValueError('Select IID condition A, B, C or D.')
-    name,folder,attack,noise,objective,_=CONDITIONS[letter]
+    name,folder,attack,noise,objective,_=conditions[letter]
     from basil_core.iid_runtime import execution_device
     device=execution_device(config)
     if config.get('recoverySourceDirectory'):
         if device!='GPU' or config['recoverySourceDirectory']!=f'newResults/IID/{folder}' or config.get('deviceTransition')!='cpu_to_gpu_verified_state':
             raise ValueError('Only the matching CPU condition can supply a verified GPU transition.')
     suffix='_gpu' if device=='GPU' else ''
-    expected=dict(nRounds=100,executionStartMode='fresh',roundEvaluationMetrics=True,approach='basil',nonIID=False,
+    expected=dict(nRounds=rounds,executionStartMode='fresh',roundEvaluationMetrics=True,approach='basil',nonIID=False,
         researchValid=True,executionMode=f'deterministic_single_process_{device.lower()}',seed=2025,
         experimentName=name+suffix,runId=name+suffix,useBasil=True,actualAttackerCount=4 if attack else 0,
         attackerCount=4 if attack else 0,resolvedAttackerIds=[0,1,5,7] if attack else [],
         attackerIds='0,1,5,7' if attack else '',attackHidden=attack,attackHiddenStart=20,
         useChannelNoise=noise,channelNoiseSigmaAbsolute=.01 if noise else 0.,localObjective=objective,
         resultDirectory=f'newResults/IID/{folder}{suffix}',plotDirectory=f'newPlots/IID/{folder}{suffix}',
-        comparisonResultsDirectory=f'newResults/IID/{COMPARISON}{suffix}',comparisonPlotsDirectory=f'newPlots/IID/{COMPARISON}{suffix}')
+        comparisonResultsDirectory=f'newResults/IID/{comparison}{suffix}',comparisonPlotsDirectory=f'newPlots/IID/{comparison}{suffix}')
     for field,value in expected.items():
         if config.get(field)!=value:raise ValueError(f'Condition {letter}: {field} must be {value!r}.')
+    for field in ('attackGaussian','attackSignFlip','attackModelPoison','attackScaling',
+                  'attackAlie','attackIpm','attackNoiseAmp'):
+        if config.get(field,False):raise ValueError(f'{field} is not part of the delayed Hidden IID study.')
     for field in ('expectedPartitionHash','expectedInitialModelHash'):
         value=config.get(field,'')
         if len(value)!=64 or any(c not in '0123456789abcdef' for c in value):raise ValueError(f'{field} requires the verified SHA-256.')
@@ -95,7 +110,7 @@ def verify_campaign(configs):
 
 
 def gui_approved(config):
-    if config.get('iidCampaignId')!=CAMPAIGN_ID:return False
+    if config.get('iidCampaignId') not in {study_layout(r)[0] for r in (100,500)}:return False
     from basil_core.research_protocol import validate_config
     try:validate_config(config)
     except (ValueError,TypeError,KeyError):return False

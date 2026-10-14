@@ -1,25 +1,34 @@
-import numpy as np
-import tensorflow as tf
 import os
 
-# Optional tonic library for real N-MNIST data
-try:
-    import tonic
-    import torch
-    from torch.utils.data import DataLoader
-    TONIC_AVAILABLE = True
-except ImportError:
-    TONIC_AVAILABLE = False
-    tonic = None
-    torch = None
+# Probe optional dependencies only when N-MNIST is requested. Preserve the
+# existing ImportError fallback and public TONIC_AVAILABLE compatibility flag.
+def _tonic_available():
+    if 'TONIC_AVAILABLE' not in globals():
+        try:
+            import tonic
+            import torch
+            from torch.utils.data import DataLoader
+        except ImportError:
+            globals().update(TONIC_AVAILABLE=False, tonic=None, torch=None)
+        else:
+            globals().update(TONIC_AVAILABLE=True, tonic=tonic, torch=torch, DataLoader=DataLoader)
+    return globals()['TONIC_AVAILABLE']
+
+
+def __getattr__(name):
+    if name == 'TONIC_AVAILABLE':
+        return _tonic_available()
+    raise AttributeError(name)
 
 
 def loadNMnist():
     # attempt to load real N-MNIST via tonic, fall back to simulated data
+    import numpy as np
+    import tensorflow as tf
     xTrain, yTrain, xTest, yTest = None, None, None, None
 
     # Try to use tonic library for N-MNIST
-    if TONIC_AVAILABLE:
+    if _tonic_available():
         try:
             # Convert events to frames with time binning
             frameTransform = tonic.transforms.ToFrame(
@@ -105,6 +114,7 @@ def loadNMnist():
 
 def _dirichletPartition(train, nClients, alpha):
     """Partition training data using Dirichlet distribution for non-IID splits."""
+    import numpy as np
     labels = np.array([y for _, y in train])
     nClasses = int(labels.max()) + 1
     clientIndices = [[] for _ in range(nClients)]
@@ -120,6 +130,8 @@ def _dirichletPartition(train, nClients, alpha):
     return [np.array(indices) for indices in clientIndices]
 
 def makeLoaders(train, test, batchSize=32, iid=True, nClients=10, dirichletAlpha=0.5):
+    import numpy as np
+    import tensorflow as tf
     if iid:
         idx = np.arange(len(train))
         np.random.shuffle(idx)

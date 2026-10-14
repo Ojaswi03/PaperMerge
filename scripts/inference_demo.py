@@ -6,14 +6,14 @@ import argparse
 from pathlib import Path
 import sys
 import json
-import numpy as np
-from PIL import Image
 
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 from basil_core.data.cifar import _datasetArrays,loadCifar10
 from basil_core.research_protocol import CLASS_NAMES,build_model
 
 def main():
+    from PIL import Image
+    import numpy as np
     parser=argparse.ArgumentParser(); parser.add_argument("run_dir"); source=parser.add_mutually_exclusive_group(required=True); source.add_argument("--cifar-index",type=int); source.add_argument("--image"); parser.add_argument("--label",choices=CLASS_NAMES); args=parser.parse_args()
     if args.cifar_index is not None:
         _,test=loadCifar10(cacheDir=Path(__file__).resolve().parents[1]/"experiments/cache/cifar10"); images,labels=_datasetArrays(test)

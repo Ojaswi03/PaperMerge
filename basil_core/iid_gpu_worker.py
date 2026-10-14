@@ -1,14 +1,13 @@
 """GPU kernels with CPU-keyed preprocessing; shares the existing training loop."""
-import tensorflow as tf
-import numpy as np
 from basil_core.iid_study import IidWorker
 from basil_core.research_protocol import gradient_norm_objective_gradients
 from basil_core.research_audit import augment_batch, ProtocolAudit, tensor_stats
-from basil_core.trainer import lossFn
 
 
 class GpuIidWorker(IidWorker):
     def _batch_gradients(self,x,y,key,mode,semantics,sigma,legacy_lambda):
+        from basil_core.trainer import lossFn
+        import tensorflow as tf
         if semantics!='paper_absolute_gaussian' or mode not in {'none','gradient_norm_objective'}:
             raise ValueError('GPU IID execution supports CE and source EBM only.')
         # Per-image map/seed/crop operations are expensive tiny CUDA launches.
@@ -39,10 +38,13 @@ class GpuIidWorker(IidWorker):
 
 class GpuProtocolAudit(ProtocolAudit):
     def begin_batch(self,*args,**kwargs):
+        import tensorflow as tf
         with tf.device('/CPU:0'):
             super().begin_batch(*args,**kwargs)
 
     def failure(self, worker, error):
+        import numpy as np
+        import tensorflow as tf
         if not isinstance(error, tf.errors.ResourceExhaustedError):
             return super().failure(worker, error)
         # An OOM must not launch the base audit's GPU-intensive graph replay.

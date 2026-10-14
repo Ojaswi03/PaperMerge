@@ -14,7 +14,6 @@ import tempfile
 from pathlib import Path
 from typing import Iterable
 
-import numpy as np
 
 
 CAMPAIGN_ID = "hidden_cifar10_v3_r2"
@@ -781,6 +780,7 @@ def freeze_calibration_if_ready(
     state_path: Path | str = CALIBRATION_STATE,
 ) -> dict | None:
     """Freeze the predeclared per-noise CART schedule after calibration."""
+    import numpy as np
     expected = build_calibration()
     records = {}
     for config in expected:
@@ -1155,6 +1155,7 @@ def write_json_atomic(path: Path | str, payload: dict | list) -> None:
 
 
 def write_npz_atomic(path: Path | str, **arrays) -> None:
+    import numpy as np
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     fd, temp_name = tempfile.mkstemp(

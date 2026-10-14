@@ -1,0 +1,17 @@
+#!/bin/sh
+set -eu
+# Reject outgoing tips AND newly pushed history containing handoff documents.
+while read local_ref local_sha remote_ref remote_sha; do
+    case "$local_sha" in
+        0000000000000000000000000000000000000000) continue ;;
+    esac
+    python3 scripts/check_publication_policy.py --revision "$local_sha" || exit 1
+    case "$remote_sha" in
+        0000000000000000000000000000000000000000)
+            revisions=$(git rev-list "$local_sha" --not --remotes) ;;
+        *) revisions=$(git rev-list "$remote_sha..$local_sha") ;;
+    esac
+    for revision in $revisions; do
+        python3 scripts/check_publication_policy.py --revision "$revision" || exit 1
+    done
+done

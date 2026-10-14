@@ -29,9 +29,12 @@ import sys
 import json
 import glob
 import itertools
-import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.cm as cm
+if __package__ in (None, ''):
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from basil_core.lazy_imports import lazy_pyplot
+plt = lazy_pyplot(style='seaborn-v0_8-darkgrid')
 
 # ============================================================================
 # CONFIGURATION - EDIT THESE TO CUSTOMIZE YOUR PLOTS
@@ -55,12 +58,9 @@ RESULT_ROOT_MERGED_CART = os.path.join("experiments", "results2", "gui")
 # ============================================================================
 
 # Robust import
-if __package__ in (None, ''):
-    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Style configuration
-plt.style.use('seaborn-v0_8-darkgrid')
+# Plot style is applied lazily on first plotting operation.
 
 # All distinct matplotlib markers
 _ALL_MARKERS = ['o', 's', '^', 'D', 'v', 'P', 'X', '*', 'h', '<', '>', 'p', 'H', '8', '+', 'x', '1', '2', '3', '4']
@@ -95,6 +95,7 @@ METHOD_COLORS = {
 
 def getColors(n):
     # pick colormap based on how many colors are needed
+    import matplotlib.cm as cm
     if n <= 0:
         return []
     if n <= 10:
@@ -599,6 +600,7 @@ def experimentSortKey(exp, attackKey):
 
 
 def _finalAcc(exp):
+    import numpy as np
     if not os.path.exists(exp['avgPath']):
         return None
     acc = np.load(exp['avgPath'])
@@ -609,6 +611,7 @@ def _finalAcc(exp):
 
 def plotDatasetExperiments(dataset, attackKey, approach, experiments, split=None, plotSubdir=None, skipExisting=False):
     # overlay all experiment curves on one axes and save the figure
+    import numpy as np
     experiments = sorted(experiments, key=lambda exp: experimentSortKey(exp, attackKey))
     datasetTitles = {
         'mnist': 'MNIST',
@@ -675,6 +678,7 @@ def plotDatasetExperiments(dataset, attackKey, approach, experiments, split=None
 
 def plotDatasetExperimentsZoom(dataset, attackKey, approach, experiments, split=None, plotSubdir=None, skipExisting=False):
     """Zoomed line plot for comparing mitigation curves without the clean scale."""
+    import numpy as np
     experiments = sorted(experiments, key=lambda exp: experimentSortKey(exp, attackKey))
     if len(experiments) <= 1:
         return
@@ -734,6 +738,7 @@ def plotDatasetExperimentsZoom(dataset, attackKey, approach, experiments, split=
 
 def plotDatasetGrid(dataset, attackKey, approach, experiments, split=None, plotSubdir=None, skipExisting=False):
     # one subplot per experiment arranged in a grid layout
+    import numpy as np
     experiments = sorted(experiments, key=lambda exp: experimentSortKey(exp, attackKey))
     if len(experiments) <= 1:
         return
@@ -903,6 +908,7 @@ def plotImprovementOverNoMitigation(dataset, attackKey, approach, experiments, s
 
 def plotAblationGroups(dataset, attackKey, approach, experiments, split=None, plotSubdir=None, skipExisting=False):
     """Grouped final-accuracy bars by environment and mitigation method."""
+    import numpy as np
     experiments = sorted(experiments, key=lambda exp: experimentSortKey(exp, attackKey))
     split = split or (experiments[0].get('split') if experiments else 'nonIID')
     savePath = _plotPath(split, dataset, attackKey, approach, "ablation_groups_avg.png", plotSubdir)
@@ -967,6 +973,7 @@ def plotAblationGroups(dataset, attackKey, approach, experiments, split=None, pl
 
 def plotFinalAccuracyBar(dataset, attackKey, approach, experiments, split=None, plotSubdir=None, skipExisting=False):
     # bar chart of each experiment's final accuracy value
+    import numpy as np
     experiments = sorted(experiments, key=lambda exp: experimentSortKey(exp, attackKey))
     split = split or (experiments[0].get('split') if experiments else 'nonIID')
     savePath = _plotPath(split, dataset, attackKey, approach, "final_accuracy_avg.png", plotSubdir)
@@ -1053,6 +1060,7 @@ def plotExperimentSet(dataset, attackKey, approach, experiments, split=None, plo
 
 def plotMitigationSweepComparison(dataset, attackKey, split=None, skipExisting=False):
     """Compare approaches/methods on one sigma sweep for the same attack."""
+    import numpy as np
     split = split or 'nonIID'
     approaches = [
         approach for approach in discoverApproaches(dataset, attackKey, split=split)

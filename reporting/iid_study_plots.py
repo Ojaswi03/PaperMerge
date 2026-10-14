@@ -5,14 +5,19 @@ import gzip
 import csv
 import json
 from pathlib import Path
-import matplotlib
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
-import numpy as np
+# Direct-script imports must resolve the project before lazy helpers.
+if __package__ in (None, ''):
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+from basil_core.lazy_imports import lazy_pyplot
+plt = lazy_pyplot(backend='Agg')
 from basil_core.iid_study import iid_output, RESULT_ROOT, TEST_NAMES
 
 
 def load_run(directory):
+    import numpy as np
     directory = Path(directory)
     manifest = json.loads((directory/"run.json").read_text())
     if manifest["status"] != "completed": raise ValueError("Metrics require a completed run.")
@@ -23,6 +28,7 @@ def load_run(directory):
 
 
 def plot(output, name, series, *, xlabel="Round", ylabel="Accuracy", bar=False, title="", attack_start=20):
+    import numpy as np
     output = iid_output(output,plots=True); output.mkdir(parents=True,exist_ok=True)
     fig,ax = plt.subplots(figsize=(9,4))
     for label,values in series.items():
@@ -38,11 +44,13 @@ def plot(output, name, series, *, xlabel="Round", ylabel="Accuracy", bar=False, 
 
 
 def round_means(telemetry, getter):
+    import numpy as np
     rounds = sorted({r["round"] for r in telemetry})
     return [float(np.mean([v for r in telemetry if r["round"]==i for v in getter(r)])) for i in rounds]
 
 
 def generate_run_plots(directory, output):
+    import numpy as np
     manifest,metrics,records = load_run(directory)
     if "fullTestAccuracy" in metrics:
         return generate_research_plots(directory,output,manifest,metrics,records)
@@ -174,6 +182,7 @@ def write_study_summary():
 
 
 def attack_analysis(values):
+    import numpy as np
     values=np.asarray(values,dtype=float)
     if len(values)<=20: return {"completedRounds":len(values),"postAttack":"unavailable"}
     before=values[:20];after=values[20:]; peak=np.maximum.accumulate(after)
@@ -185,6 +194,7 @@ def attack_analysis(values):
 
 
 def generate_research_plots(directory,output,manifest,metrics,records=()):
+    import numpy as np
     title=("Test 1 clean IID BASIL" if not manifest["config"]["useChannelNoise"] else "Test 2 noisy IID BASIL + EBM")+f" — {manifest['nRounds']}-round full-data run"
     campaign=bool(manifest['config'].get('iidCampaignId'))
     if campaign:title=manifest['config']['displayName'].split(' — Fresh')[0]+f" — {manifest['nRounds']}-round full-data run"

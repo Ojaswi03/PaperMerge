@@ -2,7 +2,6 @@
 import gzip
 import json
 from pathlib import Path
-import numpy as np
 from basil_core.protocol_compatibility import normalize_config
 
 
@@ -24,6 +23,7 @@ def activation_payload(record,experiment_name):
 
 
 def load_replay(run_path):
+    import numpy as np
     root=Path(run_path).parent
     metadata=json.loads(Path(run_path).read_text())
     with gzip.open(root/"activation_telemetry.json.gz","rt") as source:records=json.load(source)

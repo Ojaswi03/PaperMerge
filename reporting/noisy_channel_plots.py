@@ -7,8 +7,12 @@ CONFIGURATION: Edit the variables below to customize your plots
 """
 import os
 import sys
-import numpy as np
-import matplotlib.pyplot as plt
+if __package__ in (None, ''):
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from basil_core.lazy_imports import lazy_pyplot
+plt = lazy_pyplot(style='seaborn-v0_8-darkgrid')
 
 # ============================================================================
 # CONFIGURATION - EDIT THESE TO CUSTOMIZE YOUR PLOTS
@@ -34,12 +38,9 @@ GENERATE_SINGLE = True           # Single comprehensive plot per dataset
 # ============================================================================
 
 # Robust import
-if __package__ in (None, ''):
-    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Style configuration
-plt.style.use('seaborn-v0_8-darkgrid')
+# Plot style is applied lazily on first plotting operation.
 COLORS = {
     'clean': '#F18F01',  # Orange - baseline noisy
     'ebm': '#C73E1D',    # Red - EBM
@@ -55,6 +56,7 @@ MARKERS = {
 
 def loadNoisyChannelResults(dataset, mode, attack, metric='avg'):
     # build file path and return loaded array, or None if missing
+    import numpy as np
     resultDir = f"experiments/results/noisyChannel/{dataset}"
     filename = f"acc_{mode}_{attack}_{metric}.npy"
     filepath = os.path.join(resultDir, filename)
@@ -68,6 +70,7 @@ def loadNoisyChannelResults(dataset, mode, attack, metric='avg'):
 
 def plotByDataset(datasets, attacks, metric='avg'):
     # 2x2 subplots per dataset comparing clean/EBM/WCM under all attacks
+    import numpy as np
     datasetTitles = {
         'mnist': 'MNIST',
         'cifar10': 'CIFAR-10',
@@ -125,6 +128,7 @@ def plotByDataset(datasets, attacks, metric='avg'):
 
 def plotAcrossDatasets(attacks, metric='avg'):
     # one figure per mode (ebm/wcm) showing all datasets per attack
+    import numpy as np
     datasets = ['mnist', 'cifar10', 'nmnist']
     datasetLabels = {
         'mnist': 'MNIST',
@@ -181,6 +185,7 @@ def plotAcrossDatasets(attacks, metric='avg'):
 
 def plotImpact(datasets, attacks, metric='avg'):
     # side-by-side bar charts of EBM and WCM improvement over noisy baseline
+    import numpy as np
     datasetLabels = {
         'mnist': 'MNIST',
         'cifar10': 'CIFAR-10',
@@ -271,6 +276,7 @@ def plotImpact(datasets, attacks, metric='avg'):
 
 def plotSingleDataset(dataset, attacks, metric='avg'):
     # overlay all attack/mode combinations on one axes for one dataset
+    import numpy as np
     attackLabels = {
         'clean': 'No Attack',
         'gaussian': 'Gaussian Attack',

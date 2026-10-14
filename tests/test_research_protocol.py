@@ -1,6 +1,6 @@
-import numpy as np
+from basil_core.lazy_imports import lazy_module
+np = lazy_module('numpy')
 import pytest
-import tensorflow as tf
 
 from basil_core.data.cifar import fullLocalEpochBatches, oneClassPerNodePartition
 from basil_core.models import BasilPaperCifarModel
@@ -91,6 +91,7 @@ def test_relative_ebm_coefficient_is_coordinate_variance():
 
 
 def test_second_order_ebm_gradient_matches_analytic_and_is_not_scalar_scaling():
+    import tensorflow as tf
     model=tf.keras.Sequential([tf.keras.layers.Input((1,)),tf.keras.layers.Dense(1,use_bias=False)])
     model.trainable_variables[0].assign([[2.0]]); x=tf.constant([[1.0]]); y=tf.constant([0],tf.int32)
     # Use protocol helper with sparse CE on a two-logit toy instead for valid classification.
@@ -160,6 +161,7 @@ def test_absolute_coordinate_std_independent_of_model_norm():
 
 
 def test_relative_variance_is_stopped_and_changes_with_current_weights():
+    import tensorflow as tf
     from basil_core.research_protocol import tensor_noise_variance
     model=tf.keras.Sequential([tf.keras.layers.Input((1,)),tf.keras.layers.Dense(2,use_bias=False)])
     model.trainable_variables[0].assign([[2.,2.]])
@@ -173,6 +175,7 @@ def test_relative_variance_is_stopped_and_changes_with_current_weights():
 
 @pytest.mark.parametrize("mode",["none","legacy_gradient_scale","gradient_norm_objective"])
 def test_actual_worker_optimizer_and_five_full_epochs(mode):
+    import tensorflow as tf
     from basil_core.research_protocol import SequentialWorker
     model=tf.keras.Sequential([tf.keras.layers.Input((32,32,3)),tf.keras.layers.GlobalAveragePooling2D(),tf.keras.layers.Dense(10)])
     worker=SequentialWorker(model)
@@ -253,6 +256,7 @@ def test_cached_real_cifar_label_partition_and_evaluation_counts():
 
 
 def test_actual_fifty_optimizer_steps_keep_392_sample_batches():
+    import tensorflow as tf
     from basil_core.research_protocol import SequentialWorker
     model=tf.keras.Sequential([tf.keras.layers.Input((32,32,3)),tf.keras.layers.GlobalAveragePooling2D(),tf.keras.layers.Dense(10)])
     worker=SequentialWorker(model)

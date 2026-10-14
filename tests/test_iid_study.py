@@ -1,7 +1,5 @@
 """Display-independent contracts for the paired IID study."""
-import numpy as np
 import pytest
-import tensorflow as tf
 
 from basil_core.iid_study import (
     IidWorker, paired_configs, partition_audit, preflight_config, verify_pair, iid_output,
@@ -12,10 +10,10 @@ from basil_core.research_protocol import (
     initialize_memories, broadcast, Snapshot, select_snapshot, apply_channel_noise,
 )
 from basil_core.protocol_compatibility import normalize_config, is_research_protocol
-from basil_core.trainer import lossFn
 
 
 def test_existing_iid_split_coverage_histograms_and_stream_equivalence():
+    import numpy as np
     labels = np.repeat(np.arange(10),5000)
     audit,indices = partition_audit(labels,np.repeat(np.arange(10),1000))
     assert audit["assignedSamples"]==audit["uniqueSamples"]==50000
@@ -61,6 +59,7 @@ def test_preflights_preserve_epochs_and_separate_smoke_attack():
 
 
 def test_memory_rollover_and_receiver_only_selection():
+    import numpy as np
     memories = initialize_memories([np.array([0.],np.float32)])
     for r in range(11):
         for sender in range(10): broadcast(memories,Snapshot(sender,r,[np.array([sender],np.float32)]))
@@ -76,11 +75,13 @@ def test_memory_rollover_and_receiver_only_selection():
 
 
 def test_full_epoch_batch_contract():
+    import numpy as np
     sizes = [len(np.arange(5000)[s:s+512]) for s in range(0,5000,512)]
     assert sizes==[512]*9+[392] and sum(sizes)==5000 and len(sizes)*5==50
 
 
 def test_absolute_noise_is_not_model_relative():
+    import numpy as np
     a=[np.ones(100000,dtype=np.float32)]; b=[a[0]*100]
     na,sa=apply_channel_noise(a,semantics="paper_absolute_gaussian",sigma=.01,rng=keyed_rng(2025,"channel_noise",0,0,1))
     nb,sb=apply_channel_noise(b,semantics="paper_absolute_gaussian",sigma=.01,rng=keyed_rng(2025,"channel_noise",0,0,1))
@@ -92,11 +93,15 @@ def test_absolute_noise_is_not_model_relative():
 
 
 def tiny_model(shape=(2,)):
+    import tensorflow as tf
     return tf.keras.Sequential([tf.keras.layers.Input(shape=shape),tf.keras.layers.Flatten(),
         tf.keras.layers.Dense(10,kernel_initializer=tf.keras.initializers.GlorotUniform(seed=13))])
 
 
 def test_ebm_matches_hessian_vector_product_and_objective():
+    from basil_core.trainer import lossFn
+    import numpy as np
+    import tensorflow as tf
     model=tiny_model(); x=tf.constant([[.3,-.2],[.1,.6]]); y=tf.constant([0,1]); c=.02**2
     with tf.GradientTape() as outer:
         with tf.GradientTape() as inner:
@@ -122,6 +127,8 @@ def test_ebm_matches_hessian_vector_product_and_objective():
 
 
 def test_no_lambda_loss_gradients_updates_and_strict_load():
+    import numpy as np
+    import tensorflow as tf
     model=tiny_model((32,32,3)); worker=IidWorker(model)
     params=worker.export(); x=tf.ones([2,32,32,3])*.2; y=tf.constant([0,1]); key=tf.constant([1,2])
     outcomes=[]
@@ -144,6 +151,7 @@ def test_no_lambda_loss_gradients_updates_and_strict_load():
 
 
 def test_nonfinite_parameters_are_rejected():
+    import tensorflow as tf
     worker=IidWorker(tiny_model((32,32,3)))
     worker.model.trainable_variables[0].assign(tf.fill(worker.model.trainable_variables[0].shape,float("nan")))
     with pytest.raises(tf.errors.InvalidArgumentError,match="Non-finite"):
@@ -159,6 +167,7 @@ def test_output_routing_rejects_non_iid_and_historical_paths():
 
 
 def test_iid_engine_receiver_batch_handoff_attack_and_lambda_pairing(monkeypatch):
+    import numpy as np
     import basil_core.research_protocol as protocol
     inputs=[]; receiver_batches=[]; lambdas=[]; sent=[]
     class Worker:
@@ -215,6 +224,8 @@ def test_iid_config_roundtrip_keeps_identity_and_unknown_fields(tmp_path):
 
 
 def test_actual_paper_cnn_full_ebm_has_finite_correction_and_no_lambda_effect():
+    import numpy as np
+    import tensorflow as tf
     worker=IidWorker(build_model("basil_paper_cnn",2025))
     params=worker.export()
     assert sum(p.size for p in params)==117706
@@ -244,6 +255,7 @@ def test_authorized_fifty_round_iid_pair_preserves_protocol():
 
 
 def test_evaluation_ce_is_measured_without_parameter_mutation():
+    import numpy as np
     from basil_core.research_protocol import evaluate_params,params_hash
     worker=IidWorker(tiny_model((32,32,3))); params=worker.export()
     x=np.zeros((10,32,32,3),np.float32);y=np.arange(10,dtype=np.int32)
@@ -253,6 +265,7 @@ def test_evaluation_ce_is_measured_without_parameter_mutation():
 
 
 def test_pre_post_attack_analysis_uses_distinct_periods():
+    import numpy as np
     from reporting.iid_study_plots import attack_analysis
     curve=np.concatenate([np.full(20,.4),np.linspace(.3,.5,30)])
     report=attack_analysis(curve)

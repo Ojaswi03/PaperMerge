@@ -5,8 +5,8 @@ import hashlib
 import json
 from pathlib import Path
 
-import numpy as np
-import tensorflow as tf
+from basil_core.lazy_imports import lazy_module, lazy_tf_function
+tf = lazy_module('tensorflow')
 from basil_core.artifact_paths import writable_output
 
 from basil_core.research_protocol import (
@@ -16,11 +16,13 @@ from basil_core.research_protocol import (
 
 
 def array_hash(array):
+    import numpy as np
     value = np.asarray(array)
     return hashlib.sha256(str(value.shape).encode() + value.tobytes()).hexdigest()
 
 
 def tensor_stats(value):
+    import numpy as np
     array = np.asarray(value)
     finite = array[np.isfinite(array)].astype(np.float64)
     return {"shape": list(array.shape), "dtype": str(array.dtype),
@@ -31,7 +33,7 @@ def tensor_stats(value):
         "finiteL2": float(np.linalg.norm(finite))}
 
 
-@tf.function(reduce_retracing=True)
+@lazy_tf_function(reduce_retracing=True)
 def augment_batch(x, key):
     def augment(item):
         image, index = item
@@ -58,6 +60,7 @@ class ProtocolAudit:
         (self.directory / name).write_text(json.dumps(payload, indent=2, allow_nan=True) + "\n")
 
     def initial(self, params, train_x, train_y, test_x, test_y):
+        import numpy as np
         self.write("initial.json", {"parameterHash": params_hash(params),
             "parameters": [tensor_stats(p) for p in params],
             "trainImagesHash": array_hash(train_x), "trainLabelsHash": array_hash(train_y),
@@ -107,10 +110,14 @@ class ProtocolAudit:
         if len(values)>6:
             self.current.update(ebmCorrectionNorm=float(values[6]),trainingBatchAccuracy=float(values[7]),
                 ebmPenalty=float(values[3])*float(values[1]))
-        self.current["gradients"] = [tensor_stats(g.numpy()) for g in gradients]
-        self.current["gradientHash"] = params_hash([g.numpy() for g in gradients])
+        # Materialize each immutable gradient once; statistics and hashes must
+        # describe the same values without a second host/device transfer.
+        arrays=[g.numpy() for g in gradients]
+        self.current["gradients"] = [tensor_stats(g) for g in arrays]
+        self.current["gradientHash"] = params_hash(arrays)
 
     def end_batch(self, worker):
+        import numpy as np
         params = worker.export()
         self.current.update(parameterHashAfter=params_hash(params),
                             parameterStatsAfter=[tensor_stats(p) for p in params])
@@ -121,6 +128,7 @@ class ProtocolAudit:
         self.pending = None
 
     def failure(self, worker, error):
+        import numpy as np
         if self.pending is None:
             return
         pending = self.pending
@@ -198,6 +206,7 @@ class ProtocolAudit:
             self.capture_first_tensor(worker, pending, operations[0]["type"])
 
     def capture_first_tensor(self, worker, pending, op_type):
+        import numpy as np
         from tensorflow.python.debug.lib.debug_events_reader import DebugDataReader
         context = pending["context"]
         worker.load(pending["params"])
@@ -275,6 +284,7 @@ class ProtocolAudit:
             "secondOrderCorrections": [tensor_stats(g.numpy()) for g in corrections]})
 
     def evaluation_failure(self, worker, x, y, start, error):
+        import numpy as np
         preceding = self.last_training_batch
         context = {"round_id": self.context["round"], "node_id": self.context["node"],
             "epoch": self.evaluation_index, "batch": start // 512,

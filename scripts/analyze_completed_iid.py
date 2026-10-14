@@ -11,7 +11,6 @@ import hashlib
 import json
 from pathlib import Path
 
-import numpy as np
 
 ROOT = Path(__file__).resolve().parents[1]
 FOLDERS = {
@@ -23,6 +22,7 @@ FOLDERS = {
 
 
 def summary(values):
+    import numpy as np
     a = np.asarray(values, dtype=float)
     if not a.size:
         return None
@@ -33,6 +33,7 @@ def summary(values):
 
 
 def accuracy_summary(a):
+    import numpy as np
     a = np.asarray(a, dtype=float)
     if a.shape != (100,) or not np.isfinite(a).all():
         raise ValueError('Expected 100 actual finite round measurements')
@@ -47,6 +48,7 @@ def accuracy_summary(a):
 
 
 def parameter_hash(arrays):
+    import numpy as np
     h = hashlib.sha256()
     for value in arrays:
         a = np.asarray(value, dtype=np.float32)
@@ -60,6 +62,7 @@ def corrupted_selection(record):
 
 
 def audit_condition(letter):
+    import numpy as np
     path = ROOT/'newResults/IID'/FOLDERS[letter]
     manifest = json.loads((path/'run.json').read_text())
     config = json.loads((path/'config.json').read_text())

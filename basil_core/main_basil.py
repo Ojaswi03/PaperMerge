@@ -1,5 +1,5 @@
-import numpy as np
-import matplotlib.pyplot as plt
+from basil_core.lazy_imports import lazy_module
+np = lazy_module('numpy')
 
 from data.mnist import load_mnist, make_loaders as make_mnist_loaders
 from data.cifar import load_cifar10, make_loaders as make_cifar_loaders
@@ -52,6 +52,7 @@ def _build_nodes(train_loaders, dataset_name, cfg):
     return nodes
 
 def plot_curve(accs, title, out_png=None):
+    import matplotlib.pyplot as plt
     xs = list(range(len(accs)))
     plt.figure(figsize=(7,4))
     plt.plot(xs, accs, marker="o")

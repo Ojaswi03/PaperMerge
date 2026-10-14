@@ -9,8 +9,6 @@ from __future__ import annotations
 
 import time
 
-import numpy as np
-import tensorflow as tf
 
 from noise_comm.wcm import WcmState, wcmLocalUpdate
 
@@ -29,20 +27,13 @@ from .experiment_engine import (
     params_hash,
 )
 from .class_registry import ClassRegistry
-from .trainer import (
-    addChannelNoiseToParams,
-    averageParams,
-    getParams,
-    lossFn,
-    makeLrScheduler,
-    setParams,
-)
 
 
 class WcmPilotWorker:
     """One shared model without unused SGD/momentum GPU slots."""
 
     def __init__(self, model, *, lr0: float, momentum: float):
+        import tensorflow as tf
         del lr0, momentum
         self.model = model
         model_inner = self.model.model
@@ -52,21 +43,48 @@ class WcmPilotWorker:
         )
 
     def load(self, params) -> None:
+        from .trainer import (
+            addChannelNoiseToParams,
+            averageParams,
+            getParams,
+            lossFn,
+            makeLrScheduler,
+            setParams,
+        )
         setParams(self.model, params)
 
     def export(self):
+        from .trainer import (
+            addChannelNoiseToParams,
+            averageParams,
+            getParams,
+            lossFn,
+            makeLrScheduler,
+            setParams,
+        )
         return getParams(self.model)
 
     def zero_optimizer_state(self):
         return []
 
     def batch_loss(self, params, batch) -> float:
+        from .trainer import (
+            addChannelNoiseToParams,
+            averageParams,
+            getParams,
+            lossFn,
+            makeLrScheduler,
+            setParams,
+        )
+        import tensorflow as tf
         self.load(params)
         x, y = batch
         logits = self._predict(tf.cast(x, tf.float32))
         return float(lossFn(tf.cast(y, tf.int32), logits).numpy())
 
     def probe_metrics(self, params, x, y):
+        import numpy as np
+        import tensorflow as tf
         support = np.bincount(y, minlength=10).astype(np.int32)
         accuracy = np.full(10, np.nan, dtype=np.float32)
         if len(y) == 0:
@@ -83,6 +101,8 @@ class WcmPilotWorker:
         return accuracy, support
 
     def confusion(self, params, data_loader):
+        import numpy as np
+        import tensorflow as tf
         self.load(params)
         matrix = np.zeros((10, 10), dtype=np.int64)
         for x, y in data_loader:
@@ -118,6 +138,14 @@ class WcmPilotWorker:
         prox_mu,
         rng,
     ):
+        from .trainer import (
+            addChannelNoiseToParams,
+            averageParams,
+            getParams,
+            lossFn,
+            makeLrScheduler,
+            setParams,
+        )
         self.load(params)
         batches = [first_batch]
         for _ in range(max(0, int(total_steps) - 1)):
@@ -186,6 +214,16 @@ def run_wcm_pilot(
     The ring, attack, SS, CART, and channel paths match Campaign 3. Only the
     local EBM/standard optimizer is replaced by the paper-WCM SCA update.
     """
+    from .trainer import (
+        addChannelNoiseToParams,
+        averageParams,
+        getParams,
+        lossFn,
+        makeLrScheduler,
+        setParams,
+    )
+    import numpy as np
+    import tensorflow as tf
     _validate_pilot_config(config)
     seed = int(config["seed"])
     tf.keras.utils.set_random_seed(seed)

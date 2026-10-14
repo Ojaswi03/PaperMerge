@@ -9,7 +9,6 @@ from pathlib import Path
 import subprocess
 import sys
 
-import numpy as np
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
@@ -44,6 +43,7 @@ def compare_traces(left, right):
 
 
 def candidate_analysis(path):
+    import numpy as np
     rows = json.loads(path.read_text())
     selected = [r for r in rows if r["selected"]]
     if not rows:
@@ -76,6 +76,7 @@ def candidate_analysis(path):
 
 
 def learning_analysis(directory, plot_root=None):
+    import numpy as np
     rows = json.loads((directory / "trace/confusions.json").read_text())
     rounds = max(r["round"] for r in rows) + 1
     matrices = np.zeros((rounds, 10, 6, 10, 10), np.int64)

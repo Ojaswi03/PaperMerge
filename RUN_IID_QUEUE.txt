@@ -1,0 +1,23 @@
+REMOTE TERMINAL: START OR RESUME THE IID GPU QUEUE
+
+Paste this command on the machine containing PaperMerge:
+
+tmux new-session -A -s papermerge-iid 'cd /home/ojaswi/PaperMerge && environment/basil-noise-env/bin/python scripts/run_iid_queue.py --execute'
+
+Runs A -> B -> C -> D, each for 500 rounds on GPU, with configured W&B tracking.
+
+Detach without stopping: Ctrl+B, then D. Training continues after SSH disconnect.
+Reconnect: paste the same command; it reattaches to an existing session.
+Gracefully stop: Ctrl+C inside the session, then wait for checkpointing and exit.
+Resume after stopping: paste the same command again. Completed experiments are
+skipped; interrupted experiments resume from saved checkpoints.
+
+Checkpoint recovery preserves completed node activations, not individual
+minibatches. An interrupted five-epoch activation repeats from its beginning.
+Avoid kill -9. Do not change scientific code/configs or run the GUI queue at
+the same time. Genuine failures or incompatible checkpoints block recovery
+rather than silently restarting or overwriting results.
+
+Validate without training:
+cd /home/ojaswi/PaperMerge
+environment/basil-noise-env/bin/python scripts/run_iid_queue.py

@@ -5,10 +5,10 @@ import gzip
 import json
 import sys
 import argparse
-import numpy as np
 
 
 def verify_run(run_dir):
+    import numpy as np
     root=Path(run_dir);metadata=json.loads((root/"run.json").read_text());config=metadata["config"]
     if metadata["status"]!="completed":raise ValueError(f"Run did not complete: {root}")
     with gzip.open(root/"activation_telemetry.json.gz","rt") as source:records=json.load(source)

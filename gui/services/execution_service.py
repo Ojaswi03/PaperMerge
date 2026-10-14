@@ -1,10 +1,13 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
 import queue, threading
+import logging
 from pathlib import Path
 from typing import Any, Callable
 from gui.state import ApplicationState, ExecutionState
 from basil_core.protocol_compatibility import normalize_config
+
+LOG=logging.getLogger(__name__)
 
 @dataclass(frozen=True)
 class ExecutionEvent:
@@ -54,6 +57,11 @@ class ExecutionService:
                     _,self.state.average_accuracy,self.state.worst_accuracy=self.state.accuracy_history[-1]
                 self.state.status='Rebuilding and verifying saved state' if self.state.recovery_completed<self.state.recovery_total else 'Checkpoint restored; continuing experiment'
             elif event.kind=="recovery_updated":
+                if (not {'completed','total'} <= payload.keys() or
+                        any(type(payload[k]) is not int for k in ('completed','total')) or
+                        not 0 <= payload['completed'] <= payload['total']):
+                    LOG.warning('Ignoring malformed recovery progress event: %r',payload)
+                    continue
                 self.state.recovery_completed=payload['completed']; self.state.recovery_total=payload['total']
                 self.state.status=(f'Rebuilding saved state: {payload["completed"]}/{payload["total"]} activations verified'
                     if payload['completed']<payload['total'] else 'Saved state verified; continuing experiment')

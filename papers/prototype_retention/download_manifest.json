@@ -1,0 +1,90 @@
+{
+  "purpose": "Primary-source attribution review for a proposed CART prototype/feature-memory adaptation; no training implementation",
+  "reviewDate": "2026-10-11",
+  "papers": [
+    {
+      "id": "fedproto_2022",
+      "title": "FedProto: Federated Prototype Learning across Heterogeneous Clients",
+      "venue": "AAAI 2022; arXiv first submitted 2021",
+      "source": "https://arxiv.org/abs/2105.00243",
+      "pdfUrls": ["https://arxiv.org/pdf/2105.00243v4"]
+    },
+    {
+      "id": "pass_2021",
+      "title": "Prototype Augmentation and Self-Supervision for Incremental Learning",
+      "venue": "CVPR 2021",
+      "source": "https://openaccess.thecvf.com/content/CVPR2021/html/Zhu_Prototype_Augmentation_and_Self-Supervision_for_Incremental_Learning_CVPR_2021_paper.html",
+      "pdfUrls": ["https://openaccess.thecvf.com/content/CVPR2021/papers/Zhu_Prototype_Augmentation_and_Self-Supervision_for_Incremental_Learning_CVPR_2021_paper.pdf"]
+    },
+    {
+      "id": "fetril_2023",
+      "title": "FeTrIL: Feature Translation for Exemplar-Free Class-Incremental Learning",
+      "venue": "WACV 2023",
+      "source": "https://arxiv.org/abs/2211.13131",
+      "pdfUrls": ["https://openaccess.thecvf.com/content/WACV2023/papers/Petit_FeTrIL_Feature_Translation_for_Exemplar-Free_Class-Incremental_Learning_WACV_2023_paper.pdf"]
+    },
+    {
+      "id": "fedspace_2023",
+      "title": "Asynchronous Federated Continual Learning",
+      "venue": "CVPR Workshops 2023",
+      "source": "https://arxiv.org/abs/2304.03626",
+      "pdfUrls": ["https://arxiv.org/pdf/2304.03626"]
+    },
+    {
+      "id": "fedpac_2023",
+      "title": "Personalized Federated Learning with Feature Alignment and Classifier Collaboration",
+      "venue": "ICLR 2023",
+      "source": "https://openreview.net/forum?id=SXZr8aDKia",
+      "pdfUrls": ["https://openreview.net/pdf?id=SXZr8aDKia", "https://arxiv.org/pdf/2306.11867"]
+    },
+    {
+      "id": "fedprok_2024",
+      "title": "FedProK: Trustworthy Federated Class-Incremental Learning via Prototypical Feature Knowledge Transfer",
+      "venue": "CVPR Workshops 2024",
+      "source": "https://arxiv.org/abs/2405.02685",
+      "pdfUrls": ["https://openaccess.thecvf.com/content/CVPR2024W/FedVision-2024/papers/Gao_FedProK_Trustworthy_Federated_Class-Incremental_Learning_via_Prototypical_Feature_Knowledge_Transfer_CVPRW_2024_paper.pdf", "https://arxiv.org/pdf/2405.02685v1"]
+    },
+    {
+      "id": "fedtgp_2024",
+      "title": "FedTGP: Trainable Global Prototypes with Adaptive-Margin-Enhanced Contrastive Learning for Data and Model Heterogeneity in Federated Learning",
+      "venue": "AAAI 2024",
+      "source": "https://arxiv.org/abs/2401.03230",
+      "pdfUrls": ["https://ojs.aaai.org/index.php/AAAI/article/view/29617/31046", "https://arxiv.org/pdf/2401.03230"]
+    },
+    {
+      "id": "pearfl_2025",
+      "title": "Decentralized Federated Learning with Prototype Exchange",
+      "venue": "Mathematics 13(2), 237; 12 January 2025",
+      "source": "https://www.mdpi.com/2227-7390/13/2/237",
+      "pdfUrls": ["https://mdpi-res.com/d_attachment/mathematics/mathematics-13-00237/article_deploy/mathematics-13-00237.pdf", "https://www.mdpi.com/2227-7390/13/2/237/pdf"]
+    },
+    {
+      "id": "hybrid_rehearsal_2025",
+      "title": "Federated Class-Incremental Learning: A Hybrid Approach Using Latent Exemplars and Data-Free Techniques to Address Local and Global Forgetting",
+      "venue": "ICLR 2025",
+      "source": "https://openreview.net/forum?id=ydREOIttdC",
+      "pdfUrls": ["https://openreview.net/pdf?id=ydREOIttdC", "https://arxiv.org/pdf/2501.15356"]
+    },
+    {
+      "id": "stp_fcl_2026",
+      "title": "Mitigating Spatio-Temporal Forgetting in Federated Continual Learning with Dynamic-Domain Clients",
+      "venue": "Sensors 26(19), 6273; PDF publication date 3 October 2026 (publisher webpage lists 2 October)",
+      "source": "https://www.mdpi.com/1424-8220/26/19/6273",
+      "pdfUrls": ["https://mdpi-res.com/d_attachment/sensors/sensors-26-06273/article_deploy/sensors-26-06273.pdf", "https://www.mdpi.com/1424-8220/26/19/6273/pdf"]
+    },
+    {
+      "id": "noise_prototype_degradation_2026",
+      "title": "Taming Noise-Induced Prototype Degradation for Privacy-Preserving Personalized Federated Fine-Tuning",
+      "venue": "arXiv:2604.27833v1 preprint; publication venue not assumed",
+      "source": "https://arxiv.org/abs/2604.27833",
+      "pdfUrls": ["https://arxiv.org/pdf/2604.27833v1"]
+    },
+    {
+      "id": "learning_without_forgetting_2016",
+      "title": "Learning without Forgetting",
+      "venue": "ECCV 2016; extended TPAMI version; arXiv version recorded on download",
+      "source": "https://arxiv.org/abs/1606.09282",
+      "pdfUrls": ["https://arxiv.org/pdf/1606.09282"]
+    }
+  ]
+}

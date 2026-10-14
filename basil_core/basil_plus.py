@@ -1,4 +1,3 @@
-import numpy as np
 from copy import deepcopy
 
 from .basil import basil_ring_training_with_attack
@@ -15,6 +14,7 @@ def basil_plus_training(all_nodes, num_groups, rounds, test_loader, attack_type=
     """
     Basil+: parallel Basil within groups, then robust circular aggregation among groups.
     """
+    import numpy as np
     if attacker_ids is None:
         attacker_ids = []
 

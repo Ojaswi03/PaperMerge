@@ -1,0 +1,5 @@
+# Optional live/shared experiment tracking, separate from the scientific runtime.
+# W&B Models publishes existing metrics; Weave is not needed for this CNN study.
+# Keep the existing TensorFlow 2.18 serialization dependency during resume.
+wandb==0.28.0
+protobuf==4.25.8

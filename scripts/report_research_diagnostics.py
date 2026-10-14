@@ -4,7 +4,6 @@ import argparse
 import json
 from pathlib import Path
 import sys
-import numpy as np
 
 PROJECT_ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(PROJECT_ROOT))
@@ -13,6 +12,7 @@ from basil_core.protocol_compatibility import LEGACY_RESULT_ROOTS, normalize_con
 from basil_core.artifact_paths import writable_output
 
 def main():
+    import numpy as np
     parser=argparse.ArgumentParser();parser.add_argument("--plots",action="store_true")
     parser.add_argument("--result-root", action="append", help="Read-only input root; defaults to new and retained protocol results")
     parser.add_argument("--output", default="docs/RESEARCH_DIAGNOSTIC_REPORT.md")

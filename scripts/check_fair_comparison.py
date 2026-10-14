@@ -8,11 +8,10 @@ import sys
 import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-import numpy as np
-import tensorflow as tf
+from basil_core.lazy_imports import lazy_module
+np = lazy_module('numpy')
 from basil_core.data.mnist import loadMnist, makeLoaders
 from basil_core.models import MNISTModel
-from basil_core.trainer import getParams, setParams, evaluate, averageParams, addChannelNoiseToParams, lossFn, makeLrScheduler
 from scripts.common import setupGpu
 
 # Configuration
@@ -26,6 +25,8 @@ BATCH_SIZE = 32
 
 def runTest(useEbm, useMomentum, trainLoaders, testLoader):
     """Run a single test configuration."""
+    from basil_core.trainer import getParams, setParams, evaluate, averageParams, addChannelNoiseToParams, lossFn, makeLrScheduler
+    import tensorflow as tf
     momentum = 0.9 if useMomentum else 0.0
     ebmLabel = "EBM" if useEbm else "Noisy"
     momLabel = "+momentum" if useMomentum else ""

@@ -169,7 +169,8 @@ class CurrentConfigLibraryTests(unittest.TestCase):
     def test_gui_defaults_to_prepared_iid_multi_select_library(self):
         source = (Path(__file__).resolve().parents[1] / "gui" / "app.py").read_text(encoding="utf-8")
         queue_source = (Path(__file__).resolve().parents[1] / "gui" / "views" / "queue_view.py").read_text(encoding="utf-8")
-        self.assertIn('initialdir=CONFIG_ROOT', source)
+        self.assertIn("gui/configs/IID/sequential_basil_500r/gpu/fresh", source)
+        self.assertIn('initialdir=latest if latest.exists() else CONFIG_ROOT', source)
         self.assertIn('load_queue', source)
         self.assertIn("askopenfilenames", source)
         self.assertIn('selectmode="extended"', queue_source)

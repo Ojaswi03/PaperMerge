@@ -8,12 +8,9 @@ import sys
 import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-import numpy as np
-import tensorflow as tf
 from basil_core.data.mnist import loadMnist, makeLoaders
 from basil_core.models import MNISTModel
 from basil_core.basil import BasilNode, fedAvgTrainingWithNoise
-from basil_core.trainer import getParams, setParams, evaluate, averageParams, addChannelNoiseToParams, lossFn, makeLrScheduler
 from scripts.common import setupGpu
 
 # Configuration - User's requested settings
@@ -29,6 +26,9 @@ BATCH_SIZE = 32
 
 def runTest():
     """Run EBM with lr=0.03, decay, momentum=0.9."""
+    from basil_core.trainer import getParams, setParams, evaluate, averageParams, addChannelNoiseToParams, lossFn, makeLrScheduler
+    import numpy as np
+    import tensorflow as tf
     scale = 1.0 + EBM_LAMBDA * SIGMA * SIGMA
     print(f"\n{'='*60}")
     print(f"EBM Test: lr={LR}, decay={USE_LR_DECAY}, momentum={MOMENTUM}")

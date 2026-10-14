@@ -23,24 +23,9 @@ Algorithm per node per round
 """
 
 import math
-import numpy as np
-import tensorflow as tf
 
 from .attacks import applyAttack, modelPoisonAttack
 from .class_registry import ClassRegistry
-from .trainer import (
-    addChannelNoiseToParams,
-    evaluateBatchLoss,
-    evaluatePerClass,
-    getParams,
-    setParams,
-    averageParams,
-    makeLrScheduler,
-    evaluate,
-    evaluateAll,
-    lossFn,
-    _iterLimited,
-)
 from .basil import BasilNode, _MutableLR, _batchGradients
 
 
@@ -62,6 +47,8 @@ class CARTNode(BasilNode):
         verifyThreshold=0.05,   # tolerance for registry Byzantine verification
         **kwargs,
     ):
+        import numpy as np
+        import tensorflow as tf
         super().__init__(nodeId=nodeId, model=model, dataLoader=dataLoader, S=S, **kwargs)
         self.nClasses = int(nClasses)
         self.distillStrength = float(distillStrength)
@@ -97,6 +84,19 @@ class CARTNode(BasilNode):
         downstream — the selection itself still uses overall loss to keep
         this O(S) rather than O(S × nClasses).
         """
+        from .trainer import (
+            addChannelNoiseToParams,
+            evaluateBatchLoss,
+            evaluatePerClass,
+            getParams,
+            setParams,
+            averageParams,
+            makeLrScheduler,
+            evaluate,
+            evaluateAll,
+            lossFn,
+            _iterLimited,
+        )
         self.selectBestModel(verbose=verbose)
         # Evaluate per-class accuracy of the selected model
         return evaluatePerClass(
@@ -113,6 +113,7 @@ class CARTNode(BasilNode):
     def _buildRefParams(self):
         """Build a list of tf.Variables that mirror the model's trainable weights.
         Used as the proximal reference point (frozen during local training)."""
+        import tensorflow as tf
         return [
             tf.Variable(w.numpy(), trainable=False, dtype=tf.float32)
             for w in self.model.trainable_weights
@@ -120,6 +121,7 @@ class CARTNode(BasilNode):
 
     def _ensureCartCompiled(self):
         """Build the compiled proximal train step."""
+        import tensorflow as tf
         if self._cartStep is not None:
             return
         if self._refParams is None:
@@ -174,6 +176,21 @@ class CARTNode(BasilNode):
         stepsPerEpoch : int
         """
         # WCM path: fall back to base training (no proximal for WCM)
+        from .trainer import (
+            addChannelNoiseToParams,
+            evaluateBatchLoss,
+            evaluatePerClass,
+            getParams,
+            setParams,
+            averageParams,
+            makeLrScheduler,
+            evaluate,
+            evaluateAll,
+            lossFn,
+            _iterLimited,
+        )
+        import numpy as np
+        import tensorflow as tf
         if self.noiseModel == "wcm" and self.sigma > 0:
             self.localTrain(lr=lr, stepsPerEpoch=stepsPerEpoch)
             return
@@ -263,6 +280,19 @@ def cartRingTraining(
     Same interface as basilRingTrainingWithAttack but uses CARTNode features.
     Plain BasilNode instances are silently wrapped into CARTNode if needed.
     """
+    from .trainer import (
+        addChannelNoiseToParams,
+        evaluateBatchLoss,
+        evaluatePerClass,
+        getParams,
+        setParams,
+        averageParams,
+        makeLrScheduler,
+        evaluate,
+        evaluateAll,
+        lossFn,
+        _iterLimited,
+    )
     if isinstance(attackTypes, str):
         attackTypes = [attackTypes]
     if not attackTypes:

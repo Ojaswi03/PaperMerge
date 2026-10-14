@@ -1,410 +1,348 @@
 # PaperMerge
 
-## Latest completed results — 100-round IID BASIL
+PaperMerge studies Byzantine-resilient decentralized learning under noisy
+communication using Python, TensorFlow and a Tkinter experiment workspace.
 
-| Start here | Contents |
-|---|---|
-| [Latest A/B/C/D results and scientific analysis](newResults/IID/ABCD_100r_comparison_gpu/FINAL_ABCD_100R_ANALYSIS.md) | Ten evidence tables, comparison plots, convergence, attack filtering, noise/EBM diagnostics, and the accuracy-limit discussion |
-| [Code changes and training mathematics](docs/IID_CODE_CHANGES_AND_TRAINING_MATHEMATICS.md) | Actual Python excerpts, current source line ranges, diagrams, and mathematical/training explanations |
-| [Repository and study handoff](docs/RESEARCH_HANDOFF_PROMPT.md) | Complete context to accompany a repository ZIP |
+[Current: Dirichlet α=0.2 BASIL protocol, formulas and thesis attribution](docs/DIRICHLET_BASIL_PROTOCOL_AND_ATTRIBUTION.md).
+All four **30-round, local-data-only GPU** conditions completed. They use
+receiver-local Snapshot Selection and fixed μ=0.01 anchoring; C/D add absolute
+channel σₑ=0.010, and D adds full no-lambda EBM. Unequal partitions retain five
+complete epochs and every partial batch. No helper gradients, TRAIN replication
+or W&B were enabled. The queue is now idle and contains no pending runs.
 
-All four fresh GPU conditions completed **100 measured rounds**. Final fixed
-Node-9 full-test accuracies: **A 58.83% · B 58.32% · C 50.09% · D 50.26%**.
-These are one-seed results, not universal accuracy or robustness guarantees.
+| Condition | Final Node-9 full-test accuracy | Final node mean | Final worst node |
+|---|---:|---:|---:|
+| A — clean, anchor | 24.34% | 22.79% | 16.53% |
+| B — Hidden attack, anchor | 10.00% | 10.00% | 10.00% |
+| C — Hidden attack + noise, anchor | 10.00% | 10.00% | 10.00% |
+| D — Hidden attack + noise + EBM, anchor | 31.56% | 21.16% | 10.00% |
 
-The committed sharing bundle includes the reports, verification summary,
-per-run configs/manifests, CSV/NPZ metrics, partition audits, compressed
-activation telemetry, final node weights, execution logs, and current PNGs.
-Large activation-boundary checkpoints, raw batch traces, datasets, caches,
-machine-local worker state, and earlier ignored archives remain local. A
-GitHub ZIP is therefore a review bundle, not a complete checkpoint-resume
-backup or a self-contained rerun of every deep raw-trace audit.
+These are one-seed feasibility results, not sufficient learning performance:
+B/C collapsed, and D does not preserve adequate performance across all nodes.
+Numerical/protocol correctness is not evidence that the learning problem is
+solved. Saved results and plots remain local under
+`newResults/nonIID/dirichlet_alpha02_local_anchor_30r_v1/` and the matching
+`newPlots/nonIID/` namespace; generated outputs are not part of the source commit.
 
-## Project overview
+[Previous, separate one-class verified-CART study](docs/NONIID_CART_30_ROUND_STUDY.md)
+retains its evidence and documented replicated-TRAIN/trusted-coordinator
+assumptions. It is not the new Dirichlet protocol.
 
-PaperMerge is a Python and TensorFlow research framework for studying
-Byzantine-resilient decentralized and federated learning over noisy
-communication channels. It combines experiment configuration, isolated worker
-execution, queue management, runtime estimation, telemetry, result inspection,
-and research plotting in a Tkinter desktop application.
+[Latest: full-batch EBM/noise and adversarial-helper gate](docs/CART_FULL_BATCH_THREAT_GATE.md#completed-results).
+Two matched five-epoch GPU activations completed: all 50 faulty-helper updates
+exactly matched the honest reference. Full/partial-batch EBM and no-lambda checks
+passed; no non-finite failure or OOM was observed. **This is not a learning or
+Byzantine-filtering success:** the next receiver selected a genuinely corrupted
+snapshot because its verified balanced TRAIN loss was lowest. No A/B/C/D or W&B
+run was started; full research readiness remains false.
 
-The framework supports four approaches:
+[Latest: completed verified-CART learning diagnostic](docs/CART_VERIFIED_LEARNING_DIAGNOSTIC.md#completed-results).
+One full clean traversal completed all **500 updates** with five full epochs per
+node. Node-9 accuracy was **13.90%**, node mean **10.80%**, worst node **10.00%**.
+The saved evidence passed 2,525 certificate / 22,725 signature checks, with no
+observed OOM or non-finite failure. This verifies execution, **not solved retention**:
+five classes still had zero final Node-9 recall. No A/B/C/D or W&B run was started.
 
-| Approach | Topology | Purpose |
-|---|---|---|
-| BASIL | Decentralized ring | Byzantine resilience through Snapshot Selection |
-| Noisy Channel | Server/client | Communication-noise experiments and EBM/WCM mitigation |
-| Merged | Decentralized ring | BASIL-style resilience combined with noise mitigation |
-| CART | Decentralized ring | Class-aware training for non-IID data, with optional SS and EBM |
+[Latest: CART resource and recovery gates](docs/CART_RESOURCE_AND_RECOVERY_GATES.md).
+Kernel RAM/task/CPU limits are enforced; a full TRAIN replica fit below its 2 GiB
+cap without OOM. Explicit trainer-refusal recovery matched an honest CPU step,
+and restart remained exact. The bounded GPU-coordinator/CPU-helper check now
+passes, including exact same-device checkpoint recovery. Razer Axon was stopped
+with permission to free VRAM; the checker also needed an explicitly CPU-placed
+reference computation. That gate stage did not start learning; the separate
+bounded learning result above is now complete. No A/B/C/D execution, queue
+changes or W&B run was started.
 
-## Quick start
+[Latest: isolated CART runner and recovery checks](docs/CART_ISOLATED_RUNNER_VALIDATION.md).
+CPU sandbox processes now validate helper replies and feed the existing CART/EBM
+objective. A restarted synthetic step reproduced the uninterrupted result exactly;
+poisoned, forged, withheld and terminated-worker responses were exercised.
+This earlier CPU-stage report is superseded for GPU/resource status by the
+resource and recovery report above. No learning diagnostic or A/B/C/D run was started.
 
-Requirements:
+[Latest implementation: replicated TRAIN verification](docs/CART_REPLICATED_TRAIN_VERIFICATION.md).
+Independent signed recomputation replaces trust in claimed helper gradients and
+scores in an isolated prototype. It explicitly requires multi-class TRAIN-data
+replication, so it is a separate information model. CPU certificate checks pass;
+GPU checking was blocked at that earlier stage; the bounded integration check
+above has since passed. Full-data learning and long-run resource validation
+remain outstanding; no A/B/C/D run was started.
 
-- Python 3.12
-- Tkinter
-- Dependencies from `environment/requirements.txt`
-- NVIDIA GPU with compatible CUDA/cuDNN recommended for full experiments
+[Current blocker: full-node helper threat audit](docs/CART_FULL_NODE_THREAT_READINESS.md).
+Both helper-gradient and selection-score paths now have isolated adversarial
+diagnostics. Bounded outlier checks pass, but explicit counterexamples show that
+trimming can lose an honest class signal and reverse candidate rankings.
+**Full-node A/B/C/D tests remain blocked; trusted-helper execution is not enabled.**
 
-Create the environment:
+[Latest completed: 30-round clean CART validation](docs/CART_30R_CLEAN_VALIDATION.md).
+Both full-data GPU controls completed: balanced-owner TRAIN selection reached
+**49.10%** Node-9 / **49.77%** mean-node / **49.07%** worst-node accuracy,
+versus **46.71% / 46.19% / 44.98%** with receiver-local selection. Cat/deer
+recovered to **28.7% / 29.6%** on Node 9. Five full epochs and fixed μ=0.01
+were unchanged; no NaN/Inf or OOM occurred. No W&B, attacks, noise or EBM
+were enabled. This is positive clean-learning evidence, **not full A/B/C/D
+threat validation**; the helper-channel threat model still needs resolution.
+
+[Earlier: three-round balanced-selection CART diagnostic](docs/CART_BALANCED_SELECTION_DIAGNOSTIC.md).
+In a matched three-round, full-data GPU pair with fixed μ=0.01 and five full
+local epochs, balanced owner TRAIN selection reached **23.18%** Node-9 accuracy,
+**22.55%** mean-node and **17.36%** worst-node, versus **14.25%**, **12.18%** and
+**10.38%** with receiver-local selection. All executed-step and pairing checks
+passed. This is **early improvement, not a solved protocol**: cat and deer remain
+very weak. No attacks, channel noise, EBM, W&B or production queue were enabled.
+
+[CART integration safety and exact objective](docs/CART_OWNER_INTEGRATION.md):
+an isolated revision adds balanced training-side candidate evaluation and true
+local-CE EBM to owner-gradient supervision. Mathematical/device checks passed;
+the separate clean comparison above is complete. Full-node Byzantine helper defense remains
+unresolved, so the new A/B/C/D research plan stays blocked and outside the GUI queue.
+
+[Earlier: three-round CART selection comparison](docs/CART_OWNER_SELECTION_DIAGNOSTIC.md#completed-results).
+Both paired, full-data GPU controls completed with five local epochs unchanged.
+Direct predecessor handoff reached **25.35%** Node-9 full-test accuracy,
+**24.02%** mean-node and **16.64%** worst-node, versus **13.50%**, **12.28%**
+and **10.47%** with receiver-local BASIL Snapshot Selection. This is an early
+improvement, **not a solved non-IID problem**: cat accuracy remained 0.8%.
+Both use additional clean owner-gradient supervision, not plain BASIL;
+the direct-handoff control disables SS explicitly and is not a Byzantine defense.
+[Results, per-class tables and comparison plots](newResults/nonIID/cart_owner_gradients/clean_three_round_selection_pair_v1/OWNER_SELECTION_REVIEW.md).
+No W&B, attacks, noise, EBM, production queue or longer run was started.
+
+[Earlier: completed owner-gradient CART diagnostic](docs/CART_OWNER_GRADIENT_CANDIDATE.md#completed-one-traversal-learning-result).
+The approved clean GPU traversal completed ten full-data activations and 500
+SGD updates in **5.71 minutes**. Node-9 full-test accuracy was **12.50%**, mean-node
+**10.45%**, and worst-node **10.00%**. Older-owner gradients now supervise the
+encoder as well as the head, but six classes still scored 0% at Node 9: this is
+**not a solved retention problem**. The new auxiliary gradient channel is an
+isolated CART adaptation, not plain BASIL or a Byzantine-safe/privacy guarantee.
+[Measured review and plots](newResults/nonIID/cart_owner_gradients/clean_one_traversal_16_v1/OWNER_GRADIENT_LEARNING_REVIEW.md).
+No attack/noise/EBM, W&B, GUI queue or longer campaign was started. The earlier
+30-round replay controls remain intact at 10% full-test accuracy.
+
+[CART same-image audit and representation preservation](docs/CART_REPRESENTATION_PRESERVATION.md):
+an isolated diagnostic separates encoder and classifier changes on identical
+training images. A new opt-in loss preserves the selected encoder's features
+on receiver-local batches; its coefficient is explicit, not legacy lambda.
+The clean **30-round comparison per control completed** using training-only
+calibrated, fixed encoder preservation strength. It stayed isolated from the
+GUI queue and W&B. Both controls remained at 10% full-test accuracy;
+[measured review](newResults/nonIID/cart_representation/clean_30_rounds_fixed_gamma_v1/REPRESENTATION_PRESERVATION_REVIEW.md)
+and [protocol](docs/CART_REPRESENTATION_PRESERVATION.md#authorized-one-traversal-check-and-30-round-comparison)
+separate successful execution from unsuccessful class retention.
+
+[Experimental CART feature memory](docs/CART_FEATURE_MEMORY_PROTOCOL.md): an
+isolated source-attributed module adds older-class feature supervision with
+approved β=1.0, activation-bound provenance and lazy imports. Mathematical
+tests passed and both bounded clean GPU controls completed, but both remained
+at **10% balanced training-probe accuracy, 100% own-class and 0% other-class**.
+Replay was active yet did not improve retention; these are not test-set scores.
+No longer queue, W&B run or parameter retuning followed.
+
+[CART literature and attribution review](docs/CART_LITERATURE_AND_ATTRIBUTION.md):
+prototype sharing and feature-space rehearsal have established precedents.
+Twelve primary papers are [downloaded and indexed](papers/prototype_retention/README.md).
+The review precedes the isolated implementation linked above; no successful
+retention or novelty claim is implied, and existing queue/results are unchanged.
+
+[Latest: head/backbone forgetting audit](docs/FORGETTING_MECHANISM_AUDIT.md).
+Three bounded warmed activations completed on GPU. The final classifier head
+switches the constant-class prediction even on the selected backbone; removing
+output bias alone does not fix collapse. CART's local retention gap remained
+zero despite losing the previous class. This is diagnosis, not a successful
+new retention method; no longer campaign, queue or W&B run was started.
+
+[Strict-handoff CART adaptation](docs/STRICT_CART_PROTOCOL.md): the registry,
+receiver-local controller and frozen snapshot anchor are separated from the
+source-grounded EBM term. A bounded full-data CE/fixed-anchor/CART comparison
+completed all three rounds per control on GPU. All three ended at **10% global,
+100% own-class and 0% other-class accuracy**: this revision did not solve
+one-class forgetting. See the [measured review with tables and figures](newResults/nonIID/strict_cart/clean_full_data_three_round_v1/STRICT_CART_REVIEW.md).
+No production queue or W&B run was started.
+
+[Lazy dependency loading](docs/LAZY_IMPORTS.md) now covers the core, GUI,
+plotting, scripts and tests. Import-only mathematical equivalence and startup
+checks are documented separately from learning results.
+
+[Latest: three-round warmed-memory retention diagnostic](docs/GRADIENT_PROJECTION_WARM_DIAGNOSTIC.md).
+Both fresh GPU controls completed. Final mean **training-validation** accuracy
+was 10.000% for CE versus 13.204% for gradient projection. Projection retained
+some older classes but left five nodes at or below 5% own-class accuracy;
+the prespecified warmed-memory screen did not pass. No 30-/500-round run or
+W&B run followed. See the guide for measured tables and linked plots.
+
+[New clean gradient-projection retention gate](docs/GRADIENT_PROJECTION_RETENTION.md):
+a separately labelled, bias-aware GPM-inspired adaptation with training-only
+validation. It does not change existing runs, add averaging, or start a
+production queue.
+
+The paired gate completed on GPU. Projection showed limited two-class
+retention (end-of-traversal validation accuracy 12.9% versus CE's 10%), but
+several nodes failed to learn their own class and the predeclared screen did
+not pass. These are held-out training-validation results, not test accuracy.
+The later three-round diagnostic above preserves this earlier evidence.
+
+## Completed study: four 50-round one-class BASIL validation runs
+
+[Non-IID protocol, exact anchor/EBM equations and continuation review](docs/NONIID_50_ROUND_PROTOCOL.md)
+
+The IID A/B/C/D runs completed all 500 rounds and remain preserved. The new
+one-class study uses a fixed snapshot anchor μ=0.01 in A/B/C/D, with EBM added
+only in D. All four completed locally on GPU without W&B. Execution and
+mathematical checks passed, but mean test accuracy remained approximately
+10%, with almost perfect own-class accuracy and nearly zero other-class
+retention. **The learning-trend gate failed: no 500-round non-IID queue was
+prepared or started.** See the guide for the measured results and report path.
+
+The follow-up **30-round clean CE-versus-anchor controls also completed**.
+Final mean accuracy was 10.005% for CE versus 10.000% for μ=0.01 anchoring;
+both specialized to their own class. The anchor reduced parameter drift
+slightly but did not preserve class knowledge. See the
+[completed control comparison](docs/NONIID_50_ROUND_PROTOCOL.md#completed-30-round-clean-controls).
+
+A separately approved [class-aware retention diagnostic](docs/CLASS_AWARE_RETENTION_PROTOCOL.md)
+tests training-only per-class gradient importance with the same μ=0.01 and
+unchanged five-epoch protocol. It is not exact EWC, does not use ACDS or test
+data for its importance estimates, and remains separate from the original
+CE/anchor baselines. No non-IID 500-round queue is prepared automatically.
+
+That diagnostic **completed all 30 rounds** and all 31 saved-result contracts
+passed, but it also remained at 10% mean test accuracy, 100% own-class and 0%
+other-class accuracy. Its stronger parameter-wise anchor did not preserve
+class predictions. See the [three-control review with tables and plots](newResults/nonIID/class_aware_retention/comparison_30r/CLASS_AWARE_RETENTION_REVIEW.md).
+
+## Completed study: four paired 500-round IID BASIL runs
+
+[Protocol, exact equations, GPU safety and live W&B setup](docs/IID_500_ROUND_PROTOCOL.md)
+
+All four saved IID conditions are completed at **500/500**. Earlier
+interrupted attempts are preserved in an ignored local backup.
+
+| Condition | Attack | Channel | Local objective |
+|---|---|---|---|
+| A | None | Clean | Cross-entropy |
+| B | Delayed Hidden, R20 | Clean | Cross-entropy |
+| C | Same Hidden, R20 | Absolute Gaussian, σₑ=0.010 | Cross-entropy |
+| D | Same Hidden, R20 | Same Gaussian | CE + 0.0001 ‖∇CE‖² |
+
+All four use `sequential_basil_iid_v1`, ten IID nodes, the approved
+117,706-parameter CNN, five complete local epochs, batch 512, reset SGD,
+initial LR 0.05 with unchanged round decay, BASIL memory S=5, receiver-local
+Snapshot Selection and strict selected-model handoff. No momentum, weight
+decay, clipping, anchoring or CART is enabled. B/C/D use attackers `[0,1,5,7]`
+from zero-based round 20.
+
+## Open the desktop workspace
 
 ```bash
-python3 -m venv environment/basil-noise-env
 source environment/basil-noise-env/bin/activate
-pip install -r environment/requirements.txt
-python scripts/check_setup.py
-```
-
-Start the desktop application:
-
-```bash
 python run_gui.py
 ```
 
-CPU execution is supported but full experiments can be substantially slower.
+Open **Results** to inspect the completed IID evidence. Do not reload the
+old fresh IID queue just to view results: it is an execution preset, not a
+result viewer. The new non-IID 50-round validation runs use the local-only
+runner below; their completed review does not justify a 500-round non-IID queue.
 
-## Four-condition IID BASIL configurations and manual execution
+Results: `newResults/IID/*_500r_gpu/`; plots: `newPlots/IID/*_500r_gpu/`.
+Non-IID evidence is stored separately under `newResults/nonIID/` and
+`newPlots/nonIID/`. Checkpoint recovery restores models
+and all BASIL memories, not just final weights. No old-result continuation is
+configured. Dashboard shows the experiment, timing/ETA and live accuracy;
+Network displays candidate-selection/link telemetry; Queue shows done/total.
 
-Four fixed 100-round configurations are available in the Builder presets and
-the saved GUI queue: A clean/no attack/CE, B attack/clean/CE,
-C attack/absolute noise/CE, D attack/absolute noise/source EBM.
-All use the same IID data, initialization, five full epochs, batch 512,
-approved SGD round decay, receiver-local Snapshot Selection and BASIL memory S=5.
-C/D use coordinate Gaussian standard deviation 0.010 (variance 0.0001).
-D alone differentiates `CE + 0.0001 ||grad CE||²`, without lambda or anchoring.
-
-The queue starts only when you press **Run Queue**. Interrupted runs now restore
-activation-boundary checkpoints containing all node weights and BASIL memories.
-Older interrupted runs without checkpoints require deterministic reconstruction:
-saved activations are replayed and checked against their original hashes and
-telemetry before continuation. This costs training time; it is not an instant
-weights-only resume. Completed 50-round reference results remain untouched.
+## Local non-IID validation (no W&B)
 
 ```bash
-source environment/basil-noise-env/bin/activate
-python run_gui.py
+python scripts/run_noniid_basil_study.py --prepare --mu 0.01 --device GPU
+python scripts/run_noniid_basil_study.py --execute --mu 0.01 --device GPU
 ```
 
-The latest **fresh GPU A rerun and fresh GPU B/C/D are complete**. The saved
-queue presets remain available for explicitly authorized future runs; loading
-a preset never starts training. Do not start them merely to inspect the
-completed evidence. `gui/queues/iid_abcd_100r_gpu_fresh.json` describes the
-fresh four-condition setup; `gui/queues/iid_a_100r_gpu_fresh.json` describes
-the now-completed A-only rerun. Open **Queue → Load Queue** only when you
-intend to prepare a new execution, inspect its entries and paths, and use
-**Run Queue** only after separately authorizing that execution.
-No CPU-trained prefix was restored in the current completed comparison.
-The previous mixed-device A results/plots and comparisons are preserved in
-`reference_archive/`; see [fresh A rerun instructions](docs/IID_FRESH_A_GPU_QUEUE.md).
-The earlier `iid_abcd_100r_gpu.json` remains a CPU-continuation preset and should
-not be loaded for this fresh run. The prior B/C/D preparation is documented in
-[fresh GPU queue instructions](docs/IID_FRESH_GPU_QUEUE.md).
-Dashboard names the running experiment and separates experiment elapsed/ETA
-from queue-session elapsed/ETA. Accuracy uses blue dotted (latest node), green
-solid (round mean), and orange dashed (round worst) lines.
+These conditions are already complete; do not rerun them merely to view results.
+The second command starts the four explicitly authorized 50-round conditions
+only when no completed evidence exists; it refuses to overwrite evidence.
+Use `--execute --recover` only
+after investigating an interruption. All selected snapshots, frozen anchor
+references and rolling memories are checkpointed/verified. After completion,
+`python scripts/report_noniid_study.py` regenerates the comparison without
+training. See the [non-IID guide](docs/NONIID_50_ROUND_PROTOCOL.md) for equations,
+attack provenance and the continuation gate.
 
-GPU outputs use the existing A/B/C/D 100-round directory names with an **`_gpu`**
-suffix under `newResults/IID/` and `newPlots/IID/`; originals remain unchanged.
-Four-way GPU plots/reports use `ABCD_100r_comparison_gpu/`. Regenerate these
-without training with `python scripts/report_iid_campaign.py --device GPU`.
-TensorFlow is capped at 4 GiB, requires 5 GiB free before launch, and allows only
-one IID GPU process. Synthetic 512-image CE/EBM checks peaked at about 378 MiB.
-Other applications can still consume VRAM; no absolute OOM guarantee is possible.
-See [GPU execution and recovery](docs/IID_GPU_EXECUTION.md) for measured speed,
-verification scope, memory safeguards and CPU→GPU provenance limitations.
-A/B measures attacks under BASIL, B/C measures channel noise, and C/D is the
-matched EBM comparison. No outcome is assumed in advance.
-See [preparation, pairing and manual execution](docs/IID_ABCD_100R_PREPARATION.md).
-See [interrupted-run recovery](docs/IID_QUEUE_RECOVERY.md) before restarting a stopped queue.
+## Shared IID graphs: Weights & Biases Models
 
-## Completed paired 50-round IID BASIL reference
-
-The separate `sequential_basil_iid_v1` protocol pairs clean-channel BASIL with
-ordinary cross-entropy against absolute-Gaussian-channel BASIL with
-`CE + sigma_e² ||grad CE||²`. Both use ten IID nodes, the same four seeded
-Hidden attackers, five-predecessor memory, receiver-local Snapshot Selection,
-strict handoff, and five complete local epochs. No anchoring or legacy lambda
-is used. The existing one-class protocol is unchanged.
-
-The standard deviation is 0.010; variance/EBM coefficient is 0.0001.
-This moderate calibration-based value was declared before the research results,
-not selected by test accuracy. Do not overwrite this completed evidence to
-prepare the new four-condition queue; it uses separate 100-round paths.
-Execution is deterministic single-process CPU; GPU equivalence is not asserted.
-
-Results and plots are routed exclusively to `newResults/IID/` and
-`newPlots/IID/`; the corresponding `nonIID/` directories remain empty.
-Primary figures represent full research runs, not three-round preflights.
-Full-test accuracy/loss use the fixed end-of-ring Node 9 model. Mean-node
-accuracy averages the ten model accuracies, without parameter averaging.
-Both authorized 50-round full-data runs completed: final full-test accuracy
-was 54.35% for clean CE and 50.57% for noisy EBM (fixed Node 9 reference).
-This two-condition comparison does not isolate EBM's causal benefit.
-See [the study summary](newResults/IID/IID_TWO_TEST_SUMMARY.md) for measured
-evidence and [the accuracy comparison](newPlots/IID/comparison/full_test_accuracy_comparison.png).
-
-Verify completed artifacts without training:
+The W&B project is **`Research Paper`**; live plots/run labels use **`IID RUN`**.
+A/B/C/D log identical metric names and round
+axes so their accuracy and loss curves can share the same workspace panels.
+During IID training, the active condition updates after each completed round;
+finished curves remain visible. **The new non-IID runs do not use W&B.**
+Local CSV/JSON/NPZ evidence remains authoritative if uploads fail.
 
 ```bash
-python scripts/verify_iid_research_outputs.py --write-evidence
-```
-These historical two tests do not isolate EBM's causal benefit. The completed
-four-condition study now supplies that matched noisy-channel/CE-only control
-as C; C versus D is the primary EBM comparison. No further run starts
-automatically.
-
-## Desktop application
-
-PaperMerge uses a persistent five-workspace shell with a shared command bar.
-
-- **Dashboard** shows active-run progress, rounds, elapsed time, estimated
-  completion, accuracy, worker count, queue length, recent runs, and a live
-  accuracy chart.
-- **Experiment Builder** provides grouped experiment settings, presets,
-  validation, conditional controls, defaults, and a human-readable summary.
-- **Queue** provides filtering, multi-selection, ordering, retry, removal,
-  runtime estimates, configuration-library loading, and persistent execution.
-- **Results** discovers retained runs lazily and provides filters, metadata,
-  convergence charts, comparison, export, plot generation, and output access.
-- **Network** visualizes the directed ring, Byzantine nodes, Snapshot Selection
-  candidates, selected sources, channel state, per-node accuracy, and telemetry
-  replay for compatible runs.
-
-Live IID accuracy updates after each completed node activation; round mean and
-worst-node accuracy update after a complete ring traversal. They are distinct
-metrics. The first sample is visible immediately. Dashboard widgets and queue
-rows update in place, preserving focus/selection, rather than rebuilding on
-every event. Network telemetry uses the same read-only adapter as replay.
-
-The interface uses a light slate theme. Entries, dropdown fields, popup lists,
-selected rows, disabled controls, and keyboard focus states have explicit
-foreground and background colors to remain readable across operating systems.
-
-## Experiment configuration
-
-The GUI uses a typed internal experiment model while preserving the existing
-JSON contract:
-
-- Persisted keys remain camelCase.
-- Schema versions 1–5 are supported; version 5 adds the explicit research protocol.
-- Unknown compatible fields survive load/save round trips.
-- Invalid numeric or conditional values remain visible and block Run/Queue.
-- Tkinter variables are not used as the business model.
-
-Configuration libraries are stored under:
-
-```text
-gui/configs/current/
-gui/configs/adaptive_study/
-gui/configs/IID/
-gui/configs/nonIID/
-gui/configs/sequential_basil/
+pip install -r environment/requirements-tracking.txt
+wandb login
+python scripts/verify_live_tracking.py
 ```
 
-Historical campaign or study identifiers inside persisted metadata are
-experimental provenance and are intentionally not renamed.
+Never commit or share an API key. Destination settings are machine-local in
+`gui/worker_state/live_tracking.json`. Use team membership/invitations to
+share a private project, or explicitly change visibility if public sharing
+is desired. API access alone does not establish someone else's viewing access.
+Filter the completed IID workspace to the appropriate group listed in the
+[IID protocol guide](docs/IID_500_ROUND_PROTOCOL.md#fresh-tracking-attempt).
 
-## Execution and queue safety
+## Run or resume from a remote terminal
 
-Versioned studies run in isolated child processes. The application preserves:
-
-- atomic queue persistence,
-- duplicate-run prevention,
-- structured worker events,
-- main-thread-only Tkinter updates,
-- graceful stop requests,
-- stopped and failed queue recovery,
-- orphan-worker detection,
-- worker crash logs,
-- conservative single- or multi-lane execution policy,
-- runtime estimates based on compatible historical runs.
-
-Closing the application during active work requests a graceful stop and waits
-for managed workers instead of immediately destroying the process tree.
-
-## Results and plots
-
-Result discovery reads lightweight `run.json` metadata first. Large metric and
-telemetry arrays are loaded only when a run is selected or replayed.
-
-The retained research artifacts are:
-
-```text
-experiments/results4/
-plots4/
-```
-
-These directories are protected historical evidence. Application code must
-not rename, normalize, or overwrite their contents. New plot generation must
-use a separate output directory selected by the user.
-
-Plotting implementations remain in:
-
-```text
-reporting/adaptive_study_plots.py
-reporting/baseline_study_plots.py
-```
-
-## Architecture
-
-```text
-run_gui.py
-gui/
-├── app.py                    # application lifecycle and service composition
-├── experiment_app.py         # compatibility import only
-├── theme.py                  # shared visual design system
-├── state/                    # typed experiment, queue, navigation, execution state
-├── services/                 # config, queue, execution, results, and plot operations
-├── views/                    # Dashboard, Builder, Queue, Results, Network shell
-├── components/               # command bar, navigation, scrolling, empty states
-├── worker_pool.py            # isolated worker lifecycle
-├── network_view.py           # live ring and telemetry replay
-├── runtime_estimator.py      # per-run and queue estimates
-├── baseline_study.py         # baseline-study protocol and identifiers
-└── adaptive_study.py         # retained adaptive-study protocol and identifiers
-
-basil_core/
-├── experiment_engine.py
-├── adaptive_experiment_engine.py
-├── basil.py
-├── cart.py
-├── attacks.py
-├── trainer.py
-├── models.py
-└── data/
-
-reporting/
-├── adaptive_study_plots.py
-├── baseline_study_plots.py
-├── experiment_plots.py
-└── comparison_plots.py
-```
-
-Research algorithms remain in `basil_core/`; GUI services call those modules
-without duplicating experiment mathematics in visual components.
-
-## Command-line execution
-
-Run a compatible JSON configuration directly:
+For remote terminals, the existing IID runner can start/resume its saved queue
+without a GUI. This is not the new non-IID command:
 
 ```bash
-python scripts/run_single_config.py path/to/config.json
+tmux new-session -A -s papermerge-iid 'cd /home/ojaswi/PaperMerge && environment/basil-noise-env/bin/python scripts/run_iid_queue.py --execute'
 ```
 
-Use a temporary round override for a lightweight check:
+`Ctrl+C` requests a graceful checkpointed stop; repeat the command to resume.
+`Ctrl+B`, then `D` detaches and leaves training running. Completed experiments
+are skipped; an interrupted activation repeats from its beginning. See the
+[protocol guide](docs/IID_500_ROUND_PROTOCOL.md#remote-terminal-no-gui-needed)
+for recovery limits. Without `--execute`, the script only validates.
+
+## Generate completed-study plots without training
 
 ```bash
-python scripts/run_single_config.py path/to/config.json --rounds 2
+python scripts/report_iid_campaign.py --device GPU --rounds 500
 ```
 
-Do not use a shortened run as scientific evidence.
+Plots require real measured rounds. A/B measures attacks under BASIL; B/C
+measures channel noise; C/D is the matched EBM comparison. No ranking or
+80–90% accuracy is assumed.
 
-## Separate one-class sequential BASIL protocol — paused
-
-The earlier one-class/high-relative-noise verdict is **NOT READY FOR
-PRODUCTION**. That numerical/reproducibility
-audit records high-relative-noise failures and residual cross-process gradient
-differences. See [production readiness](docs/RESEARCH_PRODUCTION_READINESS.md)
-before launching that separate protocol. This does not replace the completed
-IID evidence linked above. The IID GPU path has representative synthetic
-[hardware verification](docs/IID_GPU_EXECUTION.md) and completed 100-round
-results; neither establishes bit-identical CPU/GPU execution or resolves the
-separate multiprocessing discrepancy.
-
-The new protocol has its own engine and outputs, leaving historical studies
-unchanged. It uses 10 CIFAR-10 nodes, one complete class per node, strict weight
-handoff, five full local epochs, batch 512, reset SGD, and rolling BASIL memory
-from five distinct predecessors. Each full-data activation performs 50 updates,
-including the final 392-image batch of each epoch.
-
-Channel noise and training defenses are separate settings. Choose **Paper
-absolute Gaussian** (coordinate standard deviation) or **Relative-L2 Gaussian**
-(model-relative perturbation). Full gradient-norm EBM uses nested autodiff;
-legacy gradient scaling is a separate comparison, not the same loss.
-
-Generate configs and run the bounded diagnostic gate:
-
-```bash
-python scripts/generate_research_protocol_configs.py
-python scripts/calibrate_channel_noise.py --semantics relative_l2_gaussian --evaluate
-python scripts/calibrate_channel_noise.py --semantics paper_absolute_gaussian --evaluate
-python scripts/run_research_diagnostics.py --family smoke --jobs 2
-python scripts/run_research_diagnostics.py --family preflight
-python scripts/report_research_diagnostics.py --plots
-```
-
-The 47 smoke configurations use three rounds and reduced data, **not reduced
-epochs**. Three clean full-data preflights use five rounds. Production configs
-are prepared but require explicit CLI approval via `--allow-production` after
-reviewing the baseline; the GUI cannot silently launch the 100-round matrix.
-
-New outputs live in `experiments/research_protocol_results/` and
-`plots/research_protocol/`, separated into smoke, preflight, and production.
-Results include before-training and five-epoch class metrics, outgoing-link
-noise statistics, candidate losses, optimizer-step objectives, and all ten final
-node checkpoints. Results browsing, plotting, and network replay support them.
-
-See the [protocol guide](docs/SEQUENTIAL_BASIL_PROTOCOL.md),
-[source-equation note](docs/SOURCE_EQUATIONS.md), and
-[measured diagnostic report](docs/RESEARCH_DIAGNOSTIC_REPORT.md).
-[Verification commands and artifact hashes](docs/RESEARCH_PROTOCOL_VERIFICATION.md)
-record the actual checks and environment boundaries. The >50%
-worst-node target is a research objective, never a software correctness test.
-
-The sequential BASIL research protocol uses five complete local epochs, strict
-snapshot handoff, bounded five-snapshot memory, receiver-local Snapshot Selection,
-and optional Gaussian channel noise. Old saved protocol identifiers are accepted
-as deprecated compatibility aliases; new configurations use
-`sequential_basil_one_class_v1`. Historical results remain read-only and retain
-their original provenance. See [the naming migration](docs/RESEARCH_NAMING_MIGRATION.md).
-
-## Testing
-
-Latest publication checks: compilation passed; the focused IID/protocol,
-recovery, GPU-policy, GUI-state, configuration-library, runtime-estimator and
-worker suites completed with **178 passed, 2 display-dependent skips and
-644 subtests passed**. This is not a claim that the entire legacy suite passed.
-No new scientific condition was executed for publication.
-
-Compile the active source tree:
+## Validation
 
 ```bash
 python -m compileall -q gui basil_core reporting scripts tests
+PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 CUDA_VISIBLE_DEVICES=-1 TF_ENABLE_ONEDNN_OPTS=0 python -m pytest -q tests/test_iid_500r.py tests/test_live_tracking.py tests/test_iid_study.py tests/test_research_protocol.py tests/test_protocol_recovery.py
 ```
 
-Run the display-independent suite without unrelated globally installed pytest
-plugins:
+`python scripts/verify_iid_gpu.py` performs synthetic GPU checks, not a research
+run. The local verification record must match the implementation and device.
+Execution uses a **6 GiB GPU cap**, another **1 GiB free headroom** at startup,
+one-worker lock, finite-value checks and no silent CPU fallback. CIFAR is reused
+through a read-only CPU memory-mapped cache, not repeatedly copied to VRAM.
+Checkpoint-boundary cleanup collects unreachable objects, without deleting live
+models or clearing TensorFlow's reusable allocator. Incremental telemetry
+checkpoints avoid rewriting the entire history on every activation while
+retaining exact recovery evidence. Other processes can still cause OOM; no
+absolute memory guarantee or whole-run speedup is promised.
 
-```bash
-PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python -m pytest -q \
-  --ignore=tests/test_convergence.py
-```
+## Repository and publication policy
 
-Run the fast GUI architecture contracts:
+`basil_core/`: research/runtime; `gui/`: state/services/views; `reporting/`:
+plots; `scripts/`: explicit entry points; `tests/`: headless contracts.
+The `papers/` directory is retained unchanged.
 
-```bash
-PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python -m pytest -q \
-  tests/test_gui_architecture.py \
-  tests/test_config_library.py \
-  tests/test_runtime_estimator.py \
-  tests/test_worker_pool.py
-```
-
-`tests/test_convergence.py` loads MNIST during collection and may require
-network access when the dataset is not already cached. Tests should not launch
-full research campaigns merely to verify the GUI.
-
-## Documentation
-
-- [Documentation index](docs/README.md)
-- [Repository overview](docs/GetToKnow.md)
-- [GUI architecture](docs/GUI_REDESIGN_PLAN.md)
-- [Repository audit](docs/REPOSITORY_AUDIT.md)
-- [Baseline study protocol](docs/BASELINE_STUDY_GUIDE.md)
-- [Adaptive study plan](docs/ADAPTIVE_STUDY_PLAN.md)
-- [Adaptive runtime research](docs/ADAPTIVE_RUNTIME_RESEARCH.md)
-- [CART gamma explanation](docs/gammaExplained.md)
-- [WCM pilot](docs/WCM_PILOT.md)
-
-Detailed experimental rationale, equations, protocol gates, and historical
-findings belong in these documents rather than in this README.
+Old outputs, archives and obsolete documentation were removed by explicit user
+authorization. The current study must not recreate old output paths. Historical
+source/configuration support remains separate from the prepared IID queue.
+Handoff documents are excluded by ignore rules, local commit/push hooks and
+a publication-policy CI check. Enable hooks in new clones with
+`git config core.hooksPath .githooks`. Hooks can be bypassed; previously
+committed documents can remain in Git history. No history rewrite or push is
+performed automatically.

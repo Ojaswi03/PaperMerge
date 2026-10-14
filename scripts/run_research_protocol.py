@@ -20,7 +20,6 @@ import os
 os.environ.setdefault("TF_ENABLE_ONEDNN_OPTS", "0")
 os.environ.setdefault("TF_DETERMINISTIC_OPS", "1")
 
-import numpy as np
 
 PROJECT_ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(PROJECT_ROOT))
@@ -37,6 +36,7 @@ def atomic_json(path,payload):
 
 
 def main():
+    import numpy as np
     parser=argparse.ArgumentParser(); parser.add_argument("--config",required=True); parser.add_argument("--result-root",default=str(RESULT_ROOT)); parser.add_argument("--gpu-memory-mb",type=int,default=0); parser.add_argument("--allow-production",action="store_true",help="Explicit approval after reviewing the baseline gate")
     parser.add_argument("--audit-directory")
     parser.add_argument("--audit-candidates",action="store_true")

@@ -13,21 +13,9 @@ Reference: "BASIL: A Fast and Byzantine-Resilient Approach for Decentralized Tra
 
 import sys
 import math
-import tensorflow as tf
+from basil_core.lazy_imports import lazy_module
+tf = lazy_module('tensorflow')
 from .attacks import applyAttack, modelPoisonAttack
-from .trainer import (
-    localUpdate,
-    evaluateBatchLoss,
-    addChannelNoiseToParams,
-    getParams,
-    setParams,
-    averageParams,
-    makeLrScheduler,
-    evaluate,
-    evaluateAll,
-    lossFn,
-    _iterLimited,
-)
 
 
 MAX_TRAIN_MICRO_BATCH_SIZE = 128
@@ -41,6 +29,19 @@ def _batchGradients(model_inner, weights, x, y, microBatchSize=MAX_TRAIN_MICRO_B
     for loss functions that average over the batch this is equivalent to one
     full-batch gradient update.
     """
+    from .trainer import (
+        localUpdate,
+        evaluateBatchLoss,
+        addChannelNoiseToParams,
+        getParams,
+        setParams,
+        averageParams,
+        makeLrScheduler,
+        evaluate,
+        evaluateAll,
+        lossFn,
+        _iterLimited,
+    )
     batchSize = x.shape[0]
     if batchSize is None or batchSize <= microBatchSize:
         with tf.GradientTape() as tape:
@@ -152,6 +153,19 @@ class BasilNode:
 
     def selectBestModel(self, verbose=False):
         """Select only among predecessor snapshots using one shared mini-batch."""
+        from .trainer import (
+            localUpdate,
+            evaluateBatchLoss,
+            addChannelNoiseToParams,
+            getParams,
+            setParams,
+            averageParams,
+            makeLrScheduler,
+            evaluate,
+            evaluateAll,
+            lossFn,
+            _iterLimited,
+        )
         if not self.neighborMemory:
             return "self"
 
@@ -238,6 +252,19 @@ class BasilNode:
 
     def localTrain(self, lr, stepsPerEpoch=100):
         # WCM requires custom gradient logic - fall back to existing path
+        from .trainer import (
+            localUpdate,
+            evaluateBatchLoss,
+            addChannelNoiseToParams,
+            getParams,
+            setParams,
+            averageParams,
+            makeLrScheduler,
+            evaluate,
+            evaluateAll,
+            lossFn,
+            _iterLimited,
+        )
         if self.noiseModel == "wcm" and self.sigma > 0:
             localUpdate(
                 self.model, self.dataLoader,
@@ -294,6 +321,19 @@ def basilRingTrainingWithAttack(
 ):
 
     # Backward compatibility
+    from .trainer import (
+        localUpdate,
+        evaluateBatchLoss,
+        addChannelNoiseToParams,
+        getParams,
+        setParams,
+        averageParams,
+        makeLrScheduler,
+        evaluate,
+        evaluateAll,
+        lossFn,
+        _iterLimited,
+    )
     if "attack_type" in kwargs and kwargs["attack_type"] is not None:
         attackTypes = [kwargs["attack_type"]]
 
@@ -576,6 +616,19 @@ def fedAvgTrainingWithNoise(
     **kwargs,
 ):
     # Backward compatibility
+    from .trainer import (
+        localUpdate,
+        evaluateBatchLoss,
+        addChannelNoiseToParams,
+        getParams,
+        setParams,
+        averageParams,
+        makeLrScheduler,
+        evaluate,
+        evaluateAll,
+        lossFn,
+        _iterLimited,
+    )
     if isinstance(attackTypes, str):
         attackTypes = [attackTypes]
     if not attackTypes:

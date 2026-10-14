@@ -1,4 +1,5 @@
-import numpy as np
+from basil_core.lazy_imports import lazy_module
+np = lazy_module('numpy')
 import random
 
 def split_sensitive_non_sensitive(dataset, alpha=0.05, seed=42):

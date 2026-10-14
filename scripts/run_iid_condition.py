@@ -24,7 +24,7 @@ def main(argv=None):
     from basil_core.iid_campaign import gui_approved
     if not gui_approved(config):raise ValueError('Not a valid fixed A/B/C/D configuration.')
     if not args.execute:
-        result=dict(status='valid',condition=config['conditionId'],rounds=100,executionStarted=False,startMode='fresh')
+        result=dict(status='valid',condition=config['conditionId'],rounds=config['nRounds'],executionStarted=False,startMode='fresh')
         if device=='GPU':result.update(device='GPU',startMode='verified_cpu_state_transition' if config.get('recoverySourceDirectory') else 'fresh')
         print(json.dumps(result))
         return
@@ -34,6 +34,8 @@ def main(argv=None):
     from basil_core.iid_study import partition_audit
     configure_tensorflow(tf,device)
     runtime_metadata(tf,config)  # Fail before loading data if GPU verification is stale.
+    from basil_core.memory_safety import check_host_memory
+    check_host_memory()
     train,test=loadCifar10(cacheDir=ROOT/'experiments/cache/cifar10')
     data=(*_datasetArrays(train),*_datasetArrays(test))
     audit,_=partition_audit(data[1],data[3],seed=config['seed'])

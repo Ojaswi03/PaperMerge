@@ -45,7 +45,11 @@ class QueueView(ttk.Frame):
             elif tuple(self.tree.item(entry.entry_id,'values'))!=values:self.tree.item(entry.entry_id,values=values)
             if self.tree.index(entry.entry_id)!=index:self.tree.move(entry.entry_id,'',index)
         pending=[to_persisted(entry.config) for entry in self.state.entries if entry.status.value=="pending"]
-        if pending and all(c.get('iidCampaignId') for c in pending):
+        if pending and all(c.get('experimentProtocol')=='sequential_basil_dirichlet_v1' for c in pending):
+            summary=f'{len(self.state.entries)} entries • {len(pending)} pending • Dirichlet α=0.2 / local-only GPU • starts only via Run Queue'
+        elif pending and all(c.get('noniidStudyId') for c in pending):
+            summary=f'{len(self.state.entries)} entries • {len(pending)} pending • verified CART / GPU + CPU helpers • ETA measured during execution • starts only via Run Queue'
+        elif pending and all(c.get('iidCampaignId') for c in pending):
             entries=[e for e in self.state.entries if e.status is QueueStatus.PENDING]
             seconds=sum(e.estimated_remaining_seconds if e.estimated_remaining_seconds is not None else
                 float(e.config.extra.get('runtimeEstimateModel',{}).get('sourceEbmSeconds' if e.config.extra.get('localObjective')=='source_ebm' else 'ceSeconds',0)) for e in entries)

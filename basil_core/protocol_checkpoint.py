@@ -2,13 +2,14 @@
 from __future__ import annotations
 
 import hashlib
+import gzip
 import json
 import os
+import zlib
 from zipfile import BadZipFile
 from functools import lru_cache
 from pathlib import Path
 
-import numpy as np
 
 from basil_core.artifact_paths import writable_output
 
@@ -18,12 +19,87 @@ STATE_ARRAYS = (
 )
 
 
+class TelemetryStore:
+    """Persist immutable completed records once, instead of rewriting history.
+
+    The engine never edits a completed activation after its checkpoint. A new
+    history list (e.g. on resume) is indexed afresh. Parameters, memories and
+    the cursor still commit atomically at every activation as before.
+    """
+    def __init__(self, checkpoint_path):
+        self.directory=Path(checkpoint_path).parent/'checkpoint_telemetry'
+        self.history=None
+        self.refs=[]
+
+    def references(self, history):
+        if history is not self.history:
+            self.history=history
+            self.refs=[]
+        if len(history)<len(self.refs):
+            raise ValueError('Completed checkpoint telemetry cannot be removed.')
+        self.directory.mkdir(parents=True,exist_ok=True)
+        for record in history[len(self.refs):]:
+            raw=json.dumps(record,sort_keys=True,separators=(',',':'),allow_nan=False).encode()
+            digest=hashlib.sha256(raw).hexdigest()
+            path=self.directory/f'{digest}.json.gz'
+            if path.exists():
+                if gzip.decompress(path.read_bytes())!=raw:
+                    raise ValueError('Existing checkpoint telemetry is corrupt.')
+            else:
+                temporary=path.with_suffix('.gz.tmp')
+                with temporary.open('wb') as handle:
+                    handle.write(gzip.compress(raw,compresslevel=1,mtime=0))
+                    handle.flush();os.fsync(handle.fileno())
+                os.replace(temporary,path)
+                # Commit the directory entry before a checkpoint references it.
+                descriptor=os.open(self.directory,os.O_RDONLY|os.O_DIRECTORY)
+                try:os.fsync(descriptor)
+                finally:os.close(descriptor)
+            self.refs.append(digest)
+        return list(self.refs)
+
+
+def _load_telemetry(path, metadata):
+    if metadata['version']==1:
+        return metadata['telemetry']
+    refs=metadata['telemetryRefs']
+    if len(refs)!=metadata['nextActivation']:
+        raise ValueError('Checkpoint telemetry reference count is invalid.')
+    history=[]
+    for digest in refs:
+        if not isinstance(digest,str) or len(digest)!=64 or any(c not in '0123456789abcdef' for c in digest):
+            raise ValueError('Invalid checkpoint telemetry reference.')
+        try:
+            raw=gzip.decompress((Path(path).parent/'checkpoint_telemetry'/f'{digest}.json.gz').read_bytes())
+        except (OSError, EOFError, zlib.error) as error:
+            raise ValueError('Checkpoint telemetry is missing or corrupt.') from error
+        if hashlib.sha256(raw).hexdigest()!=digest:
+            raise ValueError('Checkpoint telemetry hash differs.')
+        history.append(json.loads(raw))
+    return history
+
+
 @lru_cache(maxsize=1)
 def implementation_fingerprint():
     root=Path(__file__).resolve().parents[1]
     paths=('basil_core/models.py','basil_core/attacks.py','basil_core/trainer.py',
            'basil_core/data/cifar.py','basil_core/research_protocol.py','basil_core/iid_study.py')
     return {p:hashlib.sha256((root/p).read_bytes()).hexdigest() for p in paths}
+
+
+def checkpoint_implementation(config):
+    fingerprints=dict(implementation_fingerprint())
+    if config.get('experimentProtocol')=='sequential_basil_dirichlet_v1':
+        root=Path(__file__).resolve().parents[1]
+        for name in ('basil_core/noniid_study.py','basil_core/dirichlet_study.py',
+                     'scripts/run_noniid_basil_study.py','scripts/run_dirichlet_condition.py',
+                     'basil_core/protocol_checkpoint.py'):
+            fingerprints[name]=hashlib.sha256((root/name).read_bytes()).hexdigest()
+    if config.get('lossStudyRevision')=='class_gradient_importance_anchor_v1':
+        root=Path(__file__).resolve().parents[1]
+        for name in ('basil_core/class_aware_retention.py','basil_core/noniid_study.py','basil_core/protocol_checkpoint.py'):
+            fingerprints[name]=hashlib.sha256((root/name).read_bytes()).hexdigest()
+    return fingerprints
 
 
 def read_activation_records(path):
@@ -44,7 +120,8 @@ def read_activation_records(path):
     return records
 
 
-def save_checkpoint(path, config, state, *, partition_hash, initial_hash):
+def save_checkpoint(path, config, state, *, partition_hash, initial_hash, telemetry_store=None):
+    import numpy as np
     path = writable_output(Path(path))
     path.parent.mkdir(parents=True, exist_ok=True)
     arrays = {name: state[name] for name in STATE_ARRAYS}
@@ -60,15 +137,38 @@ def save_checkpoint(path, config, state, *, partition_hash, initial_hash):
         return digest
 
     memories = []
+    retention_states = {}
+    def pack_retention(snapshot):
+        if snapshot.retention_state is None:
+            return None
+        from basil_core.class_aware_retention import validate_state, state_hash
+        state = validate_state(snapshot.retention_state, snapshot.params)
+        digest = state_hash(state)
+        if digest not in retention_states:
+            retention_states[digest] = dict(revision=state['revision'], visits=state['visits'],
+                classes={c: pack_params(p) for c,p in state['classes'].items()})
+        return digest
     for memory in state['memories']:
-        memories.append([dict(sender=s.sender_id, round=s.round_id, params=pack_params(s.params),
-            loss=s.sender_loss, accuracy=s.sender_accuracy, channel=s.channel_metadata)
-            for s in memory.candidates()])
+        snapshots=[]
+        for s in memory.candidates():
+            entry=dict(sender=s.sender_id, round=s.round_id, params=pack_params(s.params),
+                loss=s.sender_loss, accuracy=s.sender_accuracy, channel=s.channel_metadata)
+            if s.retention_state is not None:
+                entry['retentionState']=pack_retention(s)
+            snapshots.append(entry)
+        memories.append(snapshots)
     metadata = dict(version=1, config=config, nextActivation=state['next_activation'],
-        implementation=implementation_fingerprint(),
+        implementation=checkpoint_implementation(config),
         completedRounds=state['completed_rounds'], partitionHash=partition_hash,
         initialHash=initial_hash, nodeParams=[pack_params(p) for p in state['node_params']],
         memories=memories, weights=weights, telemetry=state['telemetry'])
+    if retention_states:
+        metadata['retentionStates']=retention_states
+    if telemetry_store is not None:
+        if len(state['telemetry'])!=state['next_activation']:
+            raise ValueError('Checkpoint activation cursor differs from telemetry count.')
+        metadata.pop('telemetry')
+        metadata.update(version=2,telemetryRefs=telemetry_store.references(state['telemetry']))
     arrays['metadata'] = np.asarray(json.dumps(metadata, allow_nan=False))
     temporary = path.with_suffix('.npz.tmp')
     with temporary.open('wb') as handle:
@@ -79,15 +179,19 @@ def save_checkpoint(path, config, state, *, partition_hash, initial_hash):
     if path.exists():
         os.replace(path, path.with_name('checkpoint.previous.npz'))
     os.replace(temporary, path)
+    descriptor=os.open(path.parent,os.O_RDONLY|os.O_DIRECTORY)
+    try:os.fsync(descriptor)
+    finally:os.close(descriptor)
 
 
 def load_checkpoint(path, config, *, partition_hash, initial_hash):
+    import numpy as np
     from basil_core.research_protocol import RollingMemory, Snapshot, params_hash
     with np.load(path, allow_pickle=False) as saved:
         metadata = json.loads(str(saved['metadata']))
-        if metadata['version'] != 1 or metadata['config'] != config:
+        if metadata['version'] not in (1,2) or metadata['config'] != config:
             raise ValueError('Checkpoint configuration does not match this experiment.')
-        if metadata['implementation'] != implementation_fingerprint():
+        if metadata['implementation'] != checkpoint_implementation(config):
             raise ValueError('Scientific implementation changed since checkpoint creation.')
         if (metadata['partitionHash'], metadata['initialHash']) != (partition_hash, initial_hash):
             raise ValueError('Checkpoint partition or initialization hash differs.')
@@ -99,11 +203,27 @@ def load_checkpoint(path, config, *, partition_hash, initial_hash):
             return params
 
         memories = []
+        def unpack_retention(digest, params):
+            if digest is None:
+                return None
+            from basil_core.class_aware_retention import validate_state, state_hash
+            raw=metadata.get('retentionStates',{}).get(digest)
+            if raw is None:
+                raise ValueError('Missing checkpoint class-retention state.')
+            state=validate_state(dict(revision=raw['revision'],visits=raw['visits'],
+                classes={c:unpack_params(p) for c,p in raw['classes'].items()}),params)
+            if state_hash(state)!=digest:
+                raise ValueError('Checkpoint class-retention hash differs.')
+            return state
         for receiver, snapshots in enumerate(metadata['memories']):
             memory = RollingMemory(receiver)
             for s in snapshots:
-                memory.receive(Snapshot(s['sender'], s['round'], unpack_params(s['params']),
-                    s['loss'], s['accuracy'], s['channel']))
+                params=unpack_params(s['params'])
+                retention=unpack_retention(s.get('retentionState'),params)
+                if config.get('lossStudyRevision')=='class_gradient_importance_anchor_v1' and s['round']>=0 and retention is None:
+                    raise ValueError('Class-aware checkpoint lost an outbound retention state.')
+                memory.receive(Snapshot(s['sender'], s['round'], params,
+                    s['loss'], s['accuracy'], s['channel'],retention))
             if len(memory.candidates()) != 5:
                 raise ValueError('Checkpoint must contain all five predecessor snapshots.')
             memories.append(memory)
@@ -111,7 +231,7 @@ def load_checkpoint(path, config, *, partition_hash, initial_hash):
         state.update(next_activation=metadata['nextActivation'],
             completed_rounds=metadata['completedRounds'], memories=memories,
             node_params=[unpack_params(p) for p in metadata['nodeParams']],
-            telemetry=metadata['telemetry'])
+            telemetry=_load_telemetry(path,metadata))
     cursor = state['next_activation']
     if len(state['node_params']) != 10 or len(memories) != 10:
         raise ValueError('Checkpoint requires ten logical nodes.')

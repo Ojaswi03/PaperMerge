@@ -6,10 +6,16 @@ import gzip
 import json
 from pathlib import Path
 
-import matplotlib
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
-import numpy as np
+# Direct-script imports must resolve the project before lazy helpers.
+if __package__ in (None, ''):
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+from basil_core.lazy_imports import lazy_pyplot
+plt = lazy_pyplot(backend='Agg')
+from basil_core.lazy_imports import lazy_module
+np = lazy_module('numpy')
 
 from basil_core.research_protocol import CLASS_NAMES
 from gui.research_protocol import PLOT_ROOT, RESULT_ROOT

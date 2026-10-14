@@ -6,7 +6,6 @@ import hashlib
 import json
 from pathlib import Path
 
-import numpy as np
 
 REPOSITORY = Path(__file__).resolve().parents[1]
 ROOT = REPOSITORY / 'newResults/IID'
@@ -14,6 +13,7 @@ NAMES = ('test_01_basil_iid_no_noise_ce', 'test_02_basil_iid_noise_ebm')
 
 
 def verify(name, noisy):
+    import numpy as np
     directory = ROOT / name
     manifest = json.loads((directory / 'run.json').read_text())
     assert manifest['status'] == 'completed', manifest['status']

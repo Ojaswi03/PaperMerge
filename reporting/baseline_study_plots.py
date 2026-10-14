@@ -18,12 +18,15 @@ import tempfile
 import threading
 from typing import Callable, Iterable
 
-import matplotlib as mpl
-from matplotlib.backends.backend_agg import FigureCanvasAgg
-from matplotlib.figure import Figure
-from matplotlib.lines import Line2D
-from matplotlib.patches import Patch
-import numpy as np
+# Direct-script imports must resolve the project before lazy helpers.
+if __package__ in (None, ''):
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+from basil_core.lazy_imports import lazy_module
+figure_module = lazy_module('matplotlib.figure')
+np = lazy_module('numpy')
 
 try:
     from gui.baseline_study import (
@@ -341,10 +344,11 @@ class PlotWriter:
 
     def save(
         self,
-        figure: Figure,
+        figure: figure_module.Figure,
         relative_stem: Path | str,
         records: Iterable[RunRecord],
     ) -> None:
+        from matplotlib.backends.backend_agg import FigureCanvasAgg
         stem = self.root / Path(relative_stem)
         key = str(Path(relative_stem))
         record_list = list(records)
@@ -402,7 +406,8 @@ def _new_figure(
     width: float = 7.16,
     height: float = 3.0,
     columns: int = 1,
-) -> tuple[Figure, list]:
+) -> tuple[figure_module.Figure, list]:
+    import matplotlib as mpl
     mpl.rcParams.update(
         {
             "font.family": "DejaVu Sans",
@@ -419,7 +424,7 @@ def _new_figure(
             "savefig.dpi": 600,
         }
     )
-    figure = Figure(figsize=(width, height), constrained_layout=True)
+    figure = figure_module.Figure(figsize=(width, height), constrained_layout=True)
     if columns == 1:
         axes = [figure.add_subplot(1, 1, 1)]
     else:
@@ -485,6 +490,7 @@ def _add_clean_line(axis, records, approach: str, *, label: bool = True) -> None
 
 
 def _accuracy_axis(axis) -> None:
+    import matplotlib as mpl
     axis.set_ylim(0.0, 1.0)
     axis.set_ylabel("Test accuracy")
     axis.yaxis.set_major_formatter(mpl.ticker.PercentFormatter(1.0))
@@ -747,6 +753,7 @@ def _plot_cart_lift(
     writer: PlotWriter,
     split: str,
 ) -> None:
+    import matplotlib as mpl
     selected = _filter(
         records,
         environment="hidden_noise",
@@ -857,6 +864,7 @@ def _plot_damage_recovery(
     writer: PlotWriter,
     split: str,
 ) -> None:
+    import matplotlib as mpl
     if not _filter(records, environment="hidden_noise"):
         return
     figure, axes = _new_figure(columns=2, height=3.0)
@@ -1008,6 +1016,9 @@ def _plot_average_vs_worst(
     writer: PlotWriter,
     split: str,
 ) -> None:
+    from matplotlib.lines import Line2D
+    from matplotlib.patches import Patch
+    import matplotlib as mpl
     selected = [
         record
         for record in records
@@ -1123,6 +1134,7 @@ def _plot_history_curve(
     label: str | None = None,
     uncertainty: bool = False,
 ) -> np.ndarray:
+    import matplotlib as mpl
     mean, std = _history_summary(records, "avg_history")
     if not mean.size:
         return mean
@@ -1176,6 +1188,7 @@ def _familiar_curve_legend(
     mitigations: Iterable[str],
     include_clean: bool,
 ) -> None:
+    from matplotlib.lines import Line2D
     handles = [
         Line2D(
             [0],
@@ -1223,6 +1236,7 @@ def _plot_familiar_experiments(
     *,
     zoom: bool,
 ) -> None:
+    import matplotlib as mpl
     approach_records = _filter(records, approach=approach)
     if not approach_records:
         return
@@ -1324,6 +1338,7 @@ def _plot_familiar_grid(
     split: str,
     approach: str,
 ) -> None:
+    import matplotlib as mpl
     approach_records = _filter(records, approach=approach)
     joint = _filter(approach_records, environment="hidden_noise")
     if not joint:
@@ -1504,6 +1519,7 @@ def _plot_paired_gain_panel(
     mitigations: tuple[str, ...],
     title: str,
 ) -> list[RunRecord]:
+    import matplotlib as mpl
     positions = np.arange(len(NOISE_LEVELS), dtype=np.float64)
     width = min(0.24, 0.76 / max(1, len(mitigations)))
     used: list[RunRecord] = []
@@ -1876,6 +1892,7 @@ def _plot_mitigation_heatmaps(
     writer: PlotWriter,
     split: str,
 ) -> None:
+    import matplotlib as mpl
     selected = _filter(records, environment="hidden_noise")
     if not selected:
         return
@@ -2025,6 +2042,7 @@ def _plot_stability(
     writer: PlotWriter,
     split: str,
 ) -> None:
+    import matplotlib as mpl
     selected = _filter(records, environment="hidden_noise")
     if not selected:
         return
@@ -2183,6 +2201,7 @@ def _plot_selection_behavior(
     writer: PlotWriter,
     split: str,
 ) -> None:
+    import matplotlib as mpl
     representative_sigma = 0.4
     selected = _filter(
         records,
@@ -2364,6 +2383,7 @@ def _plot_auc_profile(
     writer: PlotWriter,
     split: str,
 ) -> None:
+    import matplotlib as mpl
     selected = _filter(records, environment="hidden_noise")
     if not selected:
         return

@@ -26,7 +26,7 @@ class QueueService:
         # Keep the established list-of-configurations format. Completed work is
         # represented by result manifests and was historically removed from
         # the persisted queue; stopped/failed entries reload as retryable work.
-        payload=[dict(config=to_persisted(e.config),status=e.status.value,entryId=e.entry_id,error=e.error) if e.config.extra.get('iidCampaignId') else to_persisted(e.config) for e in state.entries if e.status is not QueueStatus.COMPLETED]
+        payload=[dict(config=to_persisted(e.config),status=e.status.value,entryId=e.entry_id,error=e.error) if e.config.extra.get('iidCampaignId') or e.config.extra.get('noniidStudyId') else to_persisted(e.config) for e in state.entries if e.status is not QueueStatus.COMPLETED]
         temporary.write_text(json.dumps(payload,indent=2)+"\n",encoding="utf-8"); temporary.replace(self.path)
 
     @staticmethod
@@ -34,6 +34,31 @@ class QueueService:
         from basil_core.protocol_checkpoint import recovery_plan
         for entry in state.entries:
             config=to_persisted(entry.config)
+            if config.get('experimentProtocol')=='sequential_basil_dirichlet_v1':
+                from basil_core.dirichlet_study import recovery_plan as dirichlet_recovery
+                try:
+                    plan=dirichlet_recovery(root/config['resultDirectory'],config)
+                    entry.completed_rounds=plan['completedRounds']
+                    if plan['mode']=='completed':entry.status=QueueStatus.COMPLETED
+                    entry.execution_hint=(f"Fresh R0→R{config['nRounds']-1} — Dirichlet α=0.2 GPU"
+                        if plan['mode']=='fresh' else 'Already completed' if plan['mode']=='completed'
+                        else f"Exact activation-boundary resume: {plan['startActivation']} — GPU")
+                    entry.estimated_remaining_seconds=None
+                except (ValueError,OSError) as error:entry.execution_hint=f'Recovery blocked: {error}'
+                continue
+            if config.get('noniidStudyId'):
+                from basil_core.noniid_verified_study import recovery_plan as noniid_recovery
+                try:
+                    plan=noniid_recovery(root/config['resultDirectory'],config)
+                    entry.completed_rounds=plan['completedRounds']
+                    if plan['mode']=='completed':entry.status=QueueStatus.COMPLETED
+                    entry.execution_hint=('Fresh R0→R29 — GPU' if plan['mode']=='fresh' else
+                        'Completed 30/30' if plan['mode']=='completed' else
+                        f"Exact resume: activation {plan['startActivation']}, step {plan['step']}/50 — GPU")
+                    entry.estimated_remaining_seconds=None
+                except (ValueError,OSError) as error:
+                    entry.execution_hint=f'Recovery blocked: {error}'
+                continue
             if not config.get('iidCampaignId'):continue
             try:
                 plan=recovery_plan(root/config['resultDirectory'],config)
@@ -47,8 +72,8 @@ class QueueService:
                 if plan['mode']=='completed':entry.status=QueueStatus.COMPLETED
                 cursor=plan['startActivation']; saved=plan['savedActivations']
                 entry.execution_hint={
-                    'fresh':'Fresh R0→R99', 'completed':'Already completed',
-                    'checkpoint':f'Resume at activation {cursor} / 1000',
+                    'fresh':f"Fresh R0→R{config['nRounds']-1}", 'completed':'Already completed',
+                    'checkpoint':f"Resume at activation {cursor} / {config['nRounds']*config['nNodes']}",
                     'verified_replay':f'Rebuild/verify {saved} saved activations, then continue',
                 }[plan['mode']]
                 if transition:

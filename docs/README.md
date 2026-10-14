@@ -1,58 +1,39 @@
-# PaperMerge Documentation
+# Current documentation
 
-- [Scientific naming migration](RESEARCH_NAMING_MIGRATION.md): full inventory,
-  canonical identifiers, deprecated aliases and numerical-equivalence evidence.
+[Dirichlet α=0.2 BASIL and thesis attribution](DIRICHLET_BASIL_PROTOCOL_AND_ATTRIBUTION.md):
+completed local-data-only 30-round A/B/C/D GPU study, source equations, proximal
+precedent, actual partition histogram and scientific qualifications. No further
+research runs are queued.
 
-Start with:
+[Head/backbone forgetting audit](FORGETTING_MECHANISM_AUDIT.md): completed
+bounded GPU diagnosis, per-epoch classifier/feature interventions, registry
+blind spot, and a separately scoped next measurement design. No automatic
+promotion or new controller is implied.
 
-- [Fresh GPU-only A rerun](IID_FRESH_A_GPU_QUEUE.md): current A-only idle queue,
-  unchanged completed B/C/D, and archived mixed-device A reference.
-- [Fresh B/C/D GPU queue](IID_FRESH_GPU_QUEUE.md): current idle preset, preserved
-  completed A, archived recovery evidence, and manual fresh-run instructions.
-- [IID GPU execution](IID_GPU_EXECUTION.md): remaining-work queue, bounded memory,
-  measured synthetic speed, CPU-state reconstruction and device-transition provenance.
-- [IID queue recovery](IID_QUEUE_RECOVERY.md): checkpoint continuation, verified
-  legacy reconstruction, A/B/C/D ordering, timing labels and plot styles.
-- [Live GUI corrections](GUI_LIVE_UPDATES.md): stable widgets, activation-level
-  accuracy, IID network event wiring and simulated-event verification.
-- [Prepared four-condition IID queue](IID_ABCD_100R_PREPARATION.md): idle
-  A/B/C/D 100-round configurations, original preparation policy, pairing evidence and
-  exact GUI launch steps. No research execution was started during preparation.
-- [Production readiness](RESEARCH_PRODUCTION_READINESS.md): latest scientific
-  validation verdict, executed tests, and remaining launch gates.
-- [Numerical stability](NUMERICAL_STABILITY_AUDIT.md): first non-finite
-  operations, saved-batch evidence, channel norm amplification, and confirmed fixes.
-- [Reproducibility](REPRODUCIBILITY_AUDIT.md): direct, worker, spawn,
-  and worker-pool comparisons, including residual gradient mismatches.
-- [One-class learning](ONE_CLASS_LEARNING_ANALYSIS.md): before/after
-  each epoch confusion matrices, prediction collapse, forgetting, and controls.
-- [Snapshot Selection](SNAPSHOT_SELECTION_AUDIT.md): rolling memory,
-  receiver-local selection contracts and evaluation-only global comparisons.
-- [Research sequential protocol](SEQUENTIAL_BASIL_PROTOCOL.md): authoritative five-epoch
-  handoff, rolling BASIL memory, separate channel models and full second-order EBM.
-- [Source equations](SOURCE_EQUATIONS.md): checked expressions 14, 15b
-  and 23, their limitations, and the explicit CIFAR adaptation.
-- [Research diagnostic evidence](RESEARCH_DIAGNOSTIC_REPORT.md): five-epoch smoke
-  matrix, full-data clean controls, failures, runtime estimates and prepared configs.
-- [Research verification](RESEARCH_PROTOCOL_VERIFICATION.md): executed commands, actual
-  test counts, protected-artifact hash checks and environment boundaries.
-- [Get To Know PaperMerge](GetToKnow.md): advisor-facing repository map,
-  current test status, diagrams, end-to-end execution, and function reference.
-- [Campaign 3 R2 Guide](BASELINE_STUDY_GUIDE.md): exact protocol, equations,
-  calibration, result interpretation, and paper-facing boundaries.
-- [Campaign 4 Engineering And Evaluation Plan](ADAPTIVE_STUDY_PLAN.md): implemented
-  isolated `results4`/`plots4` protocol, sigma 0.4-0.6 root-cause diagnosis,
-  adaptive-EBM boundary, run order, live ring telemetry, plots, and measured
-  GPU runtime. Its explicit method-freeze gate prevents confirmation runs until
-  all Merged+CART diagnostics and the predeclared decision are recorded.
-  Official Campaign 4 evidence is still pending.
-- [Gamma Explained](gammaExplained.md): CART `gamma`, class gaps, and active
-  proximal strength `mu`.
-- [WCM Pilot](WCM_PILOT.md): isolated Worst-Case Model implementation and
-  evaluation plan.
+[Strict-handoff CART framework and diagnostic](STRICT_CART_PROTOCOL.md):
+registry-supported local control, frozen selected-snapshot anchoring and optional
+true second-order EBM. The bounded comparison isolates clean one-class forgetting.
 
-Historical retained evidence remains under `experiments/results4/` and `plots4/`.
-Obsolete results3/plots3 links are intentionally not recreated. New research
-smoke/preflight evidence is separate and explicitly not production research.
+[Lazy dependency loading](LAZY_IMPORTS.md): repository-wide import policy,
+startup checks, exact synthetic before/after equivalence and GPU verification.
 
-The root [README](../README.md) contains setup and normal run commands.
+[Three-round warmed-memory diagnostic](GRADIENT_PROJECTION_WARM_DIAGNOSTIC.md):
+fresh paired CE/projection controls; same method and five epochs, with the
+cold-start traversal separated from warmed-memory retention.
+
+[Gradient-projection retention gate](GRADIENT_PROJECTION_RETENTION.md): separate
+bias-aware projected-CE method, disjoint training-validation protocol, exact
+equations and clean-only continuation screen.
+
+[500-round IID BASIL protocol](IID_500_ROUND_PROTOCOL.md): prepared conditions,
+selection/attack/EBM equations, GPU/checkpoint safeguards and live W&B plots.
+
+[Completed non-IID controls](NONIID_50_ROUND_PROTOCOL.md): measured one-class
+collapse, fixed-anchor mathematics, and the preserved 50-/30-round evidence.
+
+[Class-aware retention diagnostic](CLASS_AWARE_RETENTION_PROTOCOL.md): separate
+training-gradient importance method, exact weighted-anchor loss, state
+transport, limitations and local-only execution.
+
+Obsolete reports were removed by explicit authorization. Source PDFs in
+`../papers/` remain unchanged. Handoff documents are local-only.

@@ -13,21 +13,12 @@ from dataclasses import dataclass, field
 import hashlib
 import time
 
-import numpy as np
-import tensorflow as tf
+from basil_core.lazy_imports import lazy_module
+np = lazy_module('numpy')
 
 from .attacks import applyAttack
 from .basil import MAX_TRAIN_MICRO_BATCH_SIZE, _MutableLR, _batchGradients
 from .class_registry import ClassRegistry
-from .trainer import (
-    addChannelNoiseToParams,
-    averageParams,
-    evaluate,
-    getParams,
-    lossFn,
-    makeLrScheduler,
-    setParams,
-)
 
 
 def _copy_params(params):
@@ -77,6 +68,16 @@ def _gradient_norm_regularized_gradients(
     The configured batch remains the effective optimizer batch. Slicing only
     limits activation memory; slice gradients are weighted by sample count.
     """
+    from .trainer import (
+        addChannelNoiseToParams,
+        averageParams,
+        evaluate,
+        getParams,
+        lossFn,
+        makeLrScheduler,
+        setParams,
+    )
+    import tensorflow as tf
     batch_size = x.shape[0]
     if batch_size is None:
         slices = ((0, None, 1.0),)
@@ -157,6 +158,7 @@ class LogicalNode:
 
 class SharedModelWorker:
     def __init__(self, model, *, lr0: float, momentum: float):
+        import tensorflow as tf
         self.model = model
         self._lr = _MutableLR(float(lr0))
         self._optimizer = tf.keras.optimizers.SGD(
@@ -216,9 +218,27 @@ class SharedModelWorker:
         )
 
     def load(self, params) -> None:
+        from .trainer import (
+            addChannelNoiseToParams,
+            averageParams,
+            evaluate,
+            getParams,
+            lossFn,
+            makeLrScheduler,
+            setParams,
+        )
         setParams(self.model, params)
 
     def export(self):
+        from .trainer import (
+            addChannelNoiseToParams,
+            averageParams,
+            evaluate,
+            getParams,
+            lossFn,
+            makeLrScheduler,
+            setParams,
+        )
         return getParams(self.model)
 
     def zero_optimizer_state(self):
@@ -228,6 +248,7 @@ class SharedModelWorker:
         ]
 
     def _load_optimizer_state(self, state) -> None:
+        import tensorflow as tf
         if len(state) != len(self._optimizer_slots):
             raise ValueError("Logical-node optimizer state does not match the worker.")
         for variable, value in zip(self._optimizer_slots, state):
@@ -240,6 +261,16 @@ class SharedModelWorker:
         ]
 
     def batch_loss(self, params, batch) -> float:
+        from .trainer import (
+            addChannelNoiseToParams,
+            averageParams,
+            evaluate,
+            getParams,
+            lossFn,
+            makeLrScheduler,
+            setParams,
+        )
+        import tensorflow as tf
         self.load(params)
         x, y = batch
         logits = self._predict(tf.cast(x, tf.float32))
@@ -257,6 +288,7 @@ class SharedModelWorker:
         ebm_coefficient: float,
         prox_mu: float,
     ):
+        import tensorflow as tf
         self.load(params)
         for reference, weight in zip(self._ref_params, self.model.trainable_weights):
             reference.assign(weight)
@@ -274,6 +306,7 @@ class SharedModelWorker:
         return self.export(), self._export_optimizer_state()
 
     def probe_metrics(self, params, x, y):
+        import tensorflow as tf
         support = np.bincount(y, minlength=10).astype(np.int32)
         accuracy = np.full(10, np.nan, dtype=np.float32)
         if len(y) == 0:
@@ -288,6 +321,7 @@ class SharedModelWorker:
         return accuracy, support
 
     def confusion(self, params, data_loader):
+        import tensorflow as tf
         self.load(params)
         matrix = np.zeros((10, 10), dtype=np.int64)
         for x, y in data_loader:
@@ -299,6 +333,7 @@ class SharedModelWorker:
 
 
 def _gpu_peak_bytes() -> int:
+    import tensorflow as tf
     try:
         info = tf.config.experimental.get_memory_info("GPU:0")
         return int(info.get("peak", 0))
@@ -417,6 +452,15 @@ def _selected_snapshot(
 
 
 def _evaluate_states(worker, nodes, test_loader, max_batches=5):
+    from .trainer import (
+        addChannelNoiseToParams,
+        averageParams,
+        evaluate,
+        getParams,
+        lossFn,
+        makeLrScheduler,
+        setParams,
+    )
     accuracies = []
     for node in nodes:
         worker.load(node.params)
@@ -439,6 +483,16 @@ def run_campaign_three(
     round_callback=None,
 ):
     """Run one campaign-three Merged or CART configuration."""
+    from .trainer import (
+        addChannelNoiseToParams,
+        averageParams,
+        evaluate,
+        getParams,
+        lossFn,
+        makeLrScheduler,
+        setParams,
+    )
+    import tensorflow as tf
     seed = int(config["seed"])
     tf.keras.utils.set_random_seed(seed)
     try:

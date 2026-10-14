@@ -1,0 +1,8 @@
+name: Publication policy
+on: [push, pull_request]
+jobs:
+  no-handoff-documents:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 scripts/check_publication_policy.py --revision HEAD

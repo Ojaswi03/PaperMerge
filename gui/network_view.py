@@ -8,7 +8,6 @@ from pathlib import Path
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 
-import numpy as np
 from gui.theme import COLORS
 
 
@@ -470,11 +469,15 @@ class NetworkView:
                 messagebox.showerror("Replay telemetry", str(error), parent=self.root)
 
     def load_replay(self, run_path):
+        import numpy as np
         run_path = Path(run_path)
         metadata = json.loads(run_path.read_text(encoding="utf-8"))
         from basil_core.protocol_compatibility import is_research_protocol
-        if is_research_protocol(metadata.get("experimentProtocol", metadata.get("config", {}).get("experimentProtocol"))):
-            from gui.services.research_telemetry import load_replay
+        if is_research_protocol(metadata.get("experimentProtocol", metadata.get("config", {}).get("experimentProtocol"))) or metadata.get('config',{}).get('experimentProtocol')=='cart_verified_one_class_v1':
+            if metadata.get('config',{}).get('experimentProtocol')=='cart_verified_one_class_v1':
+                from gui.services.noniid_telemetry import load_replay
+            else:
+                from gui.services.research_telemetry import load_replay
             replay=load_replay(run_path)
             self.start_run(0,replay["config"]);self._replay=replay
             rounds=len(replay["metrics"]["avg_history"])
@@ -504,6 +507,7 @@ class NetworkView:
             self._show_replay_round(int(round(float(value))))
 
     def _show_replay_round(self, round_index):
+        import numpy as np
         if self._replay is None:
             return
         config = self._replay["config"]

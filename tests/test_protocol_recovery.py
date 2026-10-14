@@ -4,12 +4,12 @@ import csv
 import json
 from types import SimpleNamespace
 
-import numpy as np
 import pytest
 
 from basil_core.protocol_checkpoint import (
     load_checkpoint, save_checkpoint, recovery_plan, read_activation_records,
     verify_replayed_activation,
+    TelemetryStore,
 )
 from basil_core import research_protocol as protocol
 from basil_core.iid_campaign import campaign_configs
@@ -22,6 +22,7 @@ from gui.views.dashboard_view import ACCURACY_SERIES
 
 @pytest.fixture
 def simulation(monkeypatch):
+    import numpy as np
     config=campaign_configs('a'*64,'b'*64)[3]
     config.update(nRounds=3,diagnosticTestSamplesPerClass=1,attackStartRound=1)
     monkeypatch.setattr(protocol,'validate_config',lambda config:None)
@@ -53,6 +54,7 @@ def simulation(monkeypatch):
 
 @pytest.mark.parametrize('stop_after',[1,9,10,14,29,30])
 def test_checkpoint_resume_matches_uninterrupted_ring_and_noise(simulation,tmp_path,stop_after):
+    import numpy as np
     config,data,worker=simulation
     full=protocol.run_research_protocol(config,*data,worker_factory=worker)
     completed=[]; path=tmp_path/'checkpoint.npz'
@@ -113,6 +115,62 @@ def test_checkpoint_rejects_config_and_partition_changes(simulation,tmp_path):
         checkpoint_callback=lambda state:save_checkpoint(path,config,state,partition_hash='p',initial_hash='i'))
     with pytest.raises(ValueError,match='configuration'):load_checkpoint(path,dict(config,seed=9),partition_hash='p',initial_hash='i')
     with pytest.raises(ValueError,match='partition'):load_checkpoint(path,config,partition_hash='changed',initial_hash='i')
+
+
+def test_incremental_checkpoint_matches_all_scientific_values_and_resume(simulation,tmp_path):
+    import numpy as np
+    config,data,worker=simulation
+    full=protocol.run_research_protocol(config,*data,worker_factory=worker)
+    path=tmp_path/'checkpoint.npz';store=TelemetryStore(path);records=[]
+    def save(state):
+        save_checkpoint(path,config,state,partition_hash='p',initial_hash='i',telemetry_store=store)
+    with pytest.raises(InterruptedError):
+        protocol.run_research_protocol(config,*data,worker_factory=worker,activation_callback=records.append,
+            checkpoint_callback=save,should_stop=lambda:len(records)==14)
+    with np.load(path,allow_pickle=False) as saved:
+        metadata=json.loads(str(saved['metadata']))
+    assert metadata['version']==2 and 'telemetry' not in metadata
+    assert len(metadata['telemetryRefs'])==14
+    files=list((tmp_path/'checkpoint_telemetry').glob('*.json.gz'))
+    assert len(files)==14
+    mtimes={p.name:p.stat().st_mtime_ns for p in files}
+    state=load_checkpoint(path,config,partition_hash='p',initial_hash='i')
+    save(state)
+    assert mtimes=={p.name:p.stat().st_mtime_ns for p in files}
+    resumed=protocol.run_research_protocol(config,*data,worker_factory=worker,resume_state=state)
+    assert resumed['telemetry']==full['telemetry']
+    for key,value in full.items():
+        if isinstance(value,np.ndarray):np.testing.assert_array_equal(value,resumed[key])
+    for first,second in zip(full['finalNodeParams'],resumed['finalNodeParams']):
+        for a,b in zip(first,second):np.testing.assert_array_equal(a,b)
+
+
+def test_incremental_checkpoint_refuses_tampered_telemetry(simulation,tmp_path):
+    import numpy as np
+    import gzip
+    config,data,worker=simulation;path=tmp_path/'checkpoint.npz';store=TelemetryStore(path)
+    protocol.run_research_protocol(config,*data,worker_factory=worker,
+        checkpoint_callback=lambda state:save_checkpoint(path,config,state,partition_hash='p',initial_hash='i',telemetry_store=store))
+    with np.load(path,allow_pickle=False) as saved:metadata=json.loads(str(saved['metadata']))
+    record=tmp_path/'checkpoint_telemetry'/f"{metadata['telemetryRefs'][0]}.json.gz"
+    record.write_bytes(gzip.compress(b'{"tampered":true}'))
+    with pytest.raises(ValueError,match='telemetry hash'):
+        load_checkpoint(path,config,partition_hash='p',initial_hash='i')
+
+
+def test_incremental_checkpoint_missing_or_broken_gzip_is_rejected(simulation,tmp_path):
+    import numpy as np
+    config,data,worker=simulation;path=tmp_path/'checkpoint.npz';store=TelemetryStore(path)
+    protocol.run_research_protocol(config,*data,worker_factory=worker,
+        checkpoint_callback=lambda state:save_checkpoint(path,config,state,partition_hash='p',initial_hash='i',telemetry_store=store))
+    with np.load(path,allow_pickle=False) as saved:metadata=json.loads(str(saved['metadata']))
+    record=tmp_path/'checkpoint_telemetry'/f"{metadata['telemetryRefs'][0]}.json.gz"
+    record.write_bytes(b'not gzip')
+    with pytest.raises(ValueError,match='missing or corrupt'):
+        load_checkpoint(path,config,partition_hash='p',initial_hash='i')
+    record.unlink()
+    with pytest.raises(ValueError,match='missing or corrupt'):
+        load_checkpoint(path,config,partition_hash='p',initial_hash='i')
 
 
 def test_legacy_reconstruction_requires_identical_records(simulation):
@@ -193,6 +251,7 @@ def test_curve_colors_and_line_styles_are_distinct():
 
 @pytest.mark.parametrize('mode',['none','gradient_norm_objective'])
 def test_tiny_tensorflow_gradients_and_next_update_survive_checkpoint(simulation,tmp_path,mode):
+    import numpy as np
     import tensorflow as tf
     from basil_core.iid_study import IidWorker
     config,data,mock_worker=simulation
@@ -224,6 +283,7 @@ def test_tiny_tensorflow_gradients_and_next_update_survive_checkpoint(simulation
 
 @pytest.mark.parametrize('stop_after',[0,14])
 def test_serial_runner_recovers_without_replacing_recorded_evidence(simulation,tmp_path,monkeypatch,stop_after):
+    import numpy as np
     from scripts import run_iid_basil_pair as runner
     config,data,worker=simulation
     config.update(resultDirectory=str(tmp_path/'result'),plotDirectory=str(tmp_path/'plots'))
@@ -269,6 +329,7 @@ def test_serial_runner_recovers_without_replacing_recorded_evidence(simulation,t
 
 @pytest.mark.parametrize('saved_checkpoint',[False,True])
 def test_cpu_state_transfers_to_separate_gpu_output_without_training_on_gpu(simulation,tmp_path,monkeypatch,saved_checkpoint):
+    import numpy as np
     from basil_core.iid_device_transition import transfer_cpu_state
     from basil_core.research_audit import array_hash
     import hashlib

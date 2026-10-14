@@ -8,7 +8,10 @@ The registry travels around the ring with the model. Each node:
   4. Uses the registry gap to control its proximal regularization strength.
 """
 
-import numpy as np
+from __future__ import annotations
+
+from basil_core.lazy_imports import lazy_module
+np = lazy_module('numpy')
 
 __all__ = ["ClassRegistry"]
 

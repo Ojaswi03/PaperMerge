@@ -23,11 +23,11 @@ from dataclasses import dataclass
 import math
 from typing import Iterable, Sequence
 
-import numpy as np
-import tensorflow as tf
+from basil_core.lazy_imports import lazy_module
+np = lazy_module('numpy')
 
 
-ArrayList = list[np.ndarray]
+ArrayList = list['np.ndarray']
 
 
 @dataclass
@@ -186,6 +186,7 @@ def lossAndGradientsAtDelta(
     micro_batch_size=128,
 ) -> tuple[float, ArrayList]:
     """Evaluate loss and gradient at ``w + delta`` with bounded activations."""
+    import tensorflow as tf
     variables = list(model.trainable_variables)
     deltas = _as_float32_params(deltas)
     if len(variables) != len(deltas):
@@ -293,6 +294,7 @@ def scaSurrogateGradients(
 
 
 def _clip_gradients(gradients, clip_norm):
+    import tensorflow as tf
     tensors = [
         tf.convert_to_tensor(value, dtype=tf.float32)
         for value in gradients
@@ -334,6 +336,7 @@ def wcmLocalUpdate(
     subproblem. The resulting candidate is blended with the reference using
     Equation 36b.
     """
+    import tensorflow as tf
     validatePaperExponents(rho_exponent, gamma_exponent)
     if not batches:
         raise ValueError("WCM requires at least one local batch.")
@@ -502,6 +505,7 @@ def scaSurrogateLoss(
     gPrev=None,
 ):
     """Compatibility helper returning the Equation 31 surrogate value."""
+    import tensorflow as tf
     variables = list(model.trainable_variables)
     candidate = [
         np.asarray(variable.numpy(), dtype=np.float32)
@@ -551,6 +555,7 @@ def scaSurrogateLoss(
 
 
 def _optimizer_learning_rate(optimizer) -> float:
+    import tensorflow as tf
     value = optimizer.learning_rate
     if callable(value):
         value = value(optimizer.iterations)

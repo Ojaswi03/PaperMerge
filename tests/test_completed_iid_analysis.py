@@ -1,5 +1,6 @@
 """Post-run calculations only; no training or display dependency."""
-import numpy as np
+from basil_core.lazy_imports import lazy_module
+np = lazy_module('numpy')
 import pytest
 
 from scripts.analyze_completed_iid import accuracy_summary, corrupted_selection, summary

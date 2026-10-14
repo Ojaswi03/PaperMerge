@@ -16,15 +16,16 @@ import math
 import time
 from typing import Callable
 
-import numpy as np
-import tensorflow as tf
+from basil_core.lazy_imports import lazy_module
+np = lazy_module('numpy')
+from basil_core.lazy_imports import lazy_module
+tf = lazy_module('tensorflow')
 
 from .basil import _MutableLR
 from .class_registry import ClassRegistry
-from .trainer import evaluate, lossFn, makeLrScheduler
 
 
-TensorParams = list[tf.Tensor]
+TensorParams = list['tf.Tensor']
 EPSILON = 1e-12
 
 
@@ -189,6 +190,7 @@ def _base_gradients(
     *,
     micro_batch_size: int,
 ):
+    from .trainer import evaluate, lossFn, makeLrScheduler
     sums = [tf.zeros_like(weight, dtype=tf.float32) for weight in weights]
     for start, end, factor in _microbatch_slices(x.shape[0], micro_batch_size):
         with tf.GradientTape() as tape:
@@ -218,6 +220,7 @@ def _base_and_regularizer_gradients(
     full configured batch. Smaller slices average per-slice regularizers and
     are therefore restricted to explicitly labeled diagnostics.
     """
+    from .trainer import evaluate, lossFn, makeLrScheduler
     base_sums = [tf.zeros_like(weight, dtype=tf.float32) for weight in weights]
     regularizer_sums = [tf.zeros_like(weight, dtype=tf.float32) for weight in weights]
     for start, end, factor in _microbatch_slices(x.shape[0], micro_batch_size):
@@ -599,6 +602,7 @@ class SharedDeviceWorker:
             variable.assign(0.0)
 
     def batch_loss_tensor(self, params, batch) -> tf.Tensor:
+        from .trainer import evaluate, lossFn, makeLrScheduler
         self.load(params)
         x, y = batch
         logits = self._predict(tf.cast(x, tf.float32))
@@ -806,6 +810,7 @@ def _select_snapshot(
 
 
 def _evaluate_states(worker, nodes, test_loader, max_batches=5):
+    from .trainer import evaluate, lossFn, makeLrScheduler
     values = []
     for node in nodes:
         worker.load(node.params)
@@ -960,6 +965,7 @@ def run_campaign_four(
     node_callback=None,
 ):
     """Run one Campaign 4 Merged or CART configuration."""
+    from .trainer import evaluate, lossFn, makeLrScheduler
     uses_ebm = (
         bool(config.get("useChannelNoise"))
         and str(config.get("noiseMitigation", "none")) == "ebm"

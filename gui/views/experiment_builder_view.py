@@ -21,7 +21,17 @@ class ExperimentBuilderView(ttk.Frame):
         for letter in 'ABCD':
             item = CONDITIONS[letter]
             self.iid_presets[f'{letter} — {item[5]} — GPU'] = f'gpu/fresh/{item[0]}_gpu'
-        ttk.Label(header,text="Experiment Builder",style="Title.TLabel").pack(anchor="w"); actions=ttk.Frame(header); actions.pack(anchor="w",pady=(12,0)); self.preset=tk.StringVar(value="Preset…"); ttk.Combobox(actions,textvariable=self.preset,values=("Clean baseline","Noisy + EBM","BASIL + Hidden","Sequential BASIL five-epoch protocol",*self.iid_presets),state="readonly",width=40).pack(side="left",padx=4); ttk.Button(actions,text="Apply",width=6,command=self._apply_preset).pack(side="left",padx=4); ttk.Button(actions,text="Reset defaults",width=14,command=self._reset).pack(side="left")
+        from basil_core.iid_campaign import ROOT,study_layout
+        _,latest,_=study_layout(500)
+        for letter,item in latest.items():
+            self.iid_presets[f'{letter} — {item[5]} — 500 rounds GPU'] = str(ROOT/'gui/configs/IID/sequential_basil_500r/gpu/fresh'/f'{item[0]}_gpu')
+        from basil_core.noniid_verified_study import CONFIG_ROOT as NONIID_ROOT,LABELS
+        self.noniid_presets={}
+        for letter,label in LABELS.items():
+            self.noniid_presets[f'{letter} — Non-IID CART — 30 rounds GPU'] = str(NONIID_ROOT/f'{letter}_noniid_verified_cart_30r_gpu.json')
+        from basil_core.dirichlet_study import CONFIG_ROOT as DIRICHLET_ROOT
+        self.dirichlet_presets={f'{letter} — Dirichlet α=0.2 — 30 rounds GPU':str(DIRICHLET_ROOT/f'{letter}_dirichlet_alpha02_local_anchor_30r_gpu.json') for letter in 'ABCD'}
+        ttk.Label(header,text="Experiment Builder",style="Title.TLabel").pack(anchor="w"); actions=ttk.Frame(header); actions.pack(anchor="w",pady=(12,0)); self.preset=tk.StringVar(value="Preset…"); ttk.Combobox(actions,textvariable=self.preset,values=("Clean baseline","Noisy + EBM","BASIL + Hidden","Sequential BASIL five-epoch protocol",*self.iid_presets,*self.noniid_presets,*self.dirichlet_presets),state="readonly",width=40).pack(side="left",padx=4); ttk.Button(actions,text="Apply",width=6,command=self._apply_preset).pack(side="left",padx=4); ttk.Button(actions,text="Reset defaults",width=14,command=self._reset).pack(side="left")
         self._section(body,"Identity",1,(("Experiment name","experiment_name","entry"),))
         self._section(body,"Dataset and distribution",2,(("Dataset","dataset",("cifar10","mnist","nmnist")),("Partition","partition_strategy",("iid","dirichlet","one_class_per_node")),("Dirichlet alpha","dirichlet_alpha","entry")))
         self._section(body,"Approach and topology",3,(("Approach","approach",("basil","noisy","merged","cart")),("Node count","node_count","entry"),("Model architecture","model_architecture",("basil_paper_cnn","legacy_vgg_cnn")),("Aggregation","aggregation_mode",("strict_sequential_handoff","handoff","consensus"))))
@@ -81,6 +91,12 @@ class ExperimentBuilderView(ttk.Frame):
             from basil_core.iid_campaign import CONFIG_ROOT
             from gui.services.config_service import ConfigService
             config=ConfigService().load(CONFIG_ROOT/f'{self.iid_presets[self.preset.get()]}.json')
+        elif self.preset.get() in self.noniid_presets:
+            from gui.services.config_service import ConfigService
+            config=ConfigService().load(self.noniid_presets[self.preset.get()])
+        elif self.preset.get() in self.dirichlet_presets:
+            from gui.services.config_service import ConfigService
+            config=ConfigService().load(self.dirichlet_presets[self.preset.get()])
         if self.preset.get()=="Noisy + EBM": config.use_channel_noise=True; config.noise_mitigation="ebm"
         elif self.preset.get()=="BASIL + Hidden": config.snapshot_selection=True; config.attacks["Hidden"]=True; config.attacker_ids="1,4,6,8"
         elif self.preset.get()=="Sequential BASIL five-epoch protocol":
@@ -112,8 +128,12 @@ class ExperimentBuilderView(ttk.Frame):
         else:self.cart_frame.grid_remove()
     def _validation(self):
         issues=validate_experiment(self.state.experiment); self.summary.configure(text=self.state.experiment.dirty_summary); self.errors.configure(text="Configuration ready" if not issues else "\n".join(f"• {issue.message}" for issue in issues[:6]),foreground=COLORS["success"] if not issues else COLORS["danger"])
-        if not issues and self.state.experiment.extra.get('iidCampaignId'):
-            self.errors.configure(text='100-round IID configuration ready. Research runs start only when you click Run Queue.',foreground=COLORS['success'])
+        if not issues and self.state.experiment.extra.get('experimentProtocol')=='sequential_basil_dirichlet_v1':
+            self.errors.configure(text='30-round Dirichlet α=0.2 ready. Local TRAIN only; no helpers. Start using Run Queue.',foreground=COLORS['success'])
+        elif not issues and self.state.experiment.extra.get('noniidStudyId'):
+            self.errors.configure(text='30-round non-IID CART study ready. Replicated TRAIN and trusted coordinator; start using Run Queue.',foreground=COLORS['success'])
+        elif not issues and self.state.experiment.extra.get('iidCampaignId'):
+            self.errors.configure(text=f'{self.state.experiment.rounds}-round IID configuration ready. Research runs start only when you click Run Queue.',foreground=COLORS['success'])
         elif not issues and self.state.experiment.extra.get("experimentProtocol") and self.state.experiment.extra.get("researchValid",True):
             self.errors.configure(text="Production gated: run smoke and full-data preflight first. Launch approved production explicitly from the CLI.",foreground=COLORS["warning"])
     def _value(self,key):

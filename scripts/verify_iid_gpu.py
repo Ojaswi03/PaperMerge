@@ -10,11 +10,9 @@ import time
 
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT))
-from basil_core.iid_runtime import prepare_environment, configure_tensorflow, POLICY_REVISION, gpu_worker_hash, GPU_MEMORY_LIMIT_MB
+from basil_core.iid_runtime import prepare_environment, configure_tensorflow, POLICY_REVISION, gpu_worker_hash, GPU_MEMORY_LIMIT_MB, GPU_VERIFICATION
 prepare_environment('GPU')
 
-import numpy as np
-import tensorflow as tf
 from basil_core.iid_study import IidWorker
 from basil_core.iid_gpu_worker import GpuIidWorker, GpuProtocolAudit
 from basil_core.research_protocol import build_model, params_hash, gradient_norm_objective_gradients
@@ -23,6 +21,7 @@ from basil_core.protocol_checkpoint import implementation_fingerprint
 
 
 def differences(left, right, *, atol, rtol):
+    import numpy as np
     worst=0.
     for a,b in zip(left,right):
         a,b=np.asarray(a),np.asarray(b)
@@ -34,6 +33,8 @@ def differences(left, right, *, atol, rtol):
 
 
 def analytic_ebm(device):
+    import numpy as np
+    import tensorflow as tf
     with tf.device(device):
         model=tf.keras.Sequential([tf.keras.layers.Input((1,)),tf.keras.layers.Dense(10,use_bias=False)])
         theta=np.linspace(-.4,.4,10,dtype=np.float32)
@@ -51,6 +52,8 @@ def analytic_ebm(device):
 
 
 def main():
+    import numpy as np
+    import tensorflow as tf
     configure_tensorflow(tf,'GPU')
     with tf.device('/CPU:0'):
         canonical=build_model('basil_paper_cnn',2025)
@@ -173,6 +176,10 @@ def main():
         limitations=['Synthetic batch only; not full CIFAR convergence or whole-queue timing',
             'CPU/GPU are tolerance-equivalent, not bit-identical; device transitions must preserve state and record provenance',
             'Multiprocessing remains unverified and is not used'])
+    GPU_VERIFICATION.parent.mkdir(parents=True,exist_ok=True)
+    temporary=GPU_VERIFICATION.with_suffix('.json.tmp')
+    temporary.write_text(json.dumps(report,indent=2)+'\n')
+    temporary.replace(GPU_VERIFICATION)
     print('GPU_VERIFICATION_JSON='+json.dumps(report),flush=True)
 
 

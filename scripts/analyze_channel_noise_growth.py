@@ -10,11 +10,11 @@ os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "3")
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-import numpy as np
 from basil_core.research_protocol import apply_channel_noise, build_model, keyed_rng, parameter_stats
 
 
 def main():
+    import numpy as np
     initial = [v.numpy() for v in build_model("basil_paper_cnn", 2025).trainable_variables]
     dimension, norm = parameter_stats(initial)
     results = []

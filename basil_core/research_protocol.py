@@ -13,12 +13,11 @@ import hashlib
 import math
 from typing import Callable, Iterable
 
-import numpy as np
-import tensorflow as tf
+from basil_core.lazy_imports import lazy_module
+np = lazy_module('numpy')
 
 from basil_core.attacks import applyAttack
 from basil_core.models import BasilPaperCifarModel, CIFARModel
-from basil_core.trainer import lossFn
 from basil_core.protocol_compatibility import PROTOCOL, IID_PROTOCOL, normalize_config
 
 
@@ -66,6 +65,7 @@ class Snapshot:
     sender_loss: float | None = None
     sender_accuracy: float | None = None
     channel_metadata: dict | None = None
+    retention_state: dict | None = None
 
 
 @dataclass
@@ -104,7 +104,8 @@ def broadcast(memories: list[RollingMemory], snapshot: Snapshot, transform: Call
     for distance in range(1,memories[0].size+1):
         receiver=(snapshot.sender_id+distance)%count
         params=transform(receiver) if transform else copy_params(snapshot.params)
-        memories[receiver].receive(Snapshot(snapshot.sender_id,snapshot.round_id,params,snapshot.sender_loss,snapshot.sender_accuracy))
+        memories[receiver].receive(Snapshot(snapshot.sender_id,snapshot.round_id,params,snapshot.sender_loss,snapshot.sender_accuracy,
+            retention_state=snapshot.retention_state))
 
 
 def nearest_counterclockwise_distance(receiver: int, sender: int, node_count: int) -> int:
@@ -155,6 +156,8 @@ def gradient_norm_objective_gradients(model, x, y, coefficient, *, details=False
 
     Unlike legacy scalar gradient scaling, this includes 2c H_F grad(F).
     """
+    from basil_core.trainer import lossFn
+    import tensorflow as tf
     coefficient=tf.stop_gradient(tf.cast(coefficient,tf.float32))
     weights=model.trainable_variables
     with tf.GradientTape() as outer:
@@ -183,6 +186,7 @@ def gradient_norm_objective_gradients(model, x, y, coefficient, *, details=False
 
 
 def build_model(architecture: str, seed: int = 2025):
+    import tensorflow as tf
     initialization_seed = int(keyed_rng(seed, "model_initialization").integers(0, 2**30))
     if architecture=="basil_paper_cnn": return BasilPaperCifarModel(seed=initialization_seed)
     tf.keras.utils.set_random_seed(initialization_seed)
@@ -193,7 +197,40 @@ def build_model(architecture: str, seed: int = 2025):
 def validate_config(config: dict) -> None:
     config = normalize_config(config)
     iid_study=config.get("experimentProtocol")==IID_PROTOCOL
+    anchor_study=config.get('lossStudyRevision')=='source_grounded_no_lambda_v1'
+    dirichlet_study=config.get('experimentProtocol')=='sequential_basil_dirichlet_v1'
+    anchor_study=anchor_study or dirichlet_study
+    class_aware=config.get('lossStudyRevision')=='class_gradient_importance_anchor_v1'
     required={"schemaVersion":5,"experimentProtocol":PROTOCOL,"dataset":"cifar10","nNodes":10,"localEpochs":5,"batchSize":512,"aggregationMode":"strict_sequential_handoff","epochSemantics":"full_local_dataset","optimizer":"sgd","optimizerStateMode":"reset_each_activation","learningRateSchedule":"basil_round_decay","learningRate":0.05,"momentum":0.0,"weightDecayCoefficient":0.0,"adaptiveWeightDecayMode":"off","gradientClipNorm":None,"basilMemorySize":5,"assumedByzantineCount":4,"attackerCount":4,"snapshotPlausibilityGuard":"none"}
+    if anchor_study or class_aware:
+        count=config.get('attackerCount')
+        if count not in {0,4}:raise ValueError('Anchored study actual attackers must be zero or four.')
+        required.update(attackerCount=count,partitionStrategy='one_class_per_node',
+            modelArchitecture='basil_paper_cnn',snapshotSelection=True,attackHidden=bool(count),
+            channelNoiseSemantics='paper_absolute_gaussian')
+        if dirichlet_study:
+            required.update(experimentProtocol='sequential_basil_dirichlet_v1',
+                partitionStrategy='dirichlet',dirichletAlpha=.2,
+                lossStudyRevision='dirichlet_local_snapshot_anchor_v1')
+        objectives={'class_gradient_importance_anchor':'none'} if class_aware else {'snapshot_anchor_only':'none','source_ebm_snapshot_anchor':'gradient_norm_objective'}
+        expected_mode=objectives.get(config.get('localObjective'))
+        if expected_mode is None or config.get('ebmMode')!=expected_mode:
+            raise ValueError('Anchored study objective/mode mismatch.')
+        if expected_mode=='gradient_norm_objective' and not config.get('useChannelNoise'):
+            raise ValueError('Source EBM requires actual channel noise.')
+        mu=config.get('snapshotAnchorMu')
+        if mu is None or not np.isfinite(mu) or mu<0:raise ValueError('Fixed anchor mu must be explicit, finite and nonnegative.')
+        if any(config.get(k,0) for k in ('snapshotAnchorMuMax','monteCarloNoiseSamples')):
+            raise ValueError('Fixed anchor study does not use adaptive/Monte Carlo objectives.')
+        if class_aware:
+            if iid_study or count or config.get('useChannelNoise') or config.get('channelNoiseSigmaAbsolute') != 0.:
+                raise ValueError('Initial class-aware diagnostic must be clean one-class training only.')
+            if config.get('researchValid') is not False or config.get('nRounds') != 30:
+                raise ValueError('Class-aware mechanism is restricted to the explicit 30-round diagnostic.')
+            if config.get('classImportanceCap') != 100. or config.get('classImportanceEstimator') != 'squared_minibatch_gradient_along_training':
+                raise ValueError('Unapproved class-importance estimator/cap.')
+            if config.get('snapshotAnchorMu') != .01 or config.get('liveTrackingEnabled') is not False:
+                raise ValueError('Class-aware diagnostic keeps mu=.01 and cloud tracking off.')
     if iid_study:
         required["experimentProtocol"]=IID_PROTOCOL
         count=config.get("attackerCount",4)
@@ -228,7 +265,7 @@ def validate_config(config: dict) -> None:
     if config.get("resolvedAttackerIds") != list(resolve_attackers(config["seed"],int(config.get("attackerCount",4)))):
         raise ValueError("resolvedAttackerIds must match keyed seeded attacker selection.")
     if config.get("researchValid", True):
-        horizons={50,100} if iid_study else {100}
+        horizons={50,100,500} if iid_study else {50} if anchor_study else {100}
         if config.get("nRounds") not in horizons or config.get("attackStartRound") != 20:
             raise ValueError(f"Production requires rounds in {sorted(horizons)} and attack start round 20.")
         if any(key.startswith("diagnostic") for key in config):
@@ -239,7 +276,7 @@ def validate_config(config: dict) -> None:
     if config.get("channelNoiseStartRound", config.get("channelNoiseStart", 0)) != 0:
         raise ValueError("Research channel noise starts at round 0.")
     if config.get("attackType")!="delayed_hidden_parameter_attack_v1":raise ValueError("Unsupported research attack transformation.")
-    if not iid_study and config.get("ebmMode")=="gradient_norm_objective" and any(k in config for k in ("legacyEbmLambda",)):
+    if not (iid_study or anchor_study) and config.get("ebmMode")=="gradient_norm_objective" and any(k in config for k in ("legacyEbmLambda",)):
         raise ValueError("Full gradient-norm EBM cannot use legacy lambda.")
     sigma = configured_sigma(config)
     if not np.isfinite(sigma) or sigma < 0:
@@ -258,6 +295,7 @@ def configured_sigma(config: dict) -> float:
 
 
 def tensor_noise_variance(model, semantics: str, sigma):
+    import tensorflow as tf
     sigma = tf.cast(sigma, tf.float32)
     if semantics == "relative_l2_gaussian":
         weights = model.trainable_variables
@@ -271,6 +309,7 @@ def tensor_noise_variance(model, semantics: str, sigma):
 
 class SequentialWorker:
     def __init__(self, model):
+        import tensorflow as tf
         self.model = model
         self.optimizer = None
         self.audit = None
@@ -287,6 +326,8 @@ class SequentialWorker:
         return [variable.numpy().astype(np.float32) for variable in self.model.trainable_variables]
 
     def probe(self, params, x, y):
+        from basil_core.trainer import lossFn
+        import tensorflow as tf
         self.load(params)
         logits = self.predict(tf.convert_to_tensor(x))
         loss = float(lossFn(y, logits).numpy())
@@ -296,6 +337,8 @@ class SequentialWorker:
         return loss, float(tf.reduce_mean(tf.cast(prediction == tf.cast(y, tf.int32), tf.float32)))
 
     def _batch_gradients(self, x, y, augmentation_key, mode, semantics, sigma, legacy_lambda):
+        from basil_core.trainer import lossFn
+        import tensorflow as tf
         def augment(item):
             image, index = item
             key = tf.random.experimental.stateless_fold_in(augmentation_key, index)
@@ -329,6 +372,7 @@ class SequentialWorker:
     def train(self, params, x, y, *, seed, round_id, node_id, epochs, batch_size,
               learning_rate, ebm_mode, semantics="relative_l2_gaussian", sigma=0.0,
               legacy_lambda=25.0, evaluation=None, should_stop=None):
+        import tensorflow as tf
         if epochs != 5:
             raise ValueError("Research activations require five full local epochs.")
         self.load(params)
@@ -395,6 +439,8 @@ class SequentialWorker:
 
 
 def evaluate_params(worker: SequentialWorker,params,test_x,test_y,batch_size=512,*,details=False):
+    from basil_core.trainer import lossFn
+    import tensorflow as tf
     worker.load(params); correct=np.zeros(10,np.int64);total=np.zeros(10,np.int64)
     weighted_ce=0.
     confusion = np.zeros((10, 10), np.int64)
@@ -435,7 +481,11 @@ def run_research_protocol(config: dict, train_x, train_y, test_x, test_y, *, act
         worker.audit = audit
         audit.initial(initial, train_x, train_y, test_x, test_y)
     rounds=int(config["nRounds"]); test_count=len(test_y); activation_accuracy=np.zeros((rounds,n),np.float32); activation_per_class=np.zeros((rounds,n,10),np.float32); round_node_accuracy=np.zeros((rounds,n),np.float32); round_node_per_class=np.zeros((rounds,n,10),np.float32); selected_sources=np.full((rounds,n),-1,np.int16); selected_rounds=np.full((rounds,n),-1,np.int16); telemetry=[]
-    detailed_rounds=config.get("experimentProtocol")==IID_PROTOCOL and config.get("roundEvaluationMetrics",False)
+    class_aware=config.get('lossStudyRevision')=='class_gradient_importance_anchor_v1'
+    if class_aware and not all(hasattr(worker,k) for k in ('receive_retention_state','export_retention_state')):
+        raise ValueError('Class-aware config requires its explicit retention worker, not plain CE.')
+    instrumented_study=config.get('experimentProtocol') in {IID_PROTOCOL,'sequential_basil_dirichlet_v1'} or config.get('lossStudyRevision') in {'source_grounded_no_lambda_v1','class_gradient_importance_anchor_v1'}
+    detailed_rounds=instrumented_study and config.get("roundEvaluationMetrics",False)
     round_node_loss=np.zeros((rounds,n),np.float64)
     next_activation=0; completed_rounds=0
     if resume_state is not None:
@@ -473,6 +523,12 @@ def run_research_protocol(config: dict, train_x, train_y, test_x, test_y, *, act
     if limit:
         indices=[keyed_rng(seed,"diagnostic_subset",node_id).choice(chunk,size=min(int(limit),len(chunk)),replace=False) for node_id,chunk in enumerate(indices)]
     probe_indices=[chunk[:min(512,len(chunk))] for chunk in indices]
+    if config.get('experimentProtocol')=='sequential_basil_dirichlet_v1':
+        # The historical Dirichlet allocator concatenates class chunks. Its
+        # first 512 entries are not a representative local random minibatch.
+        # Only this explicit new family changes batching; old runs keep theirs.
+        probe_indices=[keyed_rng(seed,'snapshot_selection_batch',node).choice(
+            chunk,size=min(512,len(chunk)),replace=False) for node,chunk in enumerate(indices)]
     if any(len(chunk) == 0 for chunk in indices):
         raise ValueError("Partition produced an empty local training dataset.")
     if partition == "one_class_per_node" and not limit and not config.get("diagnosticSamplesPerClass"):
@@ -501,7 +557,7 @@ def run_research_protocol(config: dict, train_x, train_y, test_x, test_y, *, act
             else:
                 selected=next((item for item in candidates if item.sender_id==(node_id-1)%n),predecessor); diagnostics=[]
             selected_sources[round_id,node_id]=selected.sender_id; selected_rounds[round_id,node_id]=selected.round_id; input_hash=params_hash(selected.params)
-            if config.get("experimentProtocol")==IID_PROTOCOL:
+            if instrumented_study:
                 for candidate,diagnostic in zip(candidates,diagnostics):
                     link=candidate.channel_metadata or {}
                     diagnostic.update(senderByzantine=candidate.sender_id in attackers,
@@ -509,13 +565,15 @@ def run_research_protocol(config: dict, train_x, train_y, test_x, test_y, *, act
                         receivedThroughNoise=bool(link.get("configuredSigma",0)),
                         receivedModelNorm=parameter_stats(candidate.params)[1],receivedNoiseNorm=link.get("noiseL2Norm",0.))
             if audit:
-                if config.get("experimentProtocol")==IID_PROTOCOL:
+                if instrumented_study:
                     audit.context.update(selectedSource=selected.sender_id,selectedSnapshotRound=selected.round_id,
                         receivedNoiseStats=selected.channel_metadata or {})
                 audit.selection(worker, node_id, candidates, selected, diagnostics, attackers,
                     config, test_x, test_y)
-            legacy_lambda=0. if config.get("experimentProtocol")==IID_PROTOCOL else float(config.get("legacyEbmLambda",25.0))
+            legacy_lambda=0. if instrumented_study else float(config.get("legacyEbmLambda",25.0))
             local=indices[node_id]
+            if class_aware:
+                worker.receive_retention_state(selected.retention_state)
             try:
                 trained,training=worker.train(selected.params,train_x[local],train_y[local],seed=seed,round_id=round_id,node_id=node_id,epochs=int(config["localEpochs"]),batch_size=int(config["batchSize"]),learning_rate=learning_rate,ebm_mode=config.get("ebmMode","none"),semantics=semantics,sigma=sigma,legacy_lambda=legacy_lambda,evaluation=evaluation,should_stop=should_stop)
             except InterruptedError:
@@ -533,8 +591,10 @@ def run_research_protocol(config: dict, train_x, train_y, test_x, test_y, *, act
                     dimension,norm=parameter_stats(outbound); stats={"coordinateSigma":0.0,"noiseL2Norm":0.0,"relativeNoiseL2":0.0,"modelL2Norm":norm,"parameterCount":dimension}; noisy=copy_params(outbound)
                 else:noisy,stats=apply_channel_noise(outbound,semantics=config["channelNoiseSemantics"],sigma=sigma,rng=keyed_rng(seed,"channel_noise",round_id,node_id,receiver))
                 link_noise.append({"receiverId":receiver,"transmittedHash":params_hash(noisy),"channelNoiseSemantics":semantics,"configuredSigma":sigma,**stats}); return noisy
-            snapshot=Snapshot(node_id,round_id,outbound,training["loss"],global_accuracy); broadcast(memories,snapshot,link_params); predecessor=next(item for item in memories[(node_id+1)%n].candidates() if item.sender_id==node_id)
-            if config.get("experimentProtocol")==IID_PROTOCOL:
+            snapshot=Snapshot(node_id,round_id,outbound,training["loss"],global_accuracy,
+                retention_state=worker.export_retention_state() if class_aware else None)
+            broadcast(memories,snapshot,link_params); predecessor=next(item for item in memories[(node_id+1)%n].candidates() if item.sender_id==node_id)
+            if instrumented_study:
                 for link in link_noise:
                     memories[link["receiverId"]].snapshots[node_id].channel_metadata=link
             record={"round":round_id,"nodeId":node_id,"inputSourceNode":selected.sender_id,"inputSnapshotRound":selected.round_id,"inputHash":input_hash,"trainedOutputHash":params_hash(trained),"candidates":diagnostics,"selectedCandidateLoss":next((item["receiverLocalLoss"] for item in diagnostics if item["senderId"]==selected.sender_id),None),"selectedCandidateAccuracy":next((item["receiverLocalAccuracy"] for item in diagnostics if item["senderId"]==selected.sender_id),None),"localTrainingLoss":training["loss"],"localTrainingAccuracy":training["accuracy"],"globalTestAccuracy":global_accuracy,"perClassGlobalTestAccuracy":per_class.tolist(),"learningRate":learning_rate,"optimizerSteps":training["steps"],"modelL2Norm":parameter_stats(trained)[1],"configuredByzantine":is_byzantine,"attackActive":attack_active,"attackRelativeParameterChange":attack_change,"channelNoiseActive":noise_active,"outgoingLinks":link_noise,"ebmMode":config.get("ebmMode","none"),"ebmCoefficient":coefficient,"baseGradientNorm":training["baseGradientNorm"],"robustObjectiveGradientNorm":training["robustGradientNorm"]}
@@ -545,10 +605,15 @@ def run_research_protocol(config: dict, train_x, train_y, test_x, test_y, *, act
                 outboundAttackHash=params_hash(outbound), channelNoiseSemantics=semantics,
                 configuredSigma=sigma, ebmCoefficientSemantics=config["ebmCoefficientSemantics"],
                 effectiveCoordinateSigma=float(np.mean([s["effectiveCoordinateSigma"] for s in training["optimizerTelemetry"]])))
-            if config.get("experimentProtocol")==IID_PROTOCOL:
+            if instrumented_study:
                 record.update(selectedSenderByzantine=selected.sender_id in attackers,
                     selectedSnapshotAgeRounds=round_id-selected.round_id if selected.round_id>=0 else None,
                     localObjective=config["localObjective"],legacyLambdaIgnored=True)
+            if config.get('lossStudyRevision') in {'source_grounded_no_lambda_v1','class_gradient_importance_anchor_v1','dirichlet_local_snapshot_anchor_v1'}:
+                record.update(snapshotAnchorReferenceHash=training['snapshotAnchorReferenceHash'],
+                    snapshotAnchorMu=config['snapshotAnchorMu'],lossStudyRevision=config['lossStudyRevision'])
+            if class_aware:
+                record['classRetention']=training['classRetention']
             if activation_callback: activation_callback(record)
             if audit:
                 audit.record_activation(record)
@@ -573,7 +638,7 @@ def run_research_protocol(config: dict, train_x, train_y, test_x, test_y, *, act
     result["beforeTrainingPerClassAccuracy"] = np.asarray([r["beforeTraining"]["perClassGlobalTestAccuracy"] for r in telemetry],np.float32).reshape(rounds,n,10)
     result["epochOverallAccuracy"] = np.asarray([[e["globalTestAccuracy"] for e in r["epochs"]] for r in telemetry],np.float32).reshape(rounds,n,5)
     result["epochPerClassAccuracy"] = np.asarray([[e["perClassGlobalTestAccuracy"] for e in r["epochs"]] for r in telemetry],np.float32).reshape(rounds,n,5,10)
-    if config.get("experimentProtocol")==IID_PROTOCOL:
+    if instrumented_study:
         result["partitionIndices"] = indices
         if detailed_rounds:
             result.update(fullTestAccuracy=round_node_accuracy[:,9].copy(),fullTestLoss=round_node_loss[:,9].copy(),

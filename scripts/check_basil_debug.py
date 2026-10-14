@@ -8,7 +8,6 @@ import sys
 import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-import numpy as np
 from copy import deepcopy
 from basil_core.data.mnist import loadMnist, makeLoaders
 from basil_core.models import MNISTModel
@@ -28,6 +27,7 @@ ATTACKER_IDS = {0, 1, 2, 3}  # 4 attackers (b = 4)
 
 
 def main():
+    import numpy as np
     setupGpu()
 
     print("Loading MNIST...")

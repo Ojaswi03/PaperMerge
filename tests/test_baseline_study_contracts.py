@@ -4,7 +4,6 @@ import tempfile
 import unittest
 from unittest import mock
 
-import numpy as np
 
 from basil_core.class_registry import ClassRegistry
 from gui.baseline_study import (
@@ -44,6 +43,7 @@ from reporting.baseline_study_plots import (
 
 
 def _synthetic_metrics(config):
+    import numpy as np
     environment_base = {
         "clean": 0.72,
         "hidden": 0.18,
@@ -452,6 +452,7 @@ class CampaignConfigTests(unittest.TestCase):
             self.assertFalse(is_completed(config, root=root))
 
     def test_calibration_freezes_predeclared_nonzero_gamma(self):
+        import numpy as np
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory) / "results"
             state_path = Path(directory) / "campaign_state.json"
@@ -502,6 +503,7 @@ class CampaignConfigTests(unittest.TestCase):
             self.assertIn(0.0005, CART_GAMMA_CANDIDATES)
 
     def test_calibration_blocks_when_ebm_component_regresses(self):
+        import numpy as np
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory) / "results"
             state_path = Path(directory) / "campaign_state.json"
@@ -561,6 +563,7 @@ class CampaignConfigTests(unittest.TestCase):
 
 class ClassRegistryTests(unittest.TestCase):
     def test_unknown_classes_do_not_create_training_signal(self):
+        import numpy as np
         registry = ClassRegistry(3)
         registry.update(
             nodeId=0,
@@ -576,6 +579,7 @@ class ClassRegistryTests(unittest.TestCase):
         np.testing.assert_allclose(weights, [0.5, 0.0, 0.0])
 
     def test_verified_merge_copies_atomic_registry_metadata(self):
+        import numpy as np
         local = ClassRegistry(2)
         incoming = ClassRegistry(2)
         incoming.update(

@@ -2,7 +2,6 @@ import gc
 import json
 import unittest
 
-import numpy as np
 
 try:
     import tensorflow as tf
@@ -47,6 +46,7 @@ class Campaign4EngineTests(unittest.TestCase):
         gc.collect()
 
     def _data(self, seed):
+        import numpy as np
         rng = np.random.default_rng(seed)
         train_loaders = []
         probe_batches = []
@@ -101,6 +101,7 @@ class Campaign4EngineTests(unittest.TestCase):
         return config
 
     def test_second_order_gradient_matches_declared_objective(self):
+        import numpy as np
         tf.keras.utils.set_random_seed(13)
         model = self.TinyModel().model
         weights = model.trainable_weights
@@ -200,6 +201,7 @@ class Campaign4EngineTests(unittest.TestCase):
         self.assertGreater(applied_from_floor, 1e-6)
 
     def test_relative_noise_is_deterministic_and_has_requested_norm(self):
+        import numpy as np
         params = [tf.reshape(tf.range(1, 101, dtype=tf.float32), (10, 10))]
         first, _, first_relative = _relative_l2_channel_noise(
             params, sigma=0.6, base_seed=5, seed_parts=("link", 1)
@@ -338,6 +340,7 @@ class Campaign4EngineTests(unittest.TestCase):
         self.assertLess(norm_with_decay, norm_zero_decay)
 
     def test_adaptive_weight_decay_ramps_up_when_norm_grows(self):
+        import numpy as np
         train, test, metadata = self._data(seed=55)
         config = self._config(
             environment="noise",
@@ -374,6 +377,7 @@ class Campaign4EngineTests(unittest.TestCase):
         self.assertTrue(np.all(coefficient <= 0.05 + 1e-9))
 
     def test_adaptive_weight_decay_off_matches_mode_none_exactly(self):
+        import numpy as np
         train, test, metadata = self._data(seed=56)
         base_kwargs = dict(
             environment="noise",

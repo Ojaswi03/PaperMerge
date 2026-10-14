@@ -11,7 +11,6 @@ CONFIGURATION: Edit the variables below to customize your test
 """
 import os
 import sys
-import numpy as np
 
 # ============================================================================
 # CONFIGURATION - EDIT THESE TO CUSTOMIZE YOUR TEST
@@ -236,6 +235,7 @@ def runNoisyChannelExperiment(dataset, attack, mode, verbose=True):
 
 def runNoisyChannelTests():
     """Run noisy channel tests based on configuration."""
+    import numpy as np
     setupGpu()
     ensureDirs()
 

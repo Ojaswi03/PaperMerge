@@ -4,15 +4,12 @@ from __future__ import annotations
 import hashlib
 from pathlib import Path
 
-import numpy as np
-import tensorflow as tf
 
 from basil_core.protocol_compatibility import IID_PROTOCOL
 from basil_core.research_protocol import (
     SequentialWorker, gradient_norm_objective_gradients, iid_partition_indices,
 )
 from basil_core.research_audit import augment_batch, tensor_stats
-from basil_core.trainer import lossFn
 from gui.research_protocol import base_config
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -73,6 +70,7 @@ def iid_output(path, *, plots=False):
 
 
 def partition_audit(train_labels, test_labels, *, seed=2025):
+    import numpy as np
     train_labels, test_labels = np.asarray(train_labels), np.asarray(test_labels)
     if len(train_labels) != 50000 or not np.array_equal(np.bincount(train_labels,minlength=10),[5000]*10):
         raise ValueError("Expected the complete CIFAR-10 training set.")
@@ -103,6 +101,9 @@ class IidWorker(SequentialWorker):
     extra_metric_names = ("ebmCorrectionNorm", "trainingBatchAccuracy")
 
     def probe(self, params, x, y):
+        from basil_core.trainer import lossFn
+        import numpy as np
+        import tensorflow as tf
         try:
             for value in params:
                 tf.debugging.assert_all_finite(value,"Non-finite received snapshot")
@@ -123,6 +124,8 @@ class IidWorker(SequentialWorker):
 
     def _batch_gradients(self, x, y, augmentation_key, mode, semantics, sigma, legacy_lambda):
         # The legacy argument is deliberately never read in this worker.
+        from basil_core.trainer import lossFn
+        import tensorflow as tf
         if semantics != "paper_absolute_gaussian" or mode not in {"none","gradient_norm_objective"}:
             raise ValueError("IID pair supports clean CE and absolute-noise source EBM only.")
         x = augment_batch(x, augmentation_key)

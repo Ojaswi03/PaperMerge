@@ -1,5 +1,3 @@
-import tensorflow as tf
-from tensorflow.keras import layers, models
 
 class MNISTModel:
     """
@@ -7,6 +5,7 @@ class MNISTModel:
     3 fully connected layers: 784->100->100->10 (logits)
     """
     def __init__(self, input_shape=(28, 28), num_classes=10):
+        from tensorflow.keras import layers, models
         self.model = models.Sequential([
             layers.Input(shape=input_shape),
             layers.Flatten(),
@@ -50,6 +49,7 @@ class CIFARModel:
     weights only without BN running-stat issues.
     """
     def __init__(self, input_shape=(32, 32, 3), num_classes=10):
+        from tensorflow.keras import layers, models
         ki = 'he_normal'
         self.model = models.Sequential([
             layers.Input(shape=input_shape),
@@ -110,6 +110,8 @@ class BasilPaperCifarModel:
     """
 
     def __init__(self, input_shape=(32, 32, 3), num_classes=10, seed=2025):
+        from tensorflow.keras import layers, models
+        import tensorflow as tf
         def dense_initializer(fan_in, offset):
             bound = fan_in ** -0.5
             return tf.keras.initializers.RandomUniform(-bound, bound, seed=seed + offset)
@@ -161,6 +163,7 @@ class NMNISTModel:
     """
     def __init__(self, input_shape=(34, 34), num_classes=10):
         # N-MNIST sensor size is 34x34 (different from regular MNIST 28x28)
+        from tensorflow.keras import layers, models
         self.model = models.Sequential([
             layers.Input(shape=input_shape),
             layers.Flatten(),

@@ -8,12 +8,11 @@ import sys
 import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-import numpy as np
-import tensorflow as tf
+from basil_core.lazy_imports import lazy_module
+np = lazy_module('numpy')
 from basil_core.data.mnist import loadMnist, makeLoaders
 from basil_core.models import MNISTModel
 from basil_core.basil import BasilNode, fedAvgTrainingWithNoise
-from basil_core.trainer import getParams, setParams, evaluate, averageParams, addChannelNoiseToParams, lossFn
 from scripts.common import setupGpu
 
 # Configuration
@@ -24,6 +23,8 @@ BATCH_SIZE = 32
 
 def runImprovedEbm(trainLoaders, testLoader, ebmLambda, lr, nRounds, useMomentum=False, lrDecay=False):
     """Run EBM with improved settings."""
+    from basil_core.trainer import getParams, setParams, evaluate, averageParams, addChannelNoiseToParams, lossFn
+    import tensorflow as tf
     scale = 1.0 + ebmLambda * SIGMA * SIGMA
     momentumStr = " +momentum" if useMomentum else ""
     decayStr = " +decay" if lrDecay else " fixed_lr"

@@ -7,8 +7,12 @@ CONFIGURATION: Edit the variables below to customize your plots
 """
 import os
 import sys
-import numpy as np
-import matplotlib.pyplot as plt
+if __package__ in (None, ''):
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from basil_core.lazy_imports import lazy_pyplot
+plt = lazy_pyplot(style='seaborn-v0_8-darkgrid')
 
 # ============================================================================
 # CONFIGURATION - EDIT THESE TO CUSTOMIZE YOUR PLOTS
@@ -28,12 +32,9 @@ METRIC = "both"
 # ============================================================================
 
 # Robust import
-if __package__ in (None, ''):
-    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Style configuration
-plt.style.use('seaborn-v0_8-darkgrid')
+# Plot style is applied lazily on first plotting operation.
 COLORS = {
     'clean': '#2E86AB',
     'basil': '#A23B72',
@@ -50,6 +51,7 @@ MARKERS = {
 
 def loadBasilResults(dataset, mode, attack, metric='avg'):
     # build file path and load .npy array, returning None if missing
+    import numpy as np
     resultDir = f"experiments/results/basil/{dataset}"
     filename = f"acc_{mode}_{attack}_{metric}.npy"
     filepath = os.path.join(resultDir, filename)
@@ -65,6 +67,7 @@ def plotCleanVsBasilByDataset(datasets=['mnist', 'cifar10', 'nmnist'],
                                 attacks=['clean', 'gaussian', 'signFlip', 'hidden'],
                                 metric='avg'):
     # one 2x2 figure per dataset comparing clean and BASIL under all attacks
+    import numpy as np
     datasetTitles = {
         'mnist': 'MNIST',
         'cifar10': 'CIFAR-10',
@@ -124,6 +127,7 @@ def plotCleanVsBasilByDataset(datasets=['mnist', 'cifar10', 'nmnist'],
 def plotBasilComparisonAcrossDatasets(attacks=['clean', 'gaussian', 'signFlip', 'hidden'],
                                        metric='avg'):
     # one 2x2 figure across datasets showing BASIL accuracy per attack
+    import numpy as np
     datasets = ['mnist', 'cifar10', 'nmnist']
     datasetLabels = {
         'mnist': 'MNIST',
@@ -175,6 +179,7 @@ def plotBasilImpact(datasets=['mnist', 'cifar10', 'nmnist'],
                      attacks=['gaussian', 'signFlip', 'hidden'],
                      metric='avg'):
     # grouped bar chart of BASIL accuracy gain over clean baseline per attack
+    import numpy as np
     datasetLabels = {
         'mnist': 'MNIST',
         'cifar10': 'CIFAR-10',
@@ -233,6 +238,7 @@ def plotBasilImpact(datasets=['mnist', 'cifar10', 'nmnist'],
 
 def plotSingleDatasetComparison(dataset='mnist', metric='avg'):
     # overlay all attacks (clean and BASIL lines) on one figure for one dataset
+    import numpy as np
     attacks = ['clean', 'gaussian', 'signFlip', 'hidden']
     attackLabels = {
         'clean': 'No Attack',

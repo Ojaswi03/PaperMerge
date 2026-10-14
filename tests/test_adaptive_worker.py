@@ -1,12 +1,12 @@
 import unittest
 
-import numpy as np
 
 from scripts.run_adaptive_worker import _scientific_fingerprint
 
 
 class Campaign4WorkerFingerprintTests(unittest.TestCase):
     def test_scientific_fingerprint_excludes_only_runtime_measurements(self):
+        import numpy as np
         metrics = {
             "avg_history": np.asarray([0.1, 0.2], dtype=np.float32),
             "runtime_seconds": np.float64(10.0),

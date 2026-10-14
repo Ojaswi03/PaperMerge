@@ -8,9 +8,9 @@ import subprocess
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-GPU_VERIFICATION = ROOT / 'docs/GPU_EXECUTION_VERIFICATION.json'
+GPU_VERIFICATION = ROOT / 'gui/worker_state/GPU_EXECUTION_VERIFICATION.json'
 POLICY_REVISION = 'iid_serial_float32_v1'
-GPU_MEMORY_LIMIT_MB = 4096
+GPU_MEMORY_LIMIT_MB = 6144
 GPU_HEADROOM_MB = 1024
 _gpu_lease = None
 
@@ -90,7 +90,7 @@ def runtime_metadata(tf, config: dict) -> dict:
         gpu_name = tf.config.experimental.get_device_details(gpus[0]).get('device_name', gpus[0].name)
         logical=tf.config.get_logical_device_configuration(gpus[0])
         if not logical or logical[0].memory_limit!=GPU_MEMORY_LIMIT_MB:
-            raise RuntimeError('GPU requires the validated 4096 MiB memory cap before execution.')
+            raise RuntimeError(f'GPU requires the validated {GPU_MEMORY_LIMIT_MB} MiB memory cap before execution.')
         if tf.config.experimental.tensor_float_32_execution_enabled():
             raise RuntimeError('The validated GPU policy requires TF32 to be disabled.')
     numerical = dict(policyRevision=POLICY_REVISION, device=device, gpuName=gpu_name,

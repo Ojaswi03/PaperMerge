@@ -26,8 +26,6 @@ from basil_core.iid_runtime import prepare_environment, runtime_metadata, check_
 # Legacy CLI invocations remain CPU-only; the GUI child selects GPU explicitly.
 prepare_environment(os.environ.get('PAPERMERGE_IID_DEVICE','CPU'))
 
-import numpy as np
-import tensorflow as tf
 from basil_core.data.cifar import _datasetArrays, loadCifar10
 from basil_core.iid_study import (
     RESULT_ROOT, PLOT_ROOT, TEST_NAMES, CALIBRATED_SIGMAS, IidWorker,
@@ -40,6 +38,7 @@ from basil_core.research_audit import ProtocolAudit, array_hash
 from basil_core.protocol_checkpoint import (
     recovery_plan, read_activation_records, load_checkpoint, save_checkpoint,
     verify_replayed_activation,
+    TelemetryStore,
 )
 
 
@@ -72,6 +71,7 @@ def prepare(configs):
 
 
 def execute(config, data, audit, *, family, recover=False):
+    import tensorflow as tf
     runtime=runtime_metadata(tf,config)
     if config.get('recoverySourceDirectory'):
         if not recover:raise ValueError('An explicit --recover is required for the CPU-to-GPU state transition.')
@@ -82,6 +82,8 @@ def execute(config, data, audit, *, family, recover=False):
 
 
 def _execute(config, data, audit, *, family, recover, runtime):
+    import numpy as np
+    import tensorflow as tf
     validate_config(config)
     name = config["experimentName"]
     campaign=bool(config.get('iidCampaignId'))
@@ -198,6 +200,11 @@ def _execute(config, data, audit, *, family, recover, runtime):
     handler = logging.FileHandler(output/"execution.log")
     logger.addHandler(handler); logger.setLevel(logging.INFO)
     started = time.perf_counter()
+    from basil_core.live_tracking import LiveTracker
+    tracking = LiveTracker(config, {**metadata, 'liveTracking':(previous or {}).get('liveTracking',{})},
+        notify=lambda event: print(json.dumps(event),flush=True))
+    metadata['liveTracking'] = tracking.metadata
+    save_json(output/'run.json',metadata)
     if runtime['device']=='GPU':
         from basil_core.iid_gpu_worker import GpuProtocolAudit
         observer=GpuProtocolAudit(audit_path)
@@ -240,9 +247,20 @@ def _execute(config, data, audit, *, family, recover, runtime):
         activationHistory=[(r['round']+(r['nodeId']+1)/10,r['globalTestAccuracy'])
             for r in saved_records[:cursor]],
         recoveryTotal=len(saved_records),recoveryCompleted=cursor)}),flush=True)
+    telemetry_store=TelemetryStore(output/'checkpoint.npz')
+    from basil_core.memory_safety import RuntimeMemoryGuard
+    memory_guard=RuntimeMemoryGuard(tf,runtime['device'])
+    metadata['checkpointIo']=dict(formatVersion=2,calls=0,totalSeconds=0.,maximumSeconds=0.)
     def checkpoint(state):
+        checkpoint_started=time.perf_counter()
         save_checkpoint(output/'checkpoint.npz',config,state,
-            partition_hash=audit['partitionHash'],initial_hash=initial_hash)
+            partition_hash=audit['partitionHash'],initial_hash=initial_hash,
+            telemetry_store=telemetry_store)
+        duration=time.perf_counter()-checkpoint_started
+        timings=metadata['checkpointIo']
+        timings.update(calls=timings['calls']+1,totalSeconds=timings['totalSeconds']+duration,
+            maximumSeconds=max(timings['maximumSeconds'],duration))
+        metadata['memorySafety']=memory_guard.checkpoint()
     def activation(record):
         round_records.append(record)
         index=record['round']*10+record['nodeId']
@@ -252,6 +270,7 @@ def _execute(config, data, audit, *, family, recover, runtime):
         else:
             with (output/"partial_activation_telemetry.jsonl").open("a") as handle:
                 handle.write(json.dumps(record,allow_nan=False)+"\n")
+            tracking.activation(record)
         from gui.services.research_telemetry import activation_payload
         print(json.dumps(activation_payload(record,name)),flush=True)
     def round_complete(record):
@@ -277,6 +296,7 @@ def _execute(config, data, audit, *, family, recover, runtime):
                 if row!=round_rows[record['round']]:raise ValueError(f'Recovery round metrics diverged at {record["round"]}.')
             else:
                 csv_writer.writerow(row);csv_handle.flush();round_rows.append(row)
+                tracking.round(row)
             if record['round']+1>=metadata['completedRounds']:metadata['latestRound']=row
             metadata.update(completedRounds=max(metadata['completedRounds'],record["round"]+1),runtimeSeconds=prior_runtime+time.perf_counter()-started)
             save_json(output/"run.json",metadata)
@@ -346,7 +366,7 @@ def _execute(config, data, audit, *, family, recover, runtime):
         generate_run_plots(output,plot_output)
         if campaign:
             from reporting.iid_campaign_plots import report_campaign
-            report_campaign(device=runtime['device'])
+            report_campaign(device=runtime['device'],rounds=config['nRounds'])
         return metadata
     except Exception as error:
         logger.exception("IID execution failed")
@@ -354,10 +374,18 @@ def _execute(config, data, audit, *, family, recover, runtime):
             "error":str(error),"runtimeSeconds":prior_runtime+time.perf_counter()-started})
         raise
     finally:
+        # Preserve the saved failure/stopped state; do not replace it with a stale running manifest.
+        persisted=json.loads((output/'run.json').read_text())
+        tracking.finish(persisted.get('status','stopped' if stopped else 'failed'))
+        metadata['liveTracking']=tracking.metadata
+        persisted['liveTracking']=tracking.metadata
+        save_json(output/'run.json',persisted)
         observer.close();csv_handle.close(); handler.close(); logger.removeHandler(handler)
 
 
 def main():
+    import numpy as np
+    import tensorflow as tf
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--sigma-absolute",type=float,help="Explicit operator-approved sigma_e; no default")
     parser.add_argument("--preflight",action="store_true",help="Three full-data rounds; attack warm-up remains 20")

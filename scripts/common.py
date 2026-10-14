@@ -2,7 +2,6 @@
 import gc
 import os
 import urllib.request
-import numpy as np
 
 # --- ntfy.sh phone notifications ---
 # 1. Install the "ntfy" app on your phone (Android/iOS)
@@ -13,6 +12,7 @@ NTFY_TOPIC = "papermerge-ojaswi"   # <-- change this to your own unique topic
 
 def setExperimentSeed(seed):
     """Seed Python, NumPy, and TensorFlow for selectable standalone configs."""
+    import numpy as np
     if seed is None:
         return
     import random
@@ -117,6 +117,7 @@ def ensureDirs():
 
 
 def saveCurve(arr, outPath):
+    import numpy as np
     arr = np.array(arr, dtype=np.float32)
     os.makedirs(os.path.dirname(outPath), exist_ok=True)
     np.save(outPath, arr)

@@ -1,0 +1,135 @@
+{
+  "results": [
+    {
+      "id": "fedproto_2022",
+      "status": "downloaded",
+      "file": "papers/prototype_retention/fedproto_2022.pdf",
+      "requestedURL": "https://arxiv.org/pdf/2105.00243v4",
+      "resolvedURL": "https://arxiv.org/pdf/2105.00243v4",
+      "bytes": 3730630,
+      "sha256": "1b1d83b1aae76ad47d7896dad7993584628733878783726c0d69cffc2bc0d934",
+      "previousSourceAttempts": []
+    },
+    {
+      "id": "pass_2021",
+      "status": "downloaded",
+      "file": "papers/prototype_retention/pass_2021.pdf",
+      "requestedURL": "https://openaccess.thecvf.com/content/CVPR2021/papers/Zhu_Prototype_Augmentation_and_Self-Supervision_for_Incremental_Learning_CVPR_2021_paper.pdf",
+      "resolvedURL": "https://openaccess.thecvf.com/content/CVPR2021/papers/Zhu_Prototype_Augmentation_and_Self-Supervision_for_Incremental_Learning_CVPR_2021_paper.pdf",
+      "bytes": 6822829,
+      "sha256": "e07c5ab34977d83e1f190b0447e4b2d73d9ab5f89bf1904e0e76dfdf442e8ec3",
+      "previousSourceAttempts": []
+    },
+    {
+      "id": "fetril_2023",
+      "status": "downloaded",
+      "file": "papers/prototype_retention/fetril_2023.pdf",
+      "requestedURL": "https://openaccess.thecvf.com/content/WACV2023/papers/Petit_FeTrIL_Feature_Translation_for_Exemplar-Free_Class-Incremental_Learning_WACV_2023_paper.pdf",
+      "resolvedURL": "https://openaccess.thecvf.com/content/WACV2023/papers/Petit_FeTrIL_Feature_Translation_for_Exemplar-Free_Class-Incremental_Learning_WACV_2023_paper.pdf",
+      "bytes": 643751,
+      "sha256": "7cce876256ff0645368a486f6d893adb05f255b41fb371934a7e0da3abd6e882",
+      "previousSourceAttempts": []
+    },
+    {
+      "id": "fedspace_2023",
+      "status": "downloaded",
+      "file": "papers/prototype_retention/fedspace_2023.pdf",
+      "requestedURL": "https://arxiv.org/pdf/2304.03626",
+      "resolvedURL": "https://arxiv.org/pdf/2304.03626",
+      "bytes": 621658,
+      "sha256": "e3e3465535d2f60018f77b711669e5727d720c65d566d2ba06c85c11bf2a60e4",
+      "previousSourceAttempts": []
+    },
+    {
+      "id": "fedpac_2023",
+      "status": "downloaded",
+      "file": "papers/prototype_retention/fedpac_2023.pdf",
+      "requestedURL": "https://arxiv.org/pdf/2306.11867",
+      "resolvedURL": "https://arxiv.org/pdf/2306.11867",
+      "bytes": 1004308,
+      "sha256": "1cfa842465682bf2af170b19bebdcb0b1de7d2374b35aba1f3e2141b0b49facc",
+      "previousSourceAttempts": [
+        {
+          "url": "https://openreview.net/pdf?id=SXZr8aDKia",
+          "error": "HTTP Error 403: Forbidden"
+        }
+      ]
+    },
+    {
+      "id": "fedprok_2024",
+      "status": "downloaded",
+      "file": "papers/prototype_retention/fedprok_2024.pdf",
+      "requestedURL": "https://openaccess.thecvf.com/content/CVPR2024W/FedVision-2024/papers/Gao_FedProK_Trustworthy_Federated_Class-Incremental_Learning_via_Prototypical_Feature_Knowledge_Transfer_CVPRW_2024_paper.pdf",
+      "resolvedURL": "https://openaccess.thecvf.com/content/CVPR2024W/FedVision-2024/papers/Gao_FedProK_Trustworthy_Federated_Class-Incremental_Learning_via_Prototypical_Feature_Knowledge_Transfer_CVPRW_2024_paper.pdf",
+      "bytes": 4144693,
+      "sha256": "9dffc3920aca428d8f9fae0b8f3a19a7e1c6e68c8fe643e3e65b98761b4ea73d",
+      "previousSourceAttempts": []
+    },
+    {
+      "id": "fedtgp_2024",
+      "status": "downloaded",
+      "file": "papers/prototype_retention/fedtgp_2024.pdf",
+      "requestedURL": "https://ojs.aaai.org/index.php/AAAI/article/view/29617/31046",
+      "resolvedURL": "https://ojs.aaai.org/index.php/AAAI/article/download/29617/31046",
+      "bytes": 206048,
+      "sha256": "4a6d9f805e2a68a5aa571c7b08482d023a6ada9af0eb98c52c5fee391c58af54",
+      "previousSourceAttempts": []
+    },
+    {
+      "id": "pearfl_2025",
+      "status": "downloaded",
+      "file": "papers/prototype_retention/pearfl_2025.pdf",
+      "requestedURL": "https://mdpi-res.com/d_attachment/mathematics/mathematics-13-00237/article_deploy/mathematics-13-00237.pdf",
+      "resolvedURL": "https://mdpi-res.com/d_attachment/mathematics/mathematics-13-00237/article_deploy/mathematics-13-00237.pdf",
+      "bytes": 557032,
+      "sha256": "8174ec0cfb13ba4b829683a66f3a629a1aee13307ebe2fa5bcbea7284f29dd57",
+      "previousSourceAttempts": []
+    },
+    {
+      "id": "hybrid_rehearsal_2025",
+      "status": "downloaded",
+      "file": "papers/prototype_retention/hybrid_rehearsal_2025.pdf",
+      "requestedURL": "https://arxiv.org/pdf/2501.15356",
+      "resolvedURL": "https://arxiv.org/pdf/2501.15356",
+      "bytes": 1091858,
+      "sha256": "aaa2d24220d4990280eb27f12c58361a524ddfa262c39a760571d91c72120a6d",
+      "previousSourceAttempts": [
+        {
+          "url": "https://openreview.net/pdf?id=ydREOIttdC",
+          "error": "HTTP Error 403: Forbidden"
+        }
+      ]
+    },
+    {
+      "id": "stp_fcl_2026",
+      "status": "downloaded",
+      "file": "papers/prototype_retention/stp_fcl_2026.pdf",
+      "requestedURL": "https://mdpi-res.com/d_attachment/sensors/sensors-26-06273/article_deploy/sensors-26-06273.pdf",
+      "resolvedURL": "https://mdpi-res.com/d_attachment/sensors/sensors-26-06273/article_deploy/sensors-26-06273.pdf",
+      "bytes": 3763140,
+      "sha256": "ab34fea0d7e85d923de5cf5864f92e09f20f53d9e012e9da0679564b0f9c9d77",
+      "previousSourceAttempts": []
+    },
+    {
+      "id": "noise_prototype_degradation_2026",
+      "status": "downloaded",
+      "file": "papers/prototype_retention/noise_prototype_degradation_2026.pdf",
+      "requestedURL": "https://arxiv.org/pdf/2604.27833v1",
+      "resolvedURL": "https://arxiv.org/pdf/2604.27833v1",
+      "bytes": 3803252,
+      "sha256": "2a46c2e107dcb1f1a2b9e5d77796e560234588a44f14337635fab2a6353b4eb9",
+      "previousSourceAttempts": []
+    },
+    {
+      "id": "learning_without_forgetting_2016",
+      "status": "downloaded",
+      "file": "papers/prototype_retention/learning_without_forgetting_2016.pdf",
+      "requestedURL": "https://arxiv.org/pdf/1606.09282",
+      "resolvedURL": "https://arxiv.org/pdf/1606.09282",
+      "bytes": 905389,
+      "sha256": "f62623b398b2dfa417686e2fe7ec981fcb39ef1ce94837656fc64726c8085a66",
+      "previousSourceAttempts": []
+    }
+  ],
+  "trainingRunsStarted": 0
+}

@@ -8,6 +8,7 @@ from typing import Any
 
 PROTOCOL = "sequential_basil_one_class_v1"
 IID_PROTOCOL = "sequential_basil_iid_v1"
+DIRICHLET_PROTOCOL = "sequential_basil_dirichlet_v1"
 
 # Deprecated compatibility aliases: read old configurations, write canonical IDs.
 LEGACY_PROTOCOL_ALIASES = {
@@ -23,7 +24,7 @@ LEGACY_PLOT_ROOTS = (Path("plots/professor_protocol"), Path("plots/professor_val
 
 
 def is_research_protocol(identifier: object) -> bool:
-    return isinstance(identifier, str) and LEGACY_PROTOCOL_ALIASES.get(identifier, identifier) in {PROTOCOL, IID_PROTOCOL}
+    return isinstance(identifier, str) and LEGACY_PROTOCOL_ALIASES.get(identifier, identifier) in {PROTOCOL, IID_PROTOCOL, DIRICHLET_PROTOCOL}
 
 
 def normalize_config(config: Mapping[str, Any]) -> dict[str, Any]:

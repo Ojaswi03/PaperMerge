@@ -9,11 +9,8 @@ import sys
 import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-import numpy as np
-import tensorflow as tf
 from basil_core.data.mnist import loadMnist, makeLoaders
 from basil_core.models import MNISTModel
-from basil_core.trainer import getParams, setParams, evaluate, averageParams, addChannelNoiseToParams, lossFn, makeLrScheduler
 from scripts.common import setupGpu
 
 # Configuration
@@ -28,6 +25,8 @@ BATCH_SIZE = 32
 
 def runTest(testName, useNoise, useEbm, trainLoaders, testLoader):
     # create fresh models, train with given noise/EBM config, return accuracy history
+    from basil_core.trainer import getParams, setParams, evaluate, averageParams, addChannelNoiseToParams, lossFn, makeLrScheduler
+    import tensorflow as tf
     print(f"\n{'='*60}")
     print(f"TEST: {testName}")
     print(f"  Noise: {'σ='+str(SIGMA) if useNoise else 'None'}")
@@ -119,6 +118,7 @@ def runTest(testName, useNoise, useEbm, trainLoaders, testLoader):
 
 
 def main():
+    import numpy as np
     setupGpu()
 
     # Load data once

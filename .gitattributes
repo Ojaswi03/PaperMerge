@@ -1,0 +1,2 @@
+# Preserve supplied research PDFs byte-for-byte; do not apply text conversion.
+*.pdf binary

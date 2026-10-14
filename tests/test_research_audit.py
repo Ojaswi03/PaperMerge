@@ -1,8 +1,6 @@
 import json
 
-import numpy as np
 import pytest
-import tensorflow as tf
 
 from basil_core.research_audit import ProtocolAudit, augment_batch, tensor_stats
 from basil_core.research_protocol import (
@@ -12,6 +10,7 @@ from basil_core.research_protocol import (
 
 
 def test_finite_float32_weights_do_not_overflow_norm_or_channel():
+    import numpy as np
     weights = [np.full(1000, 1e20, np.float32)]
     dimension, norm = parameter_stats(weights)
     assert dimension == 1000 and norm == pytest.approx(np.sqrt(1000) * 1e20)
@@ -23,6 +22,8 @@ def test_finite_float32_weights_do_not_overflow_norm_or_channel():
 
 
 def test_variance_accumulation_preserves_finite_coefficient_and_stop_gradient():
+    import numpy as np
+    import tensorflow as tf
     model = tf.keras.Sequential([tf.keras.layers.Input((1,)), tf.keras.layers.Dense(100, use_bias=False)])
     model.trainable_variables[0].assign(tf.fill((1, 100), 1e19))
     with tf.GradientTape() as tape:
@@ -32,6 +33,8 @@ def test_variance_accumulation_preserves_finite_coefficient_and_stop_gradient():
 
 
 def test_full_ebm_equals_gradient_plus_hessian_vector_correction():
+    import numpy as np
+    import tensorflow as tf
     model = tf.keras.Sequential([tf.keras.layers.Input((1,)), tf.keras.layers.Dense(2, use_bias=False)])
     model.trainable_variables[0].assign([[.4, -.2]])
     x, y, c = tf.constant([[1.], [2.]]), tf.constant([0, 1]), .3
@@ -48,6 +51,8 @@ def test_full_ebm_equals_gradient_plus_hessian_vector_correction():
 
 
 def test_evaluation_rejects_nonfinite_logits_instead_of_fabricating_accuracy():
+    import numpy as np
+    import tensorflow as tf
     class Worker:
         def load(self, params): pass
         def predict(self, x): return tf.fill((len(x), 10), float("nan"))
@@ -56,6 +61,8 @@ def test_evaluation_rejects_nonfinite_logits_instead_of_fabricating_accuracy():
 
 
 def test_confusions_are_evaluation_only_and_cover_all_five_epochs(tmp_path):
+    import numpy as np
+    import tensorflow as tf
     model = tf.keras.Sequential([tf.keras.layers.Input((32, 32, 3)),
         tf.keras.layers.GlobalAveragePooling2D(), tf.keras.layers.Dense(10)])
     worker = SequentialWorker(model)
@@ -77,6 +84,8 @@ def test_confusions_are_evaluation_only_and_cover_all_five_epochs(tmp_path):
 
 
 def test_augmentation_is_keyed_and_audit_does_not_advance_random_streams():
+    import numpy as np
+    import tensorflow as tf
     x = tf.reshape(tf.linspace(0., 1., 32 * 32 * 3), (1, 32, 32, 3))
     key = tf.constant([123, 456])
     first = augment_batch(x, key)
@@ -85,13 +94,39 @@ def test_augmentation_is_keyed_and_audit_does_not_advance_random_streams():
 
 
 def test_tensor_statistics_distinguish_nan_infinity_and_finite_values():
+    import numpy as np
     stats = tensor_stats(np.array([1., -2., np.inf, -np.inf, np.nan], np.float32))
     assert (stats["nan"], stats["positiveInf"], stats["negativeInf"]) == (1, 1, 1)
     assert stats["finiteMin"] == -2 and stats["finiteMax"] == 1
 
 
+def test_gradient_audit_materializes_once_without_changing_stats_or_hash(tmp_path):
+    import numpy as np
+    from basil_core.research_protocol import params_hash
+    class Gradient:
+        def __init__(self, value):
+            self.value = value
+            self.calls = 0
+        def numpy(self):
+            self.calls += 1
+            return self.value.copy()
+    arrays = [np.array([1., -2.], np.float32), np.array([[.3]], np.float32)]
+    gradients = [Gradient(value) for value in arrays]
+    audit = ProtocolAudit(tmp_path / 'gradient-audit')
+    try:
+        audit.current = {}
+        audit.gradients(gradients, [1., 2., 1.0002, .0001, 2., 2.01])
+        assert [g.calls for g in gradients] == [1, 1]
+        assert audit.current['gradientHash'] == params_hash(arrays)
+        assert audit.current['gradients'] == [tensor_stats(value) for value in arrays]
+    finally:
+        audit.close()
+
+
 @pytest.mark.parametrize("mode", ["none", "legacy_gradient_scale", "gradient_norm_objective"])
 def test_failure_replay_does_not_substitute_full_ebm_for_other_modes(tmp_path, mode):
+    import numpy as np
+    import tensorflow as tf
     class Model:
         def __init__(self):
             self.model = tf.keras.Sequential([tf.keras.layers.Input((32, 32, 3)),

@@ -7,8 +7,8 @@ import os
 from pathlib import Path
 import tempfile
 
-import numpy as np
-import tensorflow as tf
+from basil_core.lazy_imports import lazy_module
+np = lazy_module('numpy')
 
 try:
     import fcntl
@@ -88,6 +88,7 @@ def _cacheLock(cacheDir):
 
 
 def _cachedCifarArrays(cacheDir):
+    import tensorflow as tf
     cacheDir = Path(cacheDir)
     paths = {
         "xTrain": cacheDir / "x_train_float32.npy",
@@ -143,6 +144,7 @@ def _cachedCifarArrays(cacheDir):
 
 
 def loadCifar10(cacheDir=None):
+    import tensorflow as tf
     if cacheDir is not None:
         arrays = _cachedCifarArrays(cacheDir)
         return (
@@ -159,6 +161,7 @@ def loadCifar10(cacheDir=None):
 
 def _augment(x, y):
     """Random horizontal flip + random crop (pad 4px, then crop back to 32x32)."""
+    import tensorflow as tf
     x = tf.image.random_flip_left_right(x)
     x = tf.image.pad_to_bounding_box(x, 4, 4, 40, 40)
     x = tf.image.random_crop(x, [32, 32, 3])
@@ -167,6 +170,7 @@ def _augment(x, y):
 
 def _augmentStateless(index, sample, baseSeed):
     """Deterministic CIFAR augmentation keyed by client seed and sample visit."""
+    import tensorflow as tf
     x, y = sample
     visit = tf.cast(tf.math.floormod(index, 2_147_483_647), tf.int32)
     seed = tf.stack([tf.cast(baseSeed, tf.int32), visit])
@@ -351,6 +355,7 @@ def makeLoaders(
     returnMetadata=False,
     cacheDir=None,
 ):
+    import tensorflow as tf
     if seed is not None:
         tf.keras.utils.set_random_seed(int(seed))
     rng = np.random.default_rng(int(seed)) if seed is not None else np.random

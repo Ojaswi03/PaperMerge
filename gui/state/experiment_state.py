@@ -66,7 +66,18 @@ class ExperimentConfig:
                  f"{self.node_count}-node directed ring • {self.approach.upper()}"]
         if self.extra.get('iidCampaignId'):
             parts += [self.extra['experimentProtocol'],f"BASIL memory S={self.basil_memory_size} • actual attackers={self.extra.get('actualAttackerCount',0)} • assumed bound=4",
-                f"Objective: {self.extra.get('localObjective')} • {self.extra.get('executionStartMode')} R0→R99"]
+                f"Objective: {self.extra.get('localObjective')} • {self.extra.get('executionStartMode')} R0→R{self.rounds-1}"]
+        if self.extra.get('experimentProtocol')=='sequential_basil_dirichlet_v1':
+            parts += ['Dirichlet α=0.2 • receiver-local TRAIN only',
+                f"CE + frozen snapshot anchor μ={self.extra.get('snapshotAnchorMu')} • S=5",
+                'No helper gradients / no TRAIN replication • cloud tracking disabled',
+                f"Objective: {self.extra.get('localObjective')}"]
+        elif self.extra.get('noniidStudyId'):
+            parts += [self.extra['experimentProtocol'],
+                f"Certified CART owner gradients • μ={self.extra.get('snapshotAnchorMu')} • memory S={self.basil_memory_size}",
+                f"Selection: {self.extra.get('snapshotSelectionRule')}",
+                "Replicated TRAIN / trusted coordinator • cloud tracking disabled",
+                f"Objective: {self.extra.get('localObjective')}"]
         if attackers:
             start = min(self.attack_starts.get(name, 0) for name in attackers)
             parts.append(f"{len(self.attacker_list() or self.extra.get('resolvedAttackerIds',[]))} Byzantine nodes • {', '.join(attackers)} from round {start}")
@@ -159,6 +170,16 @@ def to_persisted(config: ExperimentConfig) -> dict[str, Any]:
 
 def validate_experiment(config: ExperimentConfig) -> list[ValidationIssue]:
     if config.form_errors:return [ValidationIssue(key,value) for key,value in config.form_errors.items()]
+    if config.extra.get('experimentProtocol')=='sequential_basil_dirichlet_v1':
+        from basil_core.dirichlet_study import validate_configuration
+        try:validate_configuration(to_persisted(config))
+        except (ValueError,TypeError,KeyError) as error:return [ValidationIssue('protocol',str(error))]
+        return []
+    if config.extra.get('experimentProtocol')=='cart_verified_one_class_v1':
+        from basil_core.noniid_verified_study import validate_configuration
+        try:validate_configuration(to_persisted(config))
+        except (ValueError,TypeError,KeyError) as error:return [ValidationIssue('protocol',str(error))]
+        return []
     if config.extra.get("experimentProtocol") in {"sequential_basil_one_class_v1","sequential_basil_iid_v1"}:
         from basil_core.research_protocol import validate_config
         try:validate_config(to_persisted(config))

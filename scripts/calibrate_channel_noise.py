@@ -8,7 +8,6 @@ import json
 from pathlib import Path
 import sys
 
-import numpy as np
 
 PROJECT_ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(PROJECT_ROOT))
@@ -22,6 +21,7 @@ def parse_args():
 
 
 def main():
+    import numpy as np
     args=parse_args(); model=build_model(args.model_architecture,args.seed)
     if args.trials<1:raise SystemExit("trials must be positive")
     sigmas=args.sigma or ((0.2,0.4,0.6) if args.semantics=="relative_l2_gaussian" else (0.005,0.01,0.02))

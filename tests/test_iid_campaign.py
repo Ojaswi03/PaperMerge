@@ -5,7 +5,6 @@ import json
 import os
 from types import SimpleNamespace
 
-import numpy as np
 import pytest
 
 from basil_core.iid_campaign import (
@@ -108,6 +107,7 @@ def test_condition_cli_defaults_to_validation_only(configs,tmp_path,capsys,monke
 
 
 def test_no_lambda_and_no_ebm_leakage_without_optimizer_steps():
+    import numpy as np
     import tensorflow as tf
     from basil_core.iid_study import IidWorker
     model=tf.keras.Sequential([tf.keras.layers.Input((32,32,3)),tf.keras.layers.GlobalAveragePooling2D(),
@@ -153,6 +153,7 @@ def test_queue_chaining_is_cancelable_and_never_starts_during_poll(configs,tmp_p
         _worker_handle=None,execution=SimpleNamespace(dispatch_pending=lambda:None),
         queue_changed=lambda:None,root=SimpleNamespace(after=lambda delay,fn:scheduled.append((delay,fn))),
         _start_entry=starts.append,_poll=lambda:None)
+    app._poll_once=lambda:PaperMergeApp._poll_once(app)
     PaperMergeApp._poll(app)
     assert starts==[] and queue.entries[0].status is QueueStatus.COMPLETED
     assert scheduled[0][0]==100 and app._queue_running
@@ -180,13 +181,15 @@ def test_execution_reader_dispatches_events_without_starting_a_process(tmp_path)
 
 
 @pytest.mark.skipif(not os.environ.get('DISPLAY'),reason='Optional GUI integration requires a display')
-def test_real_gui_loads_four_idle_configs_and_presets_without_launch(monkeypatch):
+def test_real_gui_loads_four_idle_configs_and_presets_without_launch(monkeypatch,tmp_path):
     import tkinter as tk
     from basil_core.research_protocol import validate_config
     from gui.app import PaperMergeApp
     def forbidden(*args,**kwargs):raise AssertionError('GUI startup must never start research execution')
     monkeypatch.setattr('subprocess.Popen',forbidden)
     monkeypatch.setattr(PaperMergeApp,'_launch',forbidden)
+    # Never infer progress from the user's real completed 500-round evidence.
+    monkeypatch.setattr('gui.app.PROJECT_ROOT',tmp_path)
     monkeypatch.setattr(QueueService,'save',lambda *args:None)
     monkeypatch.setattr('gui.app.filedialog.askopenfilename',lambda **kwargs:str(QUEUE_PATH))
     monkeypatch.setattr('gui.app.messagebox.askyesno',lambda *args,**kwargs:True)
@@ -207,7 +210,7 @@ def test_real_gui_loads_four_idle_configs_and_presets_without_launch(monkeypatch
         assert str(app.shell.command_bar.run['state'])=='normal'
         assert not app._queue_running and app.state.worker_count==0
         builder=app.shell.views[Workspace.BUILDER]
-        assert len(builder.iid_presets)==8
+        assert len(builder.iid_presets)==12  # 100r CPU/GPU plus four 500r GPU presets.
         for label in builder.iid_presets:
             builder.preset.set(label);builder._apply_preset()
             assert gui_approved(to_persisted(app.state.experiment))
@@ -221,10 +224,21 @@ def test_real_gui_loads_four_idle_configs_and_presets_without_launch(monkeypatch
             assert view.tree.set(entry.entry_id,'done')==f'{entry.completed_rounds}/100'
             assert view.tree.set(entry.entry_id,'device')=='GPU'
         assert 'GPU requested' in app.shell.command_bar.status.cget('text')
+        fresh_500=QUEUE_PATH.with_name('iid_abcd_500r_gpu_fresh.json')
+        monkeypatch.setattr('gui.app.filedialog.askopenfilename',lambda **kwargs:str(fresh_500))
+        app.load_queue();root.update_idletasks();root.update()
+        assert not app._queue_running and app.state.worker_count==0
+        assert [e.config.extra['conditionId'] for e in app.queue_state.entries]==list('ABCD')
+        for entry in app.queue_state.entries:
+            assert view.tree.set(entry.entry_id,'rounds')=='500'
+            assert view.tree.set(entry.entry_id,'done')=='0/500'
+            assert view.tree.set(entry.entry_id,'status')=='Pending'
+            assert view.tree.set(entry.entry_id,'device')=='GPU'
     finally:root.destroy()
 
 
 def test_prespecified_convergence_windows_and_signed_contrasts():
+    import numpy as np
     from reporting.iid_campaign_plots import convergence,scientific_contrasts
     curve=np.linspace(.1,.7,100)
     metrics={'fullTestAccuracy':curve,'worstNodeAccuracy':curve-.02}
@@ -238,11 +252,12 @@ def test_prespecified_convergence_windows_and_signed_contrasts():
     assert contrasts['ebm_effect']['differences']['final_accuracy']==pytest.approx(-.1)
     assert contrasts['total_robustness_gap']['differences']['final_accuracy']==pytest.approx(-.3)
     assert 'not the cost of BASIL' in contrasts['attack_effect']['meaning']
-    with pytest.raises(ValueError,match='100 actual finite rounds'):
+    with pytest.raises(ValueError,match='100 or 500 actual finite rounds'):
         convergence(dict(metrics,fullTestAccuracy=curve[:50]),attack_applicable=True)
 
 
 def test_campaign_plot_contract_uses_100_rounds_and_marks_only_attacked_conditions(configs,tmp_path,monkeypatch):
+    import numpy as np
     from reporting import iid_study_plots as plots
     from reporting.iid_campaign_plots import comparison_plots
     calls=[]

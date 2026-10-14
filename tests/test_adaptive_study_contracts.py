@@ -3,7 +3,6 @@ from pathlib import Path
 import tempfile
 import unittest
 
-import numpy as np
 
 from gui.adaptive_study import (
     CAMPAIGN_ID,
@@ -39,6 +38,7 @@ from gui.network_view import CampaignNetworkView
 
 
 def _write_synthetic_completed(config, root, final):
+    import numpy as np
     rounds = int(config["nRounds"])
     history = np.linspace(0.1, final, rounds, dtype=np.float32)
     metrics_path, run_path, telemetry_path = result_paths(config, root=root)
@@ -302,6 +302,7 @@ class Campaign4ContractTests(unittest.TestCase):
         self.assertNotEqual(profiled["runId"], config["runId"])
 
     def test_completion_requires_metrics_metadata_and_telemetry(self):
+        import numpy as np
         config = make_config(
             split="nonIID",
             approach="merged",

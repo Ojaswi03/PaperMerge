@@ -2,10 +2,10 @@ import csv
 import gzip
 import json
 
-import numpy as np
 
 
 def test_full_research_plot_pipeline_uses_all_measured_rounds(tmp_path,monkeypatch):
+    import numpy as np
     import basil_core.iid_study as study
     from reporting.iid_study_plots import generate_run_plots,generate_comparison
     plots=tmp_path/"plots"

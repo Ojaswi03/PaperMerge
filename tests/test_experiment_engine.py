@@ -3,7 +3,6 @@ from collections import OrderedDict
 from types import SimpleNamespace
 import unittest
 
-import numpy as np
 
 try:
     import tensorflow as tf
@@ -49,6 +48,7 @@ class CampaignEngineTests(unittest.TestCase):
         gc.collect()
 
     def _data(self, seed):
+        import numpy as np
         tf.keras.utils.set_random_seed(seed)
         rng = np.random.default_rng(seed)
         train_loaders = []
@@ -121,6 +121,7 @@ class CampaignEngineTests(unittest.TestCase):
         )
 
     def test_clean_shared_worker_produces_complete_metrics(self):
+        import numpy as np
         result = self._run(
             self._small_config(
                 approach="merged",
@@ -148,6 +149,7 @@ class CampaignEngineTests(unittest.TestCase):
         )
 
     def test_cart_ss_ebm_is_reproducible_for_same_seed(self):
+        import numpy as np
         config = self._small_config(
             approach="cart",
             environment="hidden_noise",
@@ -180,6 +182,7 @@ class CampaignEngineTests(unittest.TestCase):
         self.assertTrue(np.all(first["selected_sources"][1] != receivers))
 
     def test_ebm_gradient_matches_stated_gradient_norm_objective(self):
+        import numpy as np
         tf.keras.utils.set_random_seed(91)
         model = self.TinyModel().model
         weights = model.trainable_weights
@@ -222,6 +225,7 @@ class CampaignEngineTests(unittest.TestCase):
             )
 
     def test_cart_gap_requires_reference_to_reproduce_registry_claim(self):
+        import numpy as np
         registry = ClassRegistry(3)
         registry.update(
             nodeId=2,
@@ -239,6 +243,7 @@ class CampaignEngineTests(unittest.TestCase):
         self.assertAlmostEqual(gap, (0.2 + 0.0 + 0.0) / 3.0, places=6)
 
     def test_ss_guard_filters_implausible_low_loss_neighbor(self):
+        import numpy as np
         honest = RingSnapshot(
             sender_id=1,
             round_id=2,

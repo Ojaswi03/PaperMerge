@@ -1,7 +1,4 @@
-import numpy as np
 import random
-import tensorflow as tf
-from .trainer import lossFn, getParams
 """
 Attack implementations calibrated for:
 - No Snapshot: ~50-55% accuracy
@@ -11,6 +8,7 @@ Attack implementations calibrated for:
 
 def gaussianAttack(weights, mean=0.0, std=0.8, blend=0.55):
     # blend original weights with scaled Gaussian noise per layer
+    import numpy as np
     out = []
     for w in weights:
         weight_std = max(np.std(w), 0.01)
@@ -22,6 +20,7 @@ def gaussianAttack(weights, mean=0.0, std=0.8, blend=0.55):
 
 def signFlipAttack(weights, flipProb=0.38):
     # randomly flip the sign of individual weight values
+    import numpy as np
     out = []
     for w in weights:
         mask = np.random.random(w.shape) < flipProb
@@ -38,6 +37,7 @@ def hiddenAttack(
     rng=None,
 ):
     # blend honest weights toward a malicious direction
+    import numpy as np
     normal = rng.normal if rng is not None else np.random.normal
     out = []
     for idx, w in enumerate(weights):
@@ -56,6 +56,9 @@ def hiddenAttack(
 
 def modelPoisonAttack(model, dataLoader, nSteps=10, poisonLr=0.015, noiseStd=0.01):
     # run gradient ascent steps to maximize loss (poison the model)
+    from .trainer import lossFn, getParams
+    import numpy as np
+    import tensorflow as tf
     for step in range(nSteps):
         # Get one batch
         for xBatch, yBatch in dataLoader:
@@ -87,6 +90,7 @@ def modelPoisonAttack(model, dataLoader, nSteps=10, poisonLr=0.015, noiseStd=0.0
 def scalingAttack(weights, scaleFactor=10.0):
     # Model replacement / scaling: multiply weights by a large negative factor
     # to dominate FedAvg aggregation and push the global model in the wrong direction
+    import numpy as np
     return [(-scaleFactor * w).astype(np.float32) for w in weights]
 
 
@@ -94,6 +98,7 @@ def alieAttack(weights, zMax=1.5):
     # A Little Is Enough (ALIE): shift all weights downward by z_max * std while
     # preserving the weight structure so the attack stays within the honest weight
     # distribution and evades norm-based defenses
+    import numpy as np
     out = []
     for w in weights:
         std = max(np.std(w), 1e-6)
@@ -105,12 +110,14 @@ def alieAttack(weights, zMax=1.5):
 def innerProductAttack(weights, epsilon=3.0):
     # Inner Product Manipulation (Fall of Empires): negate and scale weights to
     # maximize the negative inner product with the honest gradient direction
+    import numpy as np
     return [(-epsilon * w).astype(np.float32) for w in weights]
 
 
 def noiseAmplificationAttack(weights, amplification=5.0):
     # Amplified noise: inject Gaussian noise scaled to each layer's weight std,
     # producing large perturbations that evade per-layer magnitude checks
+    import numpy as np
     out = []
     for w in weights:
         std = max(np.std(w), 0.01)

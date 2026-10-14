@@ -68,6 +68,57 @@ def test_round_metrics_remain_separate_from_activation_accuracy(config):
     assert state.network_events[-1][1]['payload']['worstNodeAccuracy']==.2
 
 
+@pytest.mark.parametrize('mode',['fresh','checkpoint','completed'])
+def test_startup_recovery_plan_is_not_replay_progress(config,mode):
+    state=ApplicationState(experiment=from_persisted(config),execution=ExecutionState.RUNNING)
+    handle,service=bridge(config,state)
+    handle._dispatch(dict(status='configuration_valid',trainingStarted=False,
+        recovery=dict(mode=mode,startActivation=0,savedActivations=0,completedRounds=0)))
+    handle._dispatch(dict(event='device_ready',device='GPU',deviceName='RTX 4070 Ti'))
+    handle._dispatch(dict(roundComplete=dict(round=0,averageAccuracy=.3,worstNodeAccuracy=.2)))
+    service.dispatch_pending()
+    assert state.execution_device=='GPU' and state.completed_rounds==1
+    assert state.accuracy_history==[(1,.3,.2)]
+    assert state.recovery_completed==state.recovery_total==0
+
+
+def test_actual_replay_progress_still_reaches_state(config):
+    state=ApplicationState(experiment=from_persisted(config),execution=ExecutionState.RUNNING)
+    handle,service=bridge(config,state)
+    handle._dispatch({'recovery':{'completed':4,'total':10}})
+    service.dispatch_pending()
+    assert (state.recovery_completed,state.recovery_total)==(4,10)
+    assert '4/10' in state.status
+
+
+@pytest.mark.parametrize('payload',[{}, {'mode':'fresh'}, {'completed':-1,'total':10},
+    {'completed':11,'total':10}, {'completed':'1','total':10}])
+def test_malformed_recovery_event_does_not_disable_later_events(payload,caplog):
+    state=ApplicationState(execution=ExecutionState.RUNNING)
+    service=ExecutionService(state)
+    service.post(ExecutionEvent('recovery_updated',payload))
+    service.post(ExecutionEvent('progress_updated',dict(round=1,completedRounds=1,progress=.1)))
+    assert service.dispatch_pending()==2
+    assert state.completed_rounds==1 and state.progress==.1
+    assert state.recovery_completed==state.recovery_total==0
+    assert 'Ignoring malformed recovery progress event' in caplog.text
+
+
+def test_polling_is_rescheduled_after_display_error(caplog):
+    from gui.app import PaperMergeApp
+    app=PaperMergeApp.__new__(PaperMergeApp)
+    scheduled=[];calls=[]
+    app.root=SimpleNamespace(after=lambda delay,callback:scheduled.append((delay,callback)))
+    def update():
+        calls.append(1)
+        if len(calls)==1:raise KeyError('synthetic bad display payload')
+    app._poll_once=update
+    app._poll()
+    assert scheduled[0][0]==150 and 'polling will retry' in caplog.text
+    scheduled[0][1]()
+    assert len(calls)==2 and len(scheduled)==2
+
+
 def test_older_worker_events_still_update_live_accuracy_without_fake_selection(config):
     state=ApplicationState(experiment=from_persisted(config))
     handle,service=bridge(config,state)

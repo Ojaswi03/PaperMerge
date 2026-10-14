@@ -13,10 +13,14 @@ from pathlib import Path
 import tempfile
 import threading
 
-import matplotlib as mpl
-from matplotlib.backends.backend_agg import FigureCanvasAgg
-from matplotlib.figure import Figure
-import numpy as np
+# Direct-script imports must resolve the project before lazy helpers.
+if __package__ in (None, ''):
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+from basil_core.lazy_imports import lazy_module
+np = lazy_module('numpy')
 
 try:
     from gui.adaptive_study import (
@@ -341,6 +345,7 @@ def load_records(result_root=RESULT_ROOT, split=None):
 
 
 def _paper_style():
+    import matplotlib as mpl
     mpl.rcParams.update(
         {
             "font.family": "sans-serif",
@@ -416,6 +421,7 @@ def _source_fingerprint(key, records):
 
 
 def _atomic_save_figure(figure, path, fmt):
+    from matplotlib.backends.backend_agg import FigureCanvasAgg
     path.parent.mkdir(parents=True, exist_ok=True)
     fd, temp_name = tempfile.mkstemp(dir=path.parent, suffix=f".{fmt}")
     os.close(fd)
@@ -498,6 +504,7 @@ def _legend_if_any(axis, **kwargs):
 
 
 def _evidence_hierarchy(records, approach, split):
+    from matplotlib.figure import Figure
     categories = [
         ("Clean", _select(records, environment="clean", effective_mitigation="none")),
         ("Hidden\n+ SS", _select(records, environment="hidden", effective_mitigation="ss")),
@@ -571,6 +578,7 @@ def _line_by_sigma(axis, records, environment, mitigation, label, color, marker)
 
 
 def _joint_challenge(records, approach, split):
+    from matplotlib.figure import Figure
     if not records:
         return None
     fig = Figure(figsize=(5.6, 3.5))
@@ -592,6 +600,7 @@ def _joint_challenge(records, approach, split):
 
 
 def _defense_composition(records, approach, split):
+    from matplotlib.figure import Figure
     joint = [record for record in records if record.environment == "hidden_noise"]
     if not joint:
         return None
@@ -617,6 +626,7 @@ def _defense_composition(records, approach, split):
 
 
 def _avg_worst(records, approach, split):
+    from matplotlib.figure import Figure
     joint = [record for record in records if record.environment == "hidden_noise" and record.effective_mitigation == "ss_ebm"]
     if not joint:
         return None
@@ -642,6 +652,7 @@ def _avg_worst(records, approach, split):
 
 
 def _seed_profiles(records, approach, split):
+    from matplotlib.figure import Figure
     joint = [record for record in records if record.environment == "hidden_noise" and record.effective_mitigation == "ss_ebm"]
     if not joint:
         return None
@@ -681,6 +692,7 @@ def _mean_history(group, metric="avg_history"):
 
 
 def _learning_curves(records, approach, split):
+    from matplotlib.figure import Figure
     lines = [
         ("Clean", _select(records, environment="clean", mitigation="none"), "#000000", "-"),
         ("Hidden + SS", _select(records, environment="hidden", mitigation="ss"), COLORS["ss"], "--"),
@@ -731,6 +743,7 @@ def _learning_curves(records, approach, split):
 
 
 def _noise_robustness(records, approach, split):
+    from matplotlib.figure import Figure
     relevant = [
         record
         for record in records
@@ -787,6 +800,7 @@ def _noise_robustness(records, approach, split):
 
 
 def _class_retention(records, approach, split):
+    from matplotlib.figure import Figure
     joint = [record for record in records if record.environment == "hidden_noise" and record.effective_mitigation == "ss_ebm"]
     if not joint:
         return None
@@ -832,6 +846,7 @@ def _paired_delta(records, left_approach, right_approach, environment, mitigatio
 
 
 def _cart_lift(records, split):
+    from matplotlib.figure import Figure
     pairs = _paired_delta(records, "merged", "cart", "hidden_noise", "ss_ebm")
     if not pairs:
         return None
@@ -850,6 +865,7 @@ def _cart_lift(records, split):
 
 
 def _static_adaptive(records, approach, split):
+    from matplotlib.figure import Figure
     relevant = [
         record
         for record in records
@@ -897,6 +913,7 @@ def _static_adaptive(records, approach, split):
 
 
 def _telemetry_panel(records, approach, split):
+    from matplotlib.figure import Figure
     relevant = [
         record
         for record in records
@@ -942,6 +959,7 @@ def _telemetry_panel(records, approach, split):
 
 
 def _gradient_panel(records, approach, split):
+    from matplotlib.figure import Figure
     relevant = [
         record
         for record in records
@@ -987,6 +1005,7 @@ def _gradient_panel(records, approach, split):
 
 
 def _cart_panel(records, approach, split):
+    from matplotlib.figure import Figure
     if approach != "cart":
         return None
     relevant = [
@@ -1057,6 +1076,7 @@ def _cart_panel(records, approach, split):
 
 
 def _selection_panel(records, approach, split):
+    from matplotlib.figure import Figure
     relevant = [record for record in records if record.approach == approach and record.config.get("snapshotSelection")]
     if not relevant:
         return None
@@ -1101,6 +1121,7 @@ def _selection_panel(records, approach, split):
 
 
 def _runtime_panel(records, approach, split):
+    from matplotlib.figure import Figure
     relevant = [record for record in records if record.approach == approach]
     if not relevant:
         return None
@@ -1208,6 +1229,8 @@ def _runtime_panel(records, approach, split):
 
 
 def _completeness(records, split):
+    from matplotlib.figure import Figure
+    import matplotlib as mpl
     expected = [config for config in build_main_confirmation() if config["split"] == split]
     completed = {
         (record.approach, record.config.get("conditionId"), record.seed)
@@ -1355,6 +1378,7 @@ def _seed_condition_color(record, palette, index):
 
 
 def _seed_palette(n):
+    import matplotlib as mpl
     cmap_name = "tab20" if n <= 20 else "hsv"
     cmap = mpl.colormaps[cmap_name].resampled(max(n, 1))
     return [cmap(i) for i in range(n)]
@@ -1401,6 +1425,7 @@ def _seed_title_fragment(seed):
 
 
 def _seed_final_accuracy_bar(records, approach, seed, split):
+    from matplotlib.figure import Figure
     ordered = _seed_ordered_conditions(records)
     if not ordered:
         return None
@@ -1487,6 +1512,7 @@ _ABLATION_CORE_SIGMAS = (0.2, 0.4, 0.6)
 
 
 def _render_ablation_groups(records, approach, seed, split, *, environment, tiers, subtitle, large=False):
+    from matplotlib.figure import Figure
     sigmas = sorted(
         {
             round(record.sigma, 2)
@@ -1573,6 +1599,7 @@ def _seed_ablation_noise_groups(records, approach, seed, split, *, large=False):
 
 
 def _seed_experiments_line(records, approach, seed, split, *, zoom=False):
+    from matplotlib.figure import Figure
     ordered = _seed_ordered_conditions(records)
     if not ordered:
         return None
@@ -1616,6 +1643,7 @@ def _seed_experiments_line(records, approach, seed, split, *, zoom=False):
 
 
 def _seed_grid(records, approach, seed, split):
+    from matplotlib.figure import Figure
     ordered = _seed_ordered_conditions(records)
     if len(ordered) <= 1:
         return None
@@ -1749,6 +1777,7 @@ def _overall_average_conditions(records):
 
 
 def _overall_final_accuracy_bar(records, approach, split):
+    from matplotlib.figure import Figure
     conditions = _overall_average_conditions(records)
     if not conditions:
         return None
@@ -1802,6 +1831,7 @@ _ZOOM_MARKERS = {
 
 
 def _overall_experiments_line(records, approach, split, *, zoom=False):
+    from matplotlib.figure import Figure
     conditions = [c for c in _overall_average_conditions(records) if c["history_mean"] is not None]
     if zoom:
         def _zoom_match(rep):
@@ -1894,6 +1924,7 @@ def _overall_experiments_line(records, approach, split, *, zoom=False):
 
 
 def _overall_grid(records, approach, split):
+    from matplotlib.figure import Figure
     conditions = [c for c in _overall_average_conditions(records) if c["history_mean"] is not None]
     if len(conditions) <= 1:
         return None

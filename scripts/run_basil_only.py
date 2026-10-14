@@ -7,7 +7,6 @@ CONFIGURATION: Edit the variables below to customize your test
 """
 import os
 import sys
-import numpy as np
 
 # ============================================================================
 # CONFIGURATION - EDIT THESE TO CUSTOMIZE YOUR TEST
@@ -199,6 +198,7 @@ def runBasilTests(datasets=None, attacks=None, testClean=True, testBasil=True):
         testClean: whether to test clean (no BASIL) baseline
         testBasil: whether to test BASIL approach
     """
+    import numpy as np
     setupGpu()
     ensureDirs()
 

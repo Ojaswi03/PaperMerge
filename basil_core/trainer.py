@@ -1,6 +1,7 @@
 # basil_core/trainer.py
-import numpy as np
-import tensorflow as tf
+from threading import RLock
+from basil_core.lazy_imports import lazy_module, lazy_tf_function
+tf = lazy_module('tensorflow')
 
 # Optional WCM module
 try:
@@ -25,8 +26,21 @@ __all__ = [
     "_iterLimited",
 ]
 
-# Cross-entropy on logits (as in Basil)
-lossFn = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
+# Construct the exact same loss object only on training/evaluation demand.
+_LOSS_LOCK = RLock()
+
+
+def _get_loss():
+    with _LOSS_LOCK:
+        if 'lossFn' not in globals():
+            globals()['lossFn'] = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
+        return globals()['lossFn']
+
+
+def __getattr__(name):
+    if name == 'lossFn':
+        return _get_loss()
+    raise AttributeError(name)
 
 def addChannelNoiseToParams(params, sigma, rng=None):
     """Add Gaussian channel noise using sigma as a model-level relative L2 budget.
@@ -44,6 +58,7 @@ def addChannelNoiseToParams(params, sigma, rng=None):
     This keeps sigma comparable across MNIST/CIFAR and lets EBM target channel
     noise instead of recovering from a completely randomized model.
     """
+    import numpy as np
     if not sigma or sigma <= 0:
         return params
     total_sq = 0.0
@@ -67,6 +82,7 @@ def addChannelNoiseToParams(params, sigma, rng=None):
 
 def getParams(model):
     # extract trainable weights as float32 numpy arrays
+    import numpy as np
     return [w.numpy().astype(np.float32) for w in model.trainable_weights]
 
 def setParams(model, params):
@@ -77,6 +93,7 @@ def setParams(model, params):
 
 def averageParams(paramsList, weights=None):
     # return empty list if nothing to average
+    import numpy as np
     if not paramsList:
         return []
 
@@ -129,7 +146,7 @@ def evaluateBatchLoss(model, dataLoader):
         xb = tf.cast(xBatch, tf.float32)
         yb = tf.cast(yBatch, tf.int32)
         logits = _forwardPass(model, xb)
-        return float(lossFn(yb, logits).numpy())
+        return float(_get_loss()(yb, logits).numpy())
     return 0.0
 
 def evaluatePerClass(model, dataLoader, nClasses=10, maxBatches=None):
@@ -138,6 +155,7 @@ def evaluatePerClass(model, dataLoader, nClasses=10, maxBatches=None):
     Uses at most maxBatches batches (None = full loader). Suitable for CART
     class registry updates and class-aware snapshot selection.
     """
+    import numpy as np
     correct = np.zeros(nClasses, dtype=np.int64)
     total = np.zeros(nClasses, dtype=np.int64)
     for xBatch, yBatch in _iterLimited(dataLoader, maxBatches=maxBatches):
@@ -155,6 +173,7 @@ def evaluatePerClass(model, dataLoader, nClasses=10, maxBatches=None):
 
 def evaluateAll(nodes, testLoader, maxBatches=None):
     # evaluate every node and aggregate into avg/worst
+    import numpy as np
     accs = [evaluate(node.model, testLoader, maxBatches=maxBatches) for node in nodes]
     if not accs:
         return 0.0, 0.0, []
@@ -178,17 +197,17 @@ def makeLrScheduler(lr0, alpha=0.6, minLr=1e-4, useBasilSchedule=True, useLrDeca
             return float(max(minLr, lr0 * (t + 1) ** (-alpha)))
         return lr
 
-@tf.function(reduce_retracing=True)
+@lazy_tf_function(reduce_retracing=True)
 def _computeGrads(model, x, y):
     # compute cross-entropy gradients and loss in one tape pass
     with tf.GradientTape() as tape:
         logits = model(x, training=True)
-        loss = lossFn(y, logits)
+        loss = _get_loss()(y, logits)
     grads = tape.gradient(loss, model.trainable_weights)
     return grads, loss
 
 
-@tf.function(reduce_retracing=True)
+@lazy_tf_function(reduce_retracing=True)
 def _forwardPass(model, x):
     return model(x, training=False)
 
@@ -230,7 +249,7 @@ def localUpdate(
                 result = wcmStep(
                     model=model,
                     optimizer=optimizer,
-                    lossFn=lossFn,
+                    lossFn=_get_loss(),
                     x=xb,
                     y=yb,
                     sigma=sigma,

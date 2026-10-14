@@ -26,6 +26,16 @@ class PlotService:
         from basil_core.protocol_compatibility import IID_PROTOCOL
         from basil_core.artifact_paths import writable_output
         metadata=json.loads((Path(run_dir)/'run.json').read_text())
+        if metadata.get('experimentProtocol')=='sequential_basil_dirichlet_v1':
+            from reporting.noniid_study_plots import generate_condition_plots
+            output=writable_output(Path(output_dir))
+            generate_condition_plots(run_dir,output)
+            return dict(generated=[str(p) for p in output.rglob('*.png')],errors=[])
+        if metadata.get('config',{}).get('experimentProtocol')=='cart_verified_one_class_v1':
+            from reporting.noniid_verified_plots import report_condition
+            output=writable_output(Path(output_dir))
+            report_condition(run_dir,output)
+            return dict(generated=[str(p) for p in output.glob('*.png')],errors=[])
         if metadata.get('experimentProtocol')==IID_PROTOCOL:
             from reporting.iid_study_plots import generate_run_plots
             output=writable_output(Path(output_dir))

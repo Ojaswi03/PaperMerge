@@ -14,7 +14,6 @@ import sys
 import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-import numpy as np
 from basil_core.data.mnist import loadMnist, makeLoaders
 from basil_core.models import MNISTModel
 from basil_core.basil import BasilNode, basilRingTrainingWithAttack
@@ -107,6 +106,7 @@ def runTest(testName, useAttacks, useNoise, useBasil, useEbm, trainLoaders, test
 
 
 def main():
+    import numpy as np
     setupGpu()
 
     print("Loading MNIST...")

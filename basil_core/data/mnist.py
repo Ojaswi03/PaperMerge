@@ -1,7 +1,6 @@
-import numpy as np
-import tensorflow as tf
 
 def loadMnist():
+    import tensorflow as tf
     (xTrain, yTrain), (xTest, yTest) = tf.keras.datasets.mnist.load_data()
     xTrain = (xTrain.astype("float32") / 255.0)
     xTest  = (xTest.astype("float32") / 255.0)
@@ -11,6 +10,7 @@ def loadMnist():
 
 def _dirichletPartition(train, nClients, alpha):
     """Partition training data using Dirichlet distribution for non-IID splits."""
+    import numpy as np
     labels = np.array([y for _, y in train])
     nClasses = int(labels.max()) + 1
     clientIndices = [[] for _ in range(nClients)]
@@ -26,6 +26,8 @@ def _dirichletPartition(train, nClients, alpha):
     return [np.array(indices) for indices in clientIndices]
 
 def makeLoaders(train, test, batchSize=32, iid=True, nClients=10, dirichletAlpha=0.5):
+    import numpy as np
+    import tensorflow as tf
     if iid:
         idx = np.arange(len(train))
         np.random.shuffle(idx)

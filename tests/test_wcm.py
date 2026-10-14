@@ -7,10 +7,7 @@ import subprocess
 import unittest
 from unittest import mock
 
-import numpy as np
-import tensorflow as tf
 
-from basil_core.trainer import lossFn
 from basil_core.wcm_pilot import run_wcm_pilot
 from noise_comm.wcm import (
     WcmState,
@@ -28,6 +25,7 @@ from scripts import run_wcm_pilot as pilot_runner
 
 class TinyModel:
     def __init__(self):
+        import tensorflow as tf
         self.model = tf.keras.Sequential(
             [
                 tf.keras.layers.Input(shape=(2,)),
@@ -53,6 +51,7 @@ class TinyModel:
 
 
 def _tiny_data():
+    import numpy as np
     x = np.asarray(
         [
             [1.0, 0.0],
@@ -68,6 +67,7 @@ def _tiny_data():
 
 class WcmMathTests(unittest.TestCase):
     def test_boundary_sampler_uses_one_full_model_sphere(self):
+        import numpy as np
         params = [
             np.ones((2, 3), dtype=np.float32),
             np.full((4,), 2.0, dtype=np.float32),
@@ -101,6 +101,7 @@ class WcmMathTests(unittest.TestCase):
             np.testing.assert_array_equal(left, right)
 
     def test_recursive_gradient_estimate_matches_equation_32(self):
+        import numpy as np
         updated = updateGradientEstimate(
             [np.asarray([1.0, -1.0], dtype=np.float32)],
             [np.asarray([3.0, 1.0], dtype=np.float32)],
@@ -112,6 +113,7 @@ class WcmMathTests(unittest.TestCase):
         )
 
     def test_surrogate_gradient_matches_equation_31(self):
+        import numpy as np
         gradients = scaSurrogateGradients(
             noisy_gradients=[np.asarray([2.0], dtype=np.float32)],
             candidate=[np.asarray([3.0], dtype=np.float32)],
@@ -219,13 +221,17 @@ class WcmRunnerSafetyTests(unittest.TestCase):
 
 class WcmTensorFlowTests(unittest.TestCase):
     def setUp(self):
+        import tensorflow as tf
         tf.keras.backend.clear_session()
         tf.keras.utils.set_random_seed(123)
 
     def tearDown(self):
+        import tensorflow as tf
         tf.keras.backend.clear_session()
 
     def test_local_update_initializes_state_and_conditional_step(self):
+        from basil_core.trainer import lossFn
+        import numpy as np
         model = TinyModel()
         x, y = _tiny_data()
         reference_norm = fullModelL2Norm(
@@ -277,6 +283,8 @@ class WcmTensorFlowTests(unittest.TestCase):
         )
 
     def test_legacy_step_now_initializes_recursive_gradient(self):
+        from basil_core.trainer import lossFn
+        import tensorflow as tf
         model = TinyModel()
         x, y = _tiny_data()
         optimizer = tf.keras.optimizers.SGD(learning_rate=0.01)
@@ -300,6 +308,8 @@ class WcmTensorFlowTests(unittest.TestCase):
         )
 
     def test_tiny_ring_pilot_runs_without_campaign_three_changes(self):
+        import numpy as np
+        import tensorflow as tf
         x, y = _tiny_data()
         loaders = [
             tf.data.Dataset.from_tensor_slices((x, y))
