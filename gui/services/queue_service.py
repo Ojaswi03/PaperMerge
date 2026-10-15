@@ -35,7 +35,10 @@ class QueueService:
         for entry in state.entries:
             config=to_persisted(entry.config)
             if config.get('experimentProtocol')=='sequential_basil_dirichlet_v1':
-                from basil_core.dirichlet_study import recovery_plan as dirichlet_recovery
+                if config.get('lossStudyRevision')=='dirichlet_prior_readiness_diagnostic_v1':
+                    from basil_core.dirichlet_prior_study import recovery_plan as dirichlet_recovery
+                else:
+                    from basil_core.dirichlet_study import recovery_plan as dirichlet_recovery
                 try:
                     plan=dirichlet_recovery(root/config['resultDirectory'],config)
                     entry.completed_rounds=plan['completedRounds']

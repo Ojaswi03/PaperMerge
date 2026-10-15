@@ -46,6 +46,8 @@ def generate_condition_plots(directory, output):
     objective=cfg.get('effectiveLocalObjective',cfg.get('localObjective',''))
     method_label={'class_gradient_importance_anchor':'Class-aware importance anchor',
         'cross_entropy':'CE only','snapshot_anchor_only':'Uniform snapshot anchor',
+        'logit_prior_snapshot_anchor':'Local-prior CE + snapshot anchor',
+        'logit_prior_ebm_snapshot_anchor':'Local-prior CE + source EBM + snapshot anchor',
         'source_ebm_snapshot_anchor':'Source EBM + uniform snapshot anchor'}.get(objective,letter)
     def mark(ax):
         if cfg['attackHidden']: ax.axvline(20, ls=':', color='#333', label='Hidden begins R20')

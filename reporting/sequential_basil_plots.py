@@ -30,13 +30,23 @@ def _save(fig,path):
 def _line(ax,values,label,**kwargs): ax.plot(np.arange(len(values)),values,label=label,**kwargs); ax.axhline(.5,color="#777",ls="--",lw=1,label="50% research target"); ax.set(xlabel="Full ring round",ylabel="Global test accuracy",ylim=(0,1)); ax.legend(fontsize=8)
 
 
+def plot_identity(metadata):
+    """Adapt older diagnostic manifests in memory, never rewrite saved evidence."""
+    config=metadata['config']
+    run_id=metadata.get('runId') or config.get('runId')
+    if not run_id:raise ValueError('A saved run identifier is required for plotting.')
+    family='production' if metadata['researchValid'] else 'preflight' if config.get('purpose')=='full_data_preflight' else 'smoke'
+    if config.get('lossStudyRevision')=='dirichlet_prior_readiness_diagnostic_v1':family='diagnostic'
+    return run_id,family
+
+
 def generate_run_plots(run_dir,plot_root=PLOT_ROOT):
     run_dir=Path(run_dir); metadata=json.loads((run_dir/"run.json").read_text())
     if metadata["status"]!="completed":raise ValueError("Only completed runs have plot-ready metrics.")
-    family="production" if metadata["researchValid"] else "preflight" if metadata["config"].get("purpose")=="full_data_preflight" else "smoke"
+    run_id,family=plot_identity(metadata)
     if "reference_rechecks" in run_dir.parts:family="reference_rechecks"
     elif "rechecks" in run_dir.parts:family="rechecks"
-    output=writable_output(Path(plot_root)/metadata["config"].get("protocolRevision","legacy_diagnostic")/family/metadata["runId"])
+    output=writable_output(Path(plot_root)/metadata["config"].get("protocolRevision","legacy_diagnostic")/family/run_id)
     with np.load(run_dir/"metrics.npz",allow_pickle=False) as saved: metrics={key:saved[key] for key in saved.files}
     with gzip.open(run_dir/"activation_telemetry.json.gz","rt",encoding="utf-8") as handle: telemetry=json.load(handle)
     attack_start=int(metadata["config"].get("attackStartRound",20)); generated=[]
@@ -69,9 +79,10 @@ def generate_run_plots(run_dir,plot_root=PLOT_ROOT):
         fig,ax=plt.subplots(figsize=(11,6));image=ax.imshow(states.T,aspect="auto",vmin=0,vmax=1,cmap="magma");ax.set(xlabel="Activation × (before, epoch 1, 2, 3, 4, 5)",yticks=range(10),yticklabels=CLASS_NAMES,title="Five-epoch class retention");fig.colorbar(image,ax=ax);path=output/"five_epoch_class_retention.png";_save(fig,path);generated.append(path)
         fig,axes=plt.subplots(2,1,figsize=(9,6),sharex=True)
         steps=[s for record in telemetry for s in record["optimizerTelemetry"]]
-        axes[0].plot([s["baseCrossEntropy"] for s in steps],label="Base CE");axes[0].plot([s["ebmObjective"] for s in steps],label="Reported objective (full EBM only where configured)");axes[0].legend(fontsize=8)
+        base_label='Local-prior adjusted TRAIN CE' if metadata['config'].get('logitCalibrationEnabled') else 'Base CE'
+        axes[0].plot([s["baseCrossEntropy"] for s in steps],label=base_label);axes[0].plot([s["ebmObjective"] for s in steps],label="Reported objective (full EBM only where configured)");axes[0].legend(fontsize=8)
         axes[1].plot([s["ebmCoefficient"] for s in steps],label="Actual step coefficient");axes[1].set(xlabel="Optimizer step",ylabel="Coefficient");axes[1].legend();path=output/"optimizer_objective_diagnostics.png";_save(fig,path);generated.append(path)
-    return {"runId":metadata["runId"],"generated":[str(path) for path in generated],"plotRoot":str(output)}
+    return {"runId":run_id,"generated":[str(path) for path in generated],"plotRoot":str(output)}
 
 
 def generate_comparison(result_root=RESULT_ROOT,plot_root=PLOT_ROOT,*,purpose="research_protocol_production",revision=None):

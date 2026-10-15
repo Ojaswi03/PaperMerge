@@ -1,9 +1,24 @@
 # Current documentation
 
+[Dirichlet rerun readiness](DIRICHLET_RERUN_READINESS.md): completed clean/noise/23-round
+attack gates, exact revised loss, measured tables and the idle 30-round A/B/C/D
+GPU confirmation preset. No 500-round study has been approved or started.
+
+[Small Dirichlet calibration tests](DIRICHLET_CALIBRATION_SMALL_TESTS.md):
+whole-local TRAIN accuracy fix and three full-data, five-epoch GPU diagnostics;
+local-prior adjustment improves early Node-9 accuracy to 16.53%, but class
+retention at that early stage was insufficient. The readiness report above
+supersedes its queue/status notes while preserving its original measurements.
+
 [Dirichlet α=0.2 BASIL and thesis attribution](DIRICHLET_BASIL_PROTOCOL_AND_ATTRIBUTION.md):
 completed local-data-only 30-round A/B/C/D GPU study, source equations, proximal
 precedent, actual partition histogram and scientific qualifications. No further
 research runs are queued.
+
+[Dirichlet learning failure diagnosis](DIRICHLET_LEARNING_FAILURE_ANALYSIS.md):
+read-only contract checks, clean class-forgetting heatmap, first corrupted
+selection and saved-model feature-collapse evidence. No remedial method or new
+research run is enabled.
 
 [Head/backbone forgetting audit](FORGETTING_MECHANISM_AUDIT.md): completed
 bounded GPU diagnosis, per-epoch classifier/feature interventions, registry

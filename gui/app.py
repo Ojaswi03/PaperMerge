@@ -54,6 +54,8 @@ class PaperMergeApp:
         latest=(PROJECT_ROOT/'gui/configs/nonIID/cart_verified_30r' if self.state.experiment.extra.get('noniidStudyId') else PROJECT_ROOT/'gui/configs/IID/sequential_basil_500r/gpu/fresh')
         if self.state.experiment.extra.get('experimentProtocol')=='sequential_basil_dirichlet_v1':
             latest=PROJECT_ROOT/'gui/configs/nonIID/dirichlet_alpha02_30r'
+            if self.state.experiment.extra.get('lossStudyRevision')=='dirichlet_prior_readiness_diagnostic_v1':
+                latest=PROJECT_ROOT/'gui/configs/nonIID/dirichlet_prior_confirmation_30r'
         paths=filedialog.askopenfilenames(parent=self.root,title="Add configurations",initialdir=latest if latest.exists() else CONFIG_ROOT,filetypes=(("JSON","*.json"),))
         added=0
         for path in paths:
@@ -102,16 +104,21 @@ class PaperMergeApp:
         from basil_core.iid_campaign import gui_approved
         from basil_core.noniid_verified_study import gui_approved as noniid_approved
         from basil_core.dirichlet_study import gui_approved as dirichlet_approved
-        if int(config.get("campaignVersion",0)) not in {3,4} and config.get("experimentProtocol")!="sequential_basil_one_class_v1" and not gui_approved(config) and not noniid_approved(config) and not dirichlet_approved(config):
+        from basil_core.dirichlet_prior_study import gui_approved as prior_approved
+        if int(config.get("campaignVersion",0)) not in {3,4} and config.get("experimentProtocol")!="sequential_basil_one_class_v1" and not gui_approved(config) and not noniid_approved(config) and not dirichlet_approved(config) and not prior_approved(config):
             self._queue_running=False; self.state.end_queue(); messagebox.showinfo("Run configuration","Add or load a versioned baseline/adaptive-study configuration before starting isolated execution. This prevents silently assigning research protocol fields.",parent=self.root); return
         orphans=[]
-        for root in (PROJECT_ROOT/'gui/worker_state/dirichlet',PROJECT_ROOT/'gui/worker_state/noniid_verified',PROJECT_ROOT/'gui/worker_state/iid',PROJECT_ROOT/"experiments"/"results3"/"r2"/"workers",PROJECT_ROOT/"experiments"/"results4"/"campaign4"/"workers",PROJECT_ROOT/"experiments/worker_state/adaptive",PROJECT_ROOT/"experiments/worker_state/baseline",PROJECT_ROOT/"experiments/research_protocol_results/workers", *(PROJECT_ROOT/path/"workers" for path in LEGACY_RESULT_ROOTS)): orphans.extend(find_orphan_workers(root))
+        for root in (PROJECT_ROOT/'gui/worker_state/dirichlet_prior',PROJECT_ROOT/'gui/worker_state/dirichlet',PROJECT_ROOT/'gui/worker_state/noniid_verified',PROJECT_ROOT/'gui/worker_state/iid',PROJECT_ROOT/"experiments"/"results3"/"r2"/"workers",PROJECT_ROOT/"experiments"/"results4"/"campaign4"/"workers",PROJECT_ROOT/"experiments/worker_state/adaptive",PROJECT_ROOT/"experiments/worker_state/baseline",PROJECT_ROOT/"experiments/research_protocol_results/workers", *(PROJECT_ROOT/path/"workers" for path in LEGACY_RESULT_ROOTS)): orphans.extend(find_orphan_workers(root))
         if orphans:
             names=", ".join(f"{item.get('runId','?')} (pid {item.get('pid','?')})" for item in orphans)
             if not messagebox.askyesno("Orphaned workers",f"Active workers from an earlier session were found:\n\n{names}\n\nRequest graceful termination before starting?",parent=self.root): self._queue_running=False; self.state.end_queue(); return
             terminate_orphan_workers(orphans)
         try:
             self.execution.start(config); self.state.status=f"Running {self.state.experiment.experiment_name}"
+            if config.get('lossStudyRevision')=='dirichlet_prior_readiness_diagnostic_v1':
+                from basil_core.dirichlet_prior_study import display_label
+                self.state.active_experiment_name=display_label(config)
+                self.state.status=f'Running {self.state.active_experiment_name}'
             if pending is not None:
                 from gui.state import QueueStatus
                 self._active_queue_entry=pending; self.queue_state.transition(pending.entry_id,QueueStatus.RUNNING); self.queue_changed()

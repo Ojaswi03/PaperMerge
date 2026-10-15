@@ -3,7 +3,34 @@
 PaperMerge studies Byzantine-resilient decentralized learning under noisy
 communication using Python, TensorFlow and a Tkinter experiment workspace.
 
+[Latest: Dirichlet rerun readiness, results, formulas and launch instructions](docs/DIRICHLET_RERUN_READINESS.md).
+The full-data GPU gates completed. Local-prior training reached **32.90%**
+Node-9 accuracy versus **19.13%** for the matched original ten-round control.
+At 23 rounds, B/C/D reached **41.29% / 45.04% / 46.11%**, with no actually
+attack-corrupted snapshot selected in their three attacked rounds. These are
+single-seed diagnostics, not solved retention or universal robustness.
+
+A separate **30-round A/B/C/D GPU confirmation preset is ready and idle**:
+`gui/queues/noniid_dirichlet_prior_abcd_30r_gpu.json`. Open `python run_gui.py`,
+then **Queue → Load Queue**, select that preset, and click **Run Queue** only
+when ready. It uses Dirichlet α=0.2, local-prior CE, frozen snapshot anchoring,
+and EBM in D only. No W&B, data sharing, helper services or CART is enabled.
+The new full queue has **not** started; no 500-round campaign is approved.
+
+## Earlier studies and investigation notes
+
+The status statements below describe their historical stages, not the current
+confirmation preset. Earlier outputs are preserved rather than overwritten.
+[Initial three-round GPU calibration tests](docs/DIRICHLET_CALIBRATION_SMALL_TESTS.md)
+record the local-accuracy reporting correction and earlier bounded evidence.
+
 [Current: Dirichlet α=0.2 BASIL protocol, formulas and thesis attribution](docs/DIRICHLET_BASIL_PROTOCOL_AND_ATTRIBUTION.md).
+[Diagnosis: clean forgetting and attack-induced feature collapse](docs/DIRICHLET_LEARNING_FAILURE_ANALYSIS.md).
+The read-only audit verifies full epochs and local-loss selection, but finds that
+corrupted, contracted models can win under label skew. No remedial method or new
+research run was enabled by that read-only diagnosis. The subsequent small test
+report above records the live-engine telemetry correction and separate learning
+extensions; completed 30-round curves are not rewritten.
 All four **30-round, local-data-only GPU** conditions completed. They use
 receiver-local Snapshot Selection and fixed μ=0.01 anchoring; C/D add absolute
 channel σₑ=0.010, and D adds full no-lambda EBM. Unequal partitions retain five

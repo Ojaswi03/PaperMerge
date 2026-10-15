@@ -34,12 +34,18 @@ class QueueView(ttk.Frame):
     def _clear(self):
         if messagebox.askyesno("Clear pending queue","Remove every pending queue item?",parent=self): self.state.clear_pending(); self.on_changed()
     def refresh(self):
-        needle=self.search.get().casefold(); status=self.status.get(); visible=[entry for entry in self.state.entries if (not needle or needle in entry.config.experiment_name.casefold()) and (not status or entry.status.value==status)]
+        def title(entry):
+            if entry.config.extra.get('lossStudyRevision')=='dirichlet_prior_readiness_diagnostic_v1':
+                from basil_core.dirichlet_prior_study import display_label
+                try:return display_label(to_persisted(entry.config))
+                except (ValueError,KeyError,TypeError):pass
+            return entry.config.extra.get('displayName',entry.config.experiment_name).split(' — Fresh')[0]
+        needle=self.search.get().casefold(); status=self.status.get(); visible=[entry for entry in self.state.entries if (not needle or needle in (entry.config.experiment_name+' '+title(entry)).casefold()) and (not status or entry.status.value==status)]
         wanted={e.entry_id for e in visible}
         for item in self.tree.get_children():
             if item not in wanted:self.tree.delete(item)
         for index,entry in enumerate(visible):
-            name=entry.config.extra.get('displayName',entry.config.experiment_name).split(' — Fresh')[0]
+            name=title(entry)
             values=tuple(map(str,(entry.status.value.title(),name,f'{entry.config.dataset}/{entry.config.split}',entry.config.rounds,f'{entry.completed_rounds}/{entry.config.rounds}',entry.config.extra.get('executionDevice','CPU'),entry.execution_hint)))
             if not self.tree.exists(entry.entry_id):self.tree.insert('',index,iid=entry.entry_id,values=values)
             elif tuple(self.tree.item(entry.entry_id,'values'))!=values:self.tree.item(entry.entry_id,values=values)

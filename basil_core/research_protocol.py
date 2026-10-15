@@ -196,6 +196,10 @@ def build_model(architecture: str, seed: int = 2025):
 
 def validate_config(config: dict) -> None:
     config = normalize_config(config)
+    if config.get('lossStudyRevision') in {'dirichlet_logit_calibration_diagnostic_v1','dirichlet_prior_readiness_diagnostic_v1'}:
+        from basil_core.dirichlet_calibration import validate_diagnostic_config
+        validate_diagnostic_config(config)
+        return
     iid_study=config.get("experimentProtocol")==IID_PROTOCOL
     anchor_study=config.get('lossStudyRevision')=='source_grounded_no_lambda_v1'
     dirichlet_study=config.get('experimentProtocol')=='sequential_basil_dirichlet_v1'
@@ -430,9 +434,12 @@ class SequentialWorker:
                 "localTrainingLoss": weighted_loss / seen,
                 **(evaluation() if evaluation else {})})
         final = self.export()
-        _, accuracy = self.probe(final, x[:512], y[:512])
+        # Local accuracy means the full local TRAIN dataset, not the allocator's
+        # class-grouped first 512 examples. Stream evaluation to bound VRAM.
+        accuracy, _ = evaluate_params(self, final, x, y, batch_size=batch_size)
         return final, {"loss": float(np.mean([e["localTrainingLoss"] for e in epoch_records])),
-            "accuracy": accuracy, "steps": len(step_records), "beforeTraining": before,
+            "accuracy": accuracy, "accuracyScope": "full_local_train_unaugmented",
+            "steps": len(step_records), "beforeTraining": before,
             "epochs": epoch_records, "optimizerTelemetry": step_records,
             "baseGradientNorm": float(np.mean([s["baseGradientNorm"] for s in step_records])),
             "robustGradientNorm": float(np.mean([s["robustObjectiveGradientNorm"] for s in step_records]))}
@@ -482,6 +489,11 @@ def run_research_protocol(config: dict, train_x, train_y, test_x, test_y, *, act
         audit.initial(initial, train_x, train_y, test_x, test_y)
     rounds=int(config["nRounds"]); test_count=len(test_y); activation_accuracy=np.zeros((rounds,n),np.float32); activation_per_class=np.zeros((rounds,n,10),np.float32); round_node_accuracy=np.zeros((rounds,n),np.float32); round_node_per_class=np.zeros((rounds,n,10),np.float32); selected_sources=np.full((rounds,n),-1,np.int16); selected_rounds=np.full((rounds,n),-1,np.int16); telemetry=[]
     class_aware=config.get('lossStudyRevision')=='class_gradient_importance_anchor_v1'
+    calibration_study=config.get('lossStudyRevision') in {'dirichlet_logit_calibration_diagnostic_v1','dirichlet_prior_readiness_diagnostic_v1'}
+    if calibration_study and (getattr(worker,'diagnostic_revision',None)!=config['lossStudyRevision'] or
+            getattr(worker,'calibration_enabled',None)!=config['logitCalibrationEnabled'] or
+            getattr(worker,'calibration_method',None)!=config.get('logitCalibrationMethod','fedlc')):
+        raise ValueError('Calibration diagnostic requires its explicit matching worker factory.')
     if class_aware and not all(hasattr(worker,k) for k in ('receive_retention_state','export_retention_state')):
         raise ValueError('Class-aware config requires its explicit retention worker, not plain CE.')
     instrumented_study=config.get('experimentProtocol') in {IID_PROTOCOL,'sequential_basil_dirichlet_v1'} or config.get('lossStudyRevision') in {'source_grounded_no_lambda_v1','class_gradient_importance_anchor_v1'}
@@ -600,6 +612,7 @@ def run_research_protocol(config: dict, train_x, train_y, test_x, test_y, *, act
             record={"round":round_id,"nodeId":node_id,"inputSourceNode":selected.sender_id,"inputSnapshotRound":selected.round_id,"inputHash":input_hash,"trainedOutputHash":params_hash(trained),"candidates":diagnostics,"selectedCandidateLoss":next((item["receiverLocalLoss"] for item in diagnostics if item["senderId"]==selected.sender_id),None),"selectedCandidateAccuracy":next((item["receiverLocalAccuracy"] for item in diagnostics if item["senderId"]==selected.sender_id),None),"localTrainingLoss":training["loss"],"localTrainingAccuracy":training["accuracy"],"globalTestAccuracy":global_accuracy,"perClassGlobalTestAccuracy":per_class.tolist(),"learningRate":learning_rate,"optimizerSteps":training["steps"],"modelL2Norm":parameter_stats(trained)[1],"configuredByzantine":is_byzantine,"attackActive":attack_active,"attackRelativeParameterChange":attack_change,"channelNoiseActive":noise_active,"outgoingLinks":link_noise,"ebmMode":config.get("ebmMode","none"),"ebmCoefficient":coefficient,"baseGradientNorm":training["baseGradientNorm"],"robustObjectiveGradientNorm":training["robustGradientNorm"]}
             telemetry.append(record)
             record.update(beforeTraining=training["beforeTraining"], epochs=training["epochs"],
+                localTrainingAccuracyScope=training.get('accuracyScope','unspecified_legacy_worker'),
                 optimizerTelemetry=training["optimizerTelemetry"], localSampleCount=len(local),
                 memorySenderIds=[s.sender_id for s in candidates], memorySnapshotRounds=[s.round_id for s in candidates],
                 outboundAttackHash=params_hash(outbound), channelNoiseSemantics=semantics,
@@ -609,11 +622,15 @@ def run_research_protocol(config: dict, train_x, train_y, test_x, test_y, *, act
                 record.update(selectedSenderByzantine=selected.sender_id in attackers,
                     selectedSnapshotAgeRounds=round_id-selected.round_id if selected.round_id>=0 else None,
                     localObjective=config["localObjective"],legacyLambdaIgnored=True)
-            if config.get('lossStudyRevision') in {'source_grounded_no_lambda_v1','class_gradient_importance_anchor_v1','dirichlet_local_snapshot_anchor_v1'}:
+            if config.get('lossStudyRevision') in {'source_grounded_no_lambda_v1','class_gradient_importance_anchor_v1','dirichlet_local_snapshot_anchor_v1','dirichlet_logit_calibration_diagnostic_v1','dirichlet_prior_readiness_diagnostic_v1'}:
                 record.update(snapshotAnchorReferenceHash=training['snapshotAnchorReferenceHash'],
                     snapshotAnchorMu=config['snapshotAnchorMu'],lossStudyRevision=config['lossStudyRevision'])
             if class_aware:
                 record['classRetention']=training['classRetention']
+            if calibration_study:
+                record.update(localClassCounts=training['localClassCounts'],
+                    logitCalibrationOffsets=training['logitCalibrationOffsets'],
+                    localTrainingLossDefinition='mean_over_epochs_calibrated_ce' if config['logitCalibrationEnabled'] else 'mean_over_epochs_ordinary_ce')
             if activation_callback: activation_callback(record)
             if audit:
                 audit.record_activation(record)

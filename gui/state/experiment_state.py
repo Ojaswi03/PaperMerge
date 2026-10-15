@@ -72,6 +72,9 @@ class ExperimentConfig:
                 f"CE + frozen snapshot anchor μ={self.extra.get('snapshotAnchorMu')} • S=5",
                 'No helper gradients / no TRAIN replication • cloud tracking disabled',
                 f"Objective: {self.extra.get('localObjective')}"]
+            if self.extra.get('lossStudyRevision')=='dirichlet_prior_readiness_diagnostic_v1':
+                parts += ['Local-prior training logit adjustment • raw-logit inference and selection',
+                    'Evidence-gated 30-round confirmation • not a 500-round production run']
         elif self.extra.get('noniidStudyId'):
             parts += [self.extra['experimentProtocol'],
                 f"Certified CART owner gradients • μ={self.extra.get('snapshotAnchorMu')} • memory S={self.basil_memory_size}",
@@ -171,9 +174,12 @@ def to_persisted(config: ExperimentConfig) -> dict[str, Any]:
 def validate_experiment(config: ExperimentConfig) -> list[ValidationIssue]:
     if config.form_errors:return [ValidationIssue(key,value) for key,value in config.form_errors.items()]
     if config.extra.get('experimentProtocol')=='sequential_basil_dirichlet_v1':
-        from basil_core.dirichlet_study import validate_configuration
+        if config.extra.get('lossStudyRevision')=='dirichlet_prior_readiness_diagnostic_v1':
+            from basil_core.dirichlet_prior_study import validate_evidence as validate_configuration
+        else:
+            from basil_core.dirichlet_study import validate_configuration
         try:validate_configuration(to_persisted(config))
-        except (ValueError,TypeError,KeyError) as error:return [ValidationIssue('protocol',str(error))]
+        except (ValueError,TypeError,KeyError,OSError) as error:return [ValidationIssue('protocol',str(error))]
         return []
     if config.extra.get('experimentProtocol')=='cart_verified_one_class_v1':
         from basil_core.noniid_verified_study import validate_configuration

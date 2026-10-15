@@ -95,6 +95,20 @@ def checkpoint_implementation(config):
                      'scripts/run_noniid_basil_study.py','scripts/run_dirichlet_condition.py',
                      'basil_core/protocol_checkpoint.py'):
             fingerprints[name]=hashlib.sha256((root/name).read_bytes()).hexdigest()
+    if config.get('lossStudyRevision') in {'dirichlet_logit_calibration_diagnostic_v1','dirichlet_prior_readiness_diagnostic_v1'}:
+        root=Path(__file__).resolve().parents[1]
+        for name in ('basil_core/dirichlet_calibration.py','scripts/run_dirichlet_calibration.py'):
+            fingerprints[name]=hashlib.sha256((root/name).read_bytes()).hexdigest()
+    if config.get('lossStudyRevision')=='dirichlet_prior_readiness_diagnostic_v1':
+        # Augmentation, device and cleanup policy are scientific dependencies
+        # too. A changed helper must not slip through an "exact" resume.
+        root=Path(__file__).resolve().parents[1]
+        for name in ('basil_core/research_audit.py','basil_core/iid_runtime.py',
+                     'basil_core/memory_safety.py','basil_core/protocol_compatibility.py'):
+            fingerprints[name]=hashlib.sha256((root/name).read_bytes()).hexdigest()
+        if config.get('readinessStage')=='threat':
+            for name in ('basil_core/dirichlet_prior_study.py','scripts/run_dirichlet_prior_condition.py'):
+                fingerprints[name]=hashlib.sha256((root/name).read_bytes()).hexdigest()
     if config.get('lossStudyRevision')=='class_gradient_importance_anchor_v1':
         root=Path(__file__).resolve().parents[1]
         for name in ('basil_core/class_aware_retention.py','basil_core/noniid_study.py','basil_core/protocol_checkpoint.py'):
