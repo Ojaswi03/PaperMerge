@@ -15,7 +15,7 @@ to improve accuracy or provide arbitrary-Byzantine robustness.
 
 ## 1. The complete formula
 
-For the active node \(i\), the loss at **each optimizer step** is
+For the active node $i$, the loss at **each optimizer step** is
 
 $$
 \boxed{
@@ -26,8 +26,8 @@ $$
 }
 $$
 
-Here **\(\mu=0.01\)** in all four conditions. The EBM coefficient is
-**\(c=0\)** in A/B/C and **\(c=\sigma_e^2=0.0001\)** in D.
+Here $\mu=0.01$ in all four conditions. The EBM coefficient is
+$c=0$ in A/B/C and $c=\sigma_e^2=0.0001$ in D.
 There is **no additional lambda**.
 
 The current classification term is not ordinary raw-logit CE. It is
@@ -41,22 +41,22 @@ F_i(\theta;B_i)
 $$
 
 The logarithm is applied elementwise. Its coefficient is fixed at
-\(\tau=1\). The implementation subtracts an offset
-\(-\log\pi_i\), which is exactly the same as **adding** \(\log\pi_i\)
+$\tau=1$. The implementation subtracts an offset
+$-\log\pi_i$, which is exactly the same as **adding** $\log\pi_i$
 to the logits before numerically stable cross-entropy.
 
 | Symbol | Meaning |
 |---|---|
-| \(i,c\) | Active node and CIFAR-10 class |
-| \(B_i\) | Current local TRAIN minibatch; augmented for SGD |
-| \(n_{i,c}\) | Number of actual TRAIN examples of class \(c\) owned by node \(i\) |
-| \(\pi_i\) | Fixed node-local class prior, calculated from TRAIN counts |
-| \(z_\theta(x)\) | Ten raw CNN logits, before any training-only prior adjustment |
-| \(\theta\) | Current trainable weights and biases, changing after each SGD step |
-| \(\theta_{\mathrm{sel},i}\) | Complete received snapshot selected before this activation; frozen for all five epochs |
-| \(\mu\) | Snapshot-anchor strength, fixed at 0.01 |
-| \(\sigma_e\) | Absolute channel standard deviation per parameter coordinate, 0.010 in C/D |
-| \(c\) | EBM coefficient: zero in A/B/C; channel variance 0.0001 in D |
+| $i,c$ | Active node and CIFAR-10 class |
+| $B_i$ | Current local TRAIN minibatch; augmented for SGD |
+| $n_{i,c}$ | Number of actual TRAIN examples of class $c$ owned by node $i$ |
+| $\pi_i$ | Fixed node-local class prior, calculated from TRAIN counts |
+| $z_\theta(x)$ | Ten raw CNN logits, before any training-only prior adjustment |
+| $\theta$ | Current trainable weights and biases, changing after each SGD step |
+| $\theta_{\mathrm{sel},i}$ | Complete received snapshot selected before this activation; frozen for all five epochs |
+| $\mu$ | Snapshot-anchor strength, fixed at 0.01 |
+| $\sigma_e$ | Absolute channel standard deviation per parameter coordinate, 0.010 in C/D |
+| $c$ | EBM coefficient: zero in A/B/C; channel variance 0.0001 in D |
 
 ## 2. Exactly what is enabled in A/B/C/D
 
@@ -66,15 +66,15 @@ ordinary-CE/no-anchor ablation.
 
 | Component | A: clean | B: attack | C: attack + noise | D: attack + noise + EBM |
 |---|---|---|---|---|
-| Dirichlet \(\alpha=0.2\), same partition | Yes | Yes | Yes | Yes |
-| BASIL raw-local-CE selection, memory \(S=5\) | On | On | On | On |
-| Local-prior-adjusted classification \(F_i\) | On | On | On | On |
-| Snapshot anchor, \(\mu=0.01\) | On | On | On | On |
+| Dirichlet $\alpha=0.2$, same partition | Yes | Yes | Yes | Yes |
+| BASIL raw-local-CE selection, memory $S=5$ | On | On | On | On |
+| Local-prior-adjusted classification $F_i$ | On | On | On | On |
+| Snapshot anchor, $\mu=0.01$ | On | On | On | On |
 | Actual attacker IDs | None | 0, 1, 5, 7 | 0, 1, 5, 7 | 0, 1, 5, 7 |
 | Hidden outbound attack | Off | From R20 | From R20 | From R20 |
 | Absolute Gaussian channel | Off | Off | From R0 | From R0 |
-| Channel standard deviation \(\sigma_e\) | 0 | 0 | 0.010 | 0.010 |
-| EBM coefficient \(c\) | 0 | 0 | **0 despite noise** | **0.0001** |
+| Channel standard deviation $\sigma_e$ | 0 | 0 | 0.010 | 0.010 |
+| EBM coefficient $c$ | 0 | 0 | **0 despite noise** | **0.0001** |
 | EBM mode | `none` | `none` | `none` | `gradient_norm_objective` |
 | Local objective identifier | `logit_prior_snapshot_anchor` | `logit_prior_snapshot_anchor` | `logit_prior_snapshot_anchor` | `logit_prior_ebm_snapshot_anchor` |
 
@@ -97,7 +97,7 @@ reference; the reference is not one shared constant across the experiment.
 
 ## 3. How the terms address non-IID data
 
-The current split is **Dirichlet label skew with \(\alpha=0.2\)**. Nodes own
+The current split is **Dirichlet label skew** with $\alpha=0.2$. Nodes own
 different class proportions and different numbers of examples. It is no longer
 the deterministic one-class-per-node split, nor an equal-sized IID split.
 
@@ -118,7 +118,7 @@ the deterministic one-class-per-node split, nor an equal-sized IID split.
 ### Training-only local-prior adjustment
 
 Ordinary local CE can favor the classes a node sees most often. Adding
-\(\log\pi_i\) explicitly accounts for local class frequency during fitting.
+$\log\pi_i$ explicitly accounts for local class frequency during fitting.
 For a rare class, the added log prior is more negative; correctly fitting its
 examples requires a stronger raw-logit margin relative to common classes.
 This is intended to reduce majority-class specialization in the learned raw
@@ -140,7 +140,7 @@ L_{\mathrm{anchor}}=\frac{0.01}{2}\|\theta-\theta_{\mathrm{sel},i}\|_2^2,
 \nabla L_{\mathrm{anchor}}=0.01(\theta-\theta_{\mathrm{sel},i}).
 $$
 
-At the first step, \(\theta=\theta_{\mathrm{sel},i}\), so the anchor penalty
+At the first step, $\theta=\theta_{\mathrm{sel},i}$, so the anchor penalty
 and its gradient are zero. As training changes the parameters, the anchor
 resists drift. The reference stays immutable throughout all five full epochs.
 
@@ -154,7 +154,7 @@ only once between the final trained model and the incoming snapshot.
 
 ## 4. BASIL handles candidate selection separately from the loss
 
-For each available candidate snapshot \(\theta_j\), the receiver computes
+For each available candidate snapshot $\theta_j$, the receiver computes
 
 $$
 L_{i,j}^{SS}
@@ -169,7 +169,7 @@ batch**, with up to 512 examples. Selection uses ordinary raw-logit CE, not the
 prior-adjusted training objective, EBM or the anchor penalty. Sender-reported
 metrics and global TEST accuracy never decide the winner.
 
-Losses within the implemented absolute tolerance of \(10^{-8}\) are tied;
+Losses within the implemented absolute tolerance of $10^{-8}$ are tied;
 the nearest counterclockwise sender wins. The selected model completely
 replaces the training start state: **no model averaging**.
 
@@ -186,7 +186,7 @@ low local CE does not necessarily imply high global accuracy or honesty.
 ### Project Hidden attack: B/C/D
 
 Nodes `[0, 1, 5, 7]` train normally, then corrupt their outbound parameters
-starting at **zero-based round 20**. For each parameter tensor \(w_q\):
+starting at **zero-based round 20**. For each parameter tensor $w_q$:
 
 $$
 \begin{aligned}
@@ -226,7 +226,7 @@ receiver is not given an unavailable clean version.
 
 ## 6. What EBM changes in D
 
-Let \(g_i=\nabla F_i\) and \(H_i=\nabla^2F_i\). The complete update direction is
+Let $g_i=\nabla F_i$ and $H_i=\nabla^2F_i$. The complete update direction is
 
 $$
 \boxed{
@@ -235,13 +235,13 @@ $$
 }
 $$
 
-In D, this is \(g_i+0.0002H_i g_i+0.01(\theta-\theta_{\mathrm{sel},i})\).
+In D, this is $g_i+0.0002H_i g_i+0.01(\theta-\theta_{\mathrm{sel},i})$.
 Nested TensorFlow GradientTapes differentiate the gradient-norm penalty without
 materializing the Hessian. A/B/C have no Hessian-gradient correction.
 
 EBM penalizes the gradient norm of **prior-adjusted classification loss** in
 this revision. It does not penalize the gradient of the entire anchored loss.
-There are no EBM/anchor cross terms hidden inside \(\|\nabla F_i\|^2\).
+There are no EBM/anchor cross terms hidden inside $\|\nabla F_i\|^2$.
 
 This adapts noise-aware optimization to the current classification objective;
 it is not equivalent to scaling the CE gradient by a fixed multiplier. It does
@@ -275,7 +275,7 @@ Five latest predecessor snapshots available in receiver memory
 ```
 
 All conditions retain the 117,706-parameter CNN, SGD without momentum,
-\(\eta_r=0.05/(1+0.05r)\), five complete local epochs, batch 512 with final
+$\eta_r=0.05/(1+0.05r)$, five complete local epochs, batch 512 with final
 partial batches retained, no gradient clipping and no weight decay. One full
 traversal of ten nodes is one round. No class images, replay examples, class
 registry, helper gradients or CART mechanism are shared or enabled here.
