@@ -3,6 +3,12 @@
 PaperMerge studies Byzantine-resilient decentralized learning under noisy
 communication using Python, TensorFlow and a Tkinter experiment workspace.
 
+[Current non-IID formula and A/B/C/D explained](docs/NONIID_LOSS_AND_ABCD_GUIDE.md):
+the complete local-prior-adjusted classification loss, frozen snapshot anchor,
+and D-only no-lambda EBM, with a condition table and training-flow diagram.
+The guide separates ordinary-CE BASIL Snapshot Selection from local training
+and explains the retained Hidden attack and absolute Gaussian channel.
+
 [Latest: Dirichlet rerun readiness, results, formulas and launch instructions](docs/DIRICHLET_RERUN_READINESS.md).
 The full-data GPU gates completed. Local-prior training reached **32.90%**
 Node-9 accuracy versus **19.13%** for the matched original ten-round control.

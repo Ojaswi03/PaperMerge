@@ -1,5 +1,9 @@
 # Current documentation
 
+[Current non-IID loss and A/B/C/D guide](NONIID_LOSS_AND_ABCD_GUIDE.md): complete
+local-prior/EBM/snapshot-anchor equations, condition table, BASIL selection,
+Hidden attack and actual Gaussian channel ordering, and source attribution.
+
 [Dirichlet rerun readiness](DIRICHLET_RERUN_READINESS.md): completed clean/noise/23-round
 attack gates, exact revised loss, measured tables and the idle 30-round A/B/C/D
 GPU confirmation preset. No 500-round study has been approved or started.
