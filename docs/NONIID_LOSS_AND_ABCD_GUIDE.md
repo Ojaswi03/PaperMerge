@@ -35,7 +35,7 @@ The current classification term is not ordinary raw-logit CE. It is
 $$
 F_i(\theta;B_i)
 =\frac{1}{|B_i|}\sum_{(x,y)\in B_i}
-\operatorname{CE}\!\left(y,z_\theta(x)+\log\pi_i\right),
+\mathrm{CE}\left(y,z_\theta(x)+\log\pi_i\right),
 \qquad
 \pi_{i,c}=\frac{\max(n_{i,c},1)}{\sum_{k=0}^{9}\max(n_{i,k},1)}.
 $$
@@ -159,7 +159,7 @@ For each available candidate snapshot \(\theta_j\), the receiver computes
 $$
 L_{i,j}^{SS}
 =\frac{1}{|B_i^{SS}|}\sum_{(x,y)\in B_i^{SS}}
-\operatorname{CE}\!\left(y,z_{\theta_j}(x)\right),
+\mathrm{CE}\left(y,z_{\theta_j}(x)\right),
 \qquad
 \theta_{\mathrm{sel},i}=\arg\min_j L_{i,j}^{SS}.
 $$
@@ -190,8 +190,8 @@ starting at **zero-based round 20**. For each parameter tensor \(w_q\):
 
 $$
 \begin{aligned}
-\delta_q&\sim\mathcal N\!\left(0,
-  [0.05\max(\operatorname{std}(w_q),0.01)]^2 I\right),\\
+\delta_q&\sim\mathcal N\left(0,
+  [0.05\max(\mathrm{std}(w_q),0.01)]^2 I\right),\\
 w_{\mathrm{attack},q}
 &=0.45w_q+0.55(-1.4w_q+\delta_q)
 =-0.32w_q+0.55\delta_q.
