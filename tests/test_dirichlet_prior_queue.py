@@ -179,6 +179,9 @@ def test_real_runner_io_interrupt_resume_and_live_events_without_learning(monkey
     import contextlib
     import hashlib
     import numpy as np
+    # Import before mocking subprocess.check_output: Keras may query fontconfig
+    # during its first import and expects real bytes, not the fake Git string.
+    import tensorflow as tf
     import scripts.run_dirichlet_calibration as runner
     import basil_core.dirichlet_prior_study as study
     import basil_core.protocol_checkpoint as checkpoint

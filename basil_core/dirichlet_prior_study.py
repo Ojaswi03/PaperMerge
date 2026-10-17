@@ -99,9 +99,14 @@ def gui_approved(config):
 
 
 def recovery_plan(directory,config):
+    validate_evidence(config)
+    return _recovery_plan(directory,config)
+
+
+def _recovery_plan(directory,config):
+    """Shared exact checkpoint mechanics; caller supplies family approval."""
     from zipfile import BadZipFile
     from basil_core.protocol_checkpoint import load_checkpoint
-    validate_evidence(config)
     directory=Path(directory)
     manifest_path=directory/'run.json'
     if not manifest_path.exists():

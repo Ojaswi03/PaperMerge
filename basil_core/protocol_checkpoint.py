@@ -113,6 +113,11 @@ def checkpoint_implementation(config):
         root=Path(__file__).resolve().parents[1]
         for name in ('basil_core/class_aware_retention.py','basil_core/noniid_study.py','basil_core/protocol_checkpoint.py'):
             fingerprints[name]=hashlib.sha256((root/name).read_bytes()).hexdigest()
+    if config.get('horizonStudyRevision') == 'dirichlet_prior_fixed_horizons_v1':
+        root=Path(__file__).resolve().parents[1]
+        for name in ('basil_core/dirichlet_horizon_study.py',
+                     'scripts/run_dirichlet_horizon_condition.py','basil_core/live_tracking.py'):
+            fingerprints[name]=hashlib.sha256((root/name).read_bytes()).hexdigest()
     return fingerprints
 
 

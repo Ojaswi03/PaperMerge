@@ -64,7 +64,13 @@ class IidExecutionHandle:
                 f"Live tracking unavailable; local results continue: {payload.get('error','not configured')}")
             self.sink(ExecutionEvent('status_updated',{'message':message}))
         elif 'restored' in payload:
-            self.sink(ExecutionEvent('execution_restored',payload['restored']))
+            restored=dict(payload['restored'])
+            if config.get('optimizerStepsPerNode'):
+                from gui.work_progress import completed_work
+                cursor=len(restored['activationHistory'])
+                restored.update(completed_work(config,cursor))
+                restored['startProgress']=restored['progress']
+            self.sink(ExecutionEvent('execution_restored',restored))
         elif isinstance(payload.get('recovery'),dict) and {'completed','total'} <= payload['recovery'].keys():
             # A CLI dry-run/startup also emits a recovery *plan* with fields
             # mode/startActivation/completedRounds. That is not replay progress.
@@ -73,12 +79,16 @@ class IidExecutionHandle:
             self.sink(ExecutionEvent('status_updated',{'message':payload.get('error','Execution stopped')}))
         elif 'roundComplete' in payload:
             r=payload['roundComplete']
-            self.sink(ExecutionEvent('progress_updated',{'round':r['round']+1,'completedRounds':r['round']+1,'progress':(r['round']+1)/rounds}))
+            from gui.work_progress import completed_work
+            self.sink(ExecutionEvent('progress_updated',{'round':r['round']+1,'completedRounds':r['round']+1,
+                **completed_work(config,(r['round']+1)*nodes)}))
             self.sink(ExecutionEvent('accuracy_updated',{'average':r['averageAccuracy'],'worst':r['worstNodeAccuracy']}))
             self.sink(ExecutionEvent('network_round_updated',{**context,'payload':{**r,'round':r['round']+1}}))
         elif 'node' in payload and 'round' in payload:
             position=payload['round']+(payload['node']+1)/nodes
-            self.sink(ExecutionEvent('progress_updated',{'round':payload['round']+1,'progress':position/rounds}))
+            from gui.work_progress import completed_work
+            self.sink(ExecutionEvent('progress_updated',{'round':payload['round']+1,
+                **completed_work(config,payload['round']*nodes+payload['node']+1)}))
             if payload.get('accuracy') is not None:
                 self.sink(ExecutionEvent('node_accuracy_updated',{'node':payload['node'],'accuracy':payload['accuracy'],'round_position':position}))
             update=payload.get('networkUpdate')

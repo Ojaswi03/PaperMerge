@@ -30,13 +30,23 @@ class DashboardView(ttk.Frame):
         self.live=ttk.Frame(self.content)
         cards=ttk.Frame(self.live); cards.pack(fill="x")
         self.values={}
-        for i,label in enumerate(("Run status","Progress","Round","Experiment elapsed","Experiment ETA remaining","Workers","Average accuracy","Worst-node accuracy","Queue","Queue elapsed (this session)","Queue ETA remaining")):
-            card=ttk.Frame(cards,style="Card.TFrame",padding=12)
-            card.grid(row=i//3,column=i%3,sticky="nsew",padx=4,pady=4); cards.columnconfigure(i%3,weight=1)
+        # Progress/round/queue counts have dedicated exact-work rows below;
+        # do not duplicate them in cards at the expense of the live plot.
+        for i,label in enumerate(("Run status","Experiment elapsed","Experiment ETA remaining","Workers","Average accuracy","Worst-node accuracy","Queue elapsed (this session)","Queue ETA remaining")):
+            card=ttk.Frame(cards,style="Card.TFrame",padding=10)
+            card.grid(row=i//4,column=i%4,sticky="nsew",padx=4,pady=4); cards.columnconfigure(i%4,weight=1)
             ttk.Label(card,text=label,style="Card.TLabel").pack(anchor="w")
-            self.values[label]=ttk.Label(card,font=("TkDefaultFont",18,"bold"),style="Card.TLabel")
+            self.values[label]=ttk.Label(card,font=("TkDefaultFont",16,"bold"),style="Card.TLabel")
             self.values[label].pack(anchor="w",pady=(8,0))
         self.latest=ttk.Label(self.live,style="Muted.TLabel"); self.latest.pack(anchor="w",pady=(12,4))
+        self.work_counts=ttk.Label(self.live,font=('TkDefaultFont',11,'bold'),wraplength=1000)
+        self.work_counts.pack(anchor='w',pady=(2,4))
+        self.work_bar=ttk.Progressbar(self.live,mode='determinate',maximum=1.)
+        self.work_bar.pack(fill='x',pady=(0,4))
+        self.queue_counts=ttk.Label(self.live,font=('TkDefaultFont',11,'bold'),wraplength=1000)
+        self.queue_counts.pack(anchor='w',pady=(2,4))
+        self.queue_bar=ttk.Progressbar(self.live,mode='determinate',maximum=1.)
+        self.queue_bar.pack(fill='x',pady=(0,4))
         ttk.Label(self.live,text="Live accuracy",font=("TkDefaultFont",14,"bold")).pack(anchor="w",pady=(8,4))
         self.chart=tk.Canvas(self.live,height=190,bg=COLORS["surface_alt"],highlightthickness=1,highlightbackground=COLORS["border"])
         self.chart.pack(fill="both",expand=True,pady=(8,0)); self.chart.bind("<Configure>",lambda _e:self._draw_chart())
@@ -62,21 +72,35 @@ class DashboardView(ttk.Frame):
         recovering=state.recovery_completed<state.recovery_total
         context=(f'Rebuilding saved state: {state.recovery_completed}/{state.recovery_total} activations verified. '
             'This replays recorded training; it is not a new scientific run.' if recovering else
-            'Experiment elapsed includes prior attempts. Queue elapsed is this launch session; ETAs are estimates.')
+            'Counts update after completed nodes; ETAs learn per-node wall times. Experiment elapsed includes prior attempts; queue elapsed is this session.')
         if state.execution_device:context+=f' Device: {state.execution_device} — {state.device_name}.'
         self._text(self.context,context)
         elapsed=state.elapsed_seconds; eta=state.experiment_eta_seconds
         pending=[e for e in self.queue_state.entries if e.status.value=='pending']
-        estimates=[e.estimated_remaining_seconds for e in pending]
-        queue_eta=eta+sum(estimates) if state.queue_active and eta is not None and all(v is not None for v in estimates) else None
+        from gui.work_progress import queue_work,queue_eta_seconds
+        queue_eta=queue_eta_seconds(self.queue_state.entries,state)
         rounds=state.active_experiment_rounds or state.experiment.rounds
-        values=(state.execution.value.title(),f"{state.progress:.1%}",f"{state.current_round} / {rounds}",
-            duration(elapsed),"Estimating…" if eta is None and running else "—" if eta is None else duration(eta),str(state.worker_count),
+        values=(state.execution.value.title(),f"{state.progress:.1%}",f"{state.completed_rounds} / {rounds} done",
+            duration(elapsed),"Final evaluation / saving…" if running and state.progress>=1. else "Estimating…" if eta is None and running else "—" if eta is None else duration(eta),str(state.worker_count),
             "—" if state.average_accuracy is None else f"{state.average_accuracy:.2%}",
             "—" if state.worst_accuracy is None else f"{state.worst_accuracy:.2%}",f'{len(pending)} pending',
             duration(state.queue_elapsed_seconds) if state.queue_started_monotonic is not None else 'Not started',
-            duration(queue_eta) if queue_eta is not None else 'Estimating…' if state.queue_active else 'Paused / not started')
-        for label,value in zip(self.values,values):self._text(self.values[label],value)
+            duration(queue_eta)+(' (estimate)' if not state.queue_active else '') if queue_eta is not None else 'Estimating…' if state.queue_active else 'Paused / not started')
+        values=dict(zip(("Run status","Progress","Round","Experiment elapsed","Experiment ETA remaining","Workers","Average accuracy","Worst-node accuracy","Queue","Queue elapsed (this session)","Queue ETA remaining"),values))
+        for label,widget in self.values.items():self._text(widget,values[label])
+        work=f'Experiment {state.progress:.1%} — rounds done: {state.completed_rounds:,}/{rounds:,}'
+        if state.total_activations:
+            work+=f'  |  Node activations: {state.completed_activations:,}/{state.total_activations:,} ({state.total_activations-state.completed_activations:,} left)'
+        if state.total_optimizer_steps:
+            work+=f'  |  Optimizer batches: {state.completed_optimizer_steps:,}/{state.total_optimizer_steps:,} ({state.total_optimizer_steps-state.completed_optimizer_steps:,} left)'
+        self._text(self.work_counts,work)
+        self.work_bar['value']=state.progress
+        queue=queue_work(self.queue_state.entries,state)
+        text=f"Loaded queue {queue['progress']:.1%}: {queue['completedRuns']}/{queue['totalRuns']} experiments done  |  Rounds: {queue['completedRounds']:,}/{queue['totalRounds']:,} ({queue['totalRounds']-queue['completedRounds']:,} left)"
+        text+=f"  |  Activations: {queue['completedActivations']:,}/{queue['totalActivations']:,}"
+        if queue['totalOptimizerSteps']:
+            text+=f"  |  Batches: {queue['completedOptimizerSteps']:,}/{queue['totalOptimizerSteps']:,} ({queue['totalOptimizerSteps']-queue['completedOptimizerSteps']:,} left)"
+        self._text(self.queue_counts,text);self.queue_bar['value']=queue['progress']
         latest=("Waiting for the first completed node activation."
             if state.latest_node_accuracy is None else f"Latest completed node {state.latest_node}: {state.latest_node_accuracy:.2%}. Mean/worst update after a full round.")
         self._text(self.latest,latest)
@@ -85,7 +109,9 @@ class DashboardView(ttk.Frame):
         recent=self.result_service.discover() if self.result_service else []
         protocol=state.experiment.extra.get('experimentProtocol')
         if protocol:recent=[r for r in recent if r.protocol==protocol]
-        recent=recent[:5]
+        # Keep live counters and the accuracy chart visible; idle browsing can
+        # show a longer history without consuming running-dashboard height.
+        recent=recent[:2 if running else 5]
         self._text(self.recent,"\n".join(f"{item.status.title()}  •  {item.name}" for item in recent) or "No completed or failed runs discovered.")
 
     def _draw_chart(self):

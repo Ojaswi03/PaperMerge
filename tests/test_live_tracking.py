@@ -54,6 +54,21 @@ def test_disabled_logging_never_initializes_sdk(setup):
     assert not calls and not run.logs and tracker.metadata['status']=='disabled'
 
 
+def test_noniid_names_and_ebm_coefficient_are_not_iid_or_zero(setup):
+    run,calls,sdk,cfg,settings=setup
+    cfg.update(partitionStrategy='dirichlet',trackingNamespace='NONIID RUN',
+        localObjective='logit_prior_ebm_snapshot_anchor',ebmMode='gradient_norm_objective',
+        snapshotAnchorMu=.01,dirichletAlpha=.2)
+    tracker=LiveTracker(cfg,{'partitionHash':'paired'},settings=settings,sdk=sdk)
+    tracker.round(dict(round=0,full_test_accuracy=.3,full_test_loss=1.))
+    assert calls[0]['name'].startswith('NONIID RUN — D')
+    assert calls[0]['config']['ebmCoefficient']==.0001
+    assert calls[0]['config']['partitionHash']=='paired'
+    assert calls[0]['job_type']=='noniid-basil-research'
+    assert run.logs[0]['NONIID RUN/Accuracy']==.3
+    assert 'IID RUN/Accuracy' not in run.logs[0]
+
+
 def test_metrics_only_and_no_rng_change(setup):
     import numpy as np
     run,calls,sdk,cfg,settings=setup

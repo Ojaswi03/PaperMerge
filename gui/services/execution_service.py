@@ -50,6 +50,10 @@ class ExecutionService:
                 self.state.completed_rounds=payload['round']
                 self.state.elapsed_offset=payload['priorRuntimeSeconds']
                 self.state.session_start_progress=payload['startProgress']
+                self.state.work_timing_samples.clear()
+                for key,field_name in [('completedActivations','completed_activations'),('totalActivations','total_activations'),
+                        ('completedOptimizerSteps','completed_optimizer_steps'),('totalOptimizerSteps','total_optimizer_steps')]:
+                    if key in payload:setattr(self.state,field_name,int(payload[key]))
                 self.state.accuracy_history=[tuple(r) for r in payload['accuracyHistory']]
                 self.state.activation_accuracy_history=[tuple(r) for r in payload['activationHistory']]
                 self.state.recovery_total=payload['recoveryTotal']; self.state.recovery_completed=payload['recoveryCompleted']
@@ -69,6 +73,10 @@ class ExecutionService:
             elif event.kind=="progress_updated":
                 self.state.current_round=int(payload.get("round",self.state.current_round)); self.state.progress=float(payload.get("progress",self.state.progress))
                 if 'completedRounds' in payload:self.state.completed_rounds=int(payload['completedRounds'])
+                for key,field_name in [('completedActivations','completed_activations'),('totalActivations','total_activations'),
+                        ('completedOptimizerSteps','completed_optimizer_steps'),('totalOptimizerSteps','total_optimizer_steps')]:
+                    if key in payload:setattr(self.state,field_name,int(payload[key]))
+                if 'completedActivations' in payload:self.state.observe_completed_work()
             elif event.kind=="accuracy_updated":
                 self.state.average_accuracy=payload.get("average"); self.state.worst_accuracy=payload.get("worst")
                 if self.state.average_accuracy is not None and self.state.worst_accuracy is not None:

@@ -5,6 +5,13 @@ from .iid_execution_service import IidExecutionHandle
 
 class DirichletExecutionHandle(IidExecutionHandle):
     def __init__(self,config,event_sink):
+        if config.get('horizonStudyRevision')=='dirichlet_prior_fixed_horizons_v1':
+            from basil_core.dirichlet_horizon_study import gui_approved as horizon_approved,recovery_plan as horizon_recovery
+            super().__init__(config,event_sink,_approved=horizon_approved,
+                _plan=horizon_recovery(ROOT/config['resultDirectory'],config),
+                _script=ROOT/'scripts/run_dirichlet_horizon_condition.py',
+                _work_root=ROOT/f"gui/worker_state/dirichlet_prior_{config['nRounds']}r")
+            return
         if config.get('lossStudyRevision')=='dirichlet_prior_readiness_diagnostic_v1':
             from basil_core.dirichlet_prior_study import gui_approved as prior_approved,recovery_plan as prior_recovery
             super().__init__(config,event_sink,_approved=prior_approved,

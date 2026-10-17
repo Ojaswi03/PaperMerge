@@ -12,8 +12,8 @@ class QueueView(ttk.Frame):
         for label,command in actions:
             if command is None: continue
             ttk.Button(tools,text=label,command=command).pack(side="left",padx=(0,6))
-        self.tree=ttk.Treeview(self,columns=("status","name","dataset","rounds","done","device","recovery"),show="headings",selectmode="extended")
-        for key,label,width in (("status","Status",90),("name","Experiment",280),("dataset","Dataset",90),("rounds","Rounds",65),("done","Done / total",95),("device","Device",60),("recovery","Start / recovery",260)): self.tree.heading(key,text=label); self.tree.column(key,width=width,stretch=key in {"name","recovery"})
+        self.tree=ttk.Treeview(self,columns=("status","name","dataset","rounds","done","batches","device","recovery"),show="headings",selectmode="extended")
+        for key,label,width in (("status","Status",90),("name","Experiment",280),("dataset","Dataset",90),("rounds","Rounds",65),("done","Done / total",95),("batches","Optimizer batches",145),("device","Device",60),("recovery","Start / recovery",260)): self.tree.heading(key,text=label); self.tree.column(key,width=width,stretch=key in {"name","recovery"})
         self.tree.pack(fill="both",expand=True); self.summary=ttk.Label(self,text="",style="Muted.TLabel"); self.summary.pack(fill="x",pady=(8,0)); self.empty=ttk.Label(self,text="Queue is empty. Add the current configuration or load entries from the configuration library.",style="Muted.TLabel"); self.refresh()
         self.detail=ttk.Label(self,text="Select a queued experiment to inspect its protocol, attackers, channel and objective.",wraplength=950,justify="left",style="Muted.TLabel");self.detail.pack(fill="x",pady=(8,0));self.tree.bind('<<TreeviewSelect>>',self._describe)
     def _describe(self,_event=None):
@@ -36,7 +36,10 @@ class QueueView(ttk.Frame):
     def refresh(self):
         def title(entry):
             if entry.config.extra.get('lossStudyRevision')=='dirichlet_prior_readiness_diagnostic_v1':
-                from basil_core.dirichlet_prior_study import display_label
+                if entry.config.extra.get('horizonStudyRevision')=='dirichlet_prior_fixed_horizons_v1':
+                    from basil_core.dirichlet_horizon_study import display_label
+                else:
+                    from basil_core.dirichlet_prior_study import display_label
                 try:return display_label(to_persisted(entry.config))
                 except (ValueError,KeyError,TypeError):pass
             return entry.config.extra.get('displayName',entry.config.experiment_name).split(' — Fresh')[0]
@@ -46,7 +49,9 @@ class QueueView(ttk.Frame):
             if item not in wanted:self.tree.delete(item)
         for index,entry in enumerate(visible):
             name=title(entry)
-            values=tuple(map(str,(entry.status.value.title(),name,f'{entry.config.dataset}/{entry.config.split}',entry.config.rounds,f'{entry.completed_rounds}/{entry.config.rounds}',entry.config.extra.get('executionDevice','CPU'),entry.execution_hint)))
+            batch_text=f'{entry.completed_optimizer_steps:,}/{entry.total_optimizer_steps:,}' if entry.total_optimizer_steps else '—'
+            status_text='Waiting' if entry.status is QueueStatus.PENDING and entry.execution_hint.startswith('Waiting for') else entry.status.value.title()
+            values=tuple(map(str,(status_text,name,f'{entry.config.dataset}/{entry.config.split}',entry.config.rounds,f'{entry.completed_rounds}/{entry.config.rounds}',batch_text,entry.config.extra.get('executionDevice','CPU'),entry.execution_hint)))
             if not self.tree.exists(entry.entry_id):self.tree.insert('',index,iid=entry.entry_id,values=values)
             elif tuple(self.tree.item(entry.entry_id,'values'))!=values:self.tree.item(entry.entry_id,values=values)
             if self.tree.index(entry.entry_id)!=index:self.tree.move(entry.entry_id,'',index)

@@ -149,6 +149,10 @@ def diagnostic_configs(partition_hash, initial_hash):
 
 
 def validate_diagnostic_config(config):
+    if config.get('horizonStudyRevision') == 'dirichlet_prior_fixed_horizons_v1':
+        from basil_core.dirichlet_horizon_study import validate_configuration
+        validate_configuration(config)
+        return
     from basil_core.research_protocol import validate_config
     gate=config.get('lossStudyRevision')==GATE_REVISION
     envelope = dict(config, lossStudyRevision='dirichlet_local_snapshot_anchor_v1',

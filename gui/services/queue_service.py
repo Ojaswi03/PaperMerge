@@ -26,7 +26,7 @@ class QueueService:
         # Keep the established list-of-configurations format. Completed work is
         # represented by result manifests and was historically removed from
         # the persisted queue; stopped/failed entries reload as retryable work.
-        payload=[dict(config=to_persisted(e.config),status=e.status.value,entryId=e.entry_id,error=e.error) if e.config.extra.get('iidCampaignId') or e.config.extra.get('noniidStudyId') else to_persisted(e.config) for e in state.entries if e.status is not QueueStatus.COMPLETED]
+        payload=[dict(config=to_persisted(e.config),status=e.status.value,entryId=e.entry_id,error=e.error) if e.config.extra.get('iidCampaignId') or e.config.extra.get('noniidStudyId') else to_persisted(e.config) for e in state.entries if e.status is not QueueStatus.COMPLETED or e.config.extra.get('horizonStudyRevision')]
         temporary.write_text(json.dumps(payload,indent=2)+"\n",encoding="utf-8"); temporary.replace(self.path)
 
     @staticmethod
@@ -35,7 +35,26 @@ class QueueService:
         for entry in state.entries:
             config=to_persisted(entry.config)
             if config.get('experimentProtocol')=='sequential_basil_dirichlet_v1':
-                if config.get('lossStudyRevision')=='dirichlet_prior_readiness_diagnostic_v1':
+                if config.get('horizonStudyRevision')=='dirichlet_prior_fixed_horizons_v1' and config.get('nRounds')==500:
+                    from gui.services.staged_queue_service import dependency_state
+                    try:
+                        dependency=dependency_state(config)
+                        if dependency['state']!='ready':
+                            from basil_core.dirichlet_horizon_study import EVIDENCE
+                            from gui.work_progress import completed_work
+                            measured=json.loads(EVIDENCE.read_text());work=completed_work(config,0)
+                            entry.completed_rounds=0;entry.completed_activations=0;entry.completed_optimizer_steps=0
+                            entry.total_activations=work['totalActivations'];entry.total_optimizer_steps=work['totalOptimizerSteps']
+                            entry.estimated_remaining_seconds=measured['runtimeSecondsByCondition'][config['conditionId']]/measured['rounds']*500
+                            entry.execution_hint=('Waiting for ALL 100-round A/B/C/D runs, then automatic validation — W&B'
+                                if dependency['state']=='waiting' else 'Waiting for automatic 100-round protocol/numerical validation — W&B')
+                            continue
+                    except (ValueError,OSError,KeyError) as error:
+                        entry.execution_hint=f'Recovery blocked: {error}';entry.estimated_remaining_seconds=None
+                        continue
+                if config.get('horizonStudyRevision')=='dirichlet_prior_fixed_horizons_v1':
+                    from basil_core.dirichlet_horizon_study import recovery_plan as dirichlet_recovery
+                elif config.get('lossStudyRevision')=='dirichlet_prior_readiness_diagnostic_v1':
                     from basil_core.dirichlet_prior_study import recovery_plan as dirichlet_recovery
                 else:
                     from basil_core.dirichlet_study import recovery_plan as dirichlet_recovery
@@ -47,6 +66,18 @@ class QueueService:
                         if plan['mode']=='fresh' else 'Already completed' if plan['mode']=='completed'
                         else f"Exact activation-boundary resume: {plan['startActivation']} — GPU")
                     entry.estimated_remaining_seconds=None
+                    if config.get('horizonStudyRevision')=='dirichlet_prior_fixed_horizons_v1':
+                        from basil_core.dirichlet_horizon_study import EVIDENCE
+                        measured=json.loads(EVIDENCE.read_text())
+                        per_round=measured['runtimeSecondsByCondition'][config['conditionId']]/measured['rounds']
+                        weights=config['optimizerStepsPerNode']
+                        from gui.work_progress import completed_work
+                        work=completed_work(config,plan['startActivation'])
+                        entry.completed_activations=work['completedActivations'];entry.total_activations=work['totalActivations']
+                        entry.completed_optimizer_steps=work['completedOptimizerSteps'];entry.total_optimizer_steps=work['totalOptimizerSteps']
+                        full,partial=divmod(plan['startActivation'],10)
+                        remaining=config['nRounds']-full-sum(weights[:partial])/sum(weights)
+                        entry.estimated_remaining_seconds=max(0.,per_round*remaining)
                 except (ValueError,OSError) as error:entry.execution_hint=f'Recovery blocked: {error}'
                 continue
             if config.get('noniidStudyId'):

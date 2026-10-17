@@ -70,9 +70,12 @@ class ExperimentConfig:
         if self.extra.get('experimentProtocol')=='sequential_basil_dirichlet_v1':
             parts += ['Dirichlet α=0.2 • receiver-local TRAIN only',
                 f"CE + frozen snapshot anchor μ={self.extra.get('snapshotAnchorMu')} • S=5",
-                'No helper gradients / no TRAIN replication • cloud tracking disabled',
+                'No helper gradients / no TRAIN replication • '+('W&B enabled' if self.extra.get('liveTrackingEnabled') else 'cloud tracking disabled'),
                 f"Objective: {self.extra.get('localObjective')}"]
-            if self.extra.get('lossStudyRevision')=='dirichlet_prior_readiness_diagnostic_v1':
+            if self.extra.get('horizonStudyRevision')=='dirichlet_prior_fixed_horizons_v1':
+                parts += ['Local-prior training adjustment • raw-logit inference and selection',
+                    f"Fixed {self.rounds}-round study • fresh canonical initialization"]
+            elif self.extra.get('lossStudyRevision')=='dirichlet_prior_readiness_diagnostic_v1':
                 parts += ['Local-prior training logit adjustment • raw-logit inference and selection',
                     'Evidence-gated 30-round confirmation • not a 500-round production run']
         elif self.extra.get('noniidStudyId'):
@@ -174,7 +177,9 @@ def to_persisted(config: ExperimentConfig) -> dict[str, Any]:
 def validate_experiment(config: ExperimentConfig) -> list[ValidationIssue]:
     if config.form_errors:return [ValidationIssue(key,value) for key,value in config.form_errors.items()]
     if config.extra.get('experimentProtocol')=='sequential_basil_dirichlet_v1':
-        if config.extra.get('lossStudyRevision')=='dirichlet_prior_readiness_diagnostic_v1':
+        if config.extra.get('horizonStudyRevision')=='dirichlet_prior_fixed_horizons_v1':
+            from basil_core.dirichlet_horizon_study import validate_evidence as validate_configuration
+        elif config.extra.get('lossStudyRevision')=='dirichlet_prior_readiness_diagnostic_v1':
             from basil_core.dirichlet_prior_study import validate_evidence as validate_configuration
         else:
             from basil_core.dirichlet_study import validate_configuration

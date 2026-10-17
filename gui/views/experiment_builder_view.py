@@ -31,6 +31,9 @@ class ExperimentBuilderView(ttk.Frame):
             self.noniid_presets[f'{letter} — Non-IID CART — 30 rounds GPU'] = str(NONIID_ROOT/f'{letter}_noniid_verified_cart_30r_gpu.json')
         from basil_core.dirichlet_study import CONFIG_ROOT as DIRICHLET_ROOT
         self.dirichlet_presets={f'{letter} — Dirichlet α=0.2 — 30 rounds GPU':str(DIRICHLET_ROOT/f'{letter}_dirichlet_alpha02_local_anchor_30r_gpu.json') for letter in 'ABCD'}
+        for rounds in (100,500):
+            for letter in 'ABCD':
+                self.dirichlet_presets[f'{letter} — Dirichlet prior — {rounds} rounds GPU'+(' / W&B (gated)' if rounds==500 else '')]=str(ROOT/f'gui/configs/nonIID/dirichlet_prior_{rounds}r/{letter}_dirichlet_prior_{rounds}r.json')
         ttk.Label(header,text="Experiment Builder",style="Title.TLabel").pack(anchor="w"); actions=ttk.Frame(header); actions.pack(anchor="w",pady=(12,0)); self.preset=tk.StringVar(value="Preset…"); ttk.Combobox(actions,textvariable=self.preset,values=("Clean baseline","Noisy + EBM","BASIL + Hidden","Sequential BASIL five-epoch protocol",*self.iid_presets,*self.noniid_presets,*self.dirichlet_presets),state="readonly",width=40).pack(side="left",padx=4); ttk.Button(actions,text="Apply",width=6,command=self._apply_preset).pack(side="left",padx=4); ttk.Button(actions,text="Reset defaults",width=14,command=self._reset).pack(side="left")
         self._section(body,"Identity",1,(("Experiment name","experiment_name","entry"),))
         self._section(body,"Dataset and distribution",2,(("Dataset","dataset",("cifar10","mnist","nmnist")),("Partition","partition_strategy",("iid","dirichlet","one_class_per_node")),("Dirichlet alpha","dirichlet_alpha","entry")))
@@ -129,7 +132,7 @@ class ExperimentBuilderView(ttk.Frame):
     def _validation(self):
         issues=validate_experiment(self.state.experiment); self.summary.configure(text=self.state.experiment.dirty_summary); self.errors.configure(text="Configuration ready" if not issues else "\n".join(f"• {issue.message}" for issue in issues[:6]),foreground=COLORS["success"] if not issues else COLORS["danger"])
         if not issues and self.state.experiment.extra.get('experimentProtocol')=='sequential_basil_dirichlet_v1':
-            self.errors.configure(text='30-round Dirichlet α=0.2 ready. Local TRAIN only; no helpers. Start using Run Queue.',foreground=COLORS['success'])
+            self.errors.configure(text=f'{self.state.experiment.rounds}-round Dirichlet α=0.2 ready. Local TRAIN only; no helpers. Start using Run Queue.',foreground=COLORS['success'])
         elif not issues and self.state.experiment.extra.get('noniidStudyId'):
             self.errors.configure(text='30-round non-IID CART study ready. Replicated TRAIN and trusted coordinator; start using Run Queue.',foreground=COLORS['success'])
         elif not issues and self.state.experiment.extra.get('iidCampaignId'):

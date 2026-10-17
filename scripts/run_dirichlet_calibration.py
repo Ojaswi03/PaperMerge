@@ -152,14 +152,23 @@ def run_pair(device, *, recover=False, prior_only=False, output_root=None, stage
     result_root=Path(output_root or RESULT).resolve()
     if not result_root.is_relative_to((ROOT/'newResults/nonIID').resolve()):
         raise ValueError('Small non-IID diagnostics must stay in newResults/nonIID.')
+    horizon = bool(configs_override and configs_override[0].get('horizonStudyRevision'))
     if configs_override is not None:
-        from basil_core.dirichlet_prior_study import validate_evidence
+        if horizon:
+            from basil_core.dirichlet_horizon_study import validate_evidence
+        else:
+            from basil_core.dirichlet_prior_study import validate_evidence
         if stage!='threat' or prior_only or len(configs_override)!=1:
             raise ValueError('A GUI execution must select exactly one approved confirmation condition.')
         validate_evidence(configs_override[0])
         if configs_override[0]['executionDevice']!=device:
             raise ValueError('Requested device differs from the approved configuration.')
-    os.environ.update(PAPERMERGE_LIVE_TRACKING='disabled', WANDB_MODE='disabled')
+    tracking_enabled=bool(horizon and configs_override[0].get('liveTrackingEnabled'))
+    if not tracking_enabled:
+        os.environ.update(PAPERMERGE_LIVE_TRACKING='disabled', WANDB_MODE='disabled')
+    else:
+        os.environ.pop('PAPERMERGE_LIVE_TRACKING',None)
+        os.environ['WANDB_MODE']='online'
     from basil_core.iid_runtime import prepare_environment, configure_tensorflow, runtime_metadata
     prepare_environment(device)
     import numpy as np
@@ -250,13 +259,21 @@ def run_pair(device, *, recover=False, prior_only=False, output_root=None, stage
                 raise ValueError('Resume identity / source / numerical policy mismatch.')
             if previous['status']=='completed':
                 outcomes[name]=previous; continue
-            checkpoint_path=output/'checkpoint.npz'
-            if configs_override is not None:
-                from basil_core.dirichlet_prior_study import recovery_plan
-                checkpoint_path=recovery_plan(output,cfg)['checkpoint']
-            state = load_checkpoint(checkpoint_path,cfg,
-                partition_hash=partition['partitionHash'], initial_hash=initial_hash)
-            records = list(state['telemetry'])
+            startup_retry=horizon and previous.get('status')=='tracking_unavailable'
+            if startup_retry:
+                from basil_core.dirichlet_horizon_study import recovery_plan
+                if recovery_plan(output,cfg)['mode']!='startup_retry':raise ValueError('Unverified startup retry.')
+            else:
+                checkpoint_path=output/'checkpoint.npz'
+                if configs_override is not None:
+                    if horizon:
+                        from basil_core.dirichlet_horizon_study import recovery_plan
+                    else:
+                        from basil_core.dirichlet_prior_study import recovery_plan
+                    checkpoint_path=recovery_plan(output,cfg)['checkpoint']
+                state = load_checkpoint(checkpoint_path,cfg,
+                    partition_hash=partition['partitionHash'], initial_hash=initial_hash)
+                records = list(state['telemetry'])
         output.mkdir(parents=True, exist_ok=True)
         # Future diagnostic repetitions retain the exact executed source bytes,
         # not just hashes of an evolving, potentially uncommitted worktree.
@@ -278,7 +295,7 @@ def run_pair(device, *, recover=False, prior_only=False, output_root=None, stage
         prior_time = previous.get('runtimeSeconds',0.) if previous else 0.
         guard = RuntimeMemoryGuard(tf,device)
         store = TelemetryStore(output/'checkpoint.npz')
-        metadata = dict(status='running', config=cfg, **runtime, purpose=cfg['purpose'], researchValid=False,
+        metadata = dict(status='running', config=cfg, **runtime, purpose=cfg['purpose'], researchValid=cfg['researchValid'],
             runId=cfg['runId'],experimentProtocol=cfg['experimentProtocol'],
             pythonVersion=platform.python_version(),numpyVersion=np.__version__,tensorflowVersion=tf.__version__,
             gitCommit=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),
@@ -294,7 +311,7 @@ def run_pair(device, *, recover=False, prior_only=False, output_root=None, stage
             partitionHash=partition['partitionHash'], initialModelHash=initial_hash, dataSha256=data_hashes,
             implementationSha256=source_files, timestamp=datetime.now(timezone.utc).isoformat(),
             sourceSnapshotDirectory='source_snapshots',
-            parameterCount=117706, wandbEnabled=False, helpersEnabled=False, trainSharing=False,
+            parameterCount=117706, wandbEnabled=tracking_enabled, helpersEnabled=False, trainSharing=False,
             attackEnabled=cfg['attackHidden'], channelNoiseEnabled=cfg['useChannelNoise'],
             ebmEnabled=cfg['ebmMode']=='gradient_norm_objective',
             ebmBaseObjective='adjusted_cross_entropy' if cfg['logitCalibrationEnabled'] else 'ordinary_cross_entropy',
@@ -303,8 +320,24 @@ def run_pair(device, *, recover=False, prior_only=False, output_root=None, stage
             completedRounds=state['completed_rounds'] if state else 0,
             completedActivations=state['next_activation'] if state else 0,
             runtimeSeconds=prior_time)
+        # Observation only, with a separate non-IID group and no old IID IDs.
+        tracking=None
+        if tracking_enabled:
+            from basil_core.live_tracking import LiveTracker
+            from basil_core.dirichlet_horizon_study import tracking_settings
+            tracking=LiveTracker(cfg,{**metadata,'liveTracking':(previous or {}).get('liveTracking',{})},
+                settings=tracking_settings(cfg),notify=lambda payload:print(json.dumps(payload),flush=True))
+            metadata['liveTracking']=tracking.metadata
+            if tracking.metadata['status']!='active':
+                metadata.update(status='tracking_unavailable',startupFailure=True,
+                    error='W&B initialization failed before any scientific update')
+                save_json(output/'run.json',metadata)
+                audit.close()
+                raise ValueError('W&B could not initialize: no scientific updates started. Check local login/connectivity.')
         save_json(output/'run.json',metadata)
         rows=saved_round_rows(state)
+        if tracking is not None:
+            for row in rows:tracking.round(row)
         write_round_metrics(output,rows)
         if gui_events and state is not None:emit_restored(state,prior_time,cfg)
         def checkpoint(current):
@@ -312,11 +345,13 @@ def run_pair(device, *, recover=False, prior_only=False, output_root=None, stage
                 partition_hash=partition['partitionHash'], initial_hash=initial_hash, telemetry_store=store)
             metadata.update(completedRounds=current['completed_rounds'], completedActivations=current['next_activation'],
                 runtimeSeconds=prior_time+time.perf_counter()-started, memorySafety=guard.checkpoint())
+            if tracking is not None:metadata['liveTracking']=dict(tracking.metadata)
             save_json(output/'run.json',metadata)
         def activation(record):
             if record['inputHash']!=record['snapshotAnchorReferenceHash'] or record['optimizerSteps']!=partition['nodes'][record['nodeId']]['optimizerStepsPerActivation']:
                 raise ValueError('Handoff / epoch contract failed.')
             records.append(record)
+            if tracking is not None:tracking.activation(record)
             if gui_events:
                 from gui.services.research_telemetry import activation_payload
                 payload=activation_payload(record,cfg['experimentName'])
@@ -330,6 +365,18 @@ def run_pair(device, *, recover=False, prior_only=False, output_root=None, stage
                 full_test_loss=row['fullTestLoss'])
             item.update({f'class_{c}_accuracy':float(row['perClassAccuracy'][c]) for c in range(10)})
             rows.append(item);write_round_metrics(output,rows)
+            if tracking is not None:
+                measured=[record for record in records if record['round']==r]
+                steps=[s for record in measured for s in record['optimizerTelemetry']]
+                links=[link for record in measured for link in record['outgoingLinks']]
+                tracked=dict(item)
+                for key,field in [('baseCrossEntropy','local_prior_ce'),('ebmPenalty','ebm_penalty'),
+                        ('baseGradientNorm','ordinary_gradient_norm'),('ebmCorrectionNorm','ebm_correction_norm'),
+                        ('ebmCorrectionRatio','ebm_correction_ratio'),('snapshotAnchorPenalty','snapshot_anchor_penalty')]:
+                    tracked[field]=float(np.mean([s[key] for s in steps]))
+                tracked.update(channel_noise_norm=float(np.mean([l['noiseL2Norm'] for l in links])),
+                    noise_to_model_norm_ratio=float(np.mean([l['relativeNoiseL2'] for l in links])))
+                tracking.round(tracked)
             print(json.dumps({'roundComplete':row} if gui_events else
                 dict(condition=name,event='round_completed',**row),allow_nan=False),flush=True)
         try:
@@ -369,6 +416,10 @@ def run_pair(device, *, recover=False, prior_only=False, output_root=None, stage
             save_json(output/'run.json',metadata)
             raise
         finally:
+            if tracking is not None:
+                tracking.finish(metadata['status'])
+                metadata['liveTracking']=dict(tracking.metadata)
+                save_json(output/'run.json',metadata)
             audit.close()
     if configs_override is None:
         save_json(result_root/('prior_stage.json' if prior_only else 'comparison.json'),dict(status='completed', conditions=outcomes,

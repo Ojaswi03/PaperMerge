@@ -20,6 +20,7 @@ class PaperMergeApp:
     def __init__(self,root: tk.Tk):
         self.root=root; root.title("PaperMerge Experiment Workspace"); root.geometry("1440x900"); root.minsize(1100,720); root.rowconfigure(0,weight=1); root.columnconfigure(0,weight=1); apply_theme(root)
         self.state=ApplicationState(); self.config_service=ConfigService(); self.queue_service=QueueService(PROJECT_ROOT/"gui"/"queue_state.json")
+        self._stage_gate_running=False;self._stage_gate_results=None
         try:self.queue_state=self.queue_service.load()
         except ValueError as error:self.queue_state=QueueState(); self.state.status=str(error)
         self.queue_service.describe_recovery(self.queue_state,PROJECT_ROOT)
@@ -56,6 +57,8 @@ class PaperMergeApp:
             latest=PROJECT_ROOT/'gui/configs/nonIID/dirichlet_alpha02_30r'
             if self.state.experiment.extra.get('lossStudyRevision')=='dirichlet_prior_readiness_diagnostic_v1':
                 latest=PROJECT_ROOT/'gui/configs/nonIID/dirichlet_prior_confirmation_30r'
+            if self.state.experiment.extra.get('horizonStudyRevision')=='dirichlet_prior_fixed_horizons_v1':
+                latest=PROJECT_ROOT/f"gui/configs/nonIID/dirichlet_prior_{self.state.experiment.rounds}r"
         paths=filedialog.askopenfilenames(parent=self.root,title="Add configurations",initialdir=latest if latest.exists() else CONFIG_ROOT,filetypes=(("JSON","*.json"),))
         added=0
         for path in paths:
@@ -69,7 +72,8 @@ class PaperMergeApp:
         if not path:return
         try:
             prepared=QueueService(path).load()
-            if any(validate_experiment(e.config) for e in prepared.entries):raise ValueError('Queue contains an invalid configuration.')
+            from gui.services.staged_queue_service import validate_queue_for_loading
+            validate_queue_for_loading(prepared.entries)
             if self.queue_state.entries and not messagebox.askyesno('Replace queue','Replace the current idle queue with this preset?',parent=self.root):return
             self.queue_state.entries[:]=prepared.entries
             if prepared.entries:self.state.experiment=prepared.entries[0].config
@@ -101,14 +105,30 @@ class PaperMergeApp:
     def _start_entry(self,pending=None):
         if pending is not None:self.state.experiment=pending.config
         config=to_persisted(self.state.experiment)
+        from gui.services.staged_queue_service import is_later_stage,dependency_state
+        if is_later_stage(config):
+            try:
+                dependency=dependency_state(config)
+                if dependency['state']=='needs_validation':
+                    self._begin_stage_validation(pending,config)
+                    return
+                if dependency['state']=='waiting':
+                    self._queue_running=False;self.state.end_queue()
+                    self.state.status='500-round stage waiting for completed 100-round conditions: '+', '.join(dependency['missing'])
+                    self.state.notify();return
+            except (ValueError,OSError,KeyError) as error:
+                self._queue_running=False;self.state.end_queue()
+                self.state.status=f'500-round prerequisite check failed; no run started: {error}'
+                LOG.exception('Staged queue dependency failed');self.state.notify();return
         from basil_core.iid_campaign import gui_approved
         from basil_core.noniid_verified_study import gui_approved as noniid_approved
         from basil_core.dirichlet_study import gui_approved as dirichlet_approved
         from basil_core.dirichlet_prior_study import gui_approved as prior_approved
-        if int(config.get("campaignVersion",0)) not in {3,4} and config.get("experimentProtocol")!="sequential_basil_one_class_v1" and not gui_approved(config) and not noniid_approved(config) and not dirichlet_approved(config) and not prior_approved(config):
+        from basil_core.dirichlet_horizon_study import gui_approved as horizon_approved
+        if int(config.get("campaignVersion",0)) not in {3,4} and config.get("experimentProtocol")!="sequential_basil_one_class_v1" and not gui_approved(config) and not noniid_approved(config) and not dirichlet_approved(config) and not prior_approved(config) and not horizon_approved(config):
             self._queue_running=False; self.state.end_queue(); messagebox.showinfo("Run configuration","Add or load a versioned baseline/adaptive-study configuration before starting isolated execution. This prevents silently assigning research protocol fields.",parent=self.root); return
         orphans=[]
-        for root in (PROJECT_ROOT/'gui/worker_state/dirichlet_prior',PROJECT_ROOT/'gui/worker_state/dirichlet',PROJECT_ROOT/'gui/worker_state/noniid_verified',PROJECT_ROOT/'gui/worker_state/iid',PROJECT_ROOT/"experiments"/"results3"/"r2"/"workers",PROJECT_ROOT/"experiments"/"results4"/"campaign4"/"workers",PROJECT_ROOT/"experiments/worker_state/adaptive",PROJECT_ROOT/"experiments/worker_state/baseline",PROJECT_ROOT/"experiments/research_protocol_results/workers", *(PROJECT_ROOT/path/"workers" for path in LEGACY_RESULT_ROOTS)): orphans.extend(find_orphan_workers(root))
+        for root in (PROJECT_ROOT/'gui/worker_state/dirichlet_prior_100r',PROJECT_ROOT/'gui/worker_state/dirichlet_prior_500r',PROJECT_ROOT/'gui/worker_state/dirichlet_prior',PROJECT_ROOT/'gui/worker_state/dirichlet',PROJECT_ROOT/'gui/worker_state/noniid_verified',PROJECT_ROOT/'gui/worker_state/iid',PROJECT_ROOT/"experiments"/"results3"/"r2"/"workers",PROJECT_ROOT/"experiments"/"results4"/"campaign4"/"workers",PROJECT_ROOT/"experiments/worker_state/adaptive",PROJECT_ROOT/"experiments/worker_state/baseline",PROJECT_ROOT/"experiments/research_protocol_results/workers", *(PROJECT_ROOT/path/"workers" for path in LEGACY_RESULT_ROOTS)): orphans.extend(find_orphan_workers(root))
         if orphans:
             names=", ".join(f"{item.get('runId','?')} (pid {item.get('pid','?')})" for item in orphans)
             if not messagebox.askyesno("Orphaned workers",f"Active workers from an earlier session were found:\n\n{names}\n\nRequest graceful termination before starting?",parent=self.root): self._queue_running=False; self.state.end_queue(); return
@@ -116,7 +136,10 @@ class PaperMergeApp:
         try:
             self.execution.start(config); self.state.status=f"Running {self.state.experiment.experiment_name}"
             if config.get('lossStudyRevision')=='dirichlet_prior_readiness_diagnostic_v1':
-                from basil_core.dirichlet_prior_study import display_label
+                if config.get('horizonStudyRevision')=='dirichlet_prior_fixed_horizons_v1':
+                    from basil_core.dirichlet_horizon_study import display_label
+                else:
+                    from basil_core.dirichlet_prior_study import display_label
                 self.state.active_experiment_name=display_label(config)
                 self.state.status=f'Running {self.state.active_experiment_name}'
             if pending is not None:
@@ -127,6 +150,39 @@ class PaperMergeApp:
             self.state.end_queue()
             LOG.exception("Execution start failed"); messagebox.showerror("Execution error",str(error),parent=self.root)
     def stop(self): self._queue_running=False; self.state.end_queue(); self.execution.request_stop(); self.state.status="Graceful stop requested"; self.state.notify()
+    def _begin_stage_validation(self,pending,config):
+        """Audit on a background thread; only the GUI thread may start a run."""
+        if self._stage_gate_running:return
+        import queue
+        import threading
+        self._stage_gate_running=True;self._stage_gate_results=queue.SimpleQueue()
+        self.state.stage_validation_active=True
+        self.state.status='Validating all completed 100-round A/B/C/D runs; 500-round stage is waiting (no training).'
+        self.state.notify()
+        def audit():
+            error=None
+            try:
+                from gui.services.staged_queue_service import validate_completed_100
+                validate_completed_100()
+            except Exception as failure:
+                error=str(failure);LOG.exception('100-round prerequisite audit failed')
+            self._stage_gate_results.put((pending,config,error))
+        threading.Thread(target=audit,name='100-round-prerequisite-audit',daemon=True).start()
+    def _poll_stage_validation(self):
+        if not getattr(self,'_stage_gate_running',False) or self._stage_gate_results is None or self._stage_gate_results.empty():return
+        pending,config,error=self._stage_gate_results.get();self._stage_gate_running=False
+        self.state.stage_validation_active=False
+        if error:
+            self._queue_running=False;self.state.end_queue()
+            self.state.status=f'100-round validation failed; all 500-round runs remain blocked: {error}'
+        elif self._queue_running and (pending is None or pending in self.queue_state.entries and pending.status.value=='pending'):
+            if pending is not None and to_persisted(pending.config)!=config:
+                self._queue_running=False;self.state.end_queue();self.state.status='Queue changed during validation; automatic start cancelled.'
+            else:
+                self.state.status='All four 100-round runs validated; continuing to the queued 500-round stage.'
+                self.queue_changed()
+                self.root.after(0,lambda:self._start_entry(pending) if self._queue_running else None)
+        self.state.notify()
     def _launch(self,config):
         if config.get('experimentProtocol')=='sequential_basil_dirichlet_v1':
             from gui.services.dirichlet_execution_service import DirichletExecutionHandle
@@ -154,10 +210,14 @@ class PaperMergeApp:
         self.state.tick()
         if self._worker_handle and self._worker_handle.active:self._worker_handle.poll()
         self.execution.dispatch_pending()
+        if getattr(self,'_stage_gate_running',False):self._poll_stage_validation()
         if self._active_queue_entry:
             done=max(self._active_queue_entry.completed_rounds,self.state.completed_rounds)
-            if done!=self._active_queue_entry.completed_rounds:
+            work_changed=(self._active_queue_entry.completed_activations!=self.state.completed_activations)
+            if done!=self._active_queue_entry.completed_rounds or work_changed:
                 self._active_queue_entry.completed_rounds=done
+                for field in ('completed_activations','total_activations','completed_optimizer_steps','total_optimizer_steps'):
+                    setattr(self._active_queue_entry,field,getattr(self.state,field))
                 if hasattr(self,'shell'):self.shell.views[Workspace.QUEUE].refresh()
         if hasattr(self,'shell') and time.monotonic()-getattr(self,'_last_clock_refresh',0)>=1:
             self.shell.views[Workspace.DASHBOARD].refresh(); self._last_clock_refresh=time.monotonic()

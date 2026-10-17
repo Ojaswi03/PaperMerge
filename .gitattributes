@@ -1,2 +1,5 @@
 # Preserve supplied research PDFs byte-for-byte; do not apply text conversion.
 *.pdf binary
+# CSV writers use RFC-style CRLF. Preserve evidence bytes and recognize the
+# carriage return as part of the line ending, not trailing field whitespace.
+*.csv whitespace=cr-at-eol

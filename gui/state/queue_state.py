@@ -16,6 +16,10 @@ class QueueEntry:
     execution_hint: str = ""
     estimated_remaining_seconds: float | None = None
     completed_rounds: int = 0
+    completed_activations: int = 0
+    total_activations: int = 0
+    completed_optimizer_steps: int = 0
+    total_optimizer_steps: int = 0
 
 @dataclass
 class QueueState:

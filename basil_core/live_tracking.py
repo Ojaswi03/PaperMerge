@@ -33,6 +33,7 @@ class LiveTracker:
         self.metadata = {'status': 'disabled'}
         self.last_round = -1
         self.last_activation = -1
+        self.namespace = config.get('trackingNamespace', 'IID RUN')
         try:
             settings = read_settings() if settings is None else settings
             if not settings.get('enabled', False):
@@ -56,11 +57,15 @@ class LiveTracker:
             logged_config = {k: config[k] for k in CONFIG_FIELDS if k in config}
             logged_config.update(initialModelHash=manifest.get('initialModelHash'),
                 iidPartitionHash=manifest.get('iidPartitionHash'),device=manifest.get('device'),
-                ebmCoefficient=config.get('channelNoiseSigmaAbsolute',0.)**2 if config.get('localObjective')=='source_ebm' else 0.,
+                ebmCoefficient=config.get('channelNoiseSigmaAbsolute',0.)**2 if config.get('ebmMode')=='gradient_norm_objective' or config.get('localObjective')=='source_ebm' else 0.,
                 legacyLambdaUsed=False)
+            if config.get('partitionStrategy') == 'dirichlet':
+                logged_config.update(partitionHash=manifest.get('partitionHash'),
+                    dirichletAlpha=config.get('dirichletAlpha'),snapshotAnchorMu=config.get('snapshotAnchorMu'),
+                    logitCalibrationMethod=config.get('logitCalibrationMethod'),logitCalibrationTau=config.get('logitCalibrationTau'))
             self.run = sdk.init(entity=entity,project=project,id=run_id,
-                name=f"IID RUN — {config.get('conditionId','IID')} — {config['localObjective']} — {config['nRounds']} rounds",group=group,
-                job_type='iid-basil-research',tags=[config.get('conditionId','IID'),f"{config['nRounds']}rounds"],
+                name=f"{self.namespace} — {config.get('conditionId','IID')} — {config['localObjective']} — {config['nRounds']} rounds",group=group,
+                job_type='noniid-basil-research' if config.get('partitionStrategy')=='dirichlet' else 'iid-basil-research',tags=[config.get('conditionId','IID'),f"{config['nRounds']}rounds"],
                 config=logged_config,mode=settings.get('mode','online'),
                 resume='allow' if resume and settings.get('mode','online')=='online' else None,
                 dir=str(ROOT/'gui/worker_state'),
@@ -68,7 +73,7 @@ class LiveTracker:
                     x_disable_stats=True,init_timeout=15))
             self.run.define_metric('round')
             self.run.define_metric('round/*',step_metric='round')
-            self.run.define_metric('IID RUN/*',step_metric='round')
+            self.run.define_metric(self.namespace+'/*',step_metric='round')
             self.run.define_metric('activation')
             self.run.define_metric('node/*',step_metric='activation')
             self.run.summary['research_training_started'] = not prepare_only
@@ -130,8 +135,8 @@ class LiveTracker:
         if index <= self.last_round:
             return
         primary = {}
-        if row.get('full_test_accuracy') is not None:primary['IID RUN/Accuracy']=row['full_test_accuracy']
-        if row.get('full_test_loss') is not None:primary['IID RUN/Loss']=row['full_test_loss']
+        if row.get('full_test_accuracy') is not None:primary[self.namespace+'/Accuracy']=row['full_test_accuracy']
+        if row.get('full_test_loss') is not None:primary[self.namespace+'/Loss']=row['full_test_loss']
         if self._log({'round':index,**primary,**{'round/'+k:v for k,v in row.items() if k!='round'}}):
             self.last_round = index
             self.metadata['lastLoggedRound'] = index
