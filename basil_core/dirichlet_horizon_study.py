@@ -8,12 +8,13 @@ from __future__ import annotations
 import hashlib
 import json
 from pathlib import Path
+from basil_core.execution_profile import profile_path
 
 ROOT = Path(__file__).resolve().parents[1]
 REVISION = 'dirichlet_prior_fixed_horizons_v1'
 BASE_STUDY = 'dirichlet_prior_anchor_confirmation_30r_v1'
-EVIDENCE = ROOT/'gui/worker_state/dirichlet_horizon_readiness.json'
-RECEIPT = ROOT/'gui/worker_state/dirichlet_prior_100r_validation.json'
+EVIDENCE = profile_path(ROOT/'gui/worker_state/dirichlet_horizon_readiness.json')
+RECEIPT = profile_path(ROOT/'gui/worker_state/dirichlet_prior_100r_validation.json')
 
 
 def checksum(path):
@@ -95,7 +96,7 @@ def validate_evidence(config):
     if evidence['implementationSha256'] != execution_fingerprints(config):
         raise ValueError('Implementation changed after fixed-horizon preparation; revalidate before execution.')
     for name, digest in evidence['manifests'].items():
-        if checksum(ROOT/f'newResults/nonIID/{BASE_STUDY}/{name}/run.json') != digest:
+        if checksum(profile_path(ROOT/f'newResults/nonIID/{BASE_STUDY}/{name}/run.json')) != digest:
             raise ValueError('Completed 30-round evidence changed.')
     if config['nRounds'] == 500:
         if not RECEIPT.is_file():
@@ -106,7 +107,7 @@ def validate_evidence(config):
                 or receipt.get('implementationSha256') != execution_fingerprints(config)):
             raise ValueError('The 100-round validation receipt is stale or invalid.')
         for name, digest in receipt['manifests'].items():
-            if checksum(ROOT/f'newResults/nonIID/{study_name(100)}/{name}/run.json') != digest:
+            if checksum(profile_path(ROOT/f'newResults/nonIID/{study_name(100)}/{name}/run.json')) != digest:
                 raise ValueError('Completed 100-round evidence changed after validation.')
         if set(receipt['manifests']) != set('ABCD'):
             raise ValueError('All four completed 100-round conditions are required.')
@@ -135,15 +136,31 @@ def recovery_plan(directory, config):
     # family's approval callback; never reinterpret a 30/100-round checkpoint.
     from basil_core.dirichlet_prior_study import _recovery_plan
     validate_evidence(config)
+    directory=profile_path(directory)
     manifest=Path(directory)/'run.json'
     if manifest.exists():
         previous=json.loads(manifest.read_text())
         if previous.get('status')=='tracking_unavailable':
-            if (previous['config']!=config or previous['completedActivations']!=0
-                    or previous['completedRounds']!=0 or (Path(directory)/'checkpoint.npz').exists()
-                    or previous['implementationSha256']!=execution_fingerprints(config)):
-                raise ValueError('A startup tracking failure has inconsistent scientific state.')
-            return dict(mode='startup_retry',savedActivations=0,startActivation=0,completedRounds=0)
+            # Older runners also used this status when W&B failed during a
+            # nonzero resume. Such work must go through verified checkpoint
+            # recovery, never through the zero-work startup path.
+            activations=previous.get('completedActivations')
+            rounds=previous.get('completedRounds')
+            if (previous.get('config')!=config
+                    or previous.get('implementationSha256')!=execution_fingerprints(config)
+                    or type(activations) is not int or type(rounds) is not int
+                    or not 0 <= activations <= config['nRounds']*config['nNodes']
+                    or not 0 <= rounds <= activations//config['nNodes']):
+                raise ValueError('A tracking initialization failure has inconsistent scientific state.')
+            directory=Path(directory)
+            has_checkpoint=any((directory/name).exists() for name in
+                ('checkpoint.npz','checkpoint.previous.npz'))
+            if not has_checkpoint and activations==rounds==0:
+                if (any((directory/name).exists() for name in
+                        ('metrics.npz','activation_telemetry.json.gz'))
+                        or any((directory/'checkpoint_telemetry').glob('*.json.gz'))):
+                    raise ValueError('A zero-work tracking retry contains scientific evidence without a checkpoint.')
+                return dict(mode='startup_retry',savedActivations=0,startActivation=0,completedRounds=0)
     return _recovery_plan(directory, config)
 
 
@@ -159,7 +176,7 @@ def inspect_completed(source, *, expected_rounds):
     """Read existing arrays, telemetry and real checkpoint parameters; zero SGD."""
     import gzip
     from reporting.dirichlet_calibration import review, verify_final_transmissions
-    source = Path(source)
+    source = profile_path(source)
     result, _ = review(source, names=tuple('ABCD'))
     transmissions = verify_final_transmissions(source, tuple('ABCD'))
     histories = {}

@@ -35,6 +35,32 @@ class QueueService:
         for entry in state.entries:
             config=to_persisted(entry.config)
             if config.get('experimentProtocol')=='sequential_basil_dirichlet_v1':
+                if config.get('horizonStudyRevision')=='dirichlet_prior_fixed_horizons_v1':
+                    # Display recorded completion independently of permission
+                    # to execute the current source. Compact published results
+                    # need no resume checkpoint or machine-local approval.
+                    try:
+                        manifest_path=root/config['resultDirectory']/'run.json'
+                        manifest=json.loads(manifest_path.read_text()) if manifest_path.exists() else {}
+                        if manifest.get('status')=='completed':
+                            from reporting.round_accuracy import read_condition
+                            from gui.work_progress import completed_work
+                            recorded=read_condition(root,'nonIID',config['nRounds'],config['conditionId'])
+                            target=config['nRounds']*config['nNodes']
+                            if (recorded['status']!='complete' or recorded['config']!=config
+                                    or manifest.get('completedActivations')!=target):
+                                raise ValueError('Completed result identity or counters disagree with this queue entry.')
+                            work=completed_work(config,target)
+                            entry.status=QueueStatus.COMPLETED;entry.completed_rounds=config['nRounds']
+                            entry.completed_activations=target;entry.total_activations=target
+                            entry.completed_optimizer_steps=work['completedOptimizerSteps']
+                            entry.total_optimizer_steps=work['totalOptimizerSteps']
+                            entry.estimated_remaining_seconds=0.
+                            entry.execution_hint='Recorded completed results — execution approval is separate'
+                            continue
+                    except (ValueError,OSError,KeyError,TypeError) as error:
+                        entry.execution_hint=f'Recovery blocked: {error}';entry.estimated_remaining_seconds=None
+                        continue
                 if config.get('horizonStudyRevision')=='dirichlet_prior_fixed_horizons_v1' and config.get('nRounds')==500:
                     from gui.services.staged_queue_service import dependency_state
                     try:

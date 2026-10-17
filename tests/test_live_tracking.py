@@ -151,6 +151,48 @@ def test_connection_failure_cannot_raise_into_training(setup):
     assert tracker.metadata['status']=='unavailable'
 
 
+@pytest.mark.parametrize('resuming',[False,True])
+def test_initialization_failure_retains_identity_and_retry_watermarks(setup,resuming):
+    run,calls,sdk,cfg,settings=setup
+    previous=dict(runId='original',entity='example',project='IID-Run',group='old-group',
+        lastLoggedRound=12,lastLoggedActivation=129) if resuming else {}
+    def broken(**kwargs):
+        calls.append(kwargs)
+        raise OSError('network down')
+    sdk.init=broken
+    failed=LiveTracker(cfg,{'liveTracking':previous},settings=settings,sdk=sdk)
+    identity='original' if resuming else 'test-id'
+    assert failed.metadata['runId']==identity
+    assert failed.metadata['status']=='unavailable'
+    assert failed.metadata['lastLoggedRound']==(12 if resuming else -1)
+    assert failed.metadata['lastLoggedActivation']==(129 if resuming else -1)
+    def must_not_generate():raise AssertionError('A retry must retain its cloud identity')
+    sdk.util.generate_id=must_not_generate
+    sdk.init=lambda **kwargs:(calls.append(kwargs) or run)
+    recovered=LiveTracker(cfg,{'liveTracking':failed.metadata},settings=settings,sdk=sdk)
+    assert recovered.metadata['status']=='active'
+    assert calls[-1]['id']==identity and calls[-1]['resume']=='allow'
+    if resuming:
+        recovered.round(dict(round=12,full_test_accuracy=.3))
+        recovered.activation(dict(round=12,nodeId=9,globalTestAccuracy=.3))
+        assert not run.logs
+
+
+def test_invalid_tracking_settings_preserve_existing_identity(setup):
+    _,calls,sdk,cfg,settings=setup
+    previous=dict(runId='original',entity='example',project='IID-Run',group='old-group')
+    tracker=LiveTracker(cfg,{'liveTracking':previous},settings=dict(settings,mode='invalid'),sdk=sdk)
+    assert not calls and tracker.metadata['status']=='unavailable'
+    for key,value in previous.items():assert tracker.metadata[key]==value
+
+
+@pytest.mark.parametrize('previous',['runId',[{'runId':'wrong-shape'}]])
+def test_malformed_identity_is_reported_without_raising_into_training(setup,previous):
+    _,calls,sdk,cfg,settings=setup
+    tracker=LiveTracker(cfg,{'liveTracking':previous},settings=settings,sdk=sdk)
+    assert not calls and tracker.metadata['status']=='unavailable'
+
+
 def test_logging_failure_keeps_local_run_independent(setup):
     run,calls,sdk,cfg,settings=setup
     tracker=LiveTracker(cfg,{},settings=settings,sdk=sdk)

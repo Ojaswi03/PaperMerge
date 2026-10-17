@@ -62,8 +62,9 @@ def preflight_config(config, *, rounds=3, smoke=False):
 
 
 def iid_output(path, *, plots=False):
-    root = PLOT_ROOT if plots else RESULT_ROOT
-    target = Path(path).resolve()
+    from basil_core.execution_profile import profile_path
+    root = profile_path(PLOT_ROOT if plots else RESULT_ROOT)
+    target = profile_path(path)
     if not target.is_relative_to(root.resolve()):
         raise ValueError(f"IID output must be within {root}")
     return target

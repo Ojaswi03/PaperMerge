@@ -161,6 +161,52 @@ def test_completed_horizon_entries_remain_in_saved_queue(tmp_path):
     assert service.load().entries[0].status is QueueStatus.COMPLETED
 
 
+@pytest.mark.parametrize('rounds',[100,500])
+def test_completed_display_needs_no_execution_approval_or_checkpoint(monkeypatch,tmp_path,rounds):
+    from tests.test_round_accuracy import make_run
+    from gui.services.queue_service import QueueService
+    from gui.state.queue_state import QueueState,QueueEntry,QueueStatus
+    from gui.state.experiment_state import from_persisted
+    from gui.state.application_state import ApplicationState
+    import basil_core.dirichlet_horizon_study as study
+    cfg=configs(rounds)[0]
+    directory=make_run(tmp_path,horizon=rounds)
+    (directory/'run.json').write_text(json.dumps(dict(status='completed',config=cfg,
+        completedRounds=rounds,completedActivations=rounds*10)))
+    approvals=[]
+    def stale(_):
+        approvals.append(True)
+        raise ValueError('Source approval is stale')
+    monkeypatch.setattr(study,'validate_evidence',stale)
+    entry=QueueEntry(from_persisted(cfg))
+    QueueService.describe_recovery(QueueState([entry]),tmp_path)
+    assert not approvals and entry.status is QueueStatus.COMPLETED
+    assert entry.completed_rounds==rounds and entry.completed_activations==rounds*10
+    assert entry.completed_optimizer_steps==entry.total_optimizer_steps==rounds*510
+    assert entry.estimated_remaining_seconds==0.
+    assert entry.execution_hint.startswith('Recorded completed')
+    assert not ApplicationState(experiment=from_persisted(cfg)).can_run
+
+
+@pytest.mark.parametrize('broken',['counter','config','csv'])
+def test_completed_display_refuses_inconsistent_published_results(monkeypatch,tmp_path,broken):
+    from tests.test_round_accuracy import make_run
+    from gui.services.queue_service import QueueService
+    from gui.state.queue_state import QueueState,QueueEntry,QueueStatus
+    from gui.state.experiment_state import from_persisted
+    cfg=configs(500)[0]
+    directory=make_run(tmp_path,horizon=500)
+    manifest=dict(status='completed',config=cfg,completedRounds=500,completedActivations=5000)
+    if broken=='counter':manifest['completedActivations']=4999
+    if broken=='config':manifest['config']=dict(cfg,snapshotAnchorMu=.02)
+    if broken=='csv':(directory/'round_metrics.csv').write_text('round,mean_node_accuracy\n')
+    (directory/'run.json').write_text(json.dumps(manifest))
+    entry=QueueEntry(from_persisted(cfg))
+    QueueService.describe_recovery(QueueState([entry]),tmp_path)
+    assert entry.status is QueueStatus.PENDING
+    assert entry.execution_hint.startswith('Recovery blocked:')
+
+
 def test_eta_learns_actual_unequal_node_costs_and_ignores_startup():
     from gui.state.application_state import ApplicationState,ExecutionState
     from gui.state.experiment_state import from_persisted

@@ -29,7 +29,8 @@ def main(argv=None):
         print(json.dumps(result))
         return
     # This branch is reached only by the user's explicit Run Queue action.
-    from scripts.run_iid_basil_pair import execute,tf
+    from scripts.run_iid_basil_pair import execute
+    import tensorflow as tf
     from basil_core.data.cifar import loadCifar10,_datasetArrays
     from basil_core.iid_study import partition_audit
     configure_tensorflow(tf,device)

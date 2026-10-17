@@ -8,6 +8,7 @@ import subprocess
 import sys
 import threading
 import time
+from collections import deque
 
 from basil_core.iid_campaign import ROOT, gui_approved
 from basil_core.protocol_checkpoint import recovery_plan
@@ -18,7 +19,8 @@ WORKER_ROOT=ROOT/'gui/worker_state/iid'
 
 
 class IidExecutionHandle:
-    def __init__(self,config,event_sink,*,_approved=None,_plan=None,_script=None,_work_root=None):
+    def __init__(self,config,event_sink,*,_approved=None,_plan=None,_script=None,_work_root=None,
+                 _environment=None,_headless=False):
         if not (_approved or gui_approved)(config):raise ValueError('Only validated A/B/C/D configurations may use this GUI runner.')
         output=ROOT/config['resultDirectory']
         plan=_plan if _plan is not None else recovery_plan(output,config)
@@ -27,12 +29,17 @@ class IidExecutionHandle:
         self._worker_root.mkdir(parents=True,exist_ok=True)
         run_id=config['runId'];self.config_path=self._worker_root/f'{run_id}.json';self.pid_path=self._worker_root/f'{run_id}.pid.json'
         self.config=dict(config)
+        self._headless=_headless;self._error_lines=deque(maxlen=12)
         self.config_path.write_text(json.dumps(config,indent=2)+'\n')
         self.sink=event_sink;self.events=queue.Queue();self._finished=False;self._stopping=False
         device=execution_device(config)
-        env=dict(os.environ,PAPERMERGE_IID_DEVICE=device,CUDA_VISIBLE_DEVICES='0' if device=='GPU' else '-1',TF_ENABLE_ONEDNN_OPTS='0',TF_DETERMINISTIC_OPS='1',
-            TF_NUM_INTRAOP_THREADS='1',TF_NUM_INTEROP_THREADS='1',OMP_NUM_THREADS='1',OPENBLAS_NUM_THREADS='1',MKL_NUM_THREADS='1')
-        command=[sys.executable,str(_script or ROOT/'scripts/run_iid_condition.py'),'--config',str(self.config_path),'--execute']
+        from basil_core.execution_profile import worker_environment
+        env=worker_environment(device,os.environ)
+        env.update(_environment or {})
+        script=str(_script or ROOT/'scripts/run_iid_condition.py')
+        command=([sys.executable,str(ROOT/'scripts/hpc.py'),'_worker','--runner',script]
+            if _headless else [sys.executable,script])
+        command+=['--config',str(self.config_path),'--execute']
         if plan['mode']!='fresh' or config.get('recoverySourceDirectory'):command.append('--recover')
         self.process=subprocess.Popen(command,
             cwd=ROOT,env=env,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,text=True,bufsize=1,
@@ -42,11 +49,20 @@ class IidExecutionHandle:
         self.sink(ExecutionEvent('worker_status_changed',{'count':1}))
         self.sink(ExecutionEvent('network_started',{'lane':0,'config':self.config}))
     def _read(self):
-        with (getattr(self,'_worker_root',WORKER_ROOT)/f"{self.config_path.stem}.log").open('a',buffering=1) as log:
+        path=getattr(self,'_worker_root',WORKER_ROOT)/f"{self.config_path.stem}.log"
+        if getattr(self,'_headless',False):
+            from basil_core.terminal.state import logger,safe_text
+            log=logger(path)
             for line in self.process.stdout:
-                log.write(line)
+                line=safe_text(line);log.info(line.rstrip())
                 try:self.events.put(json.loads(line))
-                except ValueError:pass
+                except ValueError:self._error_lines.append(line.strip())
+        else:
+            with path.open('a',buffering=1) as log:
+                for line in self.process.stdout:
+                    log.write(line)
+                    try:self.events.put(json.loads(line))
+                    except ValueError:pass
     @property
     def active(self):return not self._finished
     def stop(self):
@@ -59,10 +75,13 @@ class IidExecutionHandle:
         if payload.get('event')=='device_ready':
             self.sink(ExecutionEvent('device_status_changed',payload))
         elif payload.get('event')=='tracking_status':
+            self.sink(ExecutionEvent('tracking_status',payload))
             message=('Offline tracking: metrics stored locally for later sync' if payload.get('status')=='active' and payload.get('mode')=='offline' else
                 f"Live plots: {payload['url']}" if payload.get('status')=='active' and payload.get('url') else
                 f"Live tracking unavailable; local results continue: {payload.get('error','not configured')}")
             self.sink(ExecutionEvent('status_updated',{'message':message}))
+        elif payload.get('event')=='checkpoint_saved':
+            self.sink(ExecutionEvent('checkpoint_saved',payload))
         elif 'restored' in payload:
             restored=dict(payload['restored'])
             if config.get('optimizerStepsPerNode'):
@@ -107,6 +126,7 @@ class IidExecutionHandle:
             self._finished=True;self.process.stdout.close();self.process.wait()
             self.pid_path.unlink(missing_ok=True)
             kind='execution_stopped' if self._stopping or code in {130,-signal.SIGTERM,-signal.SIGINT} else 'execution_completed' if code==0 else 'execution_failed'
-            self.sink(ExecutionEvent(kind,{'returnCode':code,'logPath':str(getattr(self,'_worker_root',WORKER_ROOT)/f'{self.config_path.stem}.log')}))
+            self.sink(ExecutionEvent(kind,{'returnCode':code,'logPath':str(getattr(self,'_worker_root',WORKER_ROOT)/f'{self.config_path.stem}.log'),
+                'error':'\n'.join(getattr(self,'_error_lines',())) if code else None}))
             self.sink(ExecutionEvent('network_finished',{'lane':0,'status':kind.removeprefix('execution_')}))
             self.sink(ExecutionEvent('worker_status_changed',{'count':0}))

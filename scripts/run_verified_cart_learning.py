@@ -54,8 +54,9 @@ def atomic_json(path, value):
 
 
 def require_proof():
+    from basil_core.execution_profile import profile_path
     from basil_core.verified_cart_runner import fingerprints
-    path = ROOT/'gui/worker_state/CART_RESOURCE_LIMITED_RECOVERY_GPU.json'
+    path = profile_path(ROOT/'gui/worker_state/CART_RESOURCE_LIMITED_RECOVERY_GPU.json')
     proof = json.loads(path.read_text())
     checker = ROOT/'scripts/check_isolated_replicas.py'
     if (proof.get('status') != 'passed' or proof.get('device') != 'GPU'

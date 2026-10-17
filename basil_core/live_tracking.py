@@ -6,15 +6,17 @@ import logging
 import math
 import os
 from pathlib import Path
+from basil_core.execution_profile import profile_path
 
 ROOT = Path(__file__).resolve().parents[1]
-SETTINGS_PATH = ROOT/'gui/worker_state/live_tracking.json'
+SETTINGS_PATH = profile_path(ROOT/'gui/worker_state/live_tracking.json')
 LOG = logging.getLogger(__name__)
 CONFIG_FIELDS = ('experimentProtocol','conditionId','nRounds','nNodes','dataset','partitionStrategy',
     'seed','modelArchitecture','localEpochs','batchSize','optimizer','learningRate',
     'learningRateSchedule','momentum','basilMemorySize','snapshotSelectionRule','aggregationMode',
     'resolvedAttackerIds','attackType','attackStartRound','attackHidden','useChannelNoise',
     'channelNoiseSemantics','channelNoiseSigmaAbsolute','localObjective','ebmMode','researchValid')
+IDENTITY_FIELDS = ('entity','project','runId','url','mode','group','lastLoggedRound','lastLoggedActivation')
 
 
 def read_settings(path=SETTINGS_PATH):
@@ -35,6 +37,12 @@ class LiveTracker:
         self.last_activation = -1
         self.namespace = config.get('trackingNamespace', 'IID RUN')
         try:
+            previous = manifest.get('liveTracking') or {}
+            if not isinstance(previous,dict):
+                raise ValueError('Saved tracking identity must be an object.')
+            # Preserve identity even if settings or SDK loading fails before
+            # initialization. Never copy arbitrary manifest fields.
+            self.metadata.update({key:previous[key] for key in IDENTITY_FIELDS if key in previous})
             settings = read_settings() if settings is None else settings
             if not settings.get('enabled', False):
                 return
@@ -43,17 +51,23 @@ class LiveTracker:
             entity, project = settings.get('entity',''), settings.get('project','')
             if not entity or not project:
                 raise ValueError('Live tracking needs explicit W&B entity and project names.')
-            if sdk is None:
-                import wandb as sdk
-            previous = manifest.get('liveTracking', {}) or settings.get('preparedRuns',{}).get(config.get('conditionId'),{})
+            previous = previous or settings.get('preparedRuns',{}).get(config.get('conditionId'),{})
+            self.metadata.update({key:previous[key] for key in IDENTITY_FIELDS if key in previous})
             resume = bool(previous.get('runId'))
             if resume and (previous.get('entity'),previous.get('project')) != (entity,project):
                 raise ValueError('Cannot silently move resumed tracking to another account/project.')
+            if sdk is None:
+                import wandb as sdk
             # W&B's ID generator does not touch the scientific keyed RNG streams.
             run_id = previous.get('runId') or sdk.util.generate_id()
             group = previous.get('group') or settings.get('group') or config.get('iidCampaignId',config['experimentProtocol'])
             self.last_round = previous.get('lastLoggedRound',-1)
             self.last_activation = previous.get('lastLoggedActivation',-1)
+            # The runner persists this metadata on initialization failure, so
+            # a retry reuses the attempted ID and the last delivered cursors.
+            self.metadata.update(status='initializing',entity=entity,project=project,
+                runId=run_id,mode=settings.get('mode','online'),group=group,
+                lastLoggedRound=self.last_round,lastLoggedActivation=self.last_activation)
             logged_config = {k: config[k] for k in CONFIG_FIELDS if k in config}
             logged_config.update(initialModelHash=manifest.get('initialModelHash'),
                 iidPartitionHash=manifest.get('iidPartitionHash'),device=manifest.get('device'),
@@ -68,7 +82,7 @@ class LiveTracker:
                 job_type='noniid-basil-research' if config.get('partitionStrategy')=='dirichlet' else 'iid-basil-research',tags=[config.get('conditionId','IID'),f"{config['nRounds']}rounds"],
                 config=logged_config,mode=settings.get('mode','online'),
                 resume='allow' if resume and settings.get('mode','online')=='online' else None,
-                dir=str(ROOT/'gui/worker_state'),
+                dir=str(profile_path(ROOT/'gui/worker_state')),
                 settings=sdk.Settings(disable_git=True,save_code=False,console='off',
                     x_disable_stats=True,init_timeout=15))
             self.run.define_metric('round')

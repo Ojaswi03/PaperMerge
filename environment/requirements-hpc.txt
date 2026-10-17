@@ -1,0 +1,15 @@
+# Isolated Linux/Python 3.12 candidate; validate on the allocated Blackwell GPU.
+# The legacy environment/requirements.txt remains unchanged.
+# TensorFlow's official and-cuda extra supplies wheel runtime dependencies;
+# nvidia-smi's CUDA ceiling is not an installed toolkit or a kernel test.
+tensorflow[and-cuda]==2.21.0
+keras==3.12.0
+numpy==1.26.4
+scipy==1.16.3
+scikit-learn==1.8.0
+h5py==3.15.1
+matplotlib==3.10.8
+pillow==12.0.0
+tqdm==4.67.1
+psutil==7.2.2
+wandb==0.28.0

@@ -1,17 +1,26 @@
 # Non-IID BASIL: current loss and A/B/C/D guide
 
-This guide describes the **current 30-round Dirichlet GPU confirmation**, not
-the older IID study or the earlier one-class-per-node experiments. It documents
-the implemented method; it does not claim that every component is guaranteed
-to improve accuracy or provide arbitrary-Byzantine robustness.
+This guide describes the method used in the **completed Dirichlet 30-, 100-
+and 500-round studies**, separate from the older IID and one-class-per-node
+experiments. All eight 100/500-round A/B/C/D entries completed. The noisy C/D
+conditions deteriorated over the long horizon; correct execution did not
+establish satisfactory sustained noise robustness. See the
+[completed results](../newResults/nonIID/500round/FINAL_ABCD_RESULTS_ANALYSIS.md)
+and [mechanism diagnosis](DIRICHLET_MECHANISM_DIAGNOSIS.md).
 
 **Protocol:** `sequential_basil_dirichlet_v1`
 
 **Revision:** `dirichlet_prior_readiness_diagnostic_v1`
 
-**Configurations:** [`dirichlet_prior_confirmation_30r/`](../gui/configs/nonIID/dirichlet_prior_confirmation_30r/)
+**Fixed-horizon revision:** `dirichlet_prior_fixed_horizons_v1`
 
-**Queue:** [`noniid_dirichlet_prior_abcd_30r_gpu.json`](../gui/queues/noniid_dirichlet_prior_abcd_30r_gpu.json)
+**Configurations:** [30 rounds](../gui/configs/nonIID/dirichlet_prior_confirmation_30r/),
+[100 rounds](../gui/configs/nonIID/dirichlet_prior_100r/),
+[500 rounds](../gui/configs/nonIID/dirichlet_prior_500r/).
+
+**Completed queue:** [`noniid_dirichlet_prior_abcd_100r_then_500r_gpu.json`](../gui/queues/noniid_dirichlet_prior_abcd_100r_then_500r_gpu.json).
+These references document completed work; loading them does not authorize a
+restart, extension, or new scientific condition.
 
 ## 1. The complete formula
 
@@ -298,8 +307,10 @@ The full 10,000-image CIFAR-10 TEST set remains evaluation-only: no test images
 enter SGD or Snapshot Selection, and live test metrics do not adapt the learning
 rate, coefficients, attacks or stopping rule. Earlier diagnostic comparisons
 are exploratory development evidence, not a preregistered confirmatory study.
-The current queue is a bounded 30-round confirmation with `researchValid=false`
-and `fullResearchReady=false`, not approval for a 500-round campaign.
+The historical 30-round confirmation used `researchValid=false` and
+`fullResearchReady=false`. The subsequently approved fixed 100/500-round jobs
+used both flags true, labeling execution scope rather than scientific success.
+All are completed; their evidence and parameters remain fixed.
 
 ## 9. Sources, adaptations and implementation map
 
@@ -310,7 +321,7 @@ and `fullResearchReady=false`, not approval for a 500-round campaign.
 | Gradient-norm noise-aware penalty | Ang et al.; adapted to adjusted multiclass CE and decentralized training | [`calibrated_anchor_gradients`](../basil_core/dirichlet_calibration.py) |
 | Quadratic selected-snapshot anchor | FedProx-style proximal structure; reference changed to the BASIL-selected received model | [`noniid_study.py`](../basil_core/noniid_study.py), [`dirichlet_calibration.py`](../basil_core/dirichlet_calibration.py) |
 | Retained delayed Hidden transformation | Explicit project adaptation; not exact-paper-reproduction claim | [`attacks.py`](../basil_core/attacks.py) |
-| Approved configuration and evidence checks | Current bounded study, not historical baseline replacement | [`dirichlet_prior_study.py`](../basil_core/dirichlet_prior_study.py) |
+| Configuration and evidence checks | Separate 30-round confirmation and fixed 100/500-round families | [`dirichlet_prior_study.py`](../basil_core/dirichlet_prior_study.py), [`dirichlet_horizon_study.py`](../basil_core/dirichlet_horizon_study.py) |
 
 The Ang paper's squared-loss approximation must not be presented as an exact
 expected CNN cross-entropy identity. Its simplified gradient-scaling expression

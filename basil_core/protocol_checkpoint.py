@@ -79,11 +79,19 @@ def _load_telemetry(path, metadata):
     return history
 
 
-@lru_cache(maxsize=1)
 def implementation_fingerprint():
+    from basil_core.execution_profile import current_profile
+    return _implementation_fingerprint(current_profile().name)
+
+
+@lru_cache(maxsize=2)
+def _implementation_fingerprint(profile_name):
     root=Path(__file__).resolve().parents[1]
     paths=('basil_core/models.py','basil_core/attacks.py','basil_core/trainer.py',
            'basil_core/data/cifar.py','basil_core/research_protocol.py','basil_core/iid_study.py')
+    if profile_name=='hpc':
+        paths+=('basil_core/execution_profile.py','basil_core/iid_runtime.py',
+                'basil_core/artifact_paths.py','scripts/hpc.py')
     return {p:hashlib.sha256((root/p).read_bytes()).hexdigest() for p in paths}
 
 

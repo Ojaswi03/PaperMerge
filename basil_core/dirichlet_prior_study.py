@@ -8,11 +8,12 @@ from __future__ import annotations
 import hashlib
 import json
 from pathlib import Path
+from basil_core.execution_profile import profile_path
 
 ROOT=Path(__file__).resolve().parents[1]
 CONFIG_ROOT=ROOT/'gui/configs/nonIID/dirichlet_prior_confirmation_30r'
 QUEUE_PRESET=ROOT/'gui/queues/noniid_dirichlet_prior_abcd_30r_gpu.json'
-EVIDENCE=ROOT/'gui/worker_state/dirichlet_prior_readiness.json'
+EVIDENCE=profile_path(ROOT/'gui/worker_state/dirichlet_prior_readiness.json')
 STUDY='dirichlet_prior_anchor_confirmation_30r_v1'
 
 
@@ -70,7 +71,7 @@ def validate_evidence(config):
         proofs=evidence['gates'][stage]
         if set(proofs)!=set(names):raise ValueError('Readiness condition missing.')
         for name in names:
-            directory=ROOT/f'newResults/nonIID/dirichlet_prior_readiness_{stage}_{rounds}r_v1'/name
+            directory=profile_path(ROOT/f'newResults/nonIID/dirichlet_prior_readiness_{stage}_{rounds}r_v1'/name)
             manifest_raw=(directory/'run.json').read_bytes()
             if hashlib.sha256(manifest_raw).hexdigest()!=proofs[name]['manifestSha256']:
                 raise ValueError('Completed diagnostic manifest changed after approval.')
@@ -107,7 +108,7 @@ def _recovery_plan(directory,config):
     """Shared exact checkpoint mechanics; caller supplies family approval."""
     from zipfile import BadZipFile
     from basil_core.protocol_checkpoint import load_checkpoint
-    directory=Path(directory)
+    directory=profile_path(directory)
     manifest_path=directory/'run.json'
     if not manifest_path.exists():
         if directory.exists():raise ValueError('Existing output without a manifest requires investigation.')

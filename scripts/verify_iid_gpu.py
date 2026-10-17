@@ -11,6 +11,9 @@ import time
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT))
 from basil_core.iid_runtime import prepare_environment, configure_tensorflow, POLICY_REVISION, gpu_worker_hash, GPU_MEMORY_LIMIT_MB, GPU_VERIFICATION
+from basil_core.iid_runtime import gpu_memory_limit
+from basil_core.execution_profile import current_profile, resource_identity
+GPU_MEMORY_LIMIT_MB=gpu_memory_limit()
 prepare_environment('GPU')
 
 from basil_core.iid_study import IidWorker
@@ -55,6 +58,10 @@ def main():
     import numpy as np
     import tensorflow as tf
     configure_tensorflow(tf,'GPU')
+    with tf.device('/GPU:0'):
+        matrix=tf.matmul(tf.ones((16,16)),tf.ones((16,16)))
+        if 'GPU:' not in matrix.device:raise AssertionError('Matrix multiplication fell back to CPU')
+        np.testing.assert_array_equal(matrix.numpy(),np.full((16,16),16.))
     with tf.device('/CPU:0'):
         canonical=build_model('basil_paper_cnn',2025)
         initial=[v.numpy() for v in canonical.trainable_variables]
@@ -156,9 +163,10 @@ def main():
     build=tf.sysconfig.get_build_info();gpu=tf.config.list_physical_devices('GPU')[0]
     numerical=dict(policyRevision=POLICY_REVISION,device='GPU',
         gpuName=tf.config.experimental.get_device_details(gpu)['device_name'],tensorflowVersion=tf.__version__,
-        tensorFloat32=False,intraOpThreads=1,interOpThreads=1,
+        tensorFloat32=False,intraOpThreads=current_profile().threads,interOpThreads=current_profile().threads,
         cudaVersion=build.get('cuda_version'),cudnnVersion=build.get('cudnn_version'),gpuWorkerSha256=gpu_worker_hash(),
         gpuMemoryLimitMb=GPU_MEMORY_LIMIT_MB)
+    if current_profile().name=='hpc':numerical['resources']=resource_identity()
     memory=tf.config.experimental.get_memory_info('GPU:0')
     if memory['peak']>.75*GPU_MEMORY_LIMIT_MB*1024**2:raise AssertionError('Insufficient memory margin for GPU research')
     report=dict(status='passed',purpose='synthetic_hardware_verification',researchValid=False,

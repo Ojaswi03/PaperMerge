@@ -7,11 +7,14 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 from basil_core.iid_runtime import prepare_environment, configure_tensorflow, GPU_MEMORY_LIMIT_MB
+from basil_core.iid_runtime import gpu_memory_limit
+from basil_core.execution_profile import profile_path
 from basil_core.noniid_study import SnapshotAnchorWorker
 from basil_core.research_protocol import build_model, params_hash
 
 
 def main():
+    GPU_MEMORY_LIMIT_MB=gpu_memory_limit()
     prepare_environment('GPU')
     import numpy as np
     import tensorflow as tf
@@ -63,7 +66,8 @@ def main():
         mu=.01, sigma_e=.01, coefficient=.0001, referenceUnchanged=True,
         batchSizes=[512,19,37,160,183,311,378,385,392,444,477,502], gpuMemory=memory, initialModelHash=params_hash(initial),
         objectiveSha256=hashlib.sha256((ROOT/'basil_core/noniid_study.py').read_bytes()).hexdigest())
-    path = ROOT/'gui/worker_state/SNAPSHOT_ANCHOR_GPU_VERIFICATION.json'
+    path = profile_path(ROOT/'gui/worker_state/SNAPSHOT_ANCHOR_GPU_VERIFICATION.json')
+    path.parent.mkdir(parents=True,exist_ok=True)
     path.write_text(json.dumps(result, indent=2)+'\n')
     print(json.dumps(result))
 

@@ -7,6 +7,8 @@ PROTECTED_ROOTS = (PROJECT_ROOT / "experiments/results4", PROJECT_ROOT / "plots4
                    *(PROJECT_ROOT / path for path in (*LEGACY_RESULT_ROOTS, *LEGACY_PLOT_ROOTS)))
 
 def writable_output(path: Path) -> Path:
+    from basil_core.execution_profile import profile_path
+    path=profile_path(path)
     path = Path(path).resolve()
     if any(path == root or path.is_relative_to(root) for root in PROTECTED_ROOTS):
         raise ValueError(f"Historical research artifacts are read-only: {path}")

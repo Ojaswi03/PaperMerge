@@ -261,6 +261,8 @@ def _execute(config, data, audit, *, family, recover, runtime):
         timings.update(calls=timings['calls']+1,totalSeconds=timings['totalSeconds']+duration,
             maximumSeconds=max(timings['maximumSeconds'],duration))
         metadata['memorySafety']=memory_guard.checkpoint()
+        print(json.dumps(dict(event='checkpoint_saved',activation=state['next_activation'],
+            completedRounds=state['completed_rounds'],checkpoint=str(output/'checkpoint.npz'))),flush=True)
     def activation(record):
         round_records.append(record)
         index=record['round']*10+record['nodeId']
@@ -361,12 +363,13 @@ def _execute(config, data, audit, *, family, recover, runtime):
             metadata["bestFullTestAccuracy"]=float(result["fullTestAccuracy"].max())
             metadata["bestFullTestRound"]=int(result["fullTestAccuracy"].argmax())
         save_json(output/"run.json",metadata)
-        from reporting.iid_study_plots import generate_run_plots
-        plot_output = iid_output(ROOT/config['plotDirectory'],plots=True) if campaign else PLOT_ROOT/name/(family if family != "research" else "")
-        generate_run_plots(output,plot_output)
-        if campaign:
-            from reporting.iid_campaign_plots import report_campaign
-            report_campaign(device=runtime['device'],rounds=config['nRounds'])
+        if os.environ.get('PAPERMERGE_SKIP_PLOTS')!='1':
+            from reporting.iid_study_plots import generate_run_plots
+            plot_output = iid_output(ROOT/config['plotDirectory'],plots=True) if campaign else PLOT_ROOT/name/(family if family != "research" else "")
+            generate_run_plots(output,plot_output)
+            if campaign:
+                from reporting.iid_campaign_plots import report_campaign
+                report_campaign(device=runtime['device'],rounds=config['nRounds'])
         return metadata
     except Exception as error:
         logger.exception("IID execution failed")

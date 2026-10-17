@@ -46,6 +46,8 @@ def commit(runner, state, directory):
         cursor=[runner.round, runner.node, runner.step])
     atomic_json(directory/'progress.json', payload)
     state.update(payload)
+    print(json.dumps(dict(event='checkpoint_saved',activation=runner.round*10+runner.node,
+        completedRounds=runner.round,checkpoint=str(path))),flush=True)
 
 
 def helper_faults(config, round_id):
@@ -98,14 +100,15 @@ def publish(directory, state, runtime):
 def execute(config, *, validate_only=False):
     from basil_core.noniid_verified_study import recovery_plan, source_hashes, validate_configuration, require_transport_proof
     validate_configuration(config)
-    directory = ROOT/config['resultDirectory']
+    from basil_core.execution_profile import profile_path
+    directory = profile_path(ROOT/config['resultDirectory'])
     plan = recovery_plan(directory, config)
     if plan['mode'] == 'completed':
         raise ValueError('This condition already completed; no extra training authorized.')
     from scripts.run_verified_cart_learning import require_proof, evaluate
     proof_hash = require_proof()
     transport_proof_hash=require_transport_proof()
-    gate_path = ROOT/'gui/worker_state/cart_full_batch_threat_v1/summary.json'
+    gate_path = profile_path(ROOT/'gui/worker_state/cart_full_batch_threat_v1/summary.json')
     gate = json.loads(gate_path.read_text())
     from basil_core.verified_cart_runner import fingerprints
     if (gate.get('status') != 'passed' or gate.get('sourceHashes') != fingerprints() or
@@ -290,9 +293,10 @@ def execute(config, *, validate_only=False):
                         worstNodeAccuracy=measured['worst_node_accuracy'],perNodeAccuracy=measured['per_node_accuracy']))),flush=True)
             state.update(status='completed',elapsedSeconds=prior_elapsed+time.monotonic()-started)
             commit(runner,state,directory);publish(directory,state,runtime)
-        from reporting.noniid_verified_plots import report_condition, report_comparison
-        report_condition(directory,ROOT/config['plotDirectory'])
-        report_comparison(ROOT,config)
+        if os.environ.get('PAPERMERGE_SKIP_PLOTS')!='1':
+            from reporting.noniid_verified_plots import report_condition, report_comparison
+            report_condition(directory,profile_path(ROOT/config['plotDirectory']))
+            report_comparison(ROOT,config)
         print(json.dumps(dict(event='completed',rounds=30)),flush=True)
         return 0
     except BaseException as error:

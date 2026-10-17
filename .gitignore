@@ -138,6 +138,8 @@ celerybeat.pid
 .env
 .envrc
 .venv
+.venv-hpc/
+.papermerge/
 env/
 venv/
 ENV/

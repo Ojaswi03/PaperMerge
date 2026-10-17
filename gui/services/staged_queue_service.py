@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+from basil_core.execution_profile import profile_path
 
 
 def is_later_stage(config):
@@ -21,11 +22,11 @@ def dependency_state(config):
     parents=configurations(config['partitionHash'],config['initialModelHash'],
         config['readinessEvidenceSha256'],100)
     validate_evidence(parents[0])
-    if (ROOT/config['resultDirectory']).exists():
+    if profile_path(ROOT/config['resultDirectory']).exists():
         raise ValueError('500-round output exists without a valid prerequisite receipt; investigate it.')
     missing=[]
     for parent in parents:
-        letter=parent['conditionId'];path=ROOT/parent['resultDirectory']/'run.json'
+        letter=parent['conditionId'];path=profile_path(ROOT/parent['resultDirectory'])/'run.json'
         if not path.is_file():missing.append(letter);continue
         manifest=json.loads(path.read_text())
         if manifest.get('config')!=parent:

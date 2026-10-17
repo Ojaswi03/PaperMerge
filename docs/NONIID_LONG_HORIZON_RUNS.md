@@ -170,6 +170,21 @@ tracking unavailable; cloud delivery is not silently claimed successful. A retry
 uses the saved cloud run identity. No online W&B run is created merely by
 loading a preset or running unit/configuration checks.
 
+Initialization must also succeed before any SGD in a resumed attempt. A failure
+there leaves the manifest `interrupted`, retains its committed work and cloud
+identity, and requires verified checkpoint recovery on retry. Only a genuinely
+zero-work startup without a current/previous checkpoint or committed scientific
+artifacts can use `startup_retry`. Older nonzero `tracking_unavailable`
+manifests are routed through the same verified checkpoint reader, including
+previous-checkpoint fallback; missing/corrupt evidence never becomes a fresh run.
+
+The GUI can display recorded completion from compact manifests and measured
+CSV rows independently of current-source execution approval. This does not
+establish exact-resume readiness. Software changes invalidate source-sensitive
+approval receipts and checkpoint compatibility checks; do not rewrite executed
+manifests, regenerate approvals silently, or bypass those checks. The completed
+results remain readable with their original archived source identities.
+
 ## Results, recovery and interpretation
 
 Results: `newResults/nonIID/dirichlet_prior_anchor_{100,500}r_v1/{A,B,C,D}/`.

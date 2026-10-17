@@ -32,9 +32,11 @@ class RuntimeMemoryGuard:
     BASIL memories and telemetry. No cache reset is disguised as freeing VRAM.
     """
     def __init__(self, tf, device):
+        from basil_core.iid_runtime import gpu_memory_limit
         self.tf=tf
         self.device=device
-        self.metrics={'gpuLimitMiB':GPU_MEMORY_LIMIT_MB if device=='GPU' else None,
+        self.limit=gpu_memory_limit()
+        self.metrics={'gpuLimitMiB':self.limit if device=='GPU' else None,
             'cleanupCalls':0,'unreachableObjectsCollected':0,'maximumGpuPeakMiB':0.,
             'pressureEvents':0}
 
@@ -46,7 +48,7 @@ class RuntimeMemoryGuard:
             except (ValueError,RuntimeError):pass
         current=gpu.get('current',0)/1024**2
         peak=gpu.get('peak',0)/1024**2
-        pressure=(available is not None and available<4096) or current>.85*GPU_MEMORY_LIMIT_MB
+        pressure=(available is not None and available<4096) or current>.85*self.limit
         collected=gc.collect() if pressure else gc.collect(0)
         self.metrics.update(cleanupCalls=self.metrics['cleanupCalls']+1,
             unreachableObjectsCollected=self.metrics['unreachableObjectsCollected']+collected,

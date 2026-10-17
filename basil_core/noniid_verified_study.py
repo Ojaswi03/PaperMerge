@@ -133,8 +133,9 @@ def source_hashes():
 
 
 def require_transport_proof():
+    from basil_core.execution_profile import profile_path
     from basil_core.verified_cart_runner import fingerprints
-    path=ROOT/'gui/worker_state/CART_PARALLEL_VERIFIER_CHECK.json'
+    path=profile_path(ROOT/'gui/worker_state/CART_PARALLEL_VERIFIER_CHECK.json')
     proof=json.loads(path.read_text())
     expected=dict(fingerprints(),**{'basil_core/parallel_verifier_service.py':
         hashlib.sha256((ROOT/'basil_core/parallel_verifier_service.py').read_bytes()).hexdigest()})
@@ -149,7 +150,8 @@ def require_transport_proof():
 def recovery_plan(directory, config):
     """Inspect the committed checkpoint pointer; never reconstruct by training."""
     validate_configuration(config)
-    directory = Path(directory)
+    from basil_core.execution_profile import profile_path
+    directory = profile_path(directory)
     pointer = directory/'progress.json'
     if not pointer.exists():
         if directory.exists() and any(directory.iterdir()):

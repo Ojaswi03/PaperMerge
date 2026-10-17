@@ -22,6 +22,7 @@ import time
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
+from basil_core.execution_profile import profile_path
 RESULT = ROOT / 'newResults/nonIID/dirichlet_logit_calibration_3r_v1'
 
 
@@ -33,6 +34,8 @@ def save_json(path, payload):
 def verify_runtime(*,method='fedlc',readiness=False):
     """Synthetic CPU/GPU gradients and one SGD update; no CIFAR run."""
     from basil_core.iid_runtime import prepare_environment,configure_tensorflow,GPU_MEMORY_LIMIT_MB
+    from basil_core.iid_runtime import gpu_memory_limit
+    GPU_MEMORY_LIMIT_MB=gpu_memory_limit()
     prepare_environment('GPU')
     import numpy as np
     import tensorflow as tf
@@ -149,8 +152,8 @@ def run_pair(device, *, recover=False, prior_only=False, output_root=None, stage
              configs_override=None, gui_events=False):
     if stage=='threat' and configs_override is None:
         raise ValueError('Confirmation runs require one evidence-approved config; use run_dirichlet_prior_condition.py.')
-    result_root=Path(output_root or RESULT).resolve()
-    if not result_root.is_relative_to((ROOT/'newResults/nonIID').resolve()):
+    result_root=profile_path(output_root or RESULT)
+    if not result_root.is_relative_to(profile_path(ROOT/'newResults/nonIID')):
         raise ValueError('Small non-IID diagnostics must stay in newResults/nonIID.')
     horizon = bool(configs_override and configs_override[0].get('horizonStudyRevision'))
     if configs_override is not None:
@@ -203,7 +206,7 @@ def run_pair(device, *, recover=False, prior_only=False, output_root=None, stage
     if device=='GPU':
         filename='DIRICHLET_PRIOR_GPU_VERIFICATION.json' if prior_only else 'DIRICHLET_CALIBRATION_GPU_VERIFICATION.json'
         if stage!='initial':filename='DIRICHLET_READINESS_GPU_VERIFICATION.json'
-        verified=json.loads((ROOT/'gui/worker_state'/filename).read_text())
+        verified=json.loads(profile_path(ROOT/'gui/worker_state'/filename).read_text())
         if verified['status']!='passed' or verified['objectiveSha256']!=hashlib.sha256((ROOT/'basil_core/dirichlet_calibration.py').read_bytes()).hexdigest():
             raise ValueError('Current calibrated objective requires synthetic GPU validation before execution.')
         if stage!='initial' and (verified.get('revision')!='dirichlet_prior_readiness_diagnostic_v1' or verified.get('ebmVerified') is not True):
@@ -228,7 +231,7 @@ def run_pair(device, *, recover=False, prior_only=False, output_root=None, stage
         for name,cfg in zip(names,configs):
             if cfg['partitionHash']!=partition['partitionHash'] or cfg['initialModelHash']!=initial_hash:
                 raise ValueError('Actual data partition / initialization differs from approved pairing.')
-            if (ROOT/cfg['resultDirectory']).resolve()!=result_root/name:
+            if profile_path(ROOT/cfg['resultDirectory'])!=result_root/name:
                 raise ValueError('Approved single-condition output path differs from execution root.')
     else:
         for name,cfg in zip(names,configs):
@@ -259,18 +262,16 @@ def run_pair(device, *, recover=False, prior_only=False, output_root=None, stage
                 raise ValueError('Resume identity / source / numerical policy mismatch.')
             if previous['status']=='completed':
                 outcomes[name]=previous; continue
-            startup_retry=horizon and previous.get('status')=='tracking_unavailable'
-            if startup_retry:
-                from basil_core.dirichlet_horizon_study import recovery_plan
-                if recovery_plan(output,cfg)['mode']!='startup_retry':raise ValueError('Unverified startup retry.')
-            else:
-                checkpoint_path=output/'checkpoint.npz'
-                if configs_override is not None:
-                    if horizon:
-                        from basil_core.dirichlet_horizon_study import recovery_plan
-                    else:
-                        from basil_core.dirichlet_prior_study import recovery_plan
-                    checkpoint_path=recovery_plan(output,cfg)['checkpoint']
+            plan=None
+            checkpoint_path=output/'checkpoint.npz'
+            if configs_override is not None:
+                if horizon:
+                    from basil_core.dirichlet_horizon_study import recovery_plan
+                else:
+                    from basil_core.dirichlet_prior_study import recovery_plan
+                plan=recovery_plan(output,cfg)
+            if plan is None or plan['mode']!='startup_retry':
+                if plan is not None:checkpoint_path=plan['checkpoint']
                 state = load_checkpoint(checkpoint_path,cfg,
                     partition_hash=partition['partitionHash'], initial_hash=initial_hash)
                 records = list(state['telemetry'])
@@ -329,11 +330,16 @@ def run_pair(device, *, recover=False, prior_only=False, output_root=None, stage
                 settings=tracking_settings(cfg),notify=lambda payload:print(json.dumps(payload),flush=True))
             metadata['liveTracking']=tracking.metadata
             if tracking.metadata['status']!='active':
-                metadata.update(status='tracking_unavailable',startupFailure=True,
-                    error='W&B initialization failed before any scientific update')
+                resuming=state is not None
+                metadata.update(status='interrupted' if resuming else 'tracking_unavailable',
+                    startupFailure=not resuming,trackingInitializationFailed=True,
+                    error='W&B initialization failed before scientific updates in this attempt; '
+                        + ('committed checkpoint retained' if resuming else 'no scientific work started'))
                 save_json(output/'run.json',metadata)
                 audit.close()
-                raise ValueError('W&B could not initialize: no scientific updates started. Check local login/connectivity.')
+                raise ValueError('W&B could not initialize: no scientific updates in this attempt. '
+                    + ('Saved work is retained. ' if resuming else '')
+                    + 'Check local login/connectivity before retrying.')
         save_json(output/'run.json',metadata)
         rows=saved_round_rows(state)
         if tracking is not None:
@@ -347,6 +353,8 @@ def run_pair(device, *, recover=False, prior_only=False, output_root=None, stage
                 runtimeSeconds=prior_time+time.perf_counter()-started, memorySafety=guard.checkpoint())
             if tracking is not None:metadata['liveTracking']=dict(tracking.metadata)
             save_json(output/'run.json',metadata)
+            print(json.dumps(dict(event='checkpoint_saved',activation=current['next_activation'],
+                completedRounds=current['completed_rounds'],checkpoint=str(output/'checkpoint.npz'))),flush=True)
         def activation(record):
             if record['inputHash']!=record['snapshotAnchorReferenceHash'] or record['optimizerSteps']!=partition['nodes'][record['nodeId']]['optimizerStepsPerActivation']:
                 raise ValueError('Handoff / epoch contract failed.')

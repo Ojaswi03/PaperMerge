@@ -24,6 +24,12 @@ selected in the 100-round runs. These are single-seed observations, not universa
 robustness or statistical-significance claims. Protocol/numerical checks passed;
 that is distinct from scientific effectiveness.
 
+[Mechanism diagnosis and recovery fixes](docs/DIRICHLET_MECHANISM_DIAGNOSIS.md)
+trace accumulated channel perturbations along selected ancestry, distinguish
+method limitations from implementation defects, and document the repaired
+W&B initialization/retry path. Completed evidence is preserved; no new
+scientific condition is enabled by these software fixes.
+
 [500-round overall accuracy lines](newPlots/nonIID/500round/ABCD_overall_average_accuracy_vs_round.png)
 · [Final mean-accuracy bars](newPlots/nonIID/500round/ABCD_final_average_accuracy_bar.png)
 · [Mean/worst-node consistency](newPlots/nonIID/500round/ABCD_mean_and_worst_node_accuracy.png).
@@ -397,11 +403,10 @@ Filter the completed IID workspace to the appropriate group listed in the
 
 ## Run or resume from a remote terminal
 
-For remote terminals, the existing IID runner can start/resume its saved queue
-without a GUI. This is not the new non-IID command:
+For the original local IID500 workflow, the existing runner remains available:
 
 ```bash
-tmux new-session -A -s papermerge-iid 'cd /home/ojaswi/PaperMerge && environment/basil-noise-env/bin/python scripts/run_iid_queue.py --execute'
+tmux new-session -A -s papermerge-iid "cd '$PWD' && environment/basil-noise-env/bin/python scripts/run_iid_queue.py --execute"
 ```
 
 `Ctrl+C` requests a graceful checkpointed stop; repeat the command to resume.
@@ -409,6 +414,134 @@ tmux new-session -A -s papermerge-iid 'cd /home/ojaswi/PaperMerge && environment
 are skipped; an interrupted activation repeats from its beginning. See the
 [protocol guide](docs/IID_500_ROUND_PROTOCOL.md#remote-terminal-no-gui-needed)
 for recovery limits. Without `--execute`, the script only validates.
+
+## Ohio University HPC and headless queues
+
+The opt-in terminal profile targets Linux/Python 3.12, including Ohio
+University EECS's **The Machine** (`themachine.cs.ohio.edu`). It does not require
+Tkinter, X11, Slurm, root access or a CUDA compiler. The legacy local environment
+and GUI defaults remain GPU 0, a 6,144 MiB cap and one CPU thread.
+
+After reviewing and pushing source changes locally, connect through BobcatRAS
+VPN, then deploy from Git:
+
+```bash
+ssh os675524@themachine.cs.ohio.edu
+git clone https://github.com/Ojaswi03/PaperMerge.git
+cd PaperMerge
+# Later deployments: stop workers before updating their source, then git pull --ff-only
+bash scripts/setup_hpc.sh
+source .venv-hpc/bin/activate
+```
+
+`setup_hpc.sh` creates a fresh, isolated `.venv-hpc`, refuses to replace an
+unrecognized environment, checks installation errors and records installed
+versions inside that environment. `environment/requirements-hpc.txt` pins a
+**candidate** TensorFlow 2.21 environment, separate from local TensorFlow 2.18.
+Installation and Blackwell kernels must be verified on the actual server;
+local tests do not establish HPC compatibility. The driver's CUDA ceiling
+does not identify an installed toolkit or prove TensorFlow kernel support.
+
+Select an allocated physical GPU explicitly. The initial HPC policy caps each
+worker at **8,192 MiB**, requires **2,048 MiB free headroom**, uses **one CPU
+thread** and supervises a **32,768 MiB worker-tree RSS budget**. These limits
+are configurable; the deterministic loader currently requires zero loader
+processes. RSS supervision requests a checkpointed stop rather than imposing
+an OS memory reservation. A project lock does not reserve a GPU against other
+users. Obtain administrator permission/resource availability first.
+
+```bash
+python scripts/hpc.py gpu-status
+python scripts/hpc.py queues
+RUN_ROOT="$PWD/.papermerge/runs/blackwell-single"
+STATE="$PWD/.papermerge/terminal/blackwell-single"
+QUEUE=gui/queues/iid_a_100r_gpu_fresh.json
+python scripts/hpc.py doctor --gpus 1 --output-root "$RUN_ROOT" --state-dir "$STATE" --queue "$QUEUE"
+python scripts/hpc.py plan --gpus 1 --output-root "$RUN_ROOT" --state-dir "$STATE" --queue "$QUEUE"
+```
+
+`doctor` performs real synthetic GPU matmul, CNN forward/gradient/SGD,
+second-order EBM, partial-batch and repeatability checks; it launches no research
+condition. Failure blocks execution. It reports tools, dependencies, devices,
+build CUDA/cuDNN versions in its verification log, memory, writable locations
+and selected-queue prerequisites. `--no-gpu-check` is discovery only and cannot
+establish readiness. GPU index 1 is mapped by UUID to TensorFlow's `/GPU:0`;
+memory checks and locks use the physical device. No requested GPU silently
+falls back to CPU.
+
+The dataset cache and scientific readiness evidence are external prerequisites,
+not supplied by a Git clone. Prepare CIFAR through the existing loader with
+`python scripts/hpc.py cache-data --download`, or transfer the four existing
+`experiments/cache/cifar10/*.npy` files to the same repository-relative cache
+path. Transfer approved readiness evidence and any complete recovery bundle
+separately, preserving its relative `newResults/` and `gui/worker_state/` paths
+under `RUN_ROOT`. A bundle includes manifests, checkpoints, referenced
+checkpoint telemetry and required archives, not just weights. Run `plan` after
+transfer: transferred local hardware receipts/checkpoints do not authorize
+Blackwell execution. Source or runtime changes require appropriate fresh
+validation/approval; the CLI never fabricates evidence or weakens a gate.
+Staged non-IID500 still requires the full saved non-IID100 audit.
+
+Only after diagnostics, research gates and approval of the selected experiment:
+
+```bash
+python scripts/hpc.py run --queue "$QUEUE" --gpus 1 --output-root "$RUN_ROOT" --state-dir "$STATE" --execute --tmux papermerge
+tmux attach-session -t papermerge
+# Detach: Ctrl+B, then D. From a second SSH terminal in PaperMerge:
+source .venv-hpc/bin/activate
+python scripts/hpc.py monitor --state-dir .papermerge/terminal/blackwell-single --interval 1
+python scripts/hpc.py status --state-dir .papermerge/terminal/blackwell-single --json
+python scripts/hpc.py logs --state-dir .papermerge/terminal/blackwell-single --follow
+python scripts/hpc.py logs --state-dir .papermerge/terminal/blackwell-single --experiment 0 --lines 50
+python scripts/hpc.py stop --state-dir .papermerge/terminal/blackwell-single --wait 60
+python scripts/hpc.py resume --state-dir .papermerge/terminal/blackwell-single --execute --tmux papermerge
+```
+
+`run` and `resume` validate without training unless `--execute` is supplied.
+Completed items are skipped. Existing output without a manifest, missing or
+incompatible checkpoints, changed source and hardware transitions block
+execution. Resume retains the saved GPU/resource policy and scientific config;
+it never silently restarts at round zero. An interrupted activation may repeat
+from its committed boundary. A failed scientific run retains the existing
+investigation requirement. Stop uses a queue-specific request file and verified
+process identity; it never signals arbitrary stored PIDs.
+
+The independent monitor refreshes every second while worker counters advance
+only at genuine emitted boundaries. It distinguishes latest-node accuracy,
+round mean, worst node and Node-9 test loss, shows unavailable metrics honestly,
+and retains stopped/failed/completed entries in the denominator. Its atomic
+snapshot is separate from scientific manifests/checkpoints. Exiting the monitor
+does not stop training. Without terminal rendering, use `--plain --once` or
+`status --json`. Controller and worker logs rotate at 4 MiB with three backups.
+If tmux is missing, request tmux or an administrator-approved scheduler/nohup
+workflow; foreground execution requires a persistent terminal. No system
+service is installed.
+
+W&B is optional for the dashboard. Local-only conditions remain local-only;
+conditions requiring online tracking still require successful initialization.
+Authenticate interactively with `wandb login`; never place credentials in a
+queue. The CLI reports credential presence without reading or printing its
+value, and the dashboard retains tracking mode, identity and upload errors.
+
+Independent multi-GPU scheduling is explicitly gated by a completed compatible
+single-GPU IID run in the same namespace on one selected GPU, per-device verification, distinct GPU
+locks, and `--parallel --independent-approved --gpus 0,1`. It currently accepts
+fresh IID conditions only, with no transition or staged dependencies. The flag
+attests resource permission and protocol review; it is not automatic permission.
+No distributed model training is introduced. Sequential execution is default.
+
+Generate per-condition plots from completed HPC results without training, then
+retrieve results from your local terminal:
+
+```bash
+python scripts/hpc.py report --queue "$QUEUE" --output-root "$RUN_ROOT"
+# On your local computer (adjust the remote clone path if needed):
+rsync -av os675524@themachine.cs.ohio.edu:PaperMerge/.papermerge/runs/blackwell-single/ ./hpc-results/
+```
+
+Runtime state, generated HPC results and `.venv-hpc` are ignored by Git.
+Use a new output namespace for separately approved fresh studies. The CLI
+does not authorize repeating the already completed local A/B/C/D studies.
 
 ## Generate completed-study plots without training
 

@@ -17,11 +17,12 @@ import time
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
+from basil_core.execution_profile import profile_path
 CONFIG_ROOT = ROOT / 'gui/configs/nonIID/sequential_basil_50r'
 
 
 def save_json(path, payload):
-    path = Path(path)
+    path = profile_path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     temp = path.with_suffix(path.suffix + '.tmp')
     temp.write_text(json.dumps(payload, indent=2, allow_nan=False) + '\n')
@@ -80,7 +81,7 @@ def execute(config, *, recover=False):
     configure_tensorflow(tf, config['executionDevice'])
     runtime = runtime_metadata(tf, config)
     if config['executionDevice'] == 'GPU':
-        verification = json.loads((ROOT/'gui/worker_state/SNAPSHOT_ANCHOR_GPU_VERIFICATION.json').read_text())
+        verification = json.loads(profile_path(ROOT/'gui/worker_state/SNAPSHOT_ANCHOR_GPU_VERIFICATION.json').read_text())
         if verification['status'] != 'passed' or verification['objectiveSha256'] != hashlib.sha256((ROOT/'basil_core/noniid_study.py').read_bytes()).hexdigest():
             raise ValueError('Current snapshot-anchor GPU objective has not been verified.')
         if class_aware:
@@ -100,8 +101,8 @@ def execute(config, *, recover=False):
         raise ValueError('Actual partition/initialization differs from paired preparation.')
     if dirichlet:
         print(json.dumps(dict(event='device_ready',device=runtime['device'],deviceName=runtime.get('deviceName',''))),flush=True)
-    output = (ROOT / config['resultDirectory']).resolve()
-    if not output.is_relative_to((ROOT / 'newResults/nonIID').resolve()):
+    output = profile_path(ROOT / config['resultDirectory'])
+    if not output.is_relative_to(profile_path(ROOT / 'newResults/nonIID')):
         raise ValueError('Refusing non-IID output outside its tree.')
     output.mkdir(parents=True, exist_ok=True)
     previous = None
@@ -185,6 +186,8 @@ def execute(config, *, recover=False):
         metadata.update(completedRounds=current['completed_rounds'], completedActivations=current['next_activation'],
             memorySafety=guard.checkpoint(), runtimeSeconds=prior_runtime+time.perf_counter()-started)
         save_json(output / 'run.json', metadata)
+        print(json.dumps(dict(event='checkpoint_saved',activation=current['next_activation'],
+            completedRounds=current['completed_rounds'],checkpoint=str(output/'checkpoint.npz'))),flush=True)
     def activation(record):
         if params_hash(initial) != initial_hash:
             raise ValueError('Canonical initialization was mutated.')
@@ -258,8 +261,9 @@ def execute(config, *, recover=False):
     finally:
         audit.close()
     save_json(output / 'run.json', metadata)
-    from reporting.noniid_study_plots import generate_condition_plots
-    generate_condition_plots(output, ROOT / config['plotDirectory'])
+    if os.environ.get('PAPERMERGE_SKIP_PLOTS')!='1':
+        from reporting.noniid_study_plots import generate_condition_plots
+        generate_condition_plots(output, profile_path(ROOT / config['plotDirectory']))
     return metadata
 
 

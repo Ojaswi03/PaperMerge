@@ -9,6 +9,7 @@ import sys
 
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT))
+from basil_core.execution_profile import profile_path
 
 
 def main():
@@ -29,11 +30,12 @@ def main():
     from scripts.run_dirichlet_calibration import run_pair
     try:
         run_pair(config['executionDevice'],recover=args.recover,stage='threat',
-            output_root=ROOT/config['resultDirectory'].rsplit('/',1)[0],configs_override=[config],gui_events=True)
+            output_root=profile_path(ROOT/config['resultDirectory'].rsplit('/',1)[0]),configs_override=[config],gui_events=True)
     except InterruptedError:raise SystemExit(130)
-    from reporting.noniid_study_plots import generate_condition_plots
-    # A completed checkpoint may need plots rebuilt after a prior plotting error.
-    generate_condition_plots(ROOT/config['resultDirectory'],ROOT/config['plotDirectory'])
+    import os
+    if os.environ.get('PAPERMERGE_SKIP_PLOTS')!='1':
+        from reporting.noniid_study_plots import generate_condition_plots
+        generate_condition_plots(profile_path(ROOT/config['resultDirectory']),profile_path(ROOT/config['plotDirectory']))
 
 
 if __name__=='__main__':main()
