@@ -11,6 +11,7 @@ import os
 from pathlib import Path
 import socket
 import subprocess
+import sysconfig
 
 ROOT = Path(__file__).resolve().parents[1]
 ENV = 'PAPERMERGE_EXECUTION_PROFILE'
@@ -149,6 +150,29 @@ def verification_path(profile=None):
     return Path(profile.output_root)/'verification'/f'{socket.gethostname()}-{identity}.json'
 
 
+def cuda_wheel_paths(roots=None):
+    """Find pip CUDA runtime directories without importing TensorFlow/NVIDIA."""
+    if roots is None:
+        roots=[sysconfig.get_path(kind) for kind in ('purelib','platlib')]
+    libraries=set();binaries=set()
+    for root in {Path(p).resolve() for p in roots if p}:
+        for path in (root/'nvidia').glob('*/lib'):
+            if path.is_dir() and any(path.glob('*.so*')):libraries.add(str(path.resolve()))
+        for path in (root/'nvidia').glob('*/bin'):
+            if path.is_dir() and (path/'ptxas').is_file():binaries.add(str(path.resolve()))
+    return dict(libraryDirectories=sorted(libraries),binaryDirectories=sorted(binaries))
+
+
+def cuda_wheel_environment(base):
+    """Set loader paths before a new HPC GPU process starts; never edit the OS."""
+    paths=cuda_wheel_paths();result={}
+    for key,managed in (('LD_LIBRARY_PATH',paths['libraryDirectories']),('PATH',paths['binaryDirectories'])):
+        if managed:
+            existing=[p for p in base.get(key,'').split(os.pathsep) if p]
+            result[key]=os.pathsep.join(dict.fromkeys([*managed,*existing]))
+    return result
+
+
 def worker_environment(device, base=None, profile=None):
     profile=profile or current_profile()
     values=dict(base or {})
@@ -157,7 +181,12 @@ def worker_environment(device, base=None, profile=None):
         TF_ENABLE_ONEDNN_OPTS='0',TF_DETERMINISTIC_OPS='1',
         TF_NUM_INTRAOP_THREADS=str(profile.threads),TF_NUM_INTEROP_THREADS=str(profile.threads),
         OMP_NUM_THREADS=str(profile.threads),OPENBLAS_NUM_THREADS=str(profile.threads),MKL_NUM_THREADS=str(profile.threads))
-    if profile.name=='hpc':values.update(profile.environment())
+    if profile.name=='hpc':
+        values.update(profile.environment())
+        if device=='GPU':
+            inherited={key:os.environ[key] for key in ('PATH','LD_LIBRARY_PATH')
+                if base is None and key in os.environ}
+            values.update(cuda_wheel_environment(dict(inherited,**values)))
     return values
 
 
@@ -179,7 +208,9 @@ def resource_identity(profile=None):
     if profile.name=='hpc':
         devices=gpu_inventory();profile.bind(devices)
         driver=next(g['driver_version'] for g in devices if g['index']==profile.gpu)
-    return dict(profile=profile.name,physicalGpuId=profile.gpu,physicalGpuUuid=profile.gpu_uuid,
+    result=dict(profile=profile.name,physicalGpuId=profile.gpu,physicalGpuUuid=profile.gpu_uuid,
         logicalTensorflowDevice='/GPU:0',host=socket.gethostname(),gpuMemoryLimitMb=profile.memory_mib,
         gpuHeadroomMb=profile.headroom_mib,cpuThreads=profile.threads,hostRamBudgetMiB=profile.ram_mib,
         dataLoadingWorkers=profile.data_workers,outputRoot=profile.output_root,driverVersion=driver,software=software)
+    if profile.name=='hpc':result['cudaWheelPaths']=cuda_wheel_paths()
+    return result

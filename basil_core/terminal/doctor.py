@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from dataclasses import asdict
 from importlib.metadata import PackageNotFoundError, version
+import json
 import os
 from pathlib import Path
 import platform
@@ -30,6 +31,39 @@ def writable(path):
         with tempfile.TemporaryFile(dir=path) as stream:stream.write(b'permission check');stream.flush()
         return True
     except OSError:return False
+
+
+def library_probe(environment, runner=subprocess.run):
+    """Inspect dlopen failures in a fresh process with the worker's loader path."""
+    program='''
+import ctypes, json
+libraries = {}
+handles = []
+for name in ('libcuda.so.1', 'libcudart.so.12', 'libcublas.so.12',
+             'libcublasLt.so.12', 'libcufft.so.11', 'libcurand.so.10',
+             'libcusolver.so.11', 'libcusparse.so.12', 'libcudnn.so.9'):
+    try:
+        handles.append(ctypes.CDLL(name))
+        libraries[name] = {'loadable': True}
+    except OSError as error:
+        libraries[name] = {'loadable': False, 'error': str(error)}
+result = {'libraries': libraries, 'status': 'passed' if all(
+    item['loadable'] for item in libraries.values()) else 'blocked'}
+try:
+    import tensorflow as tf
+    result['tensorflowVersion'] = tf.__version__
+    result['tensorflowBuild'] = tf.sysconfig.get_build_info()
+except Exception as error:
+    result.update(status='blocked', tensorflowError=str(error))
+print(json.dumps(result))
+'''
+    try:
+        check=runner([sys.executable,'-c',program],cwd=ROOT,env=environment,
+            capture_output=True,text=True,timeout=60)
+        if check.returncode:raise ValueError(safe_text((check.stderr or check.stdout)[-3000:]))
+        return json.loads(check.stdout)
+    except (OSError,subprocess.SubprocessError,ValueError) as error:
+        return dict(status='blocked',error=safe_text(error))
 
 
 def diagnose(policy, state_dir, *, verify_gpu=True, objective_checks=True, runner=subprocess.run):
@@ -76,11 +110,21 @@ def diagnose(policy, state_dir, *, verify_gpu=True, objective_checks=True, runne
         if check.returncode:data['errors'].append('pip check found incompatible dependencies.')
     except (OSError,subprocess.SubprocessError) as error:data['errors'].append('pip check failed: '+str(error))
     if verify_gpu and not data['errors']:
+        from basil_core.execution_profile import worker_environment, cuda_wheel_paths
+        env=worker_environment('GPU',dict(os.environ,PAPERMERGE_LIVE_TRACKING='disabled',WANDB_MODE='disabled'),policy)
+        if policy.name=='hpc':
+            data['cudaLoader']=dict(paths=cuda_wheel_paths(),**library_probe(env,runner))
+            data['cudaLoader']['ptxas']=shutil.which('ptxas',path=env.get('PATH',''))
+            if data['cudaLoader']['status']!='passed':
+                failures=[name+': '+item.get('error','not loadable') for name,item in
+                    data['cudaLoader'].get('libraries',{}).items() if not item['loadable']]
+                failures.extend(str(data['cudaLoader'][key]) for key in ('error','tensorflowError') if key in data['cudaLoader'])
+                data['errors'].append('CUDA shared-library loading failed: '+'; '.join(failures))
+    if verify_gpu and not data['errors']:
         scripts=[['scripts/verify_iid_gpu.py']]
         if objective_checks:
             scripts += [['scripts/verify_snapshot_anchor_gpu.py'],
                         ['scripts/run_dirichlet_calibration.py','--verify-runtime','--stage','noise']]
-        env=dict(os.environ,**policy.environment(),PAPERMERGE_LIVE_TRACKING='disabled',WANDB_MODE='disabled')
         log=logger(Path(state_dir)/'doctor.log')
         for command in scripts:
             try:

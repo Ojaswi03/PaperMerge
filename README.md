@@ -469,6 +469,15 @@ establish readiness. GPU index 1 is mapped by UUID to TensorFlow's `/GPU:0`;
 memory checks and locks use the physical device. No requested GPU silently
 falls back to CPU.
 
+For the HPC profile, child GPU processes prepend the active environment's
+`nvidia/*/lib` directories to their loader path and expose the wheel's `ptxas`
+binary. This addresses pip-installed CUDA libraries being present but invisible
+to the dynamic loader without changing shared drivers or system settings.
+`doctor` probes shared-library loading in a separate process, reports exact
+`dlopen` errors and the TensorFlow build, then runs the actual kernel checks.
+Library loading alone does not establish Blackwell compatibility. See
+[TensorFlow's virtual-environment GPU troubleshooting](https://www.tensorflow.org/install/pip).
+
 The dataset cache and scientific readiness evidence are external prerequisites,
 not supplied by a Git clone. Prepare CIFAR through the existing loader with
 `python scripts/hpc.py cache-data --download`, or transfer the four existing

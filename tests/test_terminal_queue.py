@@ -471,6 +471,7 @@ def test_doctor_uses_selected_gpu_receipt_not_controller_default(tmp_path,monkey
     monkeypatch.setattr(profiles,'gpu_inventory',inventory)
     monkeypatch.setattr(doctor,'gpu_inventory',inventory)
     monkeypatch.setattr(doctor.sys,'prefix',str(tmp_path/'venv'))
+    monkeypatch.setattr(doctor,'library_probe',lambda *args,**kwargs:dict(status='passed',libraries={}))
     monkeypatch.setattr(doctor,'dependencies',lambda:{name:'synthetic' for name in
         ('tensorflow','keras','numpy','scipy','scikit-learn','h5py','matplotlib','pillow','tqdm','psutil','wandb')})
     monkeypatch.setattr(dashboard,'system_info',lambda:{})
