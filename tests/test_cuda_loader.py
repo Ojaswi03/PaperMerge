@@ -99,6 +99,22 @@ def test_library_probe_crash_is_blocked():
     assert doctor.library_probe({},runner)==dict(status='blocked',error='symbol lookup error: synthetic')
 
 
+@pytest.mark.parametrize('stderr,last_stage',[
+    (b'PAPERMERGE_PROBE_STAGE=Loading libcudnn.so.9\nPAPERMERGE_PROBE_STAGE=Importing TensorFlow\n',
+        'Importing TensorFlow'),
+    ('PAPERMERGE_PROBE_STAGE=Loading libcuda.so.1\n','Loading libcuda.so.1'),
+    (None,'child startup (no stage reported)')])
+def test_library_probe_timeout_reports_last_stage_without_dumping_child_program(stderr,last_stage):
+    def runner(command,**kwargs):
+        assert kwargs['timeout']==60
+        raise subprocess.TimeoutExpired(command,60,stderr=stderr)
+    result=doctor.library_probe({},runner)
+    assert result['status']=='blocked' and result['timedOut']
+    assert result['lastStage']==last_stage and result['timeoutSeconds']==60
+    assert 'Kernel checks were not started' in result['error']
+    assert 'Retry doctor' in result['error'] and 'ctypes' not in result['error']
+
+
 def test_doctor_loader_failure_prevents_kernel_checks(tmp_path,monkeypatch):
     from basil_core.terminal import dashboard
     from test_hpc_profiles import inventory,policy

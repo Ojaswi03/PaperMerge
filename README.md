@@ -478,6 +478,16 @@ to the dynamic loader without changing shared drivers or system settings.
 Library loading alone does not establish Blackwell compatibility. See
 [TensorFlow's virtual-environment GPU troubleshooting](https://www.tensorflow.org/install/pip).
 
+`doctor` prints the active physical GPU and check to stderr, with an activity
+update every second while a check is running. It shows elapsed time and stage
+counts, not simulated kernel or training progress. The first GPU has no ETA;
+subsequent GPUs use timings from successful checks in the same command to
+estimate their own remaining time. Slow stages show that the estimate is being
+recalculated. SSH terminals refresh the activity line; redirected output keeps
+plain activity lines with elapsed time. Final JSON stays on stdout, so
+`python scripts/hpc.py doctor --gpus 0,1,2,3 > /tmp/papermerge-doctor-results.json` still shows
+live activity in the terminal. No research queue starts from this command.
+
 The dataset cache and scientific readiness evidence are external prerequisites,
 not supplied by a Git clone. Prepare CIFAR through the existing loader with
 `python scripts/hpc.py cache-data --download`, or transfer the four existing
