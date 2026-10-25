@@ -395,21 +395,52 @@ def test_campaign_queue_validation_rejects_unpaired_initialization(tmp_path):
     with pytest.raises(ValueError,match='Unexpected scientific differences'):queues.inspect_queue(path,False)
 
 
-def test_independent_scheduler_assigns_distinct_gpus_before_polling(synthetic,tmp_path,monkeypatch):
+@pytest.mark.parametrize('gpu_ids',[(1,2),(0,1,2,3)])
+def test_independent_scheduler_assigns_distinct_gpus_before_polling(synthetic,tmp_path,monkeypatch,gpu_ids):
     from dataclasses import replace
-    launched=[]
+    from basil_core.execution_profile import worker_environment
+    launched=[];directories=[];outputs=[]
     class Worker(synthetic.Worker):
         def __init__(self,cfg,sink,policy,directory):
+            environment=worker_environment('GPU',{},policy)
+            assert environment['CUDA_VISIBLE_DEVICES']==str(policy.gpu)
+            directories.append(directory);outputs.append(cfg['resultDirectory'])
             launched.append(policy.gpu);super().__init__(cfg,sink,policy,directory)
         def poll(self):
-            assert launched==[1,2]
+            assert launched==list(gpu_ids)
             super().poll()
-    c=synthetic.create(factory=Worker)
-    first=ExecutionProfile(name='hpc',gpu=1,output_root=str(tmp_path/'runs'))
-    c.policies=[first,replace(first,gpu=2)];c.parallel=True
+    c=synthetic.create(factory=Worker,cfgs_override=configs()[:len(gpu_ids)])
+    first=ExecutionProfile(name='hpc',gpu=gpu_ids[0],output_root=str(tmp_path/'runs'))
+    c.policies=[replace(first,gpu=gpu) for gpu in gpu_ids];c.parallel=True
     monkeypatch.setattr(c,'validate_parallel',lambda:None)  # Gating is tested separately.
     assert c.run()==0
-    assert [e['gpu'] for e in c.snapshot['entries']]==[1,2]
+    assert [e['gpu'] for e in c.snapshot['entries']]==list(gpu_ids)
+    assert len(set(directories))==len(set(outputs))==len(gpu_ids)
+    assert c.snapshot['totals']['completed']==len(gpu_ids)
+    assert c.snapshot['totals']['progress']==1.
+
+
+def test_four_gpu_worker_failure_requests_peer_checkpoint_stops(synthetic,tmp_path,monkeypatch):
+    from dataclasses import replace
+    class Worker(synthetic.Worker):
+        def poll(self):
+            if self.cfg['conditionId']=='A':
+                self.sink(ExecutionEvent('execution_failed',dict(error='Synthetic worker failure')))
+                self.active=False
+            else:
+                assert self.stopping
+                super().poll()
+    c=synthetic.create(factory=Worker,cfgs_override=configs())
+    first=ExecutionProfile(name='hpc',output_root=str(tmp_path/'runs'))
+    c.policies=[replace(first,gpu=gpu) for gpu in range(4)];c.parallel=True
+    monkeypatch.setattr(c,'validate_parallel',lambda:None)  # Separate tests exercise admission.
+    assert c.run()==1
+    saved=state.read_json(tmp_path/'state/status.json')
+    assert saved['status']=='FAILED'
+    assert [e['status'] for e in saved['entries']]==['FAILED','STOPPED','STOPPED','STOPPED']
+    assert all(e['checkpoint']['activation']==10 for e in saved['entries'][1:])
+    assert all(handle.stopping for handle in synthetic.handles[1:])
+    assert not synthetic.done
 
 
 def test_slow_resource_probe_does_not_delay_dashboard_refresh(tmp_path,monkeypatch):
