@@ -4,7 +4,7 @@
 The registry travels around the ring with the model. Each node:
   1. Evaluates its per-class accuracy after local training.
   2. Merges with the received registry (take max per class).
-  3. Verifies Byzantine registry claims locally before accepting.
+  3. Checks claims against receiver-local support before accepting.
   4. Uses the registry gap to control its proximal regularization strength.
 """
 
@@ -22,7 +22,9 @@ class ClassRegistry:
     Attributes
     ----------
     class_best_acc : np.float32[nClasses]
-        Best verified accuracy for each class across all nodes seen this round.
+        Best recorded accuracy for each class across the retained history.
+        Receiver-local checks are not a certificate of sender honesty or
+        current/global class knowledge.
     class_best_source : int[nClasses]
         Node ID that achieved the best accuracy for each class (-1 = unknown).
     nClasses : int
@@ -85,11 +87,11 @@ class ClassRegistry:
     ):
         """Merge, but skip classes where the registry claim is implausible.
 
-        A Byzantine node could inflate registry entries to trick honest nodes
-        into incorrect distillation targets.  We reject a class-c claim when
-        the locally evaluated accuracy for that class on the received model is
-        more than verifyThreshold below the claimed best accuracy — i.e. the
-        model that supposedly achieved it clearly cannot reproduce the result.
+        Reject a class-c claim when receiver-local accuracy on the current
+        received model is more than verifyThreshold below its historical score.
+        This is a consistency heuristic on available TRAIN support. A genuine
+        historical score can fail it after model/data changes; rejection does
+        not establish Byzantine inflation or provide a statistical guarantee.
 
         Parameters
         ----------
@@ -119,7 +121,7 @@ class ClassRegistry:
                 self.class_best_round[c] = other.class_best_round[c]
                 self.class_best_support[c] = other.class_best_support[c]
                 accepted += 1
-            # else: claim rejected — Byzantine inflation likely
+            # The current receiver-side measurement does not support the claim.
             else:
                 rejected += 1
         return accepted, rejected

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import math
 import os
+import shutil
 import statistics
 import sys
 import threading
@@ -81,15 +82,39 @@ class DiagnosticProgress:
         self.begin(label)
         return action()
 
-    def _eta(self,now):
+    def _eta(self,now,*,compact=False):
         remaining=self.stages[self.stages.index(self.current):]
         if any(not self.estimates.get(label) for label in remaining):
-            return 'ETA unavailable (no completed matching GPU check yet)'
+            return 'ETA --' if compact else 'ETA unavailable (no completed matching GPU check yet)'
         estimates={label:statistics.median(self.estimates[label]) for label in remaining}
         elapsed=max(0.,now-self.stage_started)
         if elapsed>=estimates[self.current]:
-            return 'ETA recalculating (current stage exceeds previous timing)'
-        return 'ETA ~'+duration(sum(estimates.values())-elapsed)+' for this GPU (previous GPU timing)'
+            return 'ETA updating' if compact else 'ETA recalculating (current stage exceeds previous timing)'
+        eta='ETA ~'+duration(sum(estimates.values())-elapsed)
+        return eta if compact else eta+' for this GPU (previous GPU timing)'
+
+    def _columns(self):
+        try:
+            # stdout may be redirected to JSON while stderr remains on SSH.
+            return max(1,os.get_terminal_size(self.stream.fileno()).columns)
+        except (AttributeError,OSError,ValueError):
+            return max(1,shutil.get_terminal_size((80,24)).columns)
+
+    def _compact_line(self,now,width):
+        index=self.stages.index(self.current)+1
+        scope=self.scope.removeprefix('Physical ')
+        elapsed=duration(now-self.started);eta=self._eta(now,compact=True)
+        prefix=f'{scope} [{index}/{len(self.stages)}] {elapsed} elapsed | {duration(now-self.stage_started)} stage | {eta}'
+        if len(prefix)+6>width:
+            scope=scope.split(' (',1)[0]
+            prefix=f'{scope} {index}/{len(self.stages)} {elapsed} | {eta}'
+        if len(prefix)>width:prefix=f'{scope} {elapsed}'
+        if len(prefix)>width:prefix=elapsed
+        message=prefix+' | '+self.current
+        # Leave the terminal's final column unused to avoid automatic wrapping.
+        if len(message)>width:
+            return message[:width-3]+'...' if width>=3 else message[:width]
+        return message
 
     def _line(self,now):
         index=self.stages.index(self.current)+1
@@ -98,7 +123,10 @@ class DiagnosticProgress:
 
     def refresh(self):
         with self.lock:
-            if not self.finished:self._write(self._line(self.clock()),refresh=True)
+            if not self.finished:
+                now=self.clock()
+                line=self._compact_line(now,max(0,self._columns()-1)) if self.interactive else self._line(now)
+                self._write(line,refresh=True)
 
     def _heartbeat(self):
         while not self.stop.wait(self.interval):self.refresh()

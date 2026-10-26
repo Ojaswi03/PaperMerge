@@ -229,7 +229,7 @@ def fullLocalEpochBatches(sampleCount, batchSize, localEpochs):
     return oneEpoch * localEpochs
 
 
-def _partitionCachePath(cacheDir, *, iid, nClients, alpha, seed, dataSize):
+def _partitionCachePath(cacheDir, *, iid, nClients, alpha, seed, dataSize, labelHash=None):
     payload = json.dumps(
         {
             "schemaVersion": _CACHE_SCHEMA_VERSION,
@@ -238,6 +238,7 @@ def _partitionCachePath(cacheDir, *, iid, nClients, alpha, seed, dataSize):
             "alpha": float(alpha),
             "seed": None if seed is None else int(seed),
             "dataSize": int(dataSize),
+            "labelHash": labelHash,
         },
         sort_keys=True,
         separators=(",", ":"),
@@ -290,6 +291,7 @@ def _loadOrCreatePartition(
         alpha=alpha,
         seed=seed,
         dataSize=len(labels),
+        labelHash=(hashlib.sha256(np.asarray(labels,dtype='<i4').tobytes()).hexdigest() if not iid else None),
     )
     cachePath.parent.mkdir(parents=True, exist_ok=True)
     lock = _cacheLock(cachePath.parent)
@@ -297,12 +299,11 @@ def _loadOrCreatePartition(
         if cachePath.exists():
             try:
                 with np.load(cachePath, allow_pickle=False) as saved:
-                    chunks = [
-                        np.asarray(saved[f"client_{clientId}"], dtype=np.int64)
-                        for clientId in range(nClients)
-                    ]
-                if sum(len(chunk) for chunk in chunks) == len(labels):
-                    return chunks
+                    chunks = [saved[f"client_{clientId}"].copy() for clientId in range(nClients)]
+                if all(c.ndim==1 and np.issubdtype(c.dtype,np.integer) for c in chunks):
+                    joined=np.concatenate(chunks)
+                    if np.array_equal(np.sort(joined),np.arange(len(labels))):
+                        return [c.astype(np.int64,copy=False) for c in chunks]
             except (OSError, ValueError, KeyError):
                 pass
 

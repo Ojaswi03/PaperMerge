@@ -1,9 +1,10 @@
+"""
+Project attack transformations with historical strength settings.
+
+Accuracy outcomes depend on the model, data, protocol and seed; the numerical
+defaults do not establish an expected accuracy or a robustness guarantee.
+"""
 import random
-"""
-Attack implementations calibrated for:
-- No Snapshot: ~50-55% accuracy
-- With Snapshot (BASIL): ~75-80% accuracy
-"""
 
 
 def gaussianAttack(weights, mean=0.0, std=0.8, blend=0.55):

@@ -196,6 +196,14 @@ def build_model(architecture: str, seed: int = 2025):
 
 def validate_config(config: dict) -> None:
     config = normalize_config(config)
+    if config.get('lossStudyRevision') == 'cart_train_validation_v1':
+        from basil_core.cart_validation import validate_config as validate_cart_validation
+        validate_cart_validation(config)
+        return
+    if config.get('lossStudyRevision') == 'cart_local_class_memory_v1':
+        from basil_core.cart_memory_study import validate_config as validate_cart
+        validate_cart(config)
+        return
     if config.get('lossStudyRevision') in {'dirichlet_logit_calibration_diagnostic_v1','dirichlet_prior_readiness_diagnostic_v1'}:
         from basil_core.dirichlet_calibration import validate_diagnostic_config
         validate_diagnostic_config(config)
@@ -484,12 +492,21 @@ def run_research_protocol(config: dict, train_x, train_y, test_x, test_y, *, act
     config = normalize_config(config)
     validate_config(config); seed=int(config["seed"]); n=10; size=5; model=build_model(config["modelArchitecture"], seed); worker=(worker_factory or SequentialWorker)(model)
     initial=worker.export(); node_params=[copy_params(initial) for _ in range(n)]; memories=initialize_memories(initial,n,size); attackers=tuple(config.get("resolvedAttackerIds") or resolve_attackers(seed,int(config.get("attackerCount",4)),n))
+    if config.get('cartValidationStage')=='replication_30r' and params_hash(initial)!=config['initialModelHash']:
+        raise ValueError('Replication initialization differs from its preflight model hash; no updates started.')
     if audit:
         worker.audit = audit
         audit.initial(initial, train_x, train_y, test_x, test_y)
     rounds=int(config["nRounds"]); test_count=len(test_y); activation_accuracy=np.zeros((rounds,n),np.float32); activation_per_class=np.zeros((rounds,n,10),np.float32); round_node_accuracy=np.zeros((rounds,n),np.float32); round_node_per_class=np.zeros((rounds,n,10),np.float32); selected_sources=np.full((rounds,n),-1,np.int16); selected_rounds=np.full((rounds,n),-1,np.int16); telemetry=[]
     class_aware=config.get('lossStudyRevision')=='class_gradient_importance_anchor_v1'
     calibration_study=config.get('lossStudyRevision') in {'dirichlet_logit_calibration_diagnostic_v1','dirichlet_prior_readiness_diagnostic_v1'}
+    local_cart=config.get('lossStudyRevision') in {'cart_local_class_memory_v1','cart_train_validation_v1'}
+    if local_cart and (getattr(worker, 'diagnostic_revision', None) != config['lossStudyRevision'] or
+            getattr(worker, 'beta', None) != config['cartBeta'] or
+            not all(hasattr(worker, k) for k in ('export_local_memory', 'restore_local_memory'))):
+        raise ValueError('Local CART requires its matching memory worker; no plain CE fallback.')
+    if config.get('lossStudyRevision')=='cart_train_validation_v1' and getattr(worker,'validation_mode',None)!=config['cartMemoryMode']:
+        raise ValueError('TRAIN validation requires its explicitly selected memory objective.')
     if calibration_study and (getattr(worker,'diagnostic_revision',None)!=config['lossStudyRevision'] or
             getattr(worker,'calibration_enabled',None)!=config['logitCalibrationEnabled'] or
             getattr(worker,'calibration_method',None)!=config.get('logitCalibrationMethod','fedlc')):
@@ -501,6 +518,10 @@ def run_research_protocol(config: dict, train_x, train_y, test_x, test_y, *, act
     round_node_loss=np.zeros((rounds,n),np.float64)
     next_activation=0; completed_rounds=0
     if resume_state is not None:
+        if local_cart:
+            from basil_core.cart_memory_study import validate_memory_checkpoint
+            worker.restore_local_memory(validate_memory_checkpoint(resume_state['cart_memory'],
+                resume_state['next_activation'], seed))
         node_params=resume_state['node_params']; memories=resume_state['memories']
         telemetry=list(resume_state['telemetry'])
         next_activation=resume_state['next_activation']; completed_rounds=resume_state['completed_rounds']
@@ -515,7 +536,8 @@ def run_research_protocol(config: dict, train_x, train_y, test_x, test_y, *, act
                 activation_accuracy=activation_accuracy, activation_per_class=activation_per_class,
                 round_node_accuracy=round_node_accuracy, round_node_per_class=round_node_per_class,
                 selected_sources=selected_sources, selected_rounds=selected_rounds,
-                round_node_loss=round_node_loss))
+                round_node_loss=round_node_loss,
+                **({'cart_memory': worker.export_local_memory()} if local_cart else {})))
     predecessor=Snapshot(n-1,-1,copy_params(initial)); partition=config["partitionStrategy"]
     labels=np.asarray(train_y,np.int32)
     if not config.get("diagnosticTestSamplesPerClass"):
@@ -543,6 +565,11 @@ def run_research_protocol(config: dict, train_x, train_y, test_x, test_y, *, act
             chunk,size=min(512,len(chunk)),replace=False) for node,chunk in enumerate(indices)]
     if any(len(chunk) == 0 for chunk in indices):
         raise ValueError("Partition produced an empty local training dataset.")
+    if config.get('cartValidationStage')=='replication_30r':
+        digest=hashlib.sha256()
+        for chunk in indices:digest.update(np.asarray(chunk,dtype='<i8').tobytes())
+        if digest.hexdigest()!=config['partitionHash']:
+            raise ValueError('Replication partition differs from preflight; no updates started.')
     if partition == "one_class_per_node" and not limit and not config.get("diagnosticSamplesPerClass"):
         if [len(chunk) for chunk in indices] != [5000] * 10:
             raise ValueError("Full-data one-class protocol requires exactly 5,000 samples per class.")
@@ -622,11 +649,14 @@ def run_research_protocol(config: dict, train_x, train_y, test_x, test_y, *, act
                 record.update(selectedSenderByzantine=selected.sender_id in attackers,
                     selectedSnapshotAgeRounds=round_id-selected.round_id if selected.round_id>=0 else None,
                     localObjective=config["localObjective"],legacyLambdaIgnored=True)
-            if config.get('lossStudyRevision') in {'source_grounded_no_lambda_v1','class_gradient_importance_anchor_v1','dirichlet_local_snapshot_anchor_v1','dirichlet_logit_calibration_diagnostic_v1','dirichlet_prior_readiness_diagnostic_v1'}:
+            if config.get('lossStudyRevision') in {'source_grounded_no_lambda_v1','class_gradient_importance_anchor_v1','dirichlet_local_snapshot_anchor_v1','dirichlet_logit_calibration_diagnostic_v1','dirichlet_prior_readiness_diagnostic_v1','cart_local_class_memory_v1','cart_train_validation_v1'}:
                 record.update(snapshotAnchorReferenceHash=training['snapshotAnchorReferenceHash'],
                     snapshotAnchorMu=config['snapshotAnchorMu'],lossStudyRevision=config['lossStudyRevision'])
             if class_aware:
                 record['classRetention']=training['classRetention']
+            if local_cart:
+                record.update(cartMemory=training['cartMemory'], localClassCounts=training['localClassCounts'],
+                    logitCalibrationOffsets=training['logitCalibrationOffsets'])
             if calibration_study:
                 record.update(localClassCounts=training['localClassCounts'],
                     logitCalibrationOffsets=training['logitCalibrationOffsets'],

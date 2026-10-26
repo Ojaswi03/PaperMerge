@@ -1,0 +1,51 @@
+{
+  "purpose": "Primary related work for class-aware retention, replay and gradient projection in federated learning; not a novelty certification",
+  "reviewDate": "2026-10-25",
+  "papers": [
+    {
+      "id": "dark_experience_replay_2020",
+      "title": "Dark Experience for General Continual Learning: a Strong, Simple Baseline",
+      "authors": ["Pietro Buzzega", "Matteo Boschini", "Angelo Porrello", "Davide Abati", "Simone Calderara"],
+      "publicationStatus": "NeurIPS 2020 official proceedings PDF",
+      "source": "https://arxiv.org/abs/2004.07211",
+      "publicationRecord": "https://proceedings.neurips.cc/paper/2020/hash/b704ea2c39778f07c617f6b7ce480e9e-Abstract.html",
+      "pdfUrls": ["https://proceedings.neurips.cc/paper_files/paper/2020/file/b704ea2c39778f07c617f6b7ce480e9e-Paper.pdf"],
+      "file": "dark_experience_replay_2020.pdf",
+      "relevance": "Historical logit replay with rehearsal and distillation; required attribution for proposed CART historical prediction retention"
+    },
+    {
+      "id": "c2prompt_2025",
+      "title": "C^2Prompt: Class-aware Client Knowledge Interaction for Federated Continual Learning",
+      "authors": ["Kunlun Xu", "Yibo Feng", "Jiangmeng Li", "Yongsheng Qi", "Jiahuan Zhou"],
+      "publicationStatus": "NeurIPS 2025 acceptance reported by the primary arXiv record",
+      "downloadedVersion": "arXiv:2509.19674v2, 6 March 2026",
+      "source": "https://arxiv.org/abs/2509.19674",
+      "pdfUrls": ["https://arxiv.org/pdf/2509.19674v2"],
+      "file": "c2prompt_2025.pdf",
+      "relevance": "Class-aware knowledge interaction and temporal/spatial forgetting; prompt-based federated learning differs from strict selected-model ring handoff"
+    },
+    {
+      "id": "fedprotip_2025",
+      "title": "FedProTIP: Task-Agnostic Federated Continual Learning via Replay-Free Gradient Projection",
+      "authors": ["Seohyeon Cha", "Huancheng Chen", "Haris Vikalo"],
+      "publicationStatus": "Transactions on Machine Learning Research, June 2026, as stated in the downloaded paper",
+      "downloadedVersion": "arXiv:2509.21606v3, 21 June 2026; filename year denotes first arXiv submission",
+      "source": "https://arxiv.org/abs/2509.21606",
+      "publicationRecord": "https://openreview.net/forum?id=GW4aw0fUKC",
+      "pdfUrls": ["https://arxiv.org/pdf/2509.21606v3", "https://citychan.github.io/assets/publications/2025_arxiv1/paper.pdf"],
+      "file": "fedprotip_2025.pdf",
+      "relevance": "Local gradient projection, shared subspaces and task identity prediction; credit this work if adopting related projection mechanisms"
+    },
+    {
+      "id": "classwise_balanced_replay_2025",
+      "title": "Class-wise Balancing Data Replay for Federated Class-Incremental Learning",
+      "authors": ["Zhuang Qi", "Ying-Peng Tang", "Lei Meng", "Han Yu", "Xiaoxiao Li", "Xiangxu Meng"],
+      "publicationStatus": "NeurIPS 2025 official proceedings PDF",
+      "source": "https://arxiv.org/abs/2507.07712",
+      "publicationRecord": "https://neurips.cc/virtual/2025/poster/117264",
+      "pdfUrls": ["https://papers.nips.cc/paper_files/paper/2025/file/d611d06e3207330555fbc10810e70163-Paper-Conference.pdf"],
+      "file": "classwise_balanced_replay_2025.pdf",
+      "relevance": "Class-balanced replay and loss calibration under heterogeneous data; the method uses global server coordination"
+    }
+  ]
+}

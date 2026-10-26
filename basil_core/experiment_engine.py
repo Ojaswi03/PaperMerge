@@ -63,10 +63,13 @@ def _gradient_norm_regularized_gradients(
     coefficient,
     micro_batch_size=MAX_TRAIN_MICRO_BATCH_SIZE,
 ):
-    """Differentiate F + coefficient * ||grad F||^2 in bounded slices.
+    """Historical average of per-microbatch EBM objectives.
 
-    The configured batch remains the effective optimizer batch. Slicing only
-    limits activation memory; slice gradients are weighted by sample count.
+    This differentiates sum_j a_j*(F_j + coefficient*||grad F_j||^2).
+    For more than one slice it is not the gradient of
+    F_full + coefficient*||grad F_full||^2: the latter contains cross-slice
+    terms. Retain this historical Campaign 3 behavior explicitly; the strict
+    research workers use a separate full-batch nested-tape objective.
     """
     from .trainer import (
         addChannelNoiseToParams,

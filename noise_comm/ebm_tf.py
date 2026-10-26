@@ -25,8 +25,9 @@ def ebm_regularized_loss(loss_fn, model, x, y, sigma):
     x_t = tf.convert_to_tensor(x, dtype=tf.float32)
     y_t = tf.convert_to_tensor(y, dtype=tf.int32)
 
-    with tf.GradientTape(persistent=True) as tape:
-        tape.watch(model.trainable_variables)
+    # Automatic watching supports both native TF variables and Keras 3 backend
+    # variables. Explicit tape.watch(KerasVariable) raises on current Keras.
+    with tf.GradientTape() as tape:
         logits = model(x_t, training=True)
         base_loss = loss_fn(y_t, logits)
 

@@ -364,6 +364,43 @@ Network displays candidate-selection/link telemetry; Queue shows done/total.
 
 ## Local non-IID validation (no W&B)
 
+The [fixed 30-round, three-seed CART/HPC guide](docs/CART_30R_HPC_REPLICATION.md)
+contains the reviewed plan, four-GPU verification, bounded recovery pilot,
+parallel execution, five-second monitor, stop/resume and evidence-transfer
+commands. It compares 24 control/CART arms using a TRAIN holdout; no official
+TEST evaluation or final novelty/robustness claim is implied.
+
+[Receiver-local CART class memory](docs/CART_LOCAL_CLASS_MEMORY_DESIGN.md) is a
+separate diagnostic revision for Dirichlet alpha 0.2. It adds class-balanced
+historical prediction retention to the existing prior CE/EBM/snapshot anchor.
+`python scripts/run_cart_memory_smoke.py` inspects its bounded profiles without
+training; execution requires `--execute`. All new test artifacts stay under
+ignored `.papermerge/local-tests/`. It does not enable a production HPC queue.
+
+The [implementation audit and CART validation](docs/IMPLEMENTATION_AUDIT.md)
+document a separate class-loss barrier and a candidate that caps its auxiliary
+gradient at 10% of the base CE gradient. Inspect the fixed TRAIN-only comparisons
+with `python scripts/run_cart_train_validation.py --stage budgeted_clean` or
+`--stage noisy_attack`; these commands start no training. The execution runner
+reserves 1000 examples from TRAIN, fits on the remaining 49000, and does not open
+official TEST. These exploratory candidates do not replace historical CART or
+approve a long HPC research queue.
+
+Before a new CART validation run, review the changed numerical/execution code
+and fixed configuration, run the affected tests, then check the actual inputs:
+
+```bash
+python scripts/run_cart_train_validation.py --preflight --stage budgeted_clean \
+  --output .papermerge/local-tests/cart-reviewed-clean
+```
+
+This read-only check validates the normalized TRAIN cache, disjoint holdout,
+nonempty Dirichlet nodes, fixed configuration, source/data recovery identity,
+and planned optimizer work. It starts no training, imports no TensorFlow, and
+does not open official TEST. Execution repeats these checks before GPU
+initialization and still requires a numerical device check. A preflight pass
+does not establish learning quality or approve a different horizon/seed.
+
 ```bash
 python scripts/run_noniid_basil_study.py --prepare --mu 0.01 --device GPU
 python scripts/run_noniid_basil_study.py --execute --mu 0.01 --device GPU
@@ -483,8 +520,9 @@ update every second while a check is running. It shows elapsed time and stage
 counts, not simulated kernel or training progress. The first GPU has no ETA;
 subsequent GPUs use timings from successful checks in the same command to
 estimate their own remaining time. Slow stages show that the estimate is being
-recalculated. SSH terminals refresh the activity line; redirected output keeps
-plain activity lines with elapsed time. Final JSON stays on stdout, so
+recalculated. SSH terminals refresh a compact activity line that fits the
+window width, keeping elapsed time visible. Full check names appear at stage
+transitions; redirected output keeps full activity lines. Final JSON stays on stdout, so
 `python scripts/hpc.py doctor --gpus 0,1,2,3 > /tmp/papermerge-doctor-results.json` still shows
 live activity in the terminal. No research queue starts from this command.
 
@@ -508,7 +546,7 @@ python scripts/hpc.py run --queue "$QUEUE" --gpus 1 --output-root "$RUN_ROOT" --
 tmux attach-session -t papermerge
 # Detach: Ctrl+B, then D. From a second SSH terminal in PaperMerge:
 source .venv-hpc/bin/activate
-python scripts/hpc.py monitor --state-dir .papermerge/terminal/blackwell-single --interval 1
+python scripts/hpc.py monitor --state-dir .papermerge/terminal/blackwell-single --interval 5 --screen
 python scripts/hpc.py status --state-dir .papermerge/terminal/blackwell-single --json
 python scripts/hpc.py logs --state-dir .papermerge/terminal/blackwell-single --follow
 python scripts/hpc.py logs --state-dir .papermerge/terminal/blackwell-single --experiment 0 --lines 50
@@ -525,12 +563,18 @@ from its committed boundary. A failed scientific run retains the existing
 investigation requirement. Stop uses a queue-specific request file and verified
 process identity; it never signals arbitrary stored PIDs.
 
-The independent monitor refreshes every second while worker counters advance
+The independent monitor refreshes every five seconds while worker counters advance
 only at genuine emitted boundaries. It distinguishes latest-node accuracy,
 round mean, worst node and Node-9 test loss, shows unavailable metrics honestly,
 and retains stopped/failed/completed entries in the denominator. Its atomic
-snapshot is separate from scientific manifests/checkpoints. Exiting the monitor
-does not stop training. Without terminal rendering, use `--plain --once` or
+snapshot is separate from scientific manifests/checkpoints. SSH rendering uses
+an alternate screen and clears each frame; a compact view fits smaller windows
+without accumulating dashboard scrollback. `--screen` forces this rendering for
+SSH wrappers; `--plain` preserves readable output when terminal controls are
+unavailable. Refresh stops automatically on completion, failure, stop or a
+blocked queue, and a final completion/status summary remains visible. No dataset,
+checkpoint, result or log cache is deleted. Exiting the monitor does not stop
+training. Without terminal rendering, use `--plain --once` or
 `status --json`. Controller and worker logs rotate at 4 MiB with three backups.
 If tmux is missing, request tmux or an administrator-approved scheduler/nohup
 workflow; foreground execution requires a persistent terminal. No system

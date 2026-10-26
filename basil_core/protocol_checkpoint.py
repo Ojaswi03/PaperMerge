@@ -97,6 +97,19 @@ def _implementation_fingerprint(profile_name):
 
 def checkpoint_implementation(config):
     fingerprints=dict(implementation_fingerprint())
+    if config.get('lossStudyRevision') in {'cart_local_class_memory_v1','cart_train_validation_v1'}:
+        root=Path(__file__).resolve().parents[1]
+        for name in ('basil_core/cart_local_memory.py','basil_core/cart_memory_study.py',
+                     'scripts/run_cart_memory_smoke.py','basil_core/dirichlet_calibration.py',
+                     'basil_core/research_audit.py','basil_core/iid_runtime.py',
+                     'basil_core/memory_safety.py','basil_core/protocol_compatibility.py'):
+            fingerprints[name]=hashlib.sha256((root/name).read_bytes()).hexdigest()
+        if config.get('lossStudyRevision')=='cart_train_validation_v1':
+            for name in ('basil_core/cart_barrier.py','basil_core/cart_validation.py','scripts/run_cart_train_validation.py'):
+                fingerprints[name]=hashlib.sha256((root/name).read_bytes()).hexdigest()
+            if config.get('cartValidationStage')=='replication_30r':
+                for name in ('scripts/run_cart_replication.py','basil_core/execution_profile.py','gui/research_protocol.py'):
+                    fingerprints[name]=hashlib.sha256((root/name).read_bytes()).hexdigest()
     if config.get('experimentProtocol')=='sequential_basil_dirichlet_v1':
         root=Path(__file__).resolve().parents[1]
         for name in ('basil_core/noniid_study.py','basil_core/dirichlet_study.py',
@@ -191,6 +204,12 @@ def save_checkpoint(path, config, state, *, partition_hash, initial_hash, teleme
         memories=memories, weights=weights, telemetry=state['telemetry'])
     if retention_states:
         metadata['retentionStates']=retention_states
+    if config.get('lossStudyRevision') in {'cart_local_class_memory_v1','cart_train_validation_v1'}:
+        from basil_core.cart_memory_study import validate_memory_checkpoint
+        from basil_core.cart_local_memory import state_hash
+        metadata['cartMemory']=validate_memory_checkpoint(state['cart_memory'],
+            state['next_activation'], config['seed'])
+        metadata['cartMemoryHash']=state_hash(metadata['cartMemory'])
     if telemetry_store is not None:
         if len(state['telemetry'])!=state['next_activation']:
             raise ValueError('Checkpoint activation cursor differs from telemetry count.')
@@ -259,6 +278,13 @@ def load_checkpoint(path, config, *, partition_hash, initial_hash):
             completed_rounds=metadata['completedRounds'], memories=memories,
             node_params=[unpack_params(p) for p in metadata['nodeParams']],
             telemetry=_load_telemetry(path,metadata))
+        if config.get('lossStudyRevision') in {'cart_local_class_memory_v1','cart_train_validation_v1'}:
+            from basil_core.cart_memory_study import validate_memory_checkpoint
+            from basil_core.cart_local_memory import state_hash
+            if state_hash(metadata['cartMemory']) != metadata['cartMemoryHash']:
+                raise ValueError('Checkpoint CART targets are corrupt.')
+            state['cart_memory']=validate_memory_checkpoint(metadata['cartMemory'],
+                state['next_activation'], config['seed'])
     cursor = state['next_activation']
     if len(state['node_params']) != 10 or len(memories) != 10:
         raise ValueError('Checkpoint requires ten logical nodes.')

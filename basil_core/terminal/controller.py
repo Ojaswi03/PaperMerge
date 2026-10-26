@@ -6,6 +6,7 @@ from dataclasses import asdict
 import hashlib
 import importlib
 import json
+import math
 import os
 from pathlib import Path
 import signal
@@ -71,6 +72,18 @@ def totals(entries):
         totalActivations=sum(e['totalActivations'] for e in entries),
         completedOptimizerSteps=sum(e.get('completedOptimizerSteps',0) for e in entries) if steps else None,
         totalOptimizerSteps=sum(e['totalOptimizerSteps'] for e in entries) if steps else None)
+
+
+def remaining_eta(entries, *, parallel):
+    remaining=[e for e in entries if e['status']!='COMPLETED']
+    if not remaining:return None
+    estimates=[e.get('eta_seconds') for e in remaining]
+    if any(value is None or not math.isfinite(value) or value<0 for value in estimates):return None
+    if parallel:
+        # Max is meaningful only after every unfinished experiment is already
+        # executing. Pending work needs a scheduling/runtime model we lack.
+        return max(estimates) if all(e['status']=='RUNNING' for e in remaining) else None
+    return sum(estimates)
 
 
 def make_handle(config, sink, policy, directory):
@@ -320,8 +333,7 @@ class Controller:
                         next_index+=1
                     self.update_jobs()
                     self.snapshot['elapsed_seconds']=self.prior_elapsed+time.monotonic()-self.started
-                    remaining=[e for e in self.snapshot['entries'] if e['status']!='COMPLETED']
-                    self.snapshot['eta_seconds']=sum(e['eta_seconds'] for e in remaining) if remaining and all(e['eta_seconds'] is not None for e in remaining) and not self.parallel else None
+                    self.snapshot['eta_seconds']=remaining_eta(self.snapshot['entries'],parallel=self.parallel)
                     self.persist()
                     if self.stopped() and not self.active:break
                     self.wait(.2)

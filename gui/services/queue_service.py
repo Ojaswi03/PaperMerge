@@ -13,9 +13,12 @@ class QueueService:
         except (OSError,json.JSONDecodeError) as error: raise ValueError(f"Could not load queue: {error}") from error
         if not isinstance(raw,list): raise ValueError("Queue persistence must contain a JSON list.")
         entries=[]
-        for item in raw:
-            if not isinstance(item,dict): continue
+        for index,item in enumerate(raw):
+            if not isinstance(item,dict):
+                raise ValueError(f'Queue entry {index+1} must be a JSON object; no entries were loaded.')
             if "config" in item:
+                if not isinstance(item['config'],dict):
+                    raise ValueError(f'Queue entry {index+1} has an invalid configuration object.')
                 status=QueueStatus(item.get("status","pending"))
                 if status is QueueStatus.RUNNING:status=QueueStatus.STOPPED
                 entries.append(QueueEntry(from_persisted(item["config"]),status,str(item.get("entryId","")) or __import__("uuid").uuid4().hex,str(item.get("error",""))))

@@ -52,6 +52,21 @@ Recent work strengthens the need for careful attribution; it does not validate
 our particular integration. All PDFs, source URLs and download hashes are
 listed in the [paper index](../papers/prototype_retention/README.md).
 
+Additional primary sources are available in the
+[class-aware related-work library](../papers/cart_related_work/README.md):
+Dark Experience Replay is prior work for retaining historical predictions;
+[the local class-memory design](CART_LOCAL_CLASS_MEMORY_DESIGN.md) explicitly
+credits that mechanism and remains a proposal, not an implemented result.
+C²Prompt studies class-aware prompt communication, FedProTIP applies local
+gradient projection using shared subspaces, and FedCBDR uses globally informed
+class-balanced replay and loss calibration. These mechanisms need comparison
+if adopted in CART; their server/prompt/replay assumptions differ from the
+strict selected-snapshot ring. This targeted review does not establish that
+CART's complete integration is novel. The legacy module's former "Paper 003"
+label was incorrect: that PDF describes DFL/C-DFL, not CART. CART is this
+project's proposed Class-Aware Ring Training framework, with component-level
+attribution and empirical claims evaluated separately.
+
 ## 2. Exact mechanisms: similar names do not mean the same objective
 
 Let `h_phi(x)` be the encoder and `a_psi(z)` the classifier producing logits.

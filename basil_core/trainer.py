@@ -245,6 +245,10 @@ def localUpdate(
         yb = tf.convert_to_tensor(yBatch, dtype=tf.int32)
 
         if noiseModel == "wcm" and sigma > 0 and wcmAvailable:
+            # Include nontrainable model state (for example Dropout seed state)
+            # so a failed attempt cannot leak state into the fallback update.
+            wcm_variables = list(getattr(getattr(model, 'model', model), 'variables', model.trainable_weights))
+            before_wcm = [tf.identity(v) for v in wcm_variables]
             try:
                 result = wcmStep(
                     model=model,
@@ -264,20 +268,18 @@ def localUpdate(
                 gPrev = result["gPrev"]
             except Exception as e:
                 print(f"Warning: WCM step failed ({e}). Using standard training for this batch.")
+                # A failed inner WCM solve may have moved parameters already.
+                # Apply the stated fallback once, from the original batch start.
+                for variable, value in zip(wcm_variables, before_wcm):
+                    variable.assign(value)
+                grads, _ = _computeGrads(model, xb, yb)
+                optimizer.apply_gradients(zip(grads, model.trainable_weights))
 
         elif noiseModel == "ebm" and sigma > 0:
-            # EBM: Expectation-Based Model (Equation 13 & 23 from paper)
-            # Loss: F_e(w) = F(w) + sigma^2 * ||grad F(w)||^2
-            # Gradient: grad F_e(w) = (1 + lambda * sigma^2) * grad F(w)
-            #
-            # Reference: "Robust Federated Learning with Noisy Communication"
-            # Paper uses sigma=1.0, scale=2.0
-            #
-            # Lambda values that give scale=2.0 for different sigma:
-            #   sigma=1.0,  lambda=1   -> scale=2.0 (paper's original setting)
-            #   sigma=0.2,  lambda=25  -> scale=2.0 (default for configs)
-            #   sigma=0.1,  lambda=100 -> scale=2.0
-            #   sigma=0.05, lambda=400 -> scale=2.0
+            # Historical clipped-gradient scaling, preserved for legacy runs.
+            # This is NOT the derivative of F + sigma^2*||grad F||^2, whose
+            # correction is 2*sigma^2*H_F*grad F. The strict research workers
+            # implement that separate nested-tape objective without this lambda.
 
             grads, _ = _computeGrads(model, xb, yb)
             scale = 1.0 + ebmLambda * sigma * sigma  # (1 + λσ²)

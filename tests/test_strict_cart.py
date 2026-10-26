@@ -167,6 +167,32 @@ def test_evaluation_only_scores_cannot_change_training_or_mu():
     assert outcomes[0] == outcomes[1]
 
 
+def test_historical_registry_does_not_raise_target_above_selected_accuracy(monkeypatch):
+    """Exercise the real controller setup without applying optimizer updates."""
+    import numpy as np
+    from basil_core.noniid_study import SnapshotAnchorWorker
+    worker=tiny_worker()
+    kernel=np.zeros((3,10),np.float32);kernel[:,1]=1.
+    worker.model.set_weights([kernel,np.zeros(10,np.float32)])
+    initial=worker.export()
+    x=np.stack([np.zeros((32,32,3),np.float32),np.ones((32,32,3),np.float32)])
+    y=np.zeros(2,np.int32)
+    def no_updates(self,params,x,y,*,evaluation,**kwargs):
+        evaluation()
+        return params,{}
+    monkeypatch.setattr(SnapshotAnchorWorker,'train',no_updates)
+    controls=[]
+    for historical in (.2,.9):
+        registry=ClassRegistry()
+        registry.update(0,np.array([historical]+[np.nan]*9),support=np.array([2]+[0]*9),roundId=0)
+        _,record=worker.train(initial,x,y,local_registry=registry,received_registry=ClassRegistry(),
+            selection_x=x,selection_y=y,selected_loss=2.,node_id=0,round_id=1)
+        controls.append(record['cartControl'][0])
+    assert controls[0]==controls[1]
+    assert controls[0]['referenceAccuracy']==[.5]+[None]*9
+    assert controls[0]['supportedGap']==0.
+
+
 def test_diagnostic_configuration_is_full_data_bounded_clean_and_cloud_disabled():
     c = config('GPU')
     assert (c['nRounds'], c['localEpochs'], c['trainingSamplesPerNode'], c['batchSize']) == (3, 5, 5000, 512)

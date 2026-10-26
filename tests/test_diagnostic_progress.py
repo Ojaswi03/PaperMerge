@@ -94,6 +94,56 @@ def test_ssh_rendering_and_plain_terminal_fallback(monkeypatch,term,interactive)
     if not interactive:assert '\r' not in stream.getvalue()
 
 
+@pytest.mark.parametrize('columns',[1,2,20,40,80,100,160])
+def test_live_ssh_line_fits_terminal_without_hiding_elapsed_time(monkeypatch,columns):
+    monkeypatch.setenv('TERM','xterm-256color')
+    class Terminal(io.StringIO):
+        def isatty(self):return True
+    stream=Terminal();now=[0.]
+    label='IID CNN: forward, CE, EBM, SGD and repeatability'
+    with DiagnosticProgress('Physical GPU 0 (hpc)',(label,),stream=stream,
+            interval=60.,clock=lambda:now[0]) as progress:
+        monkeypatch.setattr(progress,'_columns',lambda:columns)
+        for tick in (1.,2.,3.):
+            stream.seek(0);stream.truncate(0);now[0]=tick
+            progress.refresh()
+            frame=stream.getvalue().removeprefix('\r\033[2K')
+            assert '\n' not in frame and len(frame)<=columns-1
+            if columns>=20:assert f'00:00:0{int(tick)}' in frame
+            if columns>=40:assert 'GPU 0' in frame and 'ETA --' in frame
+        progress.finish('passed')
+
+
+def test_live_ssh_width_tracks_stderr_and_terminal_resizing(monkeypatch):
+    from basil_core.terminal import progress as module
+    import os
+    monkeypatch.setenv('TERM','xterm-256color')
+    class Terminal(io.StringIO):
+        def isatty(self):return True
+        def fileno(self):return 123
+    stream=Terminal();columns=[120];queried=[]
+    def terminal_size(fd):
+        queried.append(fd)
+        return os.terminal_size((columns[0],24))
+    monkeypatch.setattr(module.os,'get_terminal_size',terminal_size)
+    with DiagnosticProgress('Physical GPU 1 (hpc)',('Long synthetic diagnostic label',),
+            stream=stream,interval=60.) as progress:
+        for width in (120,40,80):
+            columns[0]=width;stream.seek(0);stream.truncate(0)
+            progress.refresh()
+            assert len(stream.getvalue().removeprefix('\r\033[2K'))<=width-1
+        progress.finish('passed')
+    assert queried==[123,123,123]
+
+
+def test_redirected_activity_keeps_full_stage_names(monkeypatch):
+    monkeypatch.setenv('COLUMNS','20')
+    stream=io.StringIO();label='IID CNN: forward, CE, EBM, SGD and repeatability'
+    with DiagnosticProgress('Physical GPU 0 (hpc)',(label,),stream=stream,interval=60.) as progress:
+        progress.refresh();progress.finish('passed')
+    assert label in stream.getvalue() and '\033' not in stream.getvalue()
+
+
 @pytest.mark.parametrize('interval',[0.,-1.,float('inf'),float('nan')])
 def test_invalid_refresh_interval_is_rejected(interval):
     with pytest.raises(ValueError,match='finite and positive'):

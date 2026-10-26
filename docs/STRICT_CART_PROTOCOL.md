@@ -97,8 +97,9 @@ term. It does **not** silently change legacy CART.
 L_SS = selected snapshot CE on the receiver's fixed local selection batch
 q = 1 / (1 + L_SS)
 
-target[c] = min(historical supported registry accuracy[c],
-                selected snapshot accuracy verified locally[c])
+selected[c] = selected snapshot accuracy verified on local TRAIN support
+capped[c] = min(historical supported registry accuracy[c], selected[c])
+target[c] = max(capped[c], selected[c]) = selected[c]
 
 gap_e = mean(max(0, target[c] - current local probe accuracy[c]))
         over classes with actual receiver-local support only
@@ -106,6 +107,16 @@ gap_e = mean(max(0, target[c] - current local probe accuracy[c]))
 mu_e = mu_max * min(1, q + gap_e)
 mu_max = 0.01 in this diagnostic, fixed before seeing test results
 ```
+
+The implemented maximum with the selected accuracy makes the final target equal
+to that selected accuracy on every supported class, regardless of the historical
+registry value. Registry claims are still checked and recorded, but their older
+scores do not set a higher numerical retention target in this revision. The
+controller measures loss relative to the currently selected model's class
+performance; it does not restore a better historical model. A synthetic test
+exercises this setup with historical scores both below and above a selected
+accuracy of 0.5, applies no optimizer updates, and obtains identical controls.
+Changing that rule would require a separately defined and tested CART revision.
 
 The receiver records its measured selected-reference accuracy in its verified
 local registry before setting the target. Consequently the target cannot exceed

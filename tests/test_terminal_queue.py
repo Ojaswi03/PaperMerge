@@ -217,17 +217,17 @@ def test_monitor_formats_metrics_without_inventing_zeroes(synthetic):
     text=dashboard.render(c.snapshot,dict(host='synthetic-host'))
     assert 'Latest node accuracy: unavailable  Mean: unavailable  Worst: unavailable' in text
     assert 'Node-9 test CE: unavailable' in text and '1000' in text
-    assert 'synthetic-host' in text and 'PENDING' in text and 'Refresh: 1 seconds' in text
+    assert 'synthetic-host' in text and 'PENDING' in text and 'Refresh: 5 seconds' in text
 
 
-def test_monitor_default_one_second_refresh_and_plain_fallback(tmp_path):
+def test_monitor_default_five_second_refresh_and_plain_fallback(tmp_path):
     stream=io.StringIO();waits=[];fetches=[]
     def wait(seconds):
         waits.append(seconds)
         if len(waits)==2:raise KeyboardInterrupt
     def fetch(directory):fetches.append(directory);return dict(status='IDLE')
     dashboard.monitor(tmp_path,stream=stream,clock=lambda:0.,wait=wait,fetch=fetch,resources=lambda:{})
-    assert waits==[1.,1.] and len(fetches)==2
+    assert waits==[5.,5.] and len(fetches)==2
     assert '\x1b' not in stream.getvalue() and 'queue execution is independent' in stream.getvalue()
     assert not list(tmp_path.iterdir())
     for value in (0,-1,float('nan')):
@@ -454,7 +454,7 @@ def test_slow_resource_probe_does_not_delay_dashboard_refresh(tmp_path,monkeypat
     try:
         dashboard.monitor(tmp_path,stream=stream,clock=lambda:0.,wait=wait,
             resources=slow_resources,fetch=lambda p:dict(status='RUNNING'))
-        assert waits==[1.,1.] and stream.getvalue().count('TERMINAL EXECUTION MONITOR')==2
+        assert waits==[5.,5.] and stream.getvalue().count('TERMINAL EXECUTION MONITOR')==2
     finally:release.set()
 
 
@@ -574,3 +574,12 @@ def test_independent_scheduling_rejects_stale_single_gpu_runtime(synthetic,tmp_p
     with pytest.raises(ValueError,match='current runtime'):c.validate_parallel()
     receipt['resources']['software']='new';state.atomic_json(path,receipt)
     c.validate_parallel()
+def test_parallel_eta_uses_slowest_active_experiment_and_does_not_invent_pending_time():
+    from basil_core.terminal.controller import remaining_eta
+    entries=[dict(status='COMPLETED',eta_seconds=0.),dict(status='RUNNING',eta_seconds=10.),
+             dict(status='RUNNING',eta_seconds=20.)]
+    assert remaining_eta(entries,parallel=True)==20.
+    assert remaining_eta(entries,parallel=False)==30.
+    assert remaining_eta(entries+[dict(status='PENDING',eta_seconds=5.)],parallel=True) is None
+    for invalid in (None,float('nan'),float('inf'),-1.):
+        assert remaining_eta([dict(status='RUNNING',eta_seconds=invalid)],parallel=True) is None

@@ -1,12 +1,17 @@
 # basil_core/cart.py
 """
-CART: Class-Aware Ring Training (Paper 003)
+CART: Class-Aware Ring Training, an experimental PaperMerge framework.
 
-Extends the BASIL ring topology with:
+This legacy implementation extends the BASIL ring topology with:
 1. ClassRegistry — per-class best accuracy tracked and propagated around the ring
-2. Class-aware proximal regularisation — prevents catastrophic forgetting of
-   classes the node doesn't see much (non-IID fix)
-3. Class-aware Snapshot Selection — harder to fool than overall-loss SS
+2. Class-aware proximal regularisation intended to limit parameter drift
+3. Class-aware Snapshot Selection using receiver-side class measurements
+
+The registry/controller integration belongs to this project. BASIL supplies
+the ring/selection foundation, and proximal regularisation is established prior
+work. Paper 003 describes DFL/C-DFL, not CART. Retention and attack resistance
+require separate evidence; the mechanism names alone do not establish either.
+Historical class scores are claims, not certificates of current model knowledge.
 
 Algorithm per node per round
 -----------------------------

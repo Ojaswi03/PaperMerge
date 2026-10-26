@@ -1,0 +1,45 @@
+{
+  "results": [
+    {
+      "id": "dark_experience_replay_2020",
+      "status": "downloaded",
+      "file": "papers/cart_related_work/dark_experience_replay_2020.pdf",
+      "requestedURL": "https://proceedings.neurips.cc/paper_files/paper/2020/file/b704ea2c39778f07c617f6b7ce480e9e-Paper.pdf",
+      "resolvedURL": "https://proceedings.neurips.cc/paper_files/paper/2020/file/b704ea2c39778f07c617f6b7ce480e9e-Paper.pdf",
+      "bytes": 3979608,
+      "sha256": "1cbdffb3cea7fb8082f22bf245f1e6139217773066e6453eac396fc1a75b5f49",
+      "previousSourceAttempts": []
+    },
+    {
+      "id": "c2prompt_2025",
+      "status": "downloaded",
+      "file": "papers/cart_related_work/c2prompt_2025.pdf",
+      "requestedURL": "https://arxiv.org/pdf/2509.19674v2",
+      "resolvedURL": "https://arxiv.org/pdf/2509.19674v2",
+      "bytes": 1721914,
+      "sha256": "a9e4ffeb5cd59bc1b7ecd254404abefbf2a9a3f25273ab2b6a2dcdd7bf53d313",
+      "previousSourceAttempts": []
+    },
+    {
+      "id": "fedprotip_2025",
+      "status": "downloaded",
+      "file": "papers/cart_related_work/fedprotip_2025.pdf",
+      "requestedURL": "https://arxiv.org/pdf/2509.21606",
+      "resolvedURL": "https://arxiv.org/pdf/2509.21606",
+      "bytes": 1327465,
+      "sha256": "b1e3b1b9d3159180d107e93796929697d25150e5a89070bbfba9eedcbc4784b0",
+      "previousSourceAttempts": []
+    },
+    {
+      "id": "classwise_balanced_replay_2025",
+      "status": "downloaded",
+      "file": "papers/cart_related_work/classwise_balanced_replay_2025.pdf",
+      "requestedURL": "https://papers.nips.cc/paper_files/paper/2025/file/d611d06e3207330555fbc10810e70163-Paper-Conference.pdf",
+      "resolvedURL": "https://papers.nips.cc/paper_files/paper/2025/file/d611d06e3207330555fbc10810e70163-Paper-Conference.pdf",
+      "bytes": 2206044,
+      "sha256": "524226a1d603a1659961d66b48e6416566a443eb317ef404db24b70821efeffa",
+      "previousSourceAttempts": []
+    }
+  ],
+  "trainingRunsStarted": 0
+}

@@ -50,8 +50,11 @@ def parser():
     status=commands.add_parser('status',parents=[common],help='Read the last queue snapshot from any SSH session')
     status.add_argument('--json',action='store_true',help='Emit the operational snapshot as JSON')
     monitor=commands.add_parser('monitor',parents=[common],help='Read-only terminal dashboard; exiting never stops training')
-    monitor.add_argument('--interval',type=float,default=1.,help='Refresh seconds, default 1')
-    monitor.add_argument('--once',action='store_true');monitor.add_argument('--plain',action='store_true')
+    monitor.add_argument('--interval',type=float,default=5.,help='Refresh seconds, default 5; exits when the queue finishes')
+    monitor.add_argument('--once',action='store_true')
+    display=monitor.add_mutually_exclusive_group()
+    display.add_argument('--plain',action='store_true',help='Print readable text without terminal control sequences')
+    display.add_argument('--screen',action='store_true',help='Force a cleared-screen dashboard, including SSH wrappers')
     logs=commands.add_parser('logs',parents=[common],help='Read or follow the bounded execution log')
     logs.add_argument('--follow','-f',action='store_true');logs.add_argument('--lines','-n',type=int,default=30)
     logs.add_argument('--experiment',type=int,help='Zero-based entry index; read its worker log instead')
@@ -152,7 +155,8 @@ def main(argv=None):
         return 1 if data['status']=='FAILED' else 0
     if args.command=='monitor':
         from basil_core.terminal.dashboard import monitor
-        monitor(args.state_dir,args.interval,once=args.once,plain=args.plain);return 0
+        result=monitor(args.state_dir,args.interval,once=args.once,plain=args.plain,screen=args.screen)
+        return 1 if result in ('FAILED','BLOCKED') else 0
     if args.command=='logs':
         from basil_core.terminal.dashboard import follow_logs
         if args.experiment is None:follow_logs(args.state_dir,follow=args.follow,lines=args.lines)
