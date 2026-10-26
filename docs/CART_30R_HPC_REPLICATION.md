@@ -97,12 +97,18 @@ python scripts/run_cart_replication.py --pilot \
 ```
 
 The pilot uses seed 2026 and D's EBM/noise path for both control and CART.
+It launches a fresh Python worker with the same CUDA wheel library environment
+used by GPU verification and campaign workers. Setting loader paths inside an
+already running Python process is insufficient for the Linux startup loader.
 It stops after three activations, restores the checkpoint, performs one more,
 and compares the complete saved state against four uninterrupted activations.
 Models, BASIL history, CART memory, metrics and telemetry must match exactly.
 `PILOT_PASSED` is a recovery/execution check, not a completed study or an accuracy
 result. Pilot output is separate and cannot be promoted into the full campaign.
 If any check fails, inspect its error/log and fix the cause before proceeding.
+After pulling a source fix, rerun `--verify-gpus` to refresh the source-bound
+receipts, then rerun the pilot in a fresh output directory. Existing caches and
+completed experimental evidence do not need to be deleted.
 
 ## Launch and monitor the full comparison
 

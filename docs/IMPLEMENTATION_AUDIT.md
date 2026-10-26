@@ -281,8 +281,30 @@ model arrays, BASIL memories, CART targets, metrics and telemetry. The final
 All 25 executed-source hashes still matched the final verification receipt.
 The 879 protected historical/user files remained unchanged.
 
-This prepares the package for server acceptance checks; the new path has not
-yet been executed on The Machine. Its full 24-arm study has not completed
-locally. The server must pass installation/dependency checks, four real device
-verifications and its own bounded pilot before the full launch. No new accuracy,
-novelty or final thesis conclusion is inferred from software/pilot success.
+The Machine subsequently passed TRAIN preflight and all four real device
+verifications, including the three seeded initializations. Its first bounded
+pilot stopped before training because its in-process startup did not expose the
+private CUDA wheel libraries to the Linux loader. The full campaign has not
+completed. The corrected launcher must pass the server pilot before full launch;
+no accuracy, novelty or final thesis conclusion follows from software checks.
+
+### Pilot loader correction
+
+The pilot now starts a fresh worker with the same validated CUDA environment as
+verification and campaign workers. Its computation and recovery checks are
+unchanged. A CPU shared-library regression reproduces failed `dlopen` when
+`LD_LIBRARY_PATH` is changed inside an already running Python process, then
+verifies success when that environment is present at startup. Launcher tests
+also check selected GPU/profile propagation, parent/worker separation and failure
+propagation.
+
+The corrected pilot passed locally using the explicit HPC loader profile on the
+RTX 4070 Ti, with its cap explicitly kept at 6144 MiB. Both control and capped
+CART matched interrupted/resumed versus uninterrupted complete checkpoint state.
+Evidence is isolated under `.papermerge/local-tests/cart-hpc-loader-pilot-20261026/`.
+This tests the HPC startup path locally; the revised pilot still needs to pass
+on The Machine. Pulling this source correction requires refreshed device
+verification receipts, without deleting datasets or previous results.
+The full regression run after this correction passed 1094 tests and 644
+subtests, with four GUI-dependent skips and three existing warnings. The 879
+protected historical/user files remained unchanged.

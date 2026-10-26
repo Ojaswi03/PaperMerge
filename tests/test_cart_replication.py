@@ -98,6 +98,48 @@ def test_local_child_environment_overrides_an_inherited_hpc_profile(tmp_path,mon
     assert environment['CUDA_VISIBLE_DEVICES']=='0'
 
 
+def test_pilot_starts_fresh_worker_with_frozen_gpu_and_loader_environment(tmp_path,monkeypatch):
+    from dataclasses import asdict
+    from basil_core.execution_profile import ExecutionProfile,ENV
+    import scripts.run_cart_replication as runner
+    import scripts.run_cart_train_validation as worker
+    profile=ExecutionProfile(name='hpc',gpu=3,gpu_uuid='GPU-abc',memory_mib=8192,
+        headroom_mib=2048,output_root=str(tmp_path/'pilot'))
+    prepared=dict(output=str(tmp_path/'pilot'),jobs=[dict(seed=2026,pair='D',resources=asdict(profile))])
+    monkeypatch.setattr(runner,'preflight',lambda _:prepared)
+    monkeypatch.setattr(runner,'verified_devices',lambda _:None)
+    def forbidden(*_):raise AssertionError('Pilot data/GPU work ran in the supervisor process')
+    monkeypatch.setattr(worker,'preflight',forbidden)
+    monkeypatch.setattr('basil_core.execution_profile.cuda_wheel_paths',lambda:dict(
+        libraryDirectories=['/private/cuda/lib'],binaryDirectories=['/private/cuda/bin']))
+    calls=[]
+    class Process:
+        def __init__(self,command,**kwargs):calls.append((command,kwargs))
+        def wait(self):return 0
+    monkeypatch.setattr(runner.subprocess,'Popen',Process)
+    runner.pilot(SimpleNamespace())
+    command,options=calls[0]
+    assert '--pilot-worker' in command and '--pilot' not in command
+    assert command[command.index('--gpus')+1]=='3'
+    assert command[command.index('--gpu-memory-mib')+1]=='8192'
+    assert options['env']['LD_LIBRARY_PATH'].split(':')[0]=='/private/cuda/lib'
+    assert options['env']['CUDA_VISIBLE_DEVICES']=='GPU-abc'
+    assert json.loads(options['env'][ENV])==asdict(profile)
+
+
+def test_failed_pilot_child_cannot_be_reported_as_success(tmp_path,monkeypatch):
+    from dataclasses import asdict
+    from basil_core.execution_profile import ExecutionProfile
+    import scripts.run_cart_replication as runner
+    profile=ExecutionProfile()
+    monkeypatch.setattr(runner,'preflight',lambda _:dict(output=str(tmp_path),
+        jobs=[dict(seed=2026,pair='D',resources=asdict(profile))]))
+    monkeypatch.setattr(runner,'verified_devices',lambda _:None)
+    monkeypatch.setattr(runner.subprocess,'Popen',lambda *a,**k:SimpleNamespace(wait=lambda:2))
+    with pytest.raises(ValueError,match='Pilot worker failed with exit code 2'):
+        runner.pilot(SimpleNamespace())
+
+
 def test_campaign_data_change_is_rejected_before_gpu_environment(tmp_path,monkeypatch):
     import numpy as np
     from dataclasses import asdict

@@ -82,6 +82,23 @@ def test_managed_paths_fix_real_dlopen_in_a_fresh_process(tmp_path,monkeypatch):
     assert after.stdout.strip()=='42'
 
 
+@pytest.mark.skipif(not sys.platform.startswith('linux') or shutil.which('gcc') is None,
+    reason='Linux glibc and C compiler needed for the loader-startup regression')
+def test_setting_library_path_inside_running_python_does_not_replace_fresh_startup(tmp_path):
+    library=tmp_path/'private-wheel/lib';library.mkdir(parents=True)
+    source=tmp_path/'probe.c';source.write_text('int papermerge_probe(void) { return 42; }\n')
+    subprocess.run(['gcc','-shared','-fPIC',str(source),'-o',str(library/'libpapermerge_pilot_probe.so')],
+        check=True,capture_output=True)
+    program="import os,ctypes;os.environ['LD_LIBRARY_PATH']=os.environ['PILOT_LIBRARY'];" \
+        "print(ctypes.CDLL('libpapermerge_pilot_probe.so').papermerge_probe())"
+    base=dict(os.environ,LD_LIBRARY_PATH='',PILOT_LIBRARY=str(library))
+    old=subprocess.run([sys.executable,'-c',program],cwd=tmp_path,env=base,capture_output=True,text=True)
+    assert old.returncode!=0 and 'cannot open shared object' in old.stderr
+    fixed=subprocess.run([sys.executable,'-c',program],cwd=tmp_path,
+        env=dict(base,LD_LIBRARY_PATH=str(library)),capture_output=True,text=True,check=True)
+    assert fixed.stdout.strip()=='42'
+
+
 def test_library_probe_preserves_exact_loader_failure_and_uses_child_environment():
     calls=[]
     expected=dict(status='blocked',libraries={'libcudnn.so.9':dict(loadable=False,

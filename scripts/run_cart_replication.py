@@ -150,6 +150,23 @@ def child_command(job,*,recover):
 
 
 def pilot(args):
+    """Start the pilot with CUDA wheel paths present at process startup."""
+    from basil_core.execution_profile import ExecutionProfile
+    prepared=preflight(args);verified_devices(prepared)
+    job=next(j for j in prepared['jobs'] if j['seed']==2026 and j['pair']=='D')
+    profile=ExecutionProfile(**job['resources'])
+    command=[sys.executable,str(ROOT/'scripts/run_cart_replication.py'),'--pilot-worker',
+        '--profile',profile.name,'--gpus',str(profile.gpu),'--gpu-memory-mib',str(profile.memory_mib),
+        '--output',str(Path(prepared['output']))]
+    print(f'Pilot: starting fresh worker on physical GPU {profile.gpu} with its CUDA loader environment.',flush=True)
+    process=subprocess.Popen(command,cwd=ROOT,env=child_environment(profile))
+    try:code=process.wait()
+    except BaseException:
+        process.terminate();process.wait();raise
+    if code:raise ValueError(f'Pilot worker failed with exit code {code}; the full study was not launched.')
+
+
+def pilot_worker(args):
     """Real data/model check of control and CART, including exact resumed state."""
     from basil_core.execution_profile import ExecutionProfile,use_profile
     from scripts.run_cart_train_validation import preflight as prepare,verify_barrier,runtime_identity,require_device_receipt
@@ -337,6 +354,7 @@ def main():
     parser=argparse.ArgumentParser(description=__doc__)
     action=parser.add_mutually_exclusive_group()
     for name in ('execute','preflight','verify-gpus','pilot','status','monitor','stop'):action.add_argument('--'+name,action='store_true')
+    action.add_argument('--pilot-worker',action='store_true',help=argparse.SUPPRESS)
     parser.add_argument('--profile',choices=('local','hpc'),default='local')
     parser.add_argument('--gpus');parser.add_argument('--gpu-memory-mib',type=int)
     parser.add_argument('--output',type=Path,default=ROOT/'.papermerge/local-tests/cart-replication-30r-20261026')
@@ -354,6 +372,7 @@ def main():
         elif args.preflight:print(json.dumps(preflight(args),indent=2))
         elif args.verify_gpus:verify_devices(args)
         elif args.pilot:pilot(args)
+        elif args.pilot_worker:pilot_worker(args)
         elif args.execute:
             prepared=preflight(args)
             if args.tmux:
