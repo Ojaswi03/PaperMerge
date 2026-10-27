@@ -1,5 +1,12 @@
 # CART: literature, attribution and proposed feature-memory extension
 
+**26 October 2026 follow-up:** the current class-loss barrier also needs direct
+comparison with GEM's remembered-loss constraints (NeurIPS 2017, Equations 5–8).
+The [mechanism comparison and downloaded official paper](../papers/cart_novelty_audit_20261026/README.md)
+distinguish a soft, class-wise historical-loss penalty from GEM's constrained
+gradient projection. The current implementation's algorithmic novelty is not
+established. The clean 86.17% residual-model pilot had CART disabled.
+
 Review date: **11 October 2026**. Scope: targeted primary-source review, not an
 exhaustive novelty search. Twelve additional papers were downloaded; existing
 BASIL, noisy-communication and FedProx PDFs were read without modification.

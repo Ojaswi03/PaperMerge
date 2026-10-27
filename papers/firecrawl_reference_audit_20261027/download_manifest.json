@@ -1,0 +1,161 @@
+{
+  "scope": "Missing original PDFs for papers inspected or cited through Firecrawl research, plus clearly labeled repairs for misleading preexisting filenames. Existing correct PDFs are reused without duplication.",
+  "papers": [
+    {
+      "id": "fedlc_2022",
+      "title": "Federated Learning with Label Distribution Skew via Logits Calibration",
+      "basis": "Scraped and cited source; PDF previously cached outside papers/",
+      "firecrawlFiles": [
+        "fedlc-source.md",
+        "fedlc-code-search.json",
+        "search-dirichlet-label-skew.json"
+      ],
+      "cachedFile": ".firecrawl/fedlc-source.pdf",
+      "urls": [
+        "https://proceedings.mlr.press/v162/zhang22p/zhang22p.pdf"
+      ]
+    },
+    {
+      "id": "yin_trimmed_mean_2018",
+      "title": "Byzantine-Robust Distributed Learning: Towards Optimal Statistical Rates",
+      "basis": "Scraped and cited helper/trimmed-mean reference",
+      "firecrawlFiles": [
+        "cart-helper-yin18-paper.md",
+        "cart-helper-trimmed-sources.json"
+      ],
+      "urls": [
+        "https://proceedings.mlr.press/v80/yin18a/yin18a.pdf"
+      ]
+    },
+    {
+      "id": "hidden_vulnerability_2018",
+      "title": "The Hidden Vulnerability of Distributed Learning in Byzantium",
+      "basis": "Scraped attack-source reference",
+      "firecrawlFiles": [
+        "hidden-vulnerability-source.md",
+        "hidden-source-paper.md"
+      ],
+      "urls": [
+        "https://proceedings.mlr.press/v80/mhamdi18a/mhamdi18a.pdf"
+      ]
+    },
+    {
+      "id": "hidden_vulnerability_2018_supplement",
+      "title": "The Hidden Vulnerability of Distributed Learning in Byzantium - Supplementary Material",
+      "basis": "Scraped supplementary attack-source reference",
+      "firecrawlFiles": [
+        "hidden-source-supplement.md"
+      ],
+      "urls": [
+        "https://proceedings.mlr.press/v80/mhamdi18a/mhamdi18a-supp.pdf"
+      ]
+    },
+    {
+      "id": "flashbackcl_2026",
+      "title": "FlashbackCL: Mitigating Temporal Forgetting in Federated Learning",
+      "basis": "Scraped primary continual-learning reference",
+      "firecrawlFiles": [
+        "cart-primary-flashback.md",
+        "cart-literature-recent2026.json"
+      ],
+      "urls": [
+        "https://arxiv.org/pdf/2606.03939v1"
+      ]
+    },
+    {
+      "id": "class_balanced_loss_2019",
+      "title": "Class-Balanced Loss Based on Effective Number of Samples",
+      "basis": "Firecrawl search and explicit citation in learning-failure analysis",
+      "firecrawlFiles": [
+        "search-class-balanced-loss.json"
+      ],
+      "urls": [
+        "https://openaccess.thecvf.com/content_CVPR_2019/papers/Cui_Class-Balanced_Loss_Based_on_Effective_Number_of_Samples_CVPR_2019_paper.pdf"
+      ]
+    },
+    {
+      "id": "federated_bayesian_neural_networks_2019",
+      "title": "Bayesian Nonparametric Federated Learning of Neural Networks",
+      "basis": "Explicit related-work source in the protocol attribution document",
+      "firecrawlFiles": [],
+      "urls": [
+        "https://proceedings.mlr.press/v97/yurochkin19a/yurochkin19a.pdf"
+      ]
+    },
+    {
+      "id": "hsu_nonidentical_distribution_2019",
+      "title": "Measuring the Effects of Non-Identical Data Distribution for Federated Visual Classification",
+      "basis": "Explicit Hsu, Qi and Brown reference in docs/DIRICHLET_BASIL_PROTOCOL_AND_ATTRIBUTION.md. Title corrected after inspecting the downloaded first page; this URL is not FedMA.",
+      "firecrawlFiles": [],
+      "urls": [
+        "https://arxiv.org/pdf/1909.06335"
+      ]
+    },
+    {
+      "id": "clippedgossip_2022",
+      "title": "Byzantine-Robust Decentralized Learning via ClippedGossip",
+      "basis": "Paper associated with the author repository inspected for attack/defense sourcing; earlier title Self-Centered Clipping",
+      "firecrawlFiles": [
+        "hidden-attack-source-search.json",
+        "download-audit-self-centered.json"
+      ],
+      "urls": [
+        "https://arxiv.org/pdf/2202.01545"
+      ]
+    },
+    {
+      "id": "revisiting_gem_submission",
+      "title": "Revisiting Gradient Episodic Memory for Continual Learning",
+      "basis": "Inspected OpenReview source; original PDF previously inaccessible",
+      "firecrawlFiles": [
+        "cart-revisiting-gem.json",
+        "cart-noise-memory-prior-work.json"
+      ],
+      "publicationStatus": "ICLR 2020 submission; acceptance not established",
+      "urls": [
+        "https://openreview.net/pdf?id=H1g79ySYvB",
+        "https://openreview.net/attachment?id=H1g79ySYvB&name=original_pdf"
+      ]
+    },
+    {
+      "id": "adversarial_lens_2019",
+      "title": "Analyzing Federated Learning through an Adversarial Lens",
+      "basis": "Filename repair: existing 010 PDF contains FLTrust, not the paper named in its filename",
+      "firecrawlFiles": [],
+      "urls": [
+        "https://proceedings.mlr.press/v97/bhagoji19a/bhagoji19a.pdf"
+      ]
+    },
+    {
+      "id": "blind_transmitters_2020",
+      "title": "Collaborative Machine Learning at the Wireless Edge with Blind Transmitters",
+      "basis": "Filename repair: existing 015 PDF contains an unrelated topology paper",
+      "firecrawlFiles": [
+        "download-audit-blind-transmitters.json"
+      ],
+      "urls": [
+        "https://arxiv.org/pdf/1907.03909"
+      ]
+    },
+    {
+      "id": "geometric_median_banach_2015",
+      "title": "Geometric median and robust estimation in Banach spaces",
+      "basis": "Related geometric-median source; existing 011 PDF is actually a directed-graph optimization paper. Do not assume this resolves an unspecified legacy bibliography key.",
+      "firecrawlFiles": [],
+      "urls": [
+        "https://arxiv.org/pdf/1308.1334"
+      ]
+    },
+    {
+      "id": "fedma_2020",
+      "title": "Federated Learning with Matched Averaging",
+      "basis": "Additional relevant model-matching reference retrieved while resolving the Hsu/FedMA title mismatch; not evidence for CART novelty.",
+      "firecrawlFiles": [
+        "download-audit-fedma.json"
+      ],
+      "urls": [
+        "https://arxiv.org/pdf/2002.06440"
+      ]
+    }
+  ]
+}

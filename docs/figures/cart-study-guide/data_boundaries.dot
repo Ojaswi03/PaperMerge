@@ -1,0 +1,17 @@
+digraph Data {
+  graph [rankdir=TB, bgcolor="white", pad=.25, nodesep=.35, ranksep=.4];
+  node [shape=box, style="rounded,filled", fillcolor="#eef4ff", color="#355478", fontname="DejaVu Sans", fontsize=12];
+  edge [color="#526277", fontname="DejaVu Sans", fontsize=10];
+  train [label="CIFAR-10 TRAIN\n50,000 images"];
+  fit [label="49,000 fitting images\nDisjoint client partitions"];
+  held [label="1,000 balanced TRAIN holdout\nPerformance reporting ONLY", fillcolor="#fff4d9"];
+  sgd [label="Ordinary SGD sees each client's full partition"];
+  probes [label="Within the private client TRAIN partition"];
+  fitting [label="Up to 16 fitting probes / class\nResidual solve"];
+  checking [label="Up to 16 additional probes / class\nCorrection selection"];
+  note [label="Fitting and selection probes are disjoint\nBoth are also seen by ordinary SGD", fillcolor="#e1f3e5"];
+  test [label="Official TEST\n10,000 images\nNOT LOADED in current development", fillcolor="#ffe9e5"];
+  train -> fit; train -> held; fit -> sgd; fit -> probes;
+  probes -> fitting; probes -> checking; fitting -> note; checking -> note;
+  held -> note [style=dashed, label="no input to CART", arrowhead=none];
+}

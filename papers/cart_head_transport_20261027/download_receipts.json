@@ -1,0 +1,52 @@
+[
+  {
+    "file": "acil_neurips_2022.pdf",
+    "title": "ACIL: Analytic Class-Incremental Learning with Absolute Memorization and Privacy Protection",
+    "url": "https://proceedings.neurips.cc/paper_files/paper/2022/file/4b74a42fc81fc7ee252f6bcb6e26c8be-Paper-Conference.pdf",
+    "bytes": 581821,
+    "sha256": "9aea214fdaef6284b6a02ece06d7cf7ef8701f649f24b26aa86ddf0b0af08940",
+    "downloadedAt": "2026-10-27T12:46:01.169322+00:00",
+    "status": "downloaded_original_pdf"
+  },
+  {
+    "file": "slca_iccv_2023.pdf",
+    "title": "SLCA: Slow Learner with Classifier Alignment for Continual Learning on a Pre-trained Model",
+    "url": "https://arxiv.org/pdf/2303.05118",
+    "bytes": 8376164,
+    "sha256": "b3240b637ccd816b4db9c843a003142a3ec8aa74d0f6b2197925f00d3ac7bbaf",
+    "downloadedAt": "2026-10-27T12:46:01.721535+00:00",
+    "status": "downloaded_original_pdf"
+  },
+  {
+    "file": "multi_anchor_analytic_classifier_eccv_2026.pdf",
+    "title": "Multi-Anchor Distillation with Text-Guided Analytic Classifier for Continual Learning",
+    "url": "https://media.eventhosts.cc/Conferences/ECCV2026/pdfs/337.pdf",
+    "bytes": 962884,
+    "sha256": "cc6e9386a4fb36a4fc3525ed4acc2e1bb86ee8181cd53f86a04129efd447cdc3",
+    "downloadedAt": "2026-10-27T12:46:04.475955+00:00",
+    "status": "downloaded_original_pdf",
+    "publicationStatus": "PDF hosted under ECCV2026 path; acceptance not independently verified"
+  },
+  {
+    "file": "class_wise_adaptive_self_distillation_2022_workshop_version.pdf",
+    "title": "Class-Wise Adaptive Self Distillation for Heterogeneous Federated Learning",
+    "url": "https://federated-learning.org/fl-aaai-2022/Papers/FL-AAAI-22_paper_43.pdf",
+    "bytes": 830962,
+    "sha256": "13098971aee26642093e081e86f9534c26c9c9917612067d077a1e9dc849d717",
+    "downloadedAt": "2026-10-27T13:21:57.239803+00:00",
+    "status": "downloaded_original_pdf",
+    "publicationStatus": "Workshop-hosted original PDF; compare publisher version titled Class-Wise Adaptive Self Distillation for Federated Learning on Non-IID Data",
+    "publisherPage": "https://ojs.aaai.org/index.php/AAAI/article/view/21620"
+  },
+  {
+    "file": "fedcad_aaai_2022_student_abstract.pdf",
+    "title": "Class-Wise Adaptive Self Distillation for Federated Learning on Non-IID Data (Student Abstract)",
+    "url": "https://ojs.aaai.org/index.php/AAAI/article/download/21620/21369",
+    "bytes": 149969,
+    "sha256": "0266857b8416d8c2abd7d181238637077cc91b08882c763aab87132eb21482b9",
+    "downloadedAt": "2026-10-27T13:34:39.063558+00:00",
+    "status": "downloaded_original_pdf",
+    "publicationStatus": "AAAI 2022 Student Abstract and Poster Program, 36(11), 12967-12968",
+    "doi": "10.1609/aaai.v36i11.21620"
+  }
+]

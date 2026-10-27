@@ -1,0 +1,17 @@
+digraph GEC {
+  graph [rankdir=TB, bgcolor="white", pad=.25, nodesep=.35, ranksep=.45];
+  node [shape=box, style="rounded,filled", fillcolor="#eef4ff", color="#355478", fontname="DejaVu Sans", fontsize=12];
+  edge [color="#526277", fontname="DejaVu Sans", fontsize=10];
+  batch [label="Current task batch"];
+  memory [label="Episodic memory\nPast samples, task labels, reference losses", fillcolor="#fff4d9"];
+  current [label="Current-task gradient"];
+  previous [label="Memory losses and gradients\nPer-task extension in implementation"];
+  barrier [label="Forgetting violation h\nMemory loss minus reference minus slack"];
+  qp [label="Gradient-guided constrained QP\nNearest current gradient satisfying barrier"];
+  cases [label="Violation: emphasize restoration\nWithin allowance: permit plasticity", fillcolor="#e1f3e5"];
+  step [label="SGD step using corrected gradient"];
+  bookkeeping [label="Update references and reservoir memory\nWarm-up / threshold policy"];
+  batch -> current -> qp; memory -> previous -> barrier -> qp;
+  previous -> qp; qp -> cases -> step -> bookkeeping;
+  bookkeeping -> memory [label="next batch", constraint=false];
+}

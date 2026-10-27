@@ -1,0 +1,92 @@
+[
+  {
+    "title": "A Tutorial on Conformal Prediction",
+    "file": "shafer_vovk_conformal_prediction_jmlr_2008.pdf",
+    "source": "https://www.jmlr.org/papers/volume9/shafer08a/shafer08a.pdf",
+    "resolvedUrl": "https://www.jmlr.org/papers/volume9/shafer08a/shafer08a.pdf",
+    "publicationStatus": "Journal of Machine Learning Research 9(12):371-421, 2008",
+    "authors": [
+      "Glenn Shafer",
+      "Vladimir Vovk"
+    ],
+    "sha256": "5f19ea62de278bd241218e5da40629b481f1833cdb23afddf229fc37eda08d65",
+    "bytes": 764429,
+    "reviewDate": "2026-10-26"
+  },
+  {
+    "title": "A Conformal Predictive Measure for Assessing Catastrophic Forgetting",
+    "authors": [
+      "Ioannis Pitsiorlas",
+      "Nour Jamoussi",
+      "Marios Kountouris"
+    ],
+    "source": "https://arxiv.org/pdf/2505.10677v1",
+    "resolvedUrl": "https://arxiv.org/pdf/2505.10677v1",
+    "file": "conformal_predictive_measure_forgetting_2025.pdf",
+    "sha256": "9c4e7f7506e2c958db30a11a6fa6a1608e607fe702d0abf9d827671d77f8b7cc",
+    "bytes": 519207,
+    "publicationStatus": "arXiv preprint v1; venue not verified",
+    "reviewDate": "2026-10-26"
+  },
+  {
+    "title": "Model Uncertainty Quantification by Conformal Prediction in Continual Learning",
+    "authors": [
+      "Rui Gao",
+      "Weiwei Liu"
+    ],
+    "source": "https://raw.githubusercontent.com/mlresearch/v267/main/assets/gao25i/gao25i.pdf",
+    "resolvedUrl": "https://raw.githubusercontent.com/mlresearch/v267/main/assets/gao25i/gao25i.pdf",
+    "file": "cpcl_model_uncertainty_continual_learning_icml_2025.pdf",
+    "sha256": "1ea2387c89a1af5d501370732f5d128ac61a3c48a3b4770da887605699fc80f8",
+    "bytes": 692387,
+    "publicationStatus": "ICML 2025, PMLR 267",
+    "reviewDate": "2026-10-26"
+  },
+  {
+    "title": "Long-tail learning via logit adjustment",
+    "authors": [
+      "Aditya Krishna Menon",
+      "Sadeep Jayasumana",
+      "Ankit Singh Rawat",
+      "Himanshu Jain",
+      "Andreas Veit",
+      "Sanjiv Kumar"
+    ],
+    "file": "menon_logit_adjustment_iclr_2021.pdf",
+    "source": "https://arxiv.org/pdf/2007.07314v2",
+    "resolvedUrl": "https://arxiv.org/pdf/2007.07314v2",
+    "sha256": "1a4289fcc090ca05f711ff6002f2a4ff77ea2ae55d4bedc09448287dfd4f0209",
+    "bytes": 1402421,
+    "publicationStatus": "ICLR 2021; arXiv v2",
+    "reviewDate": "2026-10-27"
+  },
+  {
+    "title": "Visual Language Model based Cross-modal Semantic Communication Systems",
+    "file": "vlm_cross_modal_semantic_communication_2024.pdf",
+    "source": "https://arxiv.org/pdf/2407.00020v1",
+    "resolvedUrl": "https://arxiv.org/pdf/2407.00020v1",
+    "sha256": "632c9c0f9b01b2802390d3188cc92f4bbee90d40b6c5488e8081d78393c92020",
+    "bytes": 2448483,
+    "publicationStatus": "arXiv v1, 2024; later journal version not substituted",
+    "reviewDate": "2026-10-27"
+  },
+  {
+    "title": "Gradient-Guided Epsilon Constraint Method for Online Continual Learning",
+    "authors": [
+      "Song Lai",
+      "Changyi Ma",
+      "Fei Zhu",
+      "Zhe Zhao",
+      "Xi Lin",
+      "Gaofeng Meng",
+      "Qingfu Zhang"
+    ],
+    "file": "gec_epsilon_constraint_neurips_2025.pdf",
+    "source": "https://proceedings.neurips.cc/paper_files/paper/2025/file/b3c2854d9e94282a373d8fa58b567b27-Paper-Conference.pdf",
+    "resolvedUrl": "https://proceedings.neurips.cc/paper_files/paper/2025/file/b3c2854d9e94282a373d8fa58b567b27-Paper-Conference.pdf",
+    "sha256": "338c04e4a470ce9f3b684b6e257cd9571f45729ceaf9479c0e066bd724d78828",
+    "bytes": 4930481,
+    "publicationStatus": "NeurIPS 2025",
+    "reviewDate": "2026-10-27"
+  }
+]

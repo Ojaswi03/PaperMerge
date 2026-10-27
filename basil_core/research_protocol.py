@@ -189,6 +189,9 @@ def build_model(architecture: str, seed: int = 2025):
     import tensorflow as tf
     initialization_seed = int(keyed_rng(seed, "model_initialization").integers(0, 2**30))
     if architecture=="basil_paper_cnn": return BasilPaperCifarModel(seed=initialization_seed)
+    if architecture=='cifar_resnet20_groupnorm_v1':
+        from basil_core.factorial_model import build_model as build_factorial_model
+        return build_factorial_model(initialization_seed)
     tf.keras.utils.set_random_seed(initialization_seed)
     if architecture=="legacy_vgg_cnn": return CIFARModel()
     raise ValueError(f"Unsupported modelArchitecture: {architecture}")
@@ -196,6 +199,14 @@ def build_model(architecture: str, seed: int = 2025):
 
 def validate_config(config: dict) -> None:
     config = normalize_config(config)
+    if config.get('lossStudyRevision')=='cart_coherent_channel_pilot_v1':
+        from basil_core.cart_coherent_study import validate_config as validate_coherent
+        validate_coherent(config)
+        return
+    if config.get('lossStudyRevision')=='factorial_cifar_v1':
+        from basil_core.factorial_study import validate_config as validate_factorial
+        validate_factorial(config)
+        return
     if config.get('lossStudyRevision') == 'cart_train_validation_v1':
         from basil_core.cart_validation import validate_config as validate_cart_validation
         validate_cart_validation(config)
@@ -388,7 +399,8 @@ class SequentialWorker:
         if epochs != 5:
             raise ValueError("Research activations require five full local epochs.")
         self.load(params)
-        self.optimizer = tf.keras.optimizers.SGD(learning_rate=learning_rate, momentum=0.0)
+        self.optimizer = (self.optimizer_factory(learning_rate) if hasattr(self,'optimizer_factory')
+            else tf.keras.optimizers.SGD(learning_rate=learning_rate, momentum=0.0))
         before = evaluation() if evaluation else None
         epoch_records, step_records = [], []
         for epoch in range(epochs):
@@ -492,7 +504,7 @@ def run_research_protocol(config: dict, train_x, train_y, test_x, test_y, *, act
     config = normalize_config(config)
     validate_config(config); seed=int(config["seed"]); n=10; size=5; model=build_model(config["modelArchitecture"], seed); worker=(worker_factory or SequentialWorker)(model)
     initial=worker.export(); node_params=[copy_params(initial) for _ in range(n)]; memories=initialize_memories(initial,n,size); attackers=tuple(config.get("resolvedAttackerIds") or resolve_attackers(seed,int(config.get("attackerCount",4)),n))
-    if config.get('cartValidationStage')=='replication_30r' and params_hash(initial)!=config['initialModelHash']:
+    if (config.get('cartValidationStage')=='replication_30r' or config.get('lossStudyRevision')=='cart_coherent_channel_pilot_v1') and params_hash(initial)!=config['initialModelHash']:
         raise ValueError('Replication initialization differs from its preflight model hash; no updates started.')
     if audit:
         worker.audit = audit
@@ -500,7 +512,10 @@ def run_research_protocol(config: dict, train_x, train_y, test_x, test_y, *, act
     rounds=int(config["nRounds"]); test_count=len(test_y); activation_accuracy=np.zeros((rounds,n),np.float32); activation_per_class=np.zeros((rounds,n,10),np.float32); round_node_accuracy=np.zeros((rounds,n),np.float32); round_node_per_class=np.zeros((rounds,n,10),np.float32); selected_sources=np.full((rounds,n),-1,np.int16); selected_rounds=np.full((rounds,n),-1,np.int16); telemetry=[]
     class_aware=config.get('lossStudyRevision')=='class_gradient_importance_anchor_v1'
     calibration_study=config.get('lossStudyRevision') in {'dirichlet_logit_calibration_diagnostic_v1','dirichlet_prior_readiness_diagnostic_v1'}
-    local_cart=config.get('lossStudyRevision') in {'cart_local_class_memory_v1','cart_train_validation_v1'}
+    factorial=config.get('lossStudyRevision') in {'factorial_cifar_v1','cart_coherent_channel_pilot_v1'}
+    if factorial and getattr(worker,'factorial_config',None)!=config:
+        raise ValueError('Factorial protocol requires its explicitly matched worker.')
+    local_cart=config.get('lossStudyRevision') in {'cart_local_class_memory_v1','cart_train_validation_v1'} or (factorial and config['cartEnabled'])
     if local_cart and (getattr(worker, 'diagnostic_revision', None) != config['lossStudyRevision'] or
             getattr(worker, 'beta', None) != config['cartBeta'] or
             not all(hasattr(worker, k) for k in ('export_local_memory', 'restore_local_memory'))):
@@ -513,15 +528,19 @@ def run_research_protocol(config: dict, train_x, train_y, test_x, test_y, *, act
         raise ValueError('Calibration diagnostic requires its explicit matching worker factory.')
     if class_aware and not all(hasattr(worker,k) for k in ('receive_retention_state','export_retention_state')):
         raise ValueError('Class-aware config requires its explicit retention worker, not plain CE.')
-    instrumented_study=config.get('experimentProtocol') in {IID_PROTOCOL,'sequential_basil_dirichlet_v1'} or config.get('lossStudyRevision') in {'source_grounded_no_lambda_v1','class_gradient_importance_anchor_v1'}
+    instrumented_study=factorial or config.get('experimentProtocol') in {IID_PROTOCOL,'sequential_basil_dirichlet_v1'} or config.get('lossStudyRevision') in {'source_grounded_no_lambda_v1','class_gradient_importance_anchor_v1'}
     detailed_rounds=instrumented_study and config.get("roundEvaluationMetrics",False)
     round_node_loss=np.zeros((rounds,n),np.float64)
     next_activation=0; completed_rounds=0
     if resume_state is not None:
         if local_cart:
-            from basil_core.cart_memory_study import validate_memory_checkpoint
-            worker.restore_local_memory(validate_memory_checkpoint(resume_state['cart_memory'],
-                resume_state['next_activation'], seed))
+            if config.get('cartVariant') in ('coherent','coherent_refresh','coherent_commit_ce','coherent_commit_error','coherent_qualified_error','coherent_projected_error','coherent_head_transport'):
+                from basil_core.cart_feasible_worker import validate_memory
+                memory=validate_memory(resume_state['cart_memory'],seed=seed,cursor=resume_state['next_activation'])
+            else:
+                from basil_core.cart_memory_study import validate_memory_checkpoint
+                memory=validate_memory_checkpoint(resume_state['cart_memory'],resume_state['next_activation'],seed)
+            worker.restore_local_memory(memory)
         node_params=resume_state['node_params']; memories=resume_state['memories']
         telemetry=list(resume_state['telemetry'])
         next_activation=resume_state['next_activation']; completed_rounds=resume_state['completed_rounds']
@@ -557,7 +576,7 @@ def run_research_protocol(config: dict, train_x, train_y, test_x, test_y, *, act
     if limit:
         indices=[keyed_rng(seed,"diagnostic_subset",node_id).choice(chunk,size=min(int(limit),len(chunk)),replace=False) for node_id,chunk in enumerate(indices)]
     probe_indices=[chunk[:min(512,len(chunk))] for chunk in indices]
-    if config.get('experimentProtocol')=='sequential_basil_dirichlet_v1':
+    if factorial or config.get('experimentProtocol')=='sequential_basil_dirichlet_v1':
         # The historical Dirichlet allocator concatenates class chunks. Its
         # first 512 entries are not a representative local random minibatch.
         # Only this explicit new family changes batching; old runs keep theirs.
@@ -565,7 +584,7 @@ def run_research_protocol(config: dict, train_x, train_y, test_x, test_y, *, act
             chunk,size=min(512,len(chunk)),replace=False) for node,chunk in enumerate(indices)]
     if any(len(chunk) == 0 for chunk in indices):
         raise ValueError("Partition produced an empty local training dataset.")
-    if config.get('cartValidationStage')=='replication_30r':
+    if config.get('cartValidationStage')=='replication_30r' or config.get('lossStudyRevision')=='cart_coherent_channel_pilot_v1':
         digest=hashlib.sha256()
         for chunk in indices:digest.update(np.asarray(chunk,dtype='<i8').tobytes())
         if digest.hexdigest()!=config['partitionHash']:
@@ -581,7 +600,10 @@ def run_research_protocol(config: dict, train_x, train_y, test_x, test_y, *, act
             audit.evaluation()
         return {"globalTestAccuracy": accuracy, "perClassGlobalTestAccuracy": per_class.tolist()}
     for round_id in range(completed_rounds,rounds):
-        learning_rate=basil_round_learning_rate(float(config["learningRate"]),round_id)
+        if factorial:
+            from basil_core.factorial_study import learning_rate as factorial_rate
+            learning_rate=factorial_rate(config,round_id)
+        else:learning_rate=basil_round_learning_rate(float(config["learningRate"]),round_id)
         for node_id in range(n):
             if round_id*n+node_id < next_activation:
                 continue
@@ -657,7 +679,7 @@ def run_research_protocol(config: dict, train_x, train_y, test_x, test_y, *, act
             if local_cart:
                 record.update(cartMemory=training['cartMemory'], localClassCounts=training['localClassCounts'],
                     logitCalibrationOffsets=training['logitCalibrationOffsets'])
-            if calibration_study:
+            if calibration_study or factorial and config.get('logitCalibrationEnabled'):
                 record.update(localClassCounts=training['localClassCounts'],
                     logitCalibrationOffsets=training['logitCalibrationOffsets'],
                     localTrainingLossDefinition='mean_over_epochs_calibrated_ce' if config['logitCalibrationEnabled'] else 'mean_over_epochs_ordinary_ce')

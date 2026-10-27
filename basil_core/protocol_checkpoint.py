@@ -97,6 +97,26 @@ def _implementation_fingerprint(profile_name):
 
 def checkpoint_implementation(config):
     fingerprints=dict(implementation_fingerprint())
+    if config.get('lossStudyRevision') in {'factorial_cifar_v1','cart_coherent_channel_pilot_v1'}:
+        root=Path(__file__).resolve().parents[1]
+        for name in ('basil_core/factorial_study.py','basil_core/factorial_model.py',
+                     'basil_core/factorial_worker.py','scripts/run_factorial_study.py',
+                     'basil_core/cart_local_memory.py','basil_core/cart_barrier.py',
+                     'basil_core/dirichlet_calibration.py','basil_core/noniid_study.py',
+                     'basil_core/research_audit.py','basil_core/iid_runtime.py',
+                     'basil_core/protocol_checkpoint.py','basil_core/execution_profile.py',
+                     'basil_core/cart_validation.py','gui/research_protocol.py'):
+            fingerprints[name]=hashlib.sha256((root/name).read_bytes()).hexdigest()
+        for name in ('basil_core/cart_memory_study.py','scripts/run_cart_train_validation.py',
+                     'scripts/verify_factorial_gpu.py'):
+            fingerprints[name]=hashlib.sha256((root/name).read_bytes()).hexdigest()
+        if config.get('lossStudyRevision')=='cart_coherent_channel_pilot_v1':
+            for name in ('basil_core/cart_feasible_memory.py','basil_core/cart_feasible_worker.py','basil_core/cart_boundary_worker.py',
+                         'basil_core/cart_reference_qualification.py',
+                         'basil_core/cart_activation_projection.py','basil_core/cart_projected_commit.py','basil_core/compiled_optimizer.py',
+                         'basil_core/cart_head_transport.py','basil_core/cart_head_worker.py',
+                         'basil_core/cart_coherent_study.py','scripts/run_cart_coherent_pilot.py'):
+                fingerprints[name]=hashlib.sha256((root/name).read_bytes()).hexdigest()
     if config.get('lossStudyRevision') in {'cart_local_class_memory_v1','cart_train_validation_v1'}:
         root=Path(__file__).resolve().parents[1]
         for name in ('basil_core/cart_local_memory.py','basil_core/cart_memory_study.py',
@@ -204,7 +224,11 @@ def save_checkpoint(path, config, state, *, partition_hash, initial_hash, teleme
         memories=memories, weights=weights, telemetry=state['telemetry'])
     if retention_states:
         metadata['retentionStates']=retention_states
-    if config.get('lossStudyRevision') in {'cart_local_class_memory_v1','cart_train_validation_v1'}:
+    if config.get('lossStudyRevision')=='cart_coherent_channel_pilot_v1' and config.get('cartVariant') in ('coherent','coherent_refresh','coherent_commit_ce','coherent_commit_error','coherent_qualified_error','coherent_projected_error','coherent_head_transport'):
+        from basil_core.cart_feasible_worker import pack_memory
+        metadata['coherentCartMemory'],metadata['coherentCartMemoryHash']=pack_memory(
+            state['cart_memory'],seed=config['seed'],cursor=state['next_activation'],pack_params=pack_params)
+    elif config.get('lossStudyRevision') in {'cart_local_class_memory_v1','cart_train_validation_v1'} or (config.get('lossStudyRevision') in {'factorial_cifar_v1','cart_coherent_channel_pilot_v1'} and config.get('cartEnabled')):
         from basil_core.cart_memory_study import validate_memory_checkpoint
         from basil_core.cart_local_memory import state_hash
         metadata['cartMemory']=validate_memory_checkpoint(state['cart_memory'],
@@ -278,7 +302,11 @@ def load_checkpoint(path, config, *, partition_hash, initial_hash):
             completed_rounds=metadata['completedRounds'], memories=memories,
             node_params=[unpack_params(p) for p in metadata['nodeParams']],
             telemetry=_load_telemetry(path,metadata))
-        if config.get('lossStudyRevision') in {'cart_local_class_memory_v1','cart_train_validation_v1'}:
+        if config.get('lossStudyRevision')=='cart_coherent_channel_pilot_v1' and config.get('cartVariant') in ('coherent','coherent_refresh','coherent_commit_ce','coherent_commit_error','coherent_qualified_error','coherent_projected_error','coherent_head_transport'):
+            from basil_core.cart_feasible_worker import unpack_memory
+            state['cart_memory']=unpack_memory(metadata['coherentCartMemory'],metadata['coherentCartMemoryHash'],
+                seed=config['seed'],cursor=state['next_activation'],unpack_params=unpack_params)
+        elif config.get('lossStudyRevision') in {'cart_local_class_memory_v1','cart_train_validation_v1'} or (config.get('lossStudyRevision') in {'factorial_cifar_v1','cart_coherent_channel_pilot_v1'} and config.get('cartEnabled')):
             from basil_core.cart_memory_study import validate_memory_checkpoint
             from basil_core.cart_local_memory import state_hash
             if state_hash(metadata['cartMemory']) != metadata['cartMemoryHash']:

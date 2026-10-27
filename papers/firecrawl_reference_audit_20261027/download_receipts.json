@@ -1,0 +1,294 @@
+[
+  {
+    "id": "fedlc_2022",
+    "title": "Federated Learning with Label Distribution Skew via Logits Calibration",
+    "basis": "Scraped and cited source; PDF previously cached outside papers/",
+    "firecrawlFiles": [
+      "fedlc-source.md",
+      "fedlc-code-search.json",
+      "search-dirichlet-label-skew.json"
+    ],
+    "cachedFile": ".firecrawl/fedlc-source.pdf",
+    "urls": [
+      "https://proceedings.mlr.press/v162/zhang22p/zhang22p.pdf"
+    ],
+    "attempts": [],
+    "status": "downloaded_original_pdf",
+    "file": "papers/firecrawl_reference_audit_20261027/fedlc_2022.pdf",
+    "bytes": 1837996,
+    "sha256": "0f1cd9ebb973350d8d6741f425f2a5f3916dc0d91e1d54bd92eb31e3710161ce",
+    "requestedSource": ".firecrawl/fedlc-source.pdf",
+    "resolvedSource": ".firecrawl/fedlc-source.pdf",
+    "downloadedAt": "2026-10-27T14:10:55.181984+00:00",
+    "firstPagePreview": "Federated Learning with Label Distribution Skew via Logits Calibration Jie Zhang * 1 Zhiqi Li 1 Bo Li 2 Jianghe Xu 2 Shuang Wu 2 Shouhong Ding 2 Chao Wu 1 Quantity-based label skew Distribution-based label skew Abstract 80 Traditional federated optimization methods per- 70 form poorly with heterogeneous data (i.e. , ac- 60 Test Accuracy curacy reduction), especially for highly skewed 50 data. In this paper, we investigate the label distri- 40 IID IID bution skew in FL, where the distribution of labels =8 =0.8 30 =6 =0.6 varies across clients. First, we investigate the la- 20 =4 =0.4 bel distribution skew from a statistical view. We 10 =2 =0.2"
+  },
+  {
+    "id": "yin_trimmed_mean_2018",
+    "title": "Byzantine-Robust Distributed Learning: Towards Optimal Statistical Rates",
+    "basis": "Scraped and cited helper/trimmed-mean reference",
+    "firecrawlFiles": [
+      "cart-helper-yin18-paper.md",
+      "cart-helper-trimmed-sources.json"
+    ],
+    "urls": [
+      "https://proceedings.mlr.press/v80/yin18a/yin18a.pdf"
+    ],
+    "attempts": [],
+    "status": "downloaded_original_pdf",
+    "file": "papers/firecrawl_reference_audit_20261027/yin_trimmed_mean_2018.pdf",
+    "bytes": 548220,
+    "sha256": "0b101bb14126693ca6b9b8f8eeee3a9b8fd5eb8c9ad8d74c75e42447f8511330",
+    "requestedSource": "https://proceedings.mlr.press/v80/yin18a/yin18a.pdf",
+    "resolvedSource": "https://proceedings.mlr.press/v80/yin18a/yin18a.pdf",
+    "downloadedAt": "2026-10-27T14:10:55.981460+00:00",
+    "firstPagePreview": "Byzantine-Robust Distributed Learning: Towards Optimal Statistical Rates Dong Yin 1 Yudong Chen 2 Kannan Ramchandran 1 Peter Bartlett 1 3 Abstract as worker machines (McMahan & Ramage, 2017; Konec\u030cny\u0300 In this paper, we develop distributed optimiza- et al., 2016). Such machines are often more unpredictable, tion algorithms that are provably robust against and in particular may be susceptible to malicious and coor- Byzantine failures\u2014arbitrary and potentially ad- dinated attacks. versarial behavior, in distributed computing sys- Due to the inherent unpredictability of this abnormal (some- tems, with a focus on achieving optimal statistical time"
+  },
+  {
+    "id": "hidden_vulnerability_2018",
+    "title": "The Hidden Vulnerability of Distributed Learning in Byzantium",
+    "basis": "Scraped attack-source reference",
+    "firecrawlFiles": [
+      "hidden-vulnerability-source.md",
+      "hidden-source-paper.md"
+    ],
+    "urls": [
+      "https://proceedings.mlr.press/v80/mhamdi18a/mhamdi18a.pdf"
+    ],
+    "attempts": [],
+    "status": "downloaded_original_pdf",
+    "file": "papers/firecrawl_reference_audit_20261027/hidden_vulnerability_2018.pdf",
+    "bytes": 679594,
+    "sha256": "b6be7e5b30f5f73ef3df576ffaa9c7205b7027e0b391a57f15b700962df26a69",
+    "requestedSource": "https://proceedings.mlr.press/v80/mhamdi18a/mhamdi18a.pdf",
+    "resolvedSource": "https://proceedings.mlr.press/v80/mhamdi18a/mhamdi18a.pdf",
+    "downloadedAt": "2026-10-27T14:10:55.852024+00:00",
+    "firstPagePreview": "The Hidden Vulnerability of Distributed Learning in Byzantium El Mahdi El Mhamdi 1 Rachid Guerraoui 1 Se\u0301bastien Rouault 1 Abstract Q, depending on a parameter x, if one keeps updating x in While machine learning is going through an era the opposite direction of the gradient of Q, with reasonably of celebrated success, concerns have been raised small, but not too small (Bottou, 1998) steps, x eventually about the vulnerability of its backbone: stochas- reaches the global minimum if Q is convex or, if Q is not tic gradient descent (SGD). Recent approaches convex1 , reach a region where Q is either flat or in some lo- have been proposed to ensu"
+  },
+  {
+    "id": "hidden_vulnerability_2018_supplement",
+    "title": "The Hidden Vulnerability of Distributed Learning in Byzantium - Supplementary Material",
+    "basis": "Scraped supplementary attack-source reference",
+    "firecrawlFiles": [
+      "hidden-source-supplement.md"
+    ],
+    "urls": [
+      "https://proceedings.mlr.press/v80/mhamdi18a/mhamdi18a-supp.pdf"
+    ],
+    "attempts": [],
+    "status": "downloaded_original_pdf",
+    "file": "papers/firecrawl_reference_audit_20261027/hidden_vulnerability_2018_supplement.pdf",
+    "bytes": 341532,
+    "sha256": "aeff007cf9ea7aafbdece373f356f67d00192c00fc5c3871dffd4cf4ae3dabef",
+    "requestedSource": "https://proceedings.mlr.press/v80/mhamdi18a/mhamdi18a-supp.pdf",
+    "resolvedSource": "https://proceedings.mlr.press/v80/mhamdi18a/mhamdi18a-supp.pdf",
+    "downloadedAt": "2026-10-27T14:10:56.102715+00:00",
+    "firstPagePreview": "The Hidden Vulnerability of Distributed Learning in Byzantium \u2014 Supplementary Material El Mahdi El Mhamdi 1 Rachid Guerraoui 1 Se\u0301bastien Rouault 1 A. Brute\u2019s (\u03b1, f )\u2013Byzantine\u2013resilience proof A.3. Proof 2 A.1. Background Let \u2200 (i, j) \u2208 [1 .. n \u2212 f ] , i 6= j be \u03c3\u0304 , E kVi \u2212 Vj kp . Under the assumption that 2 f \u03c3\u0304 < (n \u2212 f ) kGkp , we will Definition 1 ((\u03b1, f )\u2013Byzantine\u2013resilience). prove that this rule is (\u03b1, f )\u2013Byzantine\u2013resilient. Let (\u03b1, f ) \u2208 [0, \u03c0/2] \u00d7 [0 .. n] be any angle and any integer. Let n \u2208 N with n > f . Trivial case: \u2200i \u2208 [1 .. f ] , Bi \u2208 / S. Let (V1 . . . Vn\u2212f ) \u2208 Rd \u0001n\u2212f be independent, identically As the aggregated gra"
+  },
+  {
+    "id": "flashbackcl_2026",
+    "title": "FlashbackCL: Mitigating Temporal Forgetting in Federated Learning",
+    "basis": "Scraped primary continual-learning reference",
+    "firecrawlFiles": [
+      "cart-primary-flashback.md",
+      "cart-literature-recent2026.json"
+    ],
+    "urls": [
+      "https://arxiv.org/pdf/2606.03939v1"
+    ],
+    "attempts": [],
+    "status": "downloaded_original_pdf",
+    "file": "papers/firecrawl_reference_audit_20261027/flashbackcl_2026.pdf",
+    "bytes": 458531,
+    "sha256": "2ead81d1d0ff48d5b66294cb04ef90e0e50d7441511bf938e502465d4aa2da45",
+    "requestedSource": "https://arxiv.org/pdf/2606.03939v1",
+    "resolvedSource": "https://arxiv.org/pdf/2606.03939v1",
+    "downloadedAt": "2026-10-27T14:10:55.526686+00:00",
+    "firstPagePreview": "FlashbackCL: Mitigating Temporal Forgetting in Federated Learning Mubarak A. Ojewale , Adriana E. Chis , Jorge M. Corte\u0301s-Mendoza , Bernardo Pulido-Gaytan , Horacio Gonza\u0301lez-Ve\u0301lez Cloud Competency Centre, National College of Ireland, Dublin, Ireland mubarak.ojewale@ncirl.ie, adriana.chis@ncirl.ie, JorgeMario.CortesMendoza@ncirl.ie, LuisBernardo.PulidoGaytan@ncirl.ie, horacio@ncirl.ie Abstract global knowledge that other clients have contributed, and arXiv:2606.03939v1 [cs.LG] 2 Jun 2026 coordinate-wise averaging destroys class-specific knowledge Federated Learning (FL) of foundation and edge embedded in divergent client models [Aljahdali et"
+  },
+  {
+    "id": "class_balanced_loss_2019",
+    "title": "Class-Balanced Loss Based on Effective Number of Samples",
+    "basis": "Firecrawl search and explicit citation in learning-failure analysis",
+    "firecrawlFiles": [
+      "search-class-balanced-loss.json"
+    ],
+    "urls": [
+      "https://openaccess.thecvf.com/content_CVPR_2019/papers/Cui_Class-Balanced_Loss_Based_on_Effective_Number_of_Samples_CVPR_2019_paper.pdf"
+    ],
+    "attempts": [],
+    "status": "downloaded_original_pdf",
+    "file": "papers/firecrawl_reference_audit_20261027/class_balanced_loss_2019.pdf",
+    "bytes": 774884,
+    "sha256": "6abccd9d21c36babbcd9bb62183e6e8d45d23b33d37115777b32a5f7fadd7ec9",
+    "requestedSource": "https://openaccess.thecvf.com/content_CVPR_2019/papers/Cui_Class-Balanced_Loss_Based_on_Effective_Number_of_Samples_CVPR_2019_paper.pdf",
+    "resolvedSource": "https://openaccess.thecvf.com/content_CVPR_2019/papers/Cui_Class-Balanced_Loss_Based_on_Effective_Number_of_Samples_CVPR_2019_paper.pdf",
+    "downloadedAt": "2026-10-27T14:10:57.431944+00:00",
+    "firstPagePreview": "Class-Balanced Loss Based on Effective Number of Samples Yin Cui1,2\u2217 Menglin Jia1 Tsung-Yi Lin3 Yang Song4 Serge Belongie1,2 1 2 3 4 Cornell University Cornell Tech Google Brain Alphabet Inc. Number of training samples Abstract 103 With the rapid increase of large-scale, real-world datasets, it becomes critical to address the problem of long- 102 tailed data distribution (i.e., a few classes account for most Head of the data, while most classes are under-represented). Ex- Long Tail 101 isting solutions typically adopt class re-balancing strategies 0 1000 2000 3000 4000 5000 Sorted class index such as re-sampling and re-weighting based on the "
+  },
+  {
+    "id": "federated_bayesian_neural_networks_2019",
+    "title": "Bayesian Nonparametric Federated Learning of Neural Networks",
+    "basis": "Explicit related-work source in the protocol attribution document",
+    "firecrawlFiles": [],
+    "urls": [
+      "https://proceedings.mlr.press/v97/yurochkin19a/yurochkin19a.pdf"
+    ],
+    "attempts": [],
+    "status": "downloaded_original_pdf",
+    "file": "papers/firecrawl_reference_audit_20261027/federated_bayesian_neural_networks_2019.pdf",
+    "bytes": 6578583,
+    "sha256": "f71c55965bfbaf2bdf67c7db35633190d5dd4aee70cf958e7d08871ff8941ee2",
+    "requestedSource": "https://proceedings.mlr.press/v97/yurochkin19a/yurochkin19a.pdf",
+    "resolvedSource": "https://proceedings.mlr.press/v97/yurochkin19a/yurochkin19a.pdf",
+    "downloadedAt": "2026-10-27T14:10:56.964357+00:00",
+    "firstPagePreview": "Bayesian Nonparametric Federated Learning of Neural Networks Mikhail Yurochkin 1 2 Mayank Agarwal 1 2 Soumya Ghosh 1 2 3 Kristjan Greenewald 1 2 Trong Nghia Hoang 1 2 Yasaman Khazaeni 1 2 Abstract need for centralized data, instead designing algorithms that In federated learning problems, data is scattered learn from sequestered data sources. These algorithms iter- across different servers and exchanging or pooling ate between training local models on each data source and it is often impractical or prohibited. We develop a distilling them into a global federated model, all without Bayesian nonparametric framework for federated explicitly comb"
+  },
+  {
+    "id": "hsu_nonidentical_distribution_2019",
+    "title": "Measuring the Effects of Non-Identical Data Distribution for Federated Visual Classification",
+    "basis": "Explicit Hsu, Qi and Brown reference in docs/DIRICHLET_BASIL_PROTOCOL_AND_ATTRIBUTION.md. Title corrected after inspecting the downloaded first page; this URL is not FedMA.",
+    "firecrawlFiles": [],
+    "urls": [
+      "https://arxiv.org/pdf/1909.06335"
+    ],
+    "attempts": [],
+    "status": "downloaded_original_pdf",
+    "file": "papers/firecrawl_reference_audit_20261027/hsu_nonidentical_distribution_2019.pdf",
+    "bytes": 814903,
+    "sha256": "c1e068bbf4c34b1f2ec5c9b5128d5bcaf95a1c84b7a4c8813e4477251ef85260",
+    "requestedSource": "https://arxiv.org/pdf/1909.06335",
+    "resolvedSource": "https://arxiv.org/pdf/1909.06335",
+    "downloadedAt": "2026-10-27T14:10:56.199688+00:00",
+    "firstPagePreview": "Measuring the Effects of Non-Identical Data Distribution for Federated Visual Classification Tzu-Ming Harry Hsu\u2217 Hang Qi Matthew Brown MIT CSAIL Google Research Google Research stmharry@mit.edu hangqi@google.com mtbr@google.com arXiv:1909.06335v1 [cs.LG] 13 Sep 2019 Abstract Federated Learning enables visual models to be trained in a privacy-preserving way using real-world data from mobile devices. Given their distributed nature, the statistics of the data across these devices is likely to differ significantly. In this work, we look at the effect such non-identical data distributions has on visual classification via Federated Learning. We pro"
+  },
+  {
+    "id": "clippedgossip_2022",
+    "title": "Byzantine-Robust Decentralized Learning via ClippedGossip",
+    "basis": "Paper associated with the author repository inspected for attack/defense sourcing; earlier title Self-Centered Clipping",
+    "firecrawlFiles": [
+      "hidden-attack-source-search.json",
+      "download-audit-self-centered.json"
+    ],
+    "urls": [
+      "https://arxiv.org/pdf/2202.01545"
+    ],
+    "attempts": [],
+    "status": "downloaded_original_pdf",
+    "file": "papers/firecrawl_reference_audit_20261027/clippedgossip_2022.pdf",
+    "bytes": 1370099,
+    "sha256": "6760ecd785a339bfc51a6f0123c1c09be23aec5f98df5da53f63a0702eb39b9a",
+    "requestedSource": "https://arxiv.org/pdf/2202.01545",
+    "resolvedSource": "https://arxiv.org/pdf/2202.01545",
+    "downloadedAt": "2026-10-27T14:10:56.359792+00:00",
+    "firstPagePreview": "B YZANTINE - ROBUST DECENTRALIZED LEARNING VIA C LIPPED G OSSIP Lie He \u2217 Sai Praneeth Karimireddy\u2217 EPFL UCB lie.he@epfl.ch sp.karimireddy@berkeley.edu Martin Jaggi EPFL martin.jaggi@epfl.ch arXiv:2202.01545v2 [cs.LG] 20 Apr 2023 A BSTRACT In this paper, we study the challenging task of Byzantine-robust decentralized training on arbitrary communication graphs. Unlike federated learning where workers communicate through a server, workers in the decentralized environment can only talk to their neighbors, making it harder to reach consensus and benefit from collaborative training. To address these issues, we propose a C LIPPED G OSSIP algorithm f"
+  },
+  {
+    "id": "revisiting_gem_submission",
+    "title": "Revisiting Gradient Episodic Memory for Continual Learning",
+    "basis": "Inspected OpenReview source; original PDF previously inaccessible",
+    "firecrawlFiles": [
+      "cart-revisiting-gem.json",
+      "cart-noise-memory-prior-work.json"
+    ],
+    "publicationStatus": "ICLR 2020 submission; acceptance not established",
+    "urls": [
+      "https://openreview.net/pdf?id=H1g79ySYvB",
+      "https://openreview.net/attachment?id=H1g79ySYvB&name=original_pdf"
+    ],
+    "attempts": [
+      {
+        "source": "https://openreview.net/pdf?id=H1g79ySYvB",
+        "error": "HTTP Error 403: Forbidden"
+      },
+      {
+        "source": "https://openreview.net/attachment?id=H1g79ySYvB&name=original_pdf",
+        "error": "HTTP Error 403: Forbidden"
+      },
+      {
+        "source": "https://api.openreview.net/notes?id=H1g79ySYvB",
+        "error": "HTTP Error 403: Forbidden (public metadata fallback)"
+      },
+      {
+        "source": "https://api2.openreview.net/notes?id=H1g79ySYvB",
+        "error": "HTTP Error 403: Forbidden (public metadata fallback)"
+      }
+    ],
+    "status": "unavailable_original_pdf"
+  },
+  {
+    "id": "adversarial_lens_2019",
+    "title": "Analyzing Federated Learning through an Adversarial Lens",
+    "basis": "Filename repair: existing 010 PDF contains FLTrust, not the paper named in its filename",
+    "firecrawlFiles": [],
+    "urls": [
+      "https://proceedings.mlr.press/v97/bhagoji19a/bhagoji19a.pdf"
+    ],
+    "attempts": [],
+    "status": "downloaded_original_pdf",
+    "file": "papers/firecrawl_reference_audit_20261027/adversarial_lens_2019.pdf",
+    "bytes": 1325442,
+    "sha256": "856216a33e8f7a3850bb7ba79aa72b1f1d4bc19ccb9609e4f74bcb9da741b001",
+    "requestedSource": "https://proceedings.mlr.press/v97/bhagoji19a/bhagoji19a.pdf",
+    "resolvedSource": "https://proceedings.mlr.press/v97/bhagoji19a/bhagoji19a.pdf",
+    "downloadedAt": "2026-10-27T14:10:56.914510+00:00",
+    "firstPagePreview": "Analyzing Federated Learning through an Adversarial Lens Arjun Nitin Bhagoji * 1 Supriyo Chakraborty 2 Prateek Mittal 1 Seraphin Calo 2 Abstract the training of a neural network model is distributed be- Federated learning distributes model training tween multiple agents. In each round, a random subset among a multitude of agents, who, guided by pri- of agents, with local data and computational resources, is vacy concerns, perform training using their lo- selected for training. The selected agents perform model cal data but share only model parameter updates, training and share only the parameter updates with a cen- for iterative aggregation a"
+  },
+  {
+    "id": "blind_transmitters_2020",
+    "title": "Collaborative Machine Learning at the Wireless Edge with Blind Transmitters",
+    "basis": "Filename repair: existing 015 PDF contains an unrelated topology paper",
+    "firecrawlFiles": [
+      "download-audit-blind-transmitters.json"
+    ],
+    "urls": [
+      "https://arxiv.org/pdf/1907.03909"
+    ],
+    "attempts": [],
+    "status": "downloaded_original_pdf",
+    "file": "papers/firecrawl_reference_audit_20261027/blind_transmitters_2020.pdf",
+    "bytes": 180996,
+    "sha256": "024c4b92b9b15d1ff8350ea5198c24aea8c30b2f371223bbbaae080874fbcf12",
+    "requestedSource": "https://arxiv.org/pdf/1907.03909",
+    "resolvedSource": "https://arxiv.org/pdf/1907.03909",
+    "downloadedAt": "2026-10-27T14:10:56.785780+00:00",
+    "firstPagePreview": "Collaborative Machine Learning at the Wireless Edge with Blind Transmitters Mohammad Mohammadi Amiri\u2217 , Tolga M. Duman\u2020, Deniz G\u00fcnd\u00fcz\u2217 \u2217 Electrical and Electronic Engineering Department, Imperial College London, London SW7 2BT, U.K. \u2020 Department of Electrical and Electronics Engineering, Bilkent University, Ankara 06800, Turkey Email: \u2217 {m.mohammadi-amiri15, d.gunduz}@imperial.ac.uk, \u2020 duman@ee.bilkent.edu.tr Abstract\u2014We study wireless collaborative machine learning respect to a globally consistent parameter vector, and send (ML), where mobile edge devices, each with its own dataset, carry their gradient estimates to the parameter server (PS)"
+  },
+  {
+    "id": "geometric_median_banach_2015",
+    "title": "Geometric median and robust estimation in Banach spaces",
+    "basis": "Related geometric-median source; existing 011 PDF is actually a directed-graph optimization paper. Do not assume this resolves an unspecified legacy bibliography key.",
+    "firecrawlFiles": [],
+    "urls": [
+      "https://arxiv.org/pdf/1308.1334"
+    ],
+    "attempts": [],
+    "status": "downloaded_original_pdf",
+    "file": "papers/firecrawl_reference_audit_20261027/geometric_median_banach_2015.pdf",
+    "bytes": 452933,
+    "sha256": "d7e9f3063ef096a6b5a23be38499b997f8a5270153fec8929da4a640aeda9197",
+    "requestedSource": "https://arxiv.org/pdf/1308.1334",
+    "resolvedSource": "https://arxiv.org/pdf/1308.1334",
+    "downloadedAt": "2026-10-27T14:10:57.027389+00:00",
+    "firstPagePreview": "Bernoulli 21(4), 2015, 2308\u20132335 DOI: 10.3150/14-BEJ645 Geometric median and robust estimation in arXiv:1308.1334v6 [math.ST] 29 Sep 2015 Banach spaces STANISLAV MINSKER 1 Mathematics Department, Duke University, Box 90320, Durham, NC 27708-0320, USA. E-mail: sminsker@math.duke.edu In many real-world applications, collected data are contaminated by noise with heavy-tailed dis- tribution and might contain outliers of large magnitude. In this situation, it is necessary to apply methods which produce reliable outcomes even if the input contains corrupted measurements. We describe a general method which allows one to obtain estimators with tight "
+  },
+  {
+    "id": "fedma_2020",
+    "title": "Federated Learning with Matched Averaging",
+    "basis": "Additional relevant model-matching reference retrieved while resolving the Hsu/FedMA title mismatch; not evidence for CART novelty.",
+    "firecrawlFiles": [
+      "download-audit-fedma.json"
+    ],
+    "urls": [
+      "https://arxiv.org/pdf/2002.06440"
+    ],
+    "attempts": [],
+    "status": "downloaded_original_pdf",
+    "file": "papers/firecrawl_reference_audit_20261027/fedma_2020.pdf",
+    "bytes": 3940115,
+    "sha256": "5d709a4b2d3eb8debb03cb860f0a906cf570802f9b690a5ca73b863d9a3988db",
+    "requestedSource": "https://arxiv.org/pdf/2002.06440",
+    "resolvedSource": "https://arxiv.org/pdf/2002.06440",
+    "downloadedAt": "2026-10-27T14:14:01.079187+00:00",
+    "firstPagePreview": "Published as a conference paper at ICLR 2020 F EDERATED LEARNING WITH MATCHED AVERAGING arXiv:2002.06440v1 [cs.LG] 15 Feb 2020 Hongyi Wang \u2217 Department of Computer Sciences University of Wisconsin-Madison hongyiwang@cs.wisc.edu Yuekai Sun Department of Statistics University of Michigan yuekai@umich.edu Mikhail Yurochkin IBM Research MIT-IBM Watson AI Lab mikhail.yurochkin@ibm.com Dimitris Papailiopoulos Department of Electrical and Computer Engineering University of Wisconsin-Madison dimitris@papail.io Yasaman Khazaeni IBM Research yasaman.khazaeni@us.ibm.com A BSTRACT Federated learning allows edge devices to collaboratively learn a shared m"
+  }
+]

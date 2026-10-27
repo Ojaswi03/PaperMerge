@@ -1,0 +1,31 @@
+Gradient Episodic Memory for Continual Learning
+Revisiting Gradient Episodic Memory for Continual Learning
+A Tutorial on Conformal Prediction
+Model Uncertainty Quantification by Conformal Prediction in Continual Learning
+A Conformal Predictive Measure for Assessing Catastrophic Forgetting
+Dark Experience for General Continual Learning: a Strong, Simple Baseline
+Learning without Forgetting
+C^2Prompt: Class-aware Client Knowledge Interaction for Federated Continual Learning
+FedProTIP: Task-Agnostic Federated Continual Learning via Replay-Free Gradient Projection
+Class-wise Balancing Data Replay for Federated Class-Incremental Learning
+FedProto: Federated Prototype Learning across Heterogeneous Clients
+Prototype Augmentation and Self-Supervision for Incremental Learning
+FeTrIL: Feature Translation for Exemplar-Free Class-Incremental Learning
+Asynchronous Federated Continual Learning
+Personalized Federated Learning with Feature Alignment and Classifier Collaboration
+FedProK: Trustworthy Federated Class-Incremental Learning via Prototypical Feature Knowledge Transfer
+FedTGP: Trainable Global Prototypes with Adaptive-Margin-Enhanced Contrastive Learning for Data and Model Heterogeneity in Federated Learning
+Decentralized Federated Learning with Prototype Exchange
+Federated Class-Incremental Learning: A Hybrid Approach Using Latent Exemplars and Data-Free Techniques to Address Local and Global Forgetting
+Mitigating Spatio-Temporal Forgetting in Federated Continual Learning with Dynamic-Domain Clients
+Taming Noise-Induced Prototype Degradation for Privacy-Preserving Personalized Federated Fine-Tuning
+Basil: A Fast and Byzantine-Resilient Approach for Decentralized Training
+Robust Federated Learning with Noisy Communication
+Federated Optimization in Heterogeneous Networks
+Long-tail learning via logit adjustment
+Gradient-Guided Epsilon Constraint Method for Online Continual Learning
+Visual Language Model based Cross-modal Semantic Communication Systems
+ACIL: Analytic Class-Incremental Learning with Absolute Memorization and Privacy Protection
+SLCA: Slow Learner with Classifier Alignment for Continual Learning on a Pre-trained Model
+Multi-Anchor Distillation with Text-Guided Analytic Classifier for Continual Learning
+Class-Wise Adaptive Self Distillation for Heterogeneous Federated Learning
