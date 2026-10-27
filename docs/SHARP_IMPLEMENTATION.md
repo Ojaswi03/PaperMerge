@@ -1,0 +1,292 @@
+# Professor SHARP protocol and the independent CART contribution
+
+Specification: [sharp_algorithm_OJ_1.pdf, supplied 27 October 2026](specifications/SHARP_professor_20261027.pdf).
+SHA-256: `b010c9c79a2282c5835e0b9b4bc5cd95500afbcf7395dd9d04fd6a2a0b9ce700`.
+
+This is a new protocol family. Earlier ten-node BASIL/CART configurations and
+their results are preserved. They must not be pooled with these experiments.
+
+## What changes
+
+The receiver now considers a window of predecessor models, screens unusual
+parameter deviations, ranks the survivors on one local training batch and
+averages the best copies. It trains that average for five gradient steps with
+the specified noise-aware objective and a frozen proximal anchor. CART then
+optionally applies the existing receiver-owned classifier transport correction.
+Its benefit is measured against an otherwise identical SHARP run without CART.
+
+| Setting | New default |
+| --- | --- |
+| Full network | 100 logical clients, sequential ring |
+| Design Byzantine budget | 33; actual attackers are zero in clean/noise-only conditions |
+| SHARP window/fanout | 66 distinct predecessor/successor IDs, one latest copy per sender |
+| Non-IID partition | Class-wise Dirichlet concentration 0.5, as in the professor PDF |
+| Seeds | 2025, 2026, 2027 |
+| Absolute Gaussian standard deviations | 0.005, 0.01, 0.02 |
+| Local computation | Five mini-batch SGD steps, **not five epochs** |
+| Mini-batch size | MNIST 14; CIFAR-10 and CIFAR-100 80 |
+| Learning rate | 0.03 / (1 + 0.03 × zero-based round) |
+| Momentum, weight decay, gradient clipping, augmentation, logit adjustment | Off |
+| Curvature scale | h = 1, an explicit illustrative assumption |
+| Proximal coefficient | 1 in SHARP defense-bearing conditions; zero in untreated controls |
+| Development evaluation | A stratified 1,000-image TRAIN holdout; official TEST remains unused |
+
+The design budget remains positive even in attack-free conditions. It describes
+the defense/window design; it does not secretly introduce attackers into clean
+experiments. The PDF's formula for q is undefined as a useful averaging rule at
+b = 0, so actual attack count and design budget are separate configuration fields.
+
+## Equations and implementation map
+
+### Screen, rank and average: PDF equations 7–14
+
+For a window containing m actual transmissions and design budget b:
+
+$$
+q_{\mathrm{target}}=\min\{b,\max(1,m-b)\}.
+$$
+
+Here m counts actual available senders, not synthetic initialization copies.
+Windows start empty; the initial model is an explicitly logged fallback at the
+first receiver. At a full 66-sender window, the target count is 33.
+
+For each received parameter vector v, subtract the coordinate-wise median of
+the full window and compute the largest absolute deviation divided by its RMS:
+
+$$
+R=\frac{\|v-\operatorname{median}(W)\|_\infty}
+{\|v-\operatorname{median}(W)\|_2/\sqrt d},
+\qquad T=2.5\sqrt{2\log d}.
+$$
+
+The symbol d is the actual number of trainable parameters, not a hardcoded model
+dimension. A zero deviation has ratio zero. Screening runs only on a full
+window. The default all-fail behavior retains all copies and records a counter,
+matching Algorithm 1; it is not presented as a secure fallback.
+
+All surviving copies are scored with raw cross-entropy on the **same** local
+batch. This batch is also used for the first SGD step, as Algorithm 1 specifies.
+Exact loss ties prefer the newer round and then the nearer predecessor.
+Non-finite losses rank last; an all-non-finite window stops the run.
+
+The selected count can be smaller than the target after screening. The actual
+mean uses the actual surviving count. Attacker labels never enter screening,
+ranking, averaging or CART; they are used only for outbound simulation and audit.
+
+Code: [sharp_math.py](../basil_core/sharp_math.py),
+[select_input](../basil_core/sharp_protocol.py).
+
+### Hop-aware RLA: PDF equations 15–18
+
+$$
+\eta_k=\frac{\eta_0}{1+\eta_0 k},\qquad
+\lambda_k=\frac{\sigma^2}{2q\eta_k h}.
+$$
+
+| Symbol | Meaning and source |
+| --- | --- |
+| k | Zero-based ring traversal index |
+| eta_0 | Configured initial learning rate, default 0.03 |
+| sigma | Declared absolute per-coordinate channel standard deviation |
+| q | Number of copies actually selected, with one for initial-model fallback |
+| h | Explicit curvature-scale assumption, default 1 |
+| lambda_k | Constant for this activation, computed before local SGD |
+
+The text uses q whereas Algorithm 1 line 10 substitutes b. They coincide in
+a full unscreened selection of b copies. The default `--hop-denominator
+actual_selected` follows the text and accounts for window filling or screening
+that leaves fewer copies. `--hop-denominator budget` reproduces the literal
+line-10 coefficient. This difference is explicit in every manifest.
+
+With the selected average held fixed as theta_bar, the local objective is:
+
+$$
+F(\theta)=\ell(\theta)+\lambda_k\|\nabla\ell(\theta)\|_2^2
++\frac{\mu}{2}\|\theta-\bar\theta\|_2^2.
+$$
+
+Its applied update direction is:
+
+$$
+\nabla F=g+2\lambda_k H g+\mu(\theta-\bar\theta).
+$$
+
+The loss ell is raw mini-batch cross-entropy; g and H are its gradient and
+Hessian at the current local parameters. Nested differentiation computes H g;
+no dense Hessian is stored. The anchor is the incoming average, fixed during
+all five steps. No gradient clipping, scalar-gradient substitute, optimizer
+momentum or hidden prior adjustment changes this objective.
+
+This modifies the earlier EBM coefficient, which was sigma squared for a
+single hop. It remains a gradient-norm regularizer motivated by the noise
+model. It is **not** an exact identity for expected noisy neural-network CE.
+The PDF's stationary variance formulas use local-curvature and independence
+approximations; its equations 4 and 19 also place the fresh-noise contraction
+differently. The implemented coefficient is a stated model-based design choice,
+not a measured accumulated variance or a general convergence theorem.
+
+Code: [hop_coefficient](../basil_core/sharp_math.py),
+[objective_gradients and SharpWorker](../basil_core/sharp_worker.py).
+
+### CART remains a separate intervention
+
+CART retains one older coherent model at the receiver. On private fitting
+pictures it computes a class loss gap against the trained proposal. A gate
+attenuated by a 19-draw channel allowance selects historical output residuals.
+Class-balanced ridge regression fits those residuals in the current proposal's
+feature coordinates. Separate local check pictures select strength 0, 0.25,
+0.5, 0.75 or 1. An actual-network recheck can reject the correction. Only the
+final classifier kernel and bias change at commit; the proposal backbone stays
+bitwise unchanged. Both probe groups are local TRAIN subsets also used by SGD;
+neither includes the reporting holdout.
+
+This revision supports arbitrary declared class count, including CIFAR-100.
+The chance-recall threshold is 1 / number_of_classes. Classes without local
+labels or separate checking support cannot be verified and have zero gate.
+The ridge system uses the model's actual feature dimension: the paper CNN has
+192 features, the optional ResNet has 64 and the MNIST MLP has 32.
+
+Code: [sharp_cart.py](../basil_core/sharp_cart.py) and
+[the class-generic ridge solver](../basil_core/sharp_math.py).
+The previous [CART study guide](CART_ARCHITECTURE_MATH_AND_PAPER_GUIDE.md) explains
+the mechanism and related work; its older five-epoch recipe is not this SHARP
+protocol. Ridge regression, distillation and class weighting retain their prior
+attribution. A positive paired result would support the measured contribution;
+implementation correctness alone does not establish algorithmic novelty.
+
+## Datasets, models and class support
+
+- MNIST uses its original 60,000 TRAIN images and a documented 64/32-hidden-unit
+  MLP. The PDF gives a 17,610-parameter digits example but does not specify enough
+  layers to reproduce it, so that exact parameter count is not claimed.
+- CIFAR-10 uses the supplied 117,706-parameter paper CNN by default.
+- CIFAR-100 uses the same feature extractor with a 100-class output layer.
+- `--model resnet20` explicitly selects the earlier GroupNorm residual model
+  for CIFAR. It is a model ablation, not the PDF's small-CNN reproduction.
+- CIFAR-100 still has 50,000 TRAIN images. At 100 nodes it does not increase
+  the average client sample count compared with CIFAR-10 and can reduce
+  per-class support. Preflight exports every node's sample/class counts and
+  the number of classes with at least two examples.
+
+TRAIN is split before node partitioning. The 1,000-image holdout is shared
+across seeds; each seed creates its own fitting partition. Small-test subsets
+are explicitly labeled and never silently mixed with full-data results.
+Dirichlet attempts are deterministically repeated only when clients would have
+fewer than two examples; the accepted attempt is audited. All fitting examples
+are assigned exactly once and none overlaps the holdout.
+
+## Requested conditions and aggregation
+
+| Condition | Attack | Noise | Selection defense | RLA | CART |
+| --- | --- | --- | --- | --- | --- |
+| clean | No | No | No | No | No |
+| attack_only | Yes | No | No | No | No |
+| attack_defense | Yes | No | Yes | No | No |
+| noise_only | No | Yes | No | No | No |
+| noise_rla | No | Yes | No | Yes | No |
+| attack_noise | Yes | Yes | No | No | No |
+| attack_noise_defense | Yes | Yes | Yes | No | No |
+| attack_noise_rla | Yes | Yes | No | Yes | No |
+| attack_noise_defense_rla | Yes | Yes | Yes | Yes | No |
+| attack_noise_defense_rla_cart | Yes | Yes | Yes | Yes | Yes |
+
+In the SHARP family, enabled selection means screened, ranked averaging.
+The proximal term accompanies SHARP defense-bearing conditions and is therefore
+part of the named stack; `--mu 0` provides its explicit ablation. Noise-only RLA
+without selection uses q = 1. The optional `--methods basil` lineage instead
+uses single-copy raw-loss selection and the previous sigma-squared coefficient,
+without the new proximal term. Its default window is b+1 (34 at 100 nodes),
+so it satisfies the stated honest-copy availability bound. `--basil-window 10`
+reproduces the PDF's illustrative small-window comparator, which does not meet
+that bound when b=33. `--basil-window 66` supplies a matched-window ablation.
+Differences in window size and communication cost must be reported when
+comparing these families.
+
+There are three non-noisy conditions and seven noisy conditions. Thus each
+dataset has 2 partitions × 3 seeds × (3 + 7 × 3) = **144 runs**; MNIST plus
+CIFAR-10 is 288 and adding CIFAR-100 is 432. Clean and attack-only runs are not
+repeated as independent evidence for each sigma. Aggregation first averages
+nodes and the prospectively fixed last-ten-round window within a seed, then
+averages the same condition and sigma across seeds. Final-round values are
+also retained. One-seed diagnostics do not report a seed standard deviation.
+
+The default attack is the existing project Hidden outbound transformation,
+after honest local training and CART, followed by fresh per-link Gaussian
+noise. This broad tensor transformation differs from the professor PDF's
+illustrative one-coordinate spiky attack. `--attack-type spike` is a separately
+labeled stress test; neither is a reproduction of every published Hidden/ALIE
+attack. The peak screen can miss distributed look-alike corruption, as the
+specification itself explains.
+
+## Resources, recovery and monitoring
+
+One experiment owns one physical GPU; different configs can run simultaneously
+on the four HPC GPUs. CUDA wheel paths are supplied before the worker Python
+process starts. GPU execution is verified before research runs; no CPU fallback
+is started when GPU access fails. GPU memory caps and project locks follow the
+existing execution profile.
+
+Sender models are stored once as immutable outbound versions, with per-edge
+noise reconstructed from sender, round, receiver and seed. This preserves each
+received realization across repeated evaluations without storing 6,600 separate
+full noisy models. Source/configuration/data/partition/runtime identities are
+frozen. Atomic round checkpoints save all current sender models, node models,
+CART references and telemetry. A graceful stop also saves the most recent
+completed activation; an incomplete local activation is discarded. An abrupt
+crash can require replay of the uncheckpointed portion of a round. No optimizer
+state crosses activations because the protocol specifies plain local SGD.
+
+The monitor clears the terminal and refreshes every five seconds. It identifies
+dataset, split, seed, sigma, condition and GPU, and exits when all experiments
+complete or the campaign stops. It does not refresh a completed campaign.
+
+Code: [run_sharp_study.py](../scripts/run_sharp_study.py),
+[sharp_protocol.py](../basil_core/sharp_protocol.py),
+[independent result verification](../scripts/verify_sharp_results.py).
+
+## HPC commands
+
+Use the same arguments for verification, execution and recovery. These are
+full-data configurations; run the local validation and HPC pilot first. An
+implementation test is not evidence that CART will outperform the other rows.
+
+```bash
+cd ~/Masters_Research/PaperMerge
+git pull --ff-only
+source .venv-hpc/bin/activate
+
+RUN="$PWD/.papermerge/local-tests/sharp-hpc-pilot-v1"
+COMMON=(--profile hpc --gpus 0,1,2,3 --output "$RUN"
+  --datasets mnist cifar10 --partitions iid dirichlet --seeds 2025
+  --conditions clean attack_noise_defense_rla attack_noise_defense_rla_cart
+  --nodes 10 --rounds 5 --attack-start 1 --only-sigma 0.01)
+
+python scripts/run_sharp_study.py --prepare-data --datasets mnist cifar10
+python scripts/run_sharp_study.py --preflight "${COMMON[@]}"
+python scripts/run_sharp_study.py --verify-gpus "${COMMON[@]}"
+python scripts/run_sharp_study.py --execute "${COMMON[@]}" --tmux sharp-pilot
+python scripts/run_sharp_study.py --monitor --output "$RUN"
+python scripts/run_sharp_study.py --report --output "$RUN"
+```
+
+After assessing the pilot and freezing the intended full protocol:
+
+```bash
+RUN="$PWD/.papermerge/local-tests/sharp-hpc-100nodes-v1"
+COMMON=(--profile hpc --gpus 0,1,2,3 --output "$RUN"
+  --datasets mnist cifar10 --partitions iid dirichlet
+  --seeds 2025 2026 2027 --nodes 100 --rounds 100)
+
+python scripts/run_sharp_study.py --preflight "${COMMON[@]}"
+python scripts/run_sharp_study.py --verify-gpus "${COMMON[@]}"
+python scripts/run_sharp_study.py --execute "${COMMON[@]}" --tmux sharp-full
+python scripts/run_sharp_study.py --monitor --output "$RUN"
+python scripts/run_sharp_study.py --report --output "$RUN"
+```
+
+To include CIFAR-100, add it to `--datasets` in **every** corresponding command
+and prepare its cache first. To resume, use `--execute --recover` with the same
+COMMON arguments and source revision. Keep the previous output namespace.
+
+Local test results and the final readiness evidence are recorded separately;
+this implementation document does not fabricate their completion status.

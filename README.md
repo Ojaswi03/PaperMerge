@@ -3,6 +3,20 @@
 PaperMerge studies Byzantine-resilient decentralized learning under noisy
 communication using Python, TensorFlow and a Tkinter experiment workspace.
 
+**27 October 2026 — professor SHARP specification:** the new
+[implementation and HPC commands](docs/SHARP_IMPLEMENTATION.md) support
+100-node rings, screened/ranked averaging, hop-aware RLA, a frozen proximal
+anchor and an independently switched CART classifier correction. MNIST,
+CIFAR-10 and CIFAR-100 have explicit IID/Dirichlet configurations with three
+seeds and three noise levels. This family uses **five gradient steps**, not
+the historical five-epoch protocol. See the supplied
+[algorithm PDF](docs/specifications/SHARP_professor_20261027.pdf) and
+[local validation evidence](docs/SHARP_LOCAL_VALIDATION.md). Numerical checks
+and initial pilots do not establish a general CART accuracy advantage.
+
+All archived research PDFs and their source/download records are linked in
+the [complete paper index](papers/FIRECRAWL_REFERENCE_INDEX.md).
+
 ## Latest completed results — non-IID 100 and 500 rounds
 
 [Full results, ten analysis tables, numerical checks and limitations](newResults/nonIID/500round/FINAL_ABCD_RESULTS_ANALYSIS.md).
