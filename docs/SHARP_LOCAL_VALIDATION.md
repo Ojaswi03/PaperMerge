@@ -10,13 +10,17 @@ and [implementation/commands](SHARP_IMPLEMENTATION.md) describe the new family.
   update against a binary softmax model with an independently computed Hessian.
 - A 100-node, 66-sender-window protocol test reproduces uninterrupted parameters,
   telemetry and metrics exactly after saving and recovering a partial run.
-- A separate actual-MNIST check uses three fresh CPU interpreters for a partial
-  run, recovery and an uninterrupted run. All model arrays, outgoing models,
+- Separate actual-MNIST checks use three fresh interpreters on **each of CPU
+  and RTX 4070 Ti GPU** for a partial run, recovery and an uninterrupted run.
+  All model arrays, outgoing models,
   sender versions, CART memory, telemetry and metrics match exactly after
   32 activations, including four nonzero CART corrections. This checks the
   real TensorFlow worker, in addition to the 100-node protocol test.
   Reproduction: `python scripts/check_sharp_recovery.py --device CPU --output
-  .papermerge/local-tests/sharp-cpu-recovery-new` (use a fresh output).
+  .papermerge/local-tests/sharp-cpu-recovery-new` (use a fresh output). For GPU,
+  use `--device GPU`; HPC additionally uses `--profile hpc --gpu 0`.
+  The [CPU/GPU recovery receipt](validation/SHARP_FRESH_PROCESS_RECOVERY_20261027.json)
+  records separate device contracts and exact array hashes.
 - Real TensorFlow CART tests repair a deliberately degraded classifier for
   **both 10 and 100 classes**, preserve the proposal backbone exactly, and
   pass a separate local check. Real multi-round TensorFlow checkpoints reload.
@@ -197,15 +201,36 @@ learning convergence, three-seed efficacy, closeness to clean or a universal
 CART benefit. The [coverage receipt](validation/SHARP_ALL_SWITCH_GPU_SMOKE_20261027.json)
 retains every outcome, configuration digest, runtime and source/data identity.
 
-## Further validation in progress
+## Completed three-seed GPU early-attack stress test
 
 The completed 100-node GPU cohort above retains five steps per activation and
 performs 2,500 updates per run, compared with 250 in the ten-node pilot. It is
 not pooled with the smaller-model/subset or later-onset results.
 
-The three-seed 100-node MNIST GPU early-attack repetition is now running.
-Its completion and results must be read from its frozen run manifests and
-added to this report only after validation; no pending value is a result.
+All nine runs in the three-seed, full-fitting-data MNIST GPU early-attack
+repetition completed and passed independent CPU inference and telemetry
+verification. They use 100 nodes, Dirichlet0.5, five rounds, attack onset1 and
+sigma0.01. Means and sample standard deviations across seeds are:
+
+| Condition | Configured primary: all five rounds | Final round |
+| --- | ---: | ---: |
+| Clean | 84.505 ± 0.136% | 90.753 ± 0.271% |
+| Attack + noise + SHARP | 47.621 ± 2.232% | 58.932 ± 3.124% |
+| Same + CART | 41.568 ± 1.074% | 46.754 ± 1.040% |
+
+CART worsens the primary endpoint in all three seeds: the paired mean is
+**-6.053pp**, and the final-round paired mean is **-12.178pp**. This is a
+replicated counterexample to a universal improvement claim. It is a different
+horizon and attack-onset setting from the positive 25-round study and cannot
+isolate the cause of their difference by itself. Both studies remain reported.
+See the [complete GPU seed receipt](validation/SHARP_MNIST_100NODE_EARLY_ATTACK_3SEED_20261027.json).
+
+The repeated seed2025 clean/control/CART runs also match the earlier GPU
+cohort **bitwise over all 500 activations**, including every saved model array,
+sender version, telemetry record and CART reference. This is fresh-process
+repeatability evidence; repeating seed2025 does not create another independent
+seed. The separate CPU and GPU checkpoint-recovery checks above also passed.
+All local cohorts described in this report are now complete and verified.
 
 The [CPU validation tool](../scripts/run_sharp_cpu_validation.py) declares its
 execution mode; it is not an automatic GPU fallback. Its three-noise-level
@@ -220,6 +245,28 @@ Report all of them, including negative paired differences, without substituting
 the most favorable one for the configured primary endpoint.
 
 ## Reproduction and readiness scope
+
+An evidence-matched description for the professor is:
+
+> CART is my proposed receiver-local retention component, evaluated separately
+> from SHARP. Each receiver keeps a useful older model, identifies locally
+> supported classes whose loss has increased, and translates selected older
+> output information into the newly trained model's classifier. A separate
+> local check accepts or rejects that correction, while the new feature
+> extractor stays unchanged during the repair. In the completed three-seed,
+> three-noise non-IID MNIST development study, CART improved the configured
+> primary endpoint in all nine paired comparisons, with average gains of
+> 0.42–0.97 percentage points. This supports a bounded empirical contribution;
+> near-clean performance and general superiority are not established.
+
+The architecture combines known ingredients in a specific receiver-local
+control flow. Ridge regression, output transfer, class weighting and local
+checking are not individually claimed as new. The
+[architecture and related-paper guide](CART_ARCHITECTURE_MATH_AND_PAPER_GUIDE.md)
+and [current SHARP equations/code map](SHARP_IMPLEMENTATION.md) supply the
+mechanism and comparisons. Calling it a proposed contribution is supported;
+claiming that no prior work has an equivalent design requires a stronger
+literature comparison than these implementation and accuracy checks provide.
 
 GPU workers are separate processes with their CUDA loader paths and selected
 physical-device profile set before startup. Source hashes, TRAIN identities,

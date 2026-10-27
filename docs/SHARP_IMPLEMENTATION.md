@@ -352,6 +352,19 @@ python scripts/run_sharp_study.py --monitor --output "$RUN"
 python scripts/run_sharp_study.py --report --output "$RUN"
 ```
 
+The separately verified fresh-process recovery check can also be repeated on
+the HPC before its training campaign. It uses a small MNIST TRAIN subset and
+compares an interrupted/recovered trajectory with an uninterrupted one,
+including CART memory and actual nonzero corrections:
+
+```bash
+python scripts/check_sharp_recovery.py --device GPU --profile hpc --gpu 0 \
+  --output "$PWD/.papermerge/local-tests/sharp-hpc-recovery-v1"
+```
+
+Use a fresh recovery-check output and an available GPU. This small check does
+not replace the campaign's required `--verify-gpus` receipts on all four GPUs.
+
 For a bounded learning comparison with the professor's delayed attack, use
 25 rounds so five attack-active rounds are actually observed. The following
 MNIST-only campaign repeats clean, the complete SHARP mitigation stack and
