@@ -174,16 +174,30 @@ independent verification records. The [aggregation program](../scripts/report_sh
 rejects duplicate seed results, mixed proximal settings and unpaired identities.
 It reports primary, final and attack-active endpoints together.
 
+## Completed GPU coverage of every requested configuration
+
+All **144 actual GPU smoke runs** completed and passed independent CPU
+checkpoint, telemetry and final-inference verification. This covers all ten
+requested conditions, all three noise levels, IID and Dirichlet partitions,
+and MNIST, CIFAR-10 and CIFAR-100. Each dataset/split has 24 distinct cases;
+the three non-noisy cases are run once, not repeated for each sigma. Final
+accuracy recomputation agreed exactly between the GPU runs and CPU checker.
+
+These are deliberately small execution checks: eight clients, two rounds,
+seed2025, 20 fitting examples per class, ten reporting examples per class,
+and attack onset0. They verify switch wiring and complete execution, not
+learning convergence, three-seed efficacy, closeness to clean or a universal
+CART benefit. The [coverage receipt](validation/SHARP_ALL_SWITCH_GPU_SMOKE_20261027.json)
+retains every outcome, configuration digest, runtime and source/data identity.
+
 ## Further validation in progress
 
 The completed 100-node GPU cohort above retains five steps per activation and
 performs 2,500 updates per run, compared with 250 in the ten-node pilot. It is
 not pooled with the smaller-model/subset or later-onset results.
 
-A separate bounded switch-coverage cohort exercises every requested condition
-and all three sigma values on IID and Dirichlet versions of all three datasets.
-A three-seed 100-node MNIST GPU cohort follows for a direct paired retention check.
-Their completion and results must be read from their frozen run manifests and
+The three-seed 100-node MNIST GPU early-attack repetition is now running.
+Its completion and results must be read from its frozen run manifests and
 added to this report only after validation; no pending value is a result.
 
 The [CPU validation tool](../scripts/run_sharp_cpu_validation.py) declares its

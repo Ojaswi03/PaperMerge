@@ -15,6 +15,17 @@ the specified noise-aware objective and a frozen proximal anchor. CART then
 optionally applies the existing receiver-owned classifier transport correction.
 Its benefit is measured against an otherwise identical SHARP run without CART.
 
+In plain language, imagine 100 students passing a notebook around a circle.
+Each student has a different collection of picture cards. SHARP checks several
+incoming notebooks and combines the ones that work best on that student's own
+cards. The student studies five small batches of cards. CART then asks whether
+some useful answers from that student's earlier notebook were lost. It translates
+those answers into the new notebook's final answer chart and checks the proposed
+change on a second private pile of cards. A change is accepted only if that
+local checking score passes. No student's cards or older notebook are shared by
+CART. Passing this local check does not guarantee better answers on every unseen
+picture; the experiments measure that separately.
+
 ![Full SHARP and optional CART flow](figures/sharp-study/architecture.svg)
 
 | Setting | New default |
@@ -270,6 +281,33 @@ python scripts/run_sharp_study.py --execute "${COMMON[@]}" --tmux sharp-pilot
 python scripts/run_sharp_study.py --monitor --output "$RUN"
 python scripts/run_sharp_study.py --report --output "$RUN"
 ```
+
+For a bounded learning comparison with the professor's delayed attack, use
+25 rounds so five attack-active rounds are actually observed. The following
+MNIST-only campaign repeats clean, the complete SHARP mitigation stack and
+the same stack plus CART on both splits, three seeds and all three sigmas
+(42 configurations). It uses the same MNIST model tag as the completed local
+25-round study; the underlying MNIST network remains the documented MLP.
+Repeat verification on the HPC GPUs before execution:
+
+```bash
+RUN="$PWD/.papermerge/local-tests/sharp-hpc-mnist-25r-v1"
+COMMON=(--profile hpc --gpus 0,1,2,3 --output "$RUN"
+  --datasets mnist --partitions iid dirichlet --seeds 2025 2026 2027
+  --conditions clean attack_noise_defense_rla attack_noise_defense_rla_cart
+  --nodes 100 --rounds 25 --attack-start 20 --model resnet20)
+
+python scripts/run_sharp_study.py --preflight "${COMMON[@]}"
+python scripts/run_sharp_study.py --verify-gpus "${COMMON[@]}"
+python scripts/run_sharp_study.py --execute "${COMMON[@]}" --tmux sharp-mnist-25r
+python scripts/run_sharp_study.py --monitor --output "$RUN"
+python scripts/run_sharp_study.py --report --output "$RUN"
+```
+
+The five-round pilot above deliberately attacks early and can perform poorly;
+it is an execution stress test. The completed local delayed-attack comparison
+supports modest CART gains on non-IID MNIST, with a remaining gap from clean.
+The IID branch in this new HPC campaign remains a separate comparison.
 
 After assessing the pilot and freezing the intended full protocol:
 

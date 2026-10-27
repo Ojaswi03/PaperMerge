@@ -6,6 +6,15 @@ classifier-transport revision**, not the older manuscript's ClassRegistry and
 proximal controller. Diagrams are original explanatory diagrams, not copied
 paper figures. Downloaded papers and executable code are linked below.
 
+**Later update: the professor's SHARP protocol is now implemented.** This guide's
+ten-node BASIL and five-epoch examples explain the earlier experimental family.
+The new family uses **100 clients, screened/ranked averaging, five SGD steps and
+hop-aware RLA**, with the same receiver-owned classifier-transport idea added
+after local training. Read [SHARP_IMPLEMENTATION.md](SHARP_IMPLEMENTATION.md)
+for its exact recipe and [SHARP_LOCAL_VALIDATION.md](SHARP_LOCAL_VALIDATION.md)
+for the completed positive and negative checks. Do not transfer old numerical
+results or local-epoch settings to the new family.
+
 **Offline paper library:** the [complete reference index](../papers/FIRECRAWL_REFERENCE_INDEX.md)
 links the saved PDFs and their original sources. The 27 October download audit
 added 13 PDFs and validated all 66 local PDFs. The original *Revisiting GEM*
