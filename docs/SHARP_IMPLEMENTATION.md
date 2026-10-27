@@ -167,6 +167,76 @@ protocol. Ridge regression, distillation and class weighting retain their prior
 attribution. A positive paired result would support the measured contribution;
 implementation correctness alone does not establish algorithmic novelty.
 
+#### CART's actual correction and its limited guarantee
+
+For each supported class, the current proposal and the receiver's stored
+reference are evaluated on the same private fitting pictures:
+
+$$
+d_c=[L_{p,c}-L_{r,c}]_+,\qquad
+g_c=I_c\frac{d_c}{d_c+u_c+10^{-6}}.
+$$
+
+| Symbol | Meaning and source |
+| --- | --- |
+| c | A picture category supported by this receiver's private data |
+| L_p,c | Average raw CE of the newly trained proposal on fitting pictures labeled c |
+| L_r,c | Average raw CE of this receiver's older reference on those same pictures |
+| [a]_+ | max(a, 0), so only a measured reference advantage creates a gap |
+| u_c | Nonnegative allowance stored with the reference, calibrated using 19 local simulated Gaussian parameter perturbations |
+| I_c | One only if class c also has checking pictures and reference fitting recall exceeds chance; otherwise zero |
+| g_c | Strength of historical transfer for examples labeled c; it is not an SGD gradient |
+
+The older reference belongs to this receiver; it is not a second model
+requested from the preceding client. Its gradient is never transmitted or
+used as CART's correction. CART instead fits an output-score residual:
+
+$$
+\mathsf C(z)=z-\frac{\mathbf1^\top z}{K}\mathbf1,
+\qquad t_j=g_{y_j}\mathsf C\!\left(z_r(x_j)-z_p(x_j)\right).
+$$
+
+| Symbol | Meaning and source |
+| --- | --- |
+| x_j, y_j | The j-th fitting picture and its known label, both private TRAIN data |
+| z_r, z_p | K raw output scores produced by the stored reference and current proposal |
+| K, one-vector | Number of dataset classes and the K-vector of ones |
+| C | Centering across output classes, removing a shared score offset |
+| t_j | The gated, centered historical output difference to translate |
+
+Let row j of A contain the proposal's current features followed by a constant
+one for its classifier bias. The implementation solves:
+
+$$
+\Delta=(A^\top D A+\rho I)^{-1}A^\top D T,\qquad
+D_{jj}=\frac{1}{|\mathcal C_{\mathrm{fit}}|\,n_{y_j}},\qquad
+\rho=0.01\frac{\operatorname{tr}(A^\top D A)}{f+1}.
+$$
+
+| Symbol | Meaning and source |
+| --- | --- |
+| A | Features of the private fitting pictures from the newly trained proposal, with a bias column |
+| T | Matrix whose rows are the historical residuals t_j |
+| C_fit, n_yj | Observed fitting classes and number of fitting pictures with label y_j |
+| D | Diagonal weights giving each represented class equal total fitting weight |
+| f | Actual proposal feature dimension: 32 for MNIST, 192 for the paper CNN, 64 for the residual model |
+| rho, I | Positive ridge coefficient and identity matrix; distinct from the RLA coefficient lambda |
+| Delta | Correction to the final classifier kernel and bias; no backbone parameters |
+
+The code uses a linear solve rather than explicitly forming a matrix inverse.
+This is the unique minimizer of the class-balanced squared-residual objective
+plus rho times the squared correction norm. Positivity follows because D has
+positive weights and A has a nonzero bias column, making rho positive.
+That establishes a well-defined fit; it does not establish improved accuracy.
+
+The receiver tests scales 0.25, 0.5, 0.75 and 1 on separate checking pictures,
+keeping a candidate only when it improves the best checked macro CE by more
+than 0.0001; scale zero is always available. It then recomputes the actual
+network score and rejects any increase over the baseline beyond 0.000001.
+The checked loss safeguard is local and numerical. A zero gate for an absent
+label supplies no fitting target for that label; it does **not** freeze that
+output column or guarantee retention on pictures absent from the receiver.
+
 ## Datasets, models and class support
 
 - MNIST uses its original 60,000 TRAIN images and a documented 64/32-hidden-unit

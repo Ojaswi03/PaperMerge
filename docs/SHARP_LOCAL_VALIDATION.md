@@ -10,6 +10,13 @@ and [implementation/commands](SHARP_IMPLEMENTATION.md) describe the new family.
   update against a binary softmax model with an independently computed Hessian.
 - A 100-node, 66-sender-window protocol test reproduces uninterrupted parameters,
   telemetry and metrics exactly after saving and recovering a partial run.
+- A separate actual-MNIST check uses three fresh CPU interpreters for a partial
+  run, recovery and an uninterrupted run. All model arrays, outgoing models,
+  sender versions, CART memory, telemetry and metrics match exactly after
+  32 activations, including four nonzero CART corrections. This checks the
+  real TensorFlow worker, in addition to the 100-node protocol test.
+  Reproduction: `python scripts/check_sharp_recovery.py --device CPU --output
+  .papermerge/local-tests/sharp-cpu-recovery-new` (use a fresh output).
 - Real TensorFlow CART tests repair a deliberately degraded classifier for
   **both 10 and 100 classes**, preserve the proposal backbone exactly, and
   pass a separate local check. Real multi-round TensorFlow checkpoints reload.
