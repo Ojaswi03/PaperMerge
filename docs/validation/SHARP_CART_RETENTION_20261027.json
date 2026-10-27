@@ -1,0 +1,1962 @@
+{
+  "status": "COMPLETED_TWO_DATASET_RETENTION_CHECK",
+  "scope": "Isolated additional local adaptation from a useful clean reference; not joint-impairment efficacy or independent-seed replication.",
+  "results": [
+    {
+      "allReceiversIncluded": true,
+      "cartMean": 0.7301,
+      "case": "one_extra_five_step_local_adaptation_no_attack_no_channel",
+      "classes": 10,
+      "dataset": "mnist",
+      "holdoutUsedForDecisions": false,
+      "improvedReceivers": 9,
+      "interpretation": "Isolated retention check after a clean trained reference. Not an attack/noise benchmark or independent-seed replication.",
+      "nodes": 10,
+      "nonzeroCorrections": 10,
+      "officialTestUsed": false,
+      "proposalMean": 0.7104999999999999,
+      "referenceMean": 0.7492,
+      "rows": [
+        {
+          "cart": {
+            "scale": 1,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "9cf52c5ba810ac5088437ce66e3ac9f662cc990ca7cb264a29c8a41bcbf5848c",
+            "backboneAfterHash": "9cf52c5ba810ac5088437ce66e3ac9f662cc990ca7cb264a29c8a41bcbf5848c",
+            "checkBefore": 0.4628499300746328,
+            "checkAfter": 0.45239283806181757
+          },
+          "cartAccuracy": 0.759,
+          "delta": -0.0050000000000000044,
+          "node": 0,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.764,
+          "referenceAccuracy": 0.768
+        },
+        {
+          "cart": {
+            "scale": 1,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "be163f8f747bb240a74fdb6b5d7ecf92dd7615fa2a62593ed80b278ea1356c9c",
+            "backboneAfterHash": "be163f8f747bb240a74fdb6b5d7ecf92dd7615fa2a62593ed80b278ea1356c9c",
+            "checkBefore": 0.5633735411691139,
+            "checkAfter": 0.5569594994310276
+          },
+          "cartAccuracy": 0.758,
+          "delta": 0.006000000000000005,
+          "node": 1,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.752,
+          "referenceAccuracy": 0.78
+        },
+        {
+          "cart": {
+            "scale": 1,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "98680cca9df2e6e3cf8f1c37311d62d961d1df5d15fd2331477978661b617fc6",
+            "backboneAfterHash": "98680cca9df2e6e3cf8f1c37311d62d961d1df5d15fd2331477978661b617fc6",
+            "checkBefore": 0.7456111145227184,
+            "checkAfter": 0.7286948259962485
+          },
+          "cartAccuracy": 0.745,
+          "delta": 0.016000000000000014,
+          "node": 2,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.729,
+          "referenceAccuracy": 0.753
+        },
+        {
+          "cart": {
+            "scale": 1,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "8654fda74a4280cf580494454c255b856eb4003e66e50f3728d3b98b98421985",
+            "backboneAfterHash": "8654fda74a4280cf580494454c255b856eb4003e66e50f3728d3b98b98421985",
+            "checkBefore": 0.8038749015096452,
+            "checkAfter": 0.7715844158406794
+          },
+          "cartAccuracy": 0.778,
+          "delta": 0.017000000000000015,
+          "node": 3,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.761,
+          "referenceAccuracy": 0.784
+        },
+        {
+          "cart": {
+            "scale": 1,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "f2b9d6c0d19cefa30c4720cd8477ccd827d2d984ae5cd2f14e1ed6863b9ade60",
+            "backboneAfterHash": "f2b9d6c0d19cefa30c4720cd8477ccd827d2d984ae5cd2f14e1ed6863b9ade60",
+            "checkBefore": 0.6607513792916304,
+            "checkAfter": 0.5947283592661938
+          },
+          "cartAccuracy": 0.675,
+          "delta": 0.03600000000000003,
+          "node": 4,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.639,
+          "referenceAccuracy": 0.715
+        },
+        {
+          "cart": {
+            "scale": 1,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "93f1e2c606b33485a0f2d65bef55f60341e1b391f975ea90b21c8ca34cb7200e",
+            "backboneAfterHash": "93f1e2c606b33485a0f2d65bef55f60341e1b391f975ea90b21c8ca34cb7200e",
+            "checkBefore": 0.9192999169807733,
+            "checkAfter": 0.9021270642868685
+          },
+          "cartAccuracy": 0.675,
+          "delta": 0.01100000000000001,
+          "node": 5,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.664,
+          "referenceAccuracy": 0.675
+        },
+        {
+          "cart": {
+            "scale": 1,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "8931d2c53bbe14bf2fe3553955b393ea887dbb8a2533dec3af50835d15f0ac67",
+            "backboneAfterHash": "8931d2c53bbe14bf2fe3553955b393ea887dbb8a2533dec3af50835d15f0ac67",
+            "checkBefore": 0.9286958069497411,
+            "checkAfter": 0.7901434077695564
+          },
+          "cartAccuracy": 0.744,
+          "delta": 0.051000000000000045,
+          "node": 6,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.693,
+          "referenceAccuracy": 0.778
+        },
+        {
+          "cart": {
+            "scale": 1,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "e82d0d3a3d35c4895928eb134d319cc85e394cd7b1313d1cc7d86e1314d199b0",
+            "backboneAfterHash": "e82d0d3a3d35c4895928eb134d319cc85e394cd7b1313d1cc7d86e1314d199b0",
+            "checkBefore": 0.7107459556291298,
+            "checkAfter": 0.5997010585540565
+          },
+          "cartAccuracy": 0.654,
+          "delta": 0.03700000000000003,
+          "node": 7,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.617,
+          "referenceAccuracy": 0.718
+        },
+        {
+          "cart": {
+            "scale": 1,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "d2865bc37050a56025c491ba164261f0f2cab41fca032fff9eb3b1e67ec8affa",
+            "backboneAfterHash": "d2865bc37050a56025c491ba164261f0f2cab41fca032fff9eb3b1e67ec8affa",
+            "checkBefore": 0.3454319531928368,
+            "checkAfter": 0.3331965885752387
+          },
+          "cartAccuracy": 0.761,
+          "delta": 0.008000000000000007,
+          "node": 8,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.753,
+          "referenceAccuracy": 0.772
+        },
+        {
+          "cart": {
+            "scale": 1,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "6ed956475bbfa6b8bc19a5007998c5abb21900e91005d0cafe2ef00d450b1d7f",
+            "backboneAfterHash": "6ed956475bbfa6b8bc19a5007998c5abb21900e91005d0cafe2ef00d450b1d7f",
+            "checkBefore": 0.8930435084578259,
+            "checkAfter": 0.8458873623801554
+          },
+          "cartAccuracy": 0.752,
+          "delta": 0.019000000000000017,
+          "node": 9,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.733,
+          "referenceAccuracy": 0.749
+        }
+      ],
+      "seed": 2025,
+      "source": {
+        "basil_core/attacks.py": "e1b653952cffd20983d9c4b0835fd11725e7df1cccff11c62e30569b952f119f",
+        "basil_core/data/cifar.py": "9bacb38333fe1b27b74919f7422e74415ebc58bd54e64431845f930a9ebfe180",
+        "basil_core/execution_profile.py": "222e60d95b643a364b30a400b28ed38baf4913db04b5acae5fa6f558ed84cfbe",
+        "basil_core/factorial_model.py": "07baaac3ae5d5a7a698fc4d37b37574f93f95510e43976cb8fbacdeb55f8142f",
+        "basil_core/factorial_study.py": "51ba798ee07f4d80a90a3b7e5c11280073e2cf2fabe1555b50e0505d1022884f",
+        "basil_core/iid_runtime.py": "f0069317dd6fbc583726cb734d89d8c32c50b2e5af564a491df513fee2ed9c58",
+        "basil_core/lazy_imports.py": "5d7039af5f56bcf16099ceef788e0b6515a70af7ff94cb8b9cd6fee8759f15b4",
+        "basil_core/models.py": "49169fb67c9c59d00d86e09d62d88189b164a777820680624d42bab1a47bd0cb",
+        "basil_core/research_protocol.py": "cb4fcaeb4f0b11079598001cd98ecfe8965db7ff6a806973b04b6af3393e7c15",
+        "basil_core/sharp_cart.py": "48ad43fe155f5e61c8122fcbe80e2dd3cb10b9afdf4f0506c244a466c561eeb8",
+        "basil_core/sharp_data.py": "bb636a1b6b4a95b246fa62b6168a790b92e70a11268c399b093d4689cd4eaf18",
+        "basil_core/sharp_math.py": "be9528e3ce10d8e084a44577fdb046fa8e82c61cf5d1824f6aa8494c63fb0831",
+        "basil_core/sharp_protocol.py": "564a836b74682e18e1a7d28b701b38c4b6d4aeaed1b9913cc4dbb959220e610f",
+        "basil_core/sharp_study.py": "2af5e2d52ea92f64f1a098a23fa20c9b4f172b1ee1e622fd0b6988ae16435dad",
+        "basil_core/sharp_worker.py": "42f64e76afb8a1093e23b95e874edab4e6aac12e3ef58de0318259b6c081fce7",
+        "basil_core/trainer.py": "61782cd28a44443618f07d4ed9fd8a5ac4a51ade940e4f0d1b6e9dbc245e3124",
+        "docs/specifications/SHARP_professor_20261027.pdf": "b010c9c79a2282c5835e0b9b4bc5cd95500afbcf7395dd9d04fd6a2a0b9ce700",
+        "scripts/run_sharp_study.py": "2f1909042567548c5a8d7efceda7b831aa60c8782f1f02e45774a4592d741869"
+      },
+      "sourceConfig": {
+        "actualAttackers": 0,
+        "allFailPolicy": "keep_all_and_record_pdf_algorithm_1",
+        "attackStart": 1,
+        "attackType": "hidden",
+        "basilWindow": 4,
+        "batchSize": 14,
+        "byzantineBudget": 3,
+        "calibrationDraws": 19,
+        "cart": false,
+        "cartMode": "coherent_classifier_residual_transport",
+        "cartProbePerClass": 16,
+        "cartRidgeFraction": 0.01,
+        "channel": "absolute_independent_gaussian_per_link",
+        "classes": 10,
+        "condition": "clean",
+        "curvature": 1,
+        "dataset": "mnist",
+        "dirichletAlpha": 0.5,
+        "evaluationOrigin": "stratified_heldout_TRAIN",
+        "evaluationSamples": 1000,
+        "gradientClipping": null,
+        "hopDenominator": "actual_selected",
+        "learningRate": 0.03,
+        "learningRateSchedule": "eta0_over_1_plus_eta0_round",
+        "localEpochs": null,
+        "localSteps": 5,
+        "method": "sharp",
+        "model": "paper",
+        "momentum": 0,
+        "nodes": 10,
+        "officialTestUsed": false,
+        "partition": "dirichlet",
+        "performanceClaim": "not_established",
+        "primaryEndpoint": "mean_node_validation_accuracy_last_10_rounds",
+        "proximalMu": 0,
+        "researchValid": false,
+        "revision": "sharp_professor_20261027_v1",
+        "rounds": 5,
+        "runId": "mnist-dirichlet-2025-clean-s0-sharp-3271a7f4eab2",
+        "seed": 2025,
+        "sigma": 0,
+        "startup": "empty_real_windows_with_initial_model_fallback",
+        "switches": {
+          "attack": false,
+          "byzantine_mitigation": false,
+          "cart": false,
+          "name": "clean",
+          "noise": false,
+          "noise_mitigation": false
+        },
+        "trainPerClass": 200,
+        "validationPerClass": null,
+        "weightDecay": 0,
+        "window": 6
+      },
+      "sourceRun": "mnist-dirichlet-2025-clean-s0-sharp-3271a7f4eab2",
+      "status": "COMPLETED_MECHANISM_CHECK",
+      "worsenedReceivers": 1,
+      "mechanismCheckProgramSha256": "f33462d658b26bca077ed25f3d1cf8031ed6c1a9db9cab4bde6a40d90020a1f7"
+    },
+    {
+      "allReceiversIncluded": true,
+      "cartMean": 0.32778000000000007,
+      "case": "one_extra_five_step_local_adaptation_no_attack_no_channel",
+      "classes": 10,
+      "dataset": "cifar10",
+      "holdoutUsedForDecisions": false,
+      "improvedReceivers": 65,
+      "interpretation": "Isolated retention check after a clean trained reference. Not an attack/noise benchmark or independent-seed replication.",
+      "nodes": 100,
+      "nonzeroCorrections": 77,
+      "officialTestUsed": false,
+      "proposalMean": 0.31940999999999997,
+      "referenceMean": 0.33451000000000003,
+      "rows": [
+        {
+          "cart": {
+            "scale": 1,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "0305c030ea2d8e545402e1f9a0c44fdc3f470cabda973bd223e2da8027cf6bfa",
+            "backboneAfterHash": "0305c030ea2d8e545402e1f9a0c44fdc3f470cabda973bd223e2da8027cf6bfa",
+            "checkBefore": 1.8515838128048245,
+            "checkAfter": 1.7515149006698254
+          },
+          "cartAccuracy": 0.346,
+          "delta": 0.057999999999999996,
+          "node": 0,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.288,
+          "referenceAccuracy": 0.377
+        },
+        {
+          "cart": {
+            "scale": 1,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "1c192f61404c23bcec787dcc20c4811e37bbdc9fea2d4b1a86a26939378d2633",
+            "backboneAfterHash": "1c192f61404c23bcec787dcc20c4811e37bbdc9fea2d4b1a86a26939378d2633",
+            "checkBefore": 1.9309460934798979,
+            "checkAfter": 1.8506512947070364
+          },
+          "cartAccuracy": 0.302,
+          "delta": 0.033999999999999975,
+          "node": 1,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.268,
+          "referenceAccuracy": 0.321
+        },
+        {
+          "cart": {
+            "scale": 1,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "4f7122d37b794d06fd4d230871e4cf2d26eaf8d7994ad0a682f6f54a9dfaa741",
+            "backboneAfterHash": "4f7122d37b794d06fd4d230871e4cf2d26eaf8d7994ad0a682f6f54a9dfaa741",
+            "checkBefore": 1.4756373545876154,
+            "checkAfter": 1.4613051476396115
+          },
+          "cartAccuracy": 0.335,
+          "delta": 0.01100000000000001,
+          "node": 2,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.324,
+          "referenceAccuracy": 0.363
+        },
+        {
+          "cart": {
+            "scale": 1,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "7b42caec810cbcba96cd68c992d01a69eb6856017c7bb113f127d338fc2a79a9",
+            "backboneAfterHash": "7b42caec810cbcba96cd68c992d01a69eb6856017c7bb113f127d338fc2a79a9",
+            "checkBefore": 1.8384534793252445,
+            "checkAfter": 1.7276114484479212
+          },
+          "cartAccuracy": 0.322,
+          "delta": 0.016000000000000014,
+          "node": 3,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.306,
+          "referenceAccuracy": 0.333
+        },
+        {
+          "cart": {
+            "scale": 0.25,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "7fbe43e0cc61986107a4d96f657e91e4ad104ff46eaa5802c5c3dd7cd607e8fd",
+            "backboneAfterHash": "7fbe43e0cc61986107a4d96f657e91e4ad104ff46eaa5802c5c3dd7cd607e8fd",
+            "checkBefore": 1.6872167836345553,
+            "checkAfter": 1.6865491452461872
+          },
+          "cartAccuracy": 0.283,
+          "delta": -0.0010000000000000009,
+          "node": 4,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.284,
+          "referenceAccuracy": 0.27
+        },
+        {
+          "cart": {
+            "scale": 1,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "891f41f2e3d52478c28748c64276e74bd5761271eab6a1443071c89dfd32d796",
+            "backboneAfterHash": "891f41f2e3d52478c28748c64276e74bd5761271eab6a1443071c89dfd32d796",
+            "checkBefore": 1.742006541519463,
+            "checkAfter": 1.7151744513691958
+          },
+          "cartAccuracy": 0.371,
+          "delta": -0.007000000000000006,
+          "node": 5,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.378,
+          "referenceAccuracy": 0.374
+        },
+        {
+          "cart": {
+            "scale": 0,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "86e07699afe4c8f8b7e2b54d9ea9eeccf5d2281620d1831a1cc4d55f1a138414",
+            "backboneAfterHash": "86e07699afe4c8f8b7e2b54d9ea9eeccf5d2281620d1831a1cc4d55f1a138414",
+            "checkBefore": 2.174143697043047,
+            "checkAfter": 2.174143697043047
+          },
+          "cartAccuracy": 0.289,
+          "delta": 0,
+          "node": 6,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.289,
+          "referenceAccuracy": 0.296
+        },
+        {
+          "cart": {
+            "scale": 1,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "35509143a5419988814db3809aaf7f7f270195c8f8e246be2d246cdff8b3ca72",
+            "backboneAfterHash": "35509143a5419988814db3809aaf7f7f270195c8f8e246be2d246cdff8b3ca72",
+            "checkBefore": 1.5176934266943813,
+            "checkAfter": 1.4670570484908518
+          },
+          "cartAccuracy": 0.371,
+          "delta": 0.019000000000000017,
+          "node": 7,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.352,
+          "referenceAccuracy": 0.4
+        },
+        {
+          "cart": {
+            "scale": 1,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "d56187855ffefe5f1a8467408307e09041fdc86972d500d2f436f492513fd787",
+            "backboneAfterHash": "d56187855ffefe5f1a8467408307e09041fdc86972d500d2f436f492513fd787",
+            "checkBefore": 1.5888332468304869,
+            "checkAfter": 1.5621467215440377
+          },
+          "cartAccuracy": 0.312,
+          "delta": 0.010000000000000009,
+          "node": 8,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.302,
+          "referenceAccuracy": 0.298
+        },
+        {
+          "cart": {
+            "scale": 1,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "1ba077616ad3c8e3fa64e29b674b4f8cb4015e3434a8b089f5f7c374d4393345",
+            "backboneAfterHash": "1ba077616ad3c8e3fa64e29b674b4f8cb4015e3434a8b089f5f7c374d4393345",
+            "checkBefore": 1.7719031897851578,
+            "checkAfter": 1.7123808688275828
+          },
+          "cartAccuracy": 0.333,
+          "delta": 0.013000000000000012,
+          "node": 9,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.32,
+          "referenceAccuracy": 0.386
+        },
+        {
+          "cart": {
+            "scale": 1,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "00366c93d03cbee6092a92af788e75f6478da654871ea1e891a16b9c149bd6f3",
+            "backboneAfterHash": "00366c93d03cbee6092a92af788e75f6478da654871ea1e891a16b9c149bd6f3",
+            "checkBefore": 1.4816405017228467,
+            "checkAfter": 1.4689909422702139
+          },
+          "cartAccuracy": 0.352,
+          "delta": 0.006000000000000005,
+          "node": 10,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.346,
+          "referenceAccuracy": 0.342
+        },
+        {
+          "cart": {
+            "scale": 1,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "2af78b03de4d057a3deac9678d06b02160275ee82a3a0faa523efcfdb391927f",
+            "backboneAfterHash": "2af78b03de4d057a3deac9678d06b02160275ee82a3a0faa523efcfdb391927f",
+            "checkBefore": 1.8300058633990688,
+            "checkAfter": 1.7936701515890412
+          },
+          "cartAccuracy": 0.358,
+          "delta": 0.01599999999999996,
+          "node": 11,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.342,
+          "referenceAccuracy": 0.369
+        },
+        {
+          "cart": {
+            "scale": 1,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "6351191d12c75f02bf78e38f8bcfe1131194e45dfeb9bf470e538b143896cf06",
+            "backboneAfterHash": "6351191d12c75f02bf78e38f8bcfe1131194e45dfeb9bf470e538b143896cf06",
+            "checkBefore": 1.563499063257119,
+            "checkAfter": 1.4585764933290648
+          },
+          "cartAccuracy": 0.312,
+          "delta": 0.0040000000000000036,
+          "node": 12,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.308,
+          "referenceAccuracy": 0.321
+        },
+        {
+          "cart": {
+            "scale": 0,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "a1a18a476b95368f1e32debac06cdfd69698ebacdc8e08aac202970a3586a402",
+            "backboneAfterHash": "a1a18a476b95368f1e32debac06cdfd69698ebacdc8e08aac202970a3586a402",
+            "checkBefore": 1.8193927109942056,
+            "checkAfter": 1.8193927109942056
+          },
+          "cartAccuracy": 0.326,
+          "delta": 0,
+          "node": 13,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.326,
+          "referenceAccuracy": 0.348
+        },
+        {
+          "cart": {
+            "scale": 1,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "1450d61c09f7682698f2337345f277a22e89417fc97cbd5d0247548422043525",
+            "backboneAfterHash": "1450d61c09f7682698f2337345f277a22e89417fc97cbd5d0247548422043525",
+            "checkBefore": 2.181350227458411,
+            "checkAfter": 2.1349967913374113
+          },
+          "cartAccuracy": 0.336,
+          "delta": 0.006000000000000005,
+          "node": 14,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.33,
+          "referenceAccuracy": 0.344
+        },
+        {
+          "cart": {
+            "scale": 1,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "c311f5b6403054647ad6f90a9bec046367c1d439e4a306b71084186538a8fb81",
+            "backboneAfterHash": "c311f5b6403054647ad6f90a9bec046367c1d439e4a306b71084186538a8fb81",
+            "checkBefore": 2.3135928963375147,
+            "checkAfter": 2.295472410081034
+          },
+          "cartAccuracy": 0.256,
+          "delta": -0.019000000000000017,
+          "node": 15,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.275,
+          "referenceAccuracy": 0.221
+        },
+        {
+          "cart": {
+            "scale": 1,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "ff8295435a2c2df88d395ffe52555e21853240d9c731a0475840440242d986a5",
+            "backboneAfterHash": "ff8295435a2c2df88d395ffe52555e21853240d9c731a0475840440242d986a5",
+            "checkBefore": 1.7967451068108198,
+            "checkAfter": 1.7781851378296376
+          },
+          "cartAccuracy": 0.311,
+          "delta": 0.017000000000000015,
+          "node": 16,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.294,
+          "referenceAccuracy": 0.323
+        },
+        {
+          "cart": {
+            "scale": 1,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "879a3b6df4a400cdbc27851d76259efeb8c4efac14a3c2f124fbb1878fdec891",
+            "backboneAfterHash": "879a3b6df4a400cdbc27851d76259efeb8c4efac14a3c2f124fbb1878fdec891",
+            "checkBefore": 1.8655798045989502,
+            "checkAfter": 1.751685259899513
+          },
+          "cartAccuracy": 0.326,
+          "delta": 0.03700000000000003,
+          "node": 17,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.289,
+          "referenceAccuracy": 0.355
+        },
+        {
+          "cart": {
+            "scale": 1,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "2d35b4053773d9dbdcd2de67133f6493dfa4715207f64f23a7abd6397909b1d2",
+            "backboneAfterHash": "2d35b4053773d9dbdcd2de67133f6493dfa4715207f64f23a7abd6397909b1d2",
+            "checkBefore": 1.976141869509759,
+            "checkAfter": 1.9662025072823852
+          },
+          "cartAccuracy": 0.34,
+          "delta": 0.010000000000000009,
+          "node": 18,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.33,
+          "referenceAccuracy": 0.337
+        },
+        {
+          "cart": {
+            "scale": 1,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "acfc21d9e0426b7208cbf026f2bfbe0d35b0de2b285365a7a9a1d79882f78a6f",
+            "backboneAfterHash": "acfc21d9e0426b7208cbf026f2bfbe0d35b0de2b285365a7a9a1d79882f78a6f",
+            "checkBefore": 1.5920892414688121,
+            "checkAfter": 1.5792366543230085
+          },
+          "cartAccuracy": 0.288,
+          "delta": 0.022999999999999965,
+          "node": 19,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.265,
+          "referenceAccuracy": 0.33
+        },
+        {
+          "cart": {
+            "scale": 1,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "77c04176fa970dbbb5e3f9ebce432065dbdf85d0b838ba37554c58e02db09733",
+            "backboneAfterHash": "77c04176fa970dbbb5e3f9ebce432065dbdf85d0b838ba37554c58e02db09733",
+            "checkBefore": 1.6001331998332042,
+            "checkAfter": 1.5977664065778319
+          },
+          "cartAccuracy": 0.307,
+          "delta": -0.0050000000000000044,
+          "node": 20,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.312,
+          "referenceAccuracy": 0.323
+        },
+        {
+          "cart": {
+            "scale": 0,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "312a5940b791eab44f88210286839e0166456b9c8c57e8d467c6fabfe4308aba",
+            "backboneAfterHash": "312a5940b791eab44f88210286839e0166456b9c8c57e8d467c6fabfe4308aba",
+            "checkBefore": 1.8355787744573577,
+            "checkAfter": 1.8355787744573577
+          },
+          "cartAccuracy": 0.305,
+          "delta": 0,
+          "node": 21,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.305,
+          "referenceAccuracy": 0.215
+        },
+        {
+          "cart": {
+            "scale": 1,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "12d88544631ee9ba627e2c5968e6ab54fa1117290a3e54199f567b6419b407c1",
+            "backboneAfterHash": "12d88544631ee9ba627e2c5968e6ab54fa1117290a3e54199f567b6419b407c1",
+            "checkBefore": 2.037611609258639,
+            "checkAfter": 2.021306703387343
+          },
+          "cartAccuracy": 0.271,
+          "delta": 0.0040000000000000036,
+          "node": 22,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.267,
+          "referenceAccuracy": 0.278
+        },
+        {
+          "cart": {
+            "scale": 0,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "68926d61da52b490524442b5e1da4cc69d1cf2ad9b82c0b1094ba53365a4d000",
+            "backboneAfterHash": "68926d61da52b490524442b5e1da4cc69d1cf2ad9b82c0b1094ba53365a4d000",
+            "checkBefore": 1.5685965810580802,
+            "checkAfter": 1.5685965810580802
+          },
+          "cartAccuracy": 0.342,
+          "delta": 0,
+          "node": 23,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.342,
+          "referenceAccuracy": 0.302
+        },
+        {
+          "cart": {
+            "scale": 1,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "9a711a15eafcc54212649aa13fc3066551d9747b14523ed58ffe8b45753ea1aa",
+            "backboneAfterHash": "9a711a15eafcc54212649aa13fc3066551d9747b14523ed58ffe8b45753ea1aa",
+            "checkBefore": 1.556285032908917,
+            "checkAfter": 1.5444920599380596
+          },
+          "cartAccuracy": 0.294,
+          "delta": 0,
+          "node": 24,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.294,
+          "referenceAccuracy": 0.295
+        },
+        {
+          "cart": {
+            "scale": 1,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "458bdfd3818dab95d7f79240b47e7c75f0f8b502c0556064fc42c059ab87e8ff",
+            "backboneAfterHash": "458bdfd3818dab95d7f79240b47e7c75f0f8b502c0556064fc42c059ab87e8ff",
+            "checkBefore": 1.667060962395673,
+            "checkAfter": 1.6516759278198658
+          },
+          "cartAccuracy": 0.365,
+          "delta": 0.007000000000000006,
+          "node": 25,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.358,
+          "referenceAccuracy": 0.369
+        },
+        {
+          "cart": {
+            "scale": 1,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "d2ce7baff515786cf9a79af49e13cbb808bd51f552ffd1b1a498203a86a549f8",
+            "backboneAfterHash": "d2ce7baff515786cf9a79af49e13cbb808bd51f552ffd1b1a498203a86a549f8",
+            "checkBefore": 1.7384621329683698,
+            "checkAfter": 1.6931736732895581
+          },
+          "cartAccuracy": 0.353,
+          "delta": -0.0040000000000000036,
+          "node": 26,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.357,
+          "referenceAccuracy": 0.373
+        },
+        {
+          "cart": {
+            "scale": 1,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "6317512612dab7136fccaa5c2a5d462be06c07cd1827a63a73e4226f49af04b5",
+            "backboneAfterHash": "6317512612dab7136fccaa5c2a5d462be06c07cd1827a63a73e4226f49af04b5",
+            "checkBefore": 1.6196948000629239,
+            "checkAfter": 1.563141701905329
+          },
+          "cartAccuracy": 0.326,
+          "delta": 0.006000000000000005,
+          "node": 27,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.32,
+          "referenceAccuracy": 0.339
+        },
+        {
+          "cart": {
+            "scale": 0.75,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "c89070ab8b982fd29256d7903649ca1eb07a9eb0e7586434ff57946bad92d69c",
+            "backboneAfterHash": "c89070ab8b982fd29256d7903649ca1eb07a9eb0e7586434ff57946bad92d69c",
+            "checkBefore": 1.440056424420418,
+            "checkAfter": 1.4365672527485538
+          },
+          "cartAccuracy": 0.392,
+          "delta": 0.019000000000000017,
+          "node": 28,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.373,
+          "referenceAccuracy": 0.391
+        },
+        {
+          "cart": {
+            "scale": 1,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "5d481730c8c9fb6735c13e7c23be3b43f990067ee99d03b7949e3f8c2f4b121b",
+            "backboneAfterHash": "5d481730c8c9fb6735c13e7c23be3b43f990067ee99d03b7949e3f8c2f4b121b",
+            "checkBefore": 1.6392526200878679,
+            "checkAfter": 1.6317703094956582
+          },
+          "cartAccuracy": 0.29,
+          "delta": -0.007000000000000006,
+          "node": 29,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.297,
+          "referenceAccuracy": 0.299
+        },
+        {
+          "cart": {
+            "scale": 0.5,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "4a6b8d00fc4639d4d55e1fb8939243d9a1397c51b32b8ea48f5bde1001dd7838",
+            "backboneAfterHash": "4a6b8d00fc4639d4d55e1fb8939243d9a1397c51b32b8ea48f5bde1001dd7838",
+            "checkBefore": 1.3649393005045545,
+            "checkAfter": 1.3626762163164092
+          },
+          "cartAccuracy": 0.348,
+          "delta": 0.0030000000000000027,
+          "node": 30,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.345,
+          "referenceAccuracy": 0.352
+        },
+        {
+          "cart": {
+            "scale": 0.5,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "3572cc0a3a648d79405e6c40f00b53922e31d1caeae4fc665a0fe1aac32e92a1",
+            "backboneAfterHash": "3572cc0a3a648d79405e6c40f00b53922e31d1caeae4fc665a0fe1aac32e92a1",
+            "checkBefore": 1.4625518586364907,
+            "checkAfter": 1.4539630108750887
+          },
+          "cartAccuracy": 0.356,
+          "delta": 0.010000000000000009,
+          "node": 31,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.346,
+          "referenceAccuracy": 0.342
+        },
+        {
+          "cart": {
+            "scale": 1,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "5f17aebf1ae77432bd66c5af468b16faf6af564c730fda17874f1cd928d02c17",
+            "backboneAfterHash": "5f17aebf1ae77432bd66c5af468b16faf6af564c730fda17874f1cd928d02c17",
+            "checkBefore": 1.8452566871882556,
+            "checkAfter": 1.750751078715242
+          },
+          "cartAccuracy": 0.359,
+          "delta": 0.02799999999999997,
+          "node": 32,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.331,
+          "referenceAccuracy": 0.384
+        },
+        {
+          "cart": {
+            "scale": 1,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "8f85402c3c0563a84da89c13022f43281dd07469c974dd1a61470e6caf1f3fc8",
+            "backboneAfterHash": "8f85402c3c0563a84da89c13022f43281dd07469c974dd1a61470e6caf1f3fc8",
+            "checkBefore": 1.7437797134437372,
+            "checkAfter": 1.700950146013895
+          },
+          "cartAccuracy": 0.329,
+          "delta": -0.0020000000000000018,
+          "node": 33,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.331,
+          "referenceAccuracy": 0.326
+        },
+        {
+          "cart": {
+            "scale": 0,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "0c0ad414ffd1e39811a750368bbf99043e2e0822ea7dd64745e7d843036cb94f",
+            "backboneAfterHash": "0c0ad414ffd1e39811a750368bbf99043e2e0822ea7dd64745e7d843036cb94f",
+            "checkBefore": 1.4522971882125912,
+            "checkAfter": 1.4522971882125912
+          },
+          "cartAccuracy": 0.314,
+          "delta": 0,
+          "node": 34,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.314,
+          "referenceAccuracy": 0.336
+        },
+        {
+          "cart": {
+            "scale": 0,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "dc4ef0daebc08dd8cb5e6b5838890246d431cefddf1323b922a18dbbe43070f7",
+            "backboneAfterHash": "dc4ef0daebc08dd8cb5e6b5838890246d431cefddf1323b922a18dbbe43070f7",
+            "checkBefore": 1.9221223393549036,
+            "checkAfter": 1.9221223393549036
+          },
+          "cartAccuracy": 0.314,
+          "delta": 0,
+          "node": 35,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.314,
+          "referenceAccuracy": 0.322
+        },
+        {
+          "cart": {
+            "scale": 1,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "f19f58bcfe9a2497cd6521596aff44c4b9a7a697f0a1bf412328b98639ed9990",
+            "backboneAfterHash": "f19f58bcfe9a2497cd6521596aff44c4b9a7a697f0a1bf412328b98639ed9990",
+            "checkBefore": 1.5119636819371054,
+            "checkAfter": 1.4838440694593586
+          },
+          "cartAccuracy": 0.337,
+          "delta": 0.006000000000000005,
+          "node": 36,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.331,
+          "referenceAccuracy": 0.357
+        },
+        {
+          "cart": {
+            "scale": 1,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "7c2c46e2a185488d51bd69b24da6c320d56ea45c8ca267e15da465a0137bfaa0",
+            "backboneAfterHash": "7c2c46e2a185488d51bd69b24da6c320d56ea45c8ca267e15da465a0137bfaa0",
+            "checkBefore": 1.0353364084394625,
+            "checkAfter": 0.9882222734020769
+          },
+          "cartAccuracy": 0.311,
+          "delta": 0.028000000000000025,
+          "node": 37,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.283,
+          "referenceAccuracy": 0.341
+        },
+        {
+          "cart": {
+            "scale": 1,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "c2ab2775a3e063138495acfaecc62046e65f15bee4078d7e2efa35687401e39c",
+            "backboneAfterHash": "c2ab2775a3e063138495acfaecc62046e65f15bee4078d7e2efa35687401e39c",
+            "checkBefore": 1.4525024744578974,
+            "checkAfter": 1.443614147402618
+          },
+          "cartAccuracy": 0.4,
+          "delta": 0.0020000000000000018,
+          "node": 38,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.398,
+          "referenceAccuracy": 0.379
+        },
+        {
+          "cart": {
+            "scale": 1,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "c7583b4b1b64bf8db0bd88e62a5278302d8e4fe9510d782f4293fbbe8148e5e3",
+            "backboneAfterHash": "c7583b4b1b64bf8db0bd88e62a5278302d8e4fe9510d782f4293fbbe8148e5e3",
+            "checkBefore": 1.520909092732325,
+            "checkAfter": 1.5152470527631157
+          },
+          "cartAccuracy": 0.348,
+          "delta": 0.0020000000000000018,
+          "node": 39,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.346,
+          "referenceAccuracy": 0.364
+        },
+        {
+          "cart": {
+            "scale": 1,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "35f84148628c17063d4bc8efef57cf94f2ef719f65a3d85d0157724c8aba7422",
+            "backboneAfterHash": "35f84148628c17063d4bc8efef57cf94f2ef719f65a3d85d0157724c8aba7422",
+            "checkBefore": 1.4841997777207163,
+            "checkAfter": 1.471238071879109
+          },
+          "cartAccuracy": 0.3,
+          "delta": 0.01100000000000001,
+          "node": 40,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.289,
+          "referenceAccuracy": 0.315
+        },
+        {
+          "cart": {
+            "scale": 1,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "fe9171d8fca45c242fad7466c5121e8e569e26957a55e8221b345273c75d07f1",
+            "backboneAfterHash": "fe9171d8fca45c242fad7466c5121e8e569e26957a55e8221b345273c75d07f1",
+            "checkBefore": 1.8535076677775386,
+            "checkAfter": 1.6330157872282376
+          },
+          "cartAccuracy": 0.326,
+          "delta": 0.03600000000000003,
+          "node": 41,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.29,
+          "referenceAccuracy": 0.334
+        },
+        {
+          "cart": {
+            "scale": 0,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "762898ed866231b48064bb831769dbe09c63264ebe1e114130fe4d438a4edc76",
+            "backboneAfterHash": "762898ed866231b48064bb831769dbe09c63264ebe1e114130fe4d438a4edc76",
+            "checkBefore": 2.465073925095983,
+            "checkAfter": 2.465073925095983
+          },
+          "cartAccuracy": 0.228,
+          "delta": 0,
+          "node": 42,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.228,
+          "referenceAccuracy": 0.227
+        },
+        {
+          "cart": {
+            "scale": 0.5,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "b8f4ed608af79321fd47cf3ad661f030c6867fde96baee65adf4c8abae0fcf3f",
+            "backboneAfterHash": "b8f4ed608af79321fd47cf3ad661f030c6867fde96baee65adf4c8abae0fcf3f",
+            "checkBefore": 1.5377092471893914,
+            "checkAfter": 1.5311406862533572
+          },
+          "cartAccuracy": 0.309,
+          "delta": -0.0050000000000000044,
+          "node": 43,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.314,
+          "referenceAccuracy": 0.283
+        },
+        {
+          "cart": {
+            "scale": 1,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "82c5f7b093a431477dd7af93e260be1057c987228951c8aeb80d97405a0f2b36",
+            "backboneAfterHash": "82c5f7b093a431477dd7af93e260be1057c987228951c8aeb80d97405a0f2b36",
+            "checkBefore": 1.9709808414453245,
+            "checkAfter": 1.9526172767980465
+          },
+          "cartAccuracy": 0.272,
+          "delta": -0.01799999999999996,
+          "node": 44,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.29,
+          "referenceAccuracy": 0.275
+        },
+        {
+          "cart": {
+            "scale": 1,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "6ad2eed6c57faa49a0b01c0d47b832f9f7189b835501bc80857f8cb5044070ea",
+            "backboneAfterHash": "6ad2eed6c57faa49a0b01c0d47b832f9f7189b835501bc80857f8cb5044070ea",
+            "checkBefore": 1.6897371820352332,
+            "checkAfter": 1.6386219660247145
+          },
+          "cartAccuracy": 0.311,
+          "delta": 0.028000000000000025,
+          "node": 45,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.283,
+          "referenceAccuracy": 0.331
+        },
+        {
+          "cart": {
+            "scale": 1,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "cb343b381296d431b486f22bbdc0017b74fe7a7a304c29025346fe2a47f50b71",
+            "backboneAfterHash": "cb343b381296d431b486f22bbdc0017b74fe7a7a304c29025346fe2a47f50b71",
+            "checkBefore": 1.8838657758972126,
+            "checkAfter": 1.8544698672549846
+          },
+          "cartAccuracy": 0.365,
+          "delta": 0.01200000000000001,
+          "node": 46,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.353,
+          "referenceAccuracy": 0.383
+        },
+        {
+          "cart": {
+            "scale": 1,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "64c02001168fa5357ccccccc466ed64f04687140696c524641468fcdff817638",
+            "backboneAfterHash": "64c02001168fa5357ccccccc466ed64f04687140696c524641468fcdff817638",
+            "checkBefore": 1.5129442003013032,
+            "checkAfter": 1.4897508569222715
+          },
+          "cartAccuracy": 0.353,
+          "delta": 0.009999999999999953,
+          "node": 47,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.343,
+          "referenceAccuracy": 0.364
+        },
+        {
+          "cart": {
+            "scale": 0.5,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "865d535379e3566860ad3ac6c1c876b7c91d1f04809149dd86c9150c36c06981",
+            "backboneAfterHash": "865d535379e3566860ad3ac6c1c876b7c91d1f04809149dd86c9150c36c06981",
+            "checkBefore": 1.6035984314615617,
+            "checkAfter": 1.6025622303821176
+          },
+          "cartAccuracy": 0.302,
+          "delta": 0.008000000000000007,
+          "node": 48,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.294,
+          "referenceAccuracy": 0.331
+        },
+        {
+          "cart": {
+            "scale": 1,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "26c50dbcb1a997dfe9045ac77365442ee0a725428a22188525a225a257f43818",
+            "backboneAfterHash": "26c50dbcb1a997dfe9045ac77365442ee0a725428a22188525a225a257f43818",
+            "checkBefore": 1.6580221586149204,
+            "checkAfter": 1.5240699567994398
+          },
+          "cartAccuracy": 0.362,
+          "delta": 0.02999999999999997,
+          "node": 49,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.332,
+          "referenceAccuracy": 0.396
+        },
+        {
+          "cart": {
+            "scale": 0,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "45a58a8fe694fa75a4beae88a15b72c710f013a697e4323491ed81081322911f",
+            "backboneAfterHash": "45a58a8fe694fa75a4beae88a15b72c710f013a697e4323491ed81081322911f",
+            "checkBefore": 1.687942373155297,
+            "checkAfter": 1.687942373155297
+          },
+          "cartAccuracy": 0.335,
+          "delta": 0,
+          "node": 50,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.335,
+          "referenceAccuracy": 0.3
+        },
+        {
+          "cart": {
+            "scale": 1,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "f4e5ca03988c1742ab5d3618cadf8cf538891c162c61b6713fa05f5ef9542c74",
+            "backboneAfterHash": "f4e5ca03988c1742ab5d3618cadf8cf538891c162c61b6713fa05f5ef9542c74",
+            "checkBefore": 2.1121967289083035,
+            "checkAfter": 2.0818739278304563
+          },
+          "cartAccuracy": 0.319,
+          "delta": 0.01100000000000001,
+          "node": 51,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.308,
+          "referenceAccuracy": 0.322
+        },
+        {
+          "cart": {
+            "scale": 0,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "c167b6404c6d25ffefedf4782094e623b8c8380ef6cdb664c8a4e6bdc08f8929",
+            "backboneAfterHash": "c167b6404c6d25ffefedf4782094e623b8c8380ef6cdb664c8a4e6bdc08f8929",
+            "checkBefore": 1.6366429509766407,
+            "checkAfter": 1.6366429509766407
+          },
+          "cartAccuracy": 0.302,
+          "delta": 0,
+          "node": 52,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.302,
+          "referenceAccuracy": 0.351
+        },
+        {
+          "cart": {
+            "scale": 0,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "7d052bfdc1b2b952619524b0b0a0b29dc992ef787d325b83876cc585f71da308",
+            "backboneAfterHash": "7d052bfdc1b2b952619524b0b0a0b29dc992ef787d325b83876cc585f71da308",
+            "checkBefore": 1.4697622389474436,
+            "checkAfter": 1.4697622389474436
+          },
+          "cartAccuracy": 0.355,
+          "delta": 0,
+          "node": 53,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.355,
+          "referenceAccuracy": 0.352
+        },
+        {
+          "cart": {
+            "scale": 0.5,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "6b3af73548fba631015d188c7ac6555eea4c9c6427bd4189c7af78f9de184a6c",
+            "backboneAfterHash": "6b3af73548fba631015d188c7ac6555eea4c9c6427bd4189c7af78f9de184a6c",
+            "checkBefore": 1.838014233685008,
+            "checkAfter": 1.833596725093751
+          },
+          "cartAccuracy": 0.345,
+          "delta": 0.004999999999999949,
+          "node": 54,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.34,
+          "referenceAccuracy": 0.347
+        },
+        {
+          "cart": {
+            "scale": 1,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "3d4bfd025cfe0c7b4adaf1ae73bbf20b8515bef48c3fc2ff2171345eef58c755",
+            "backboneAfterHash": "3d4bfd025cfe0c7b4adaf1ae73bbf20b8515bef48c3fc2ff2171345eef58c755",
+            "checkBefore": 2.2477558643106086,
+            "checkAfter": 2.0138791823574027
+          },
+          "cartAccuracy": 0.272,
+          "delta": 0.020000000000000018,
+          "node": 55,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.252,
+          "referenceAccuracy": 0.291
+        },
+        {
+          "cart": {
+            "scale": 1,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "484270c7bc999912b738d5fae8e653bce46501135b50aafb202bce448d96b6ad",
+            "backboneAfterHash": "484270c7bc999912b738d5fae8e653bce46501135b50aafb202bce448d96b6ad",
+            "checkBefore": 1.8689353642573892,
+            "checkAfter": 1.8478836767655544
+          },
+          "cartAccuracy": 0.283,
+          "delta": 0.004999999999999949,
+          "node": 56,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.278,
+          "referenceAccuracy": 0.296
+        },
+        {
+          "cart": {
+            "scale": 1,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "561aed4355487a2c929e128fe19bae2bb14e3238399d597881421fa2679c6167",
+            "backboneAfterHash": "561aed4355487a2c929e128fe19bae2bb14e3238399d597881421fa2679c6167",
+            "checkBefore": 2.0940923356096053,
+            "checkAfter": 2.052478258398322
+          },
+          "cartAccuracy": 0.25,
+          "delta": 0.013000000000000012,
+          "node": 57,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.237,
+          "referenceAccuracy": 0.267
+        },
+        {
+          "cart": {
+            "scale": 1,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "b8392afb714be9882abc399900a976288aadadad983c3f57ffabe088eb7c9d09",
+            "backboneAfterHash": "b8392afb714be9882abc399900a976288aadadad983c3f57ffabe088eb7c9d09",
+            "checkBefore": 1.7273267176179743,
+            "checkAfter": 1.6492510601585268
+          },
+          "cartAccuracy": 0.311,
+          "delta": 0.01200000000000001,
+          "node": 58,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.299,
+          "referenceAccuracy": 0.333
+        },
+        {
+          "cart": {
+            "scale": 1,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "f322470f75a88b6b8a1e1c3f1bc12259a103dbfed9b6fa05805a620f8dea00d5",
+            "backboneAfterHash": "f322470f75a88b6b8a1e1c3f1bc12259a103dbfed9b6fa05805a620f8dea00d5",
+            "checkBefore": 1.5525357505730037,
+            "checkAfter": 1.532965869912347
+          },
+          "cartAccuracy": 0.384,
+          "delta": -0.007000000000000006,
+          "node": 59,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.391,
+          "referenceAccuracy": 0.365
+        },
+        {
+          "cart": {
+            "scale": 1,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "cab678fc3ad10d1ac9c4f68eec6e8839ebff081c40fcd7d2e34e7f6ab3267dab",
+            "backboneAfterHash": "cab678fc3ad10d1ac9c4f68eec6e8839ebff081c40fcd7d2e34e7f6ab3267dab",
+            "checkBefore": 1.6073673101925998,
+            "checkAfter": 1.5647384226641559
+          },
+          "cartAccuracy": 0.385,
+          "delta": 0.020000000000000018,
+          "node": 60,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.365,
+          "referenceAccuracy": 0.384
+        },
+        {
+          "cart": {
+            "scale": 1,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "68106985d86d72c72b174f28d7a5ac838a1e5c843e08832763b7db120a212e51",
+            "backboneAfterHash": "68106985d86d72c72b174f28d7a5ac838a1e5c843e08832763b7db120a212e51",
+            "checkBefore": 1.4923330395595398,
+            "checkAfter": 1.4315024680162614
+          },
+          "cartAccuracy": 0.359,
+          "delta": 0.019999999999999962,
+          "node": 61,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.339,
+          "referenceAccuracy": 0.383
+        },
+        {
+          "cart": {
+            "scale": 0,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "e1e0defe341854596deb47f6c881b43468f82f994338e1d327aa0597e1f3f904",
+            "backboneAfterHash": "e1e0defe341854596deb47f6c881b43468f82f994338e1d327aa0597e1f3f904",
+            "checkBefore": 2.0949971904024784,
+            "checkAfter": 2.0949971904024784
+          },
+          "cartAccuracy": 0.164,
+          "delta": 0,
+          "node": 62,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.164,
+          "referenceAccuracy": 0.164
+        },
+        {
+          "cart": {
+            "scale": 1,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "3718128b4cafcf8e3dcb07ad9905d6dd61059b19d3eb0805171de03dab7b8f83",
+            "backboneAfterHash": "3718128b4cafcf8e3dcb07ad9905d6dd61059b19d3eb0805171de03dab7b8f83",
+            "checkBefore": 1.8931978152817004,
+            "checkAfter": 1.821605994762641
+          },
+          "cartAccuracy": 0.296,
+          "delta": 0.009000000000000008,
+          "node": 63,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.287,
+          "referenceAccuracy": 0.326
+        },
+        {
+          "cart": {
+            "scale": 0,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "1f5870e5c9cbd3e14e817b9744237b59770f6fb7ce0c074c9d11ea90f77f8a4b",
+            "backboneAfterHash": "1f5870e5c9cbd3e14e817b9744237b59770f6fb7ce0c074c9d11ea90f77f8a4b",
+            "checkBefore": 1.7690219021767293,
+            "checkAfter": 1.7690219021767293
+          },
+          "cartAccuracy": 0.316,
+          "delta": 0,
+          "node": 64,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.316,
+          "referenceAccuracy": 0.311
+        },
+        {
+          "cart": {
+            "scale": 1,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "5ff1f6ad0582e35fe2a2ab2c98ee8db5fa9b6895def3dbd41929722d540ef6d7",
+            "backboneAfterHash": "5ff1f6ad0582e35fe2a2ab2c98ee8db5fa9b6895def3dbd41929722d540ef6d7",
+            "checkBefore": 1.7470849411833846,
+            "checkAfter": 1.7007225016429883
+          },
+          "cartAccuracy": 0.317,
+          "delta": 0.02400000000000002,
+          "node": 65,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.293,
+          "referenceAccuracy": 0.329
+        },
+        {
+          "cart": {
+            "scale": 1,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "dc09fd020de18f48a4bb5a631695d75c7a4fba6a3a8e08d968651b8dc54e3d59",
+            "backboneAfterHash": "dc09fd020de18f48a4bb5a631695d75c7a4fba6a3a8e08d968651b8dc54e3d59",
+            "checkBefore": 1.7329870965290182,
+            "checkAfter": 1.7313491543602761
+          },
+          "cartAccuracy": 0.345,
+          "delta": -0.0020000000000000018,
+          "node": 66,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.347,
+          "referenceAccuracy": 0.317
+        },
+        {
+          "cart": {
+            "scale": 0,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "5ee694a29b9185fc17ae4170d459e91bb6c7f4ec0c6ebc90bc6037a422442538",
+            "backboneAfterHash": "5ee694a29b9185fc17ae4170d459e91bb6c7f4ec0c6ebc90bc6037a422442538",
+            "checkBefore": 1.8384427037268916,
+            "checkAfter": 1.8384427037268916
+          },
+          "cartAccuracy": 0.37,
+          "delta": 0,
+          "node": 67,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.37,
+          "referenceAccuracy": 0.335
+        },
+        {
+          "cart": {
+            "scale": 1,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "3c9d6ac83094dfa47c8502d518689921030519485dd9f4fee19963b51cce57bf",
+            "backboneAfterHash": "3c9d6ac83094dfa47c8502d518689921030519485dd9f4fee19963b51cce57bf",
+            "checkBefore": 1.562416097282373,
+            "checkAfter": 1.5389065297336215
+          },
+          "cartAccuracy": 0.276,
+          "delta": 0.0040000000000000036,
+          "node": 68,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.272,
+          "referenceAccuracy": 0.287
+        },
+        {
+          "cart": {
+            "scale": 0,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "36ce1d4052fad27a7ef966ca69508e2fa2cce388f9c96b3b78d5cbe362c35d36",
+            "backboneAfterHash": "36ce1d4052fad27a7ef966ca69508e2fa2cce388f9c96b3b78d5cbe362c35d36",
+            "checkBefore": 1.7605388027325257,
+            "checkAfter": 1.7605388027325257
+          },
+          "cartAccuracy": 0.288,
+          "delta": 0,
+          "node": 69,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.288,
+          "referenceAccuracy": 0.309
+        },
+        {
+          "cart": {
+            "scale": 0,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "b52ee15f1fd71e19a5923736aa5e1facf5c4e4ba56e8796997270e31d767bb9d",
+            "backboneAfterHash": "b52ee15f1fd71e19a5923736aa5e1facf5c4e4ba56e8796997270e31d767bb9d",
+            "checkBefore": 1.68795413051207,
+            "checkAfter": 1.68795413051207
+          },
+          "cartAccuracy": 0.347,
+          "delta": 0,
+          "node": 70,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.347,
+          "referenceAccuracy": 0.343
+        },
+        {
+          "cart": {
+            "scale": 1,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "c0c3de0552d4dffcf69dbad197244e98f2f1895c19dd78e268892e729df9e300",
+            "backboneAfterHash": "c0c3de0552d4dffcf69dbad197244e98f2f1895c19dd78e268892e729df9e300",
+            "checkBefore": 1.7234323758600447,
+            "checkAfter": 1.7033444112431637
+          },
+          "cartAccuracy": 0.334,
+          "delta": 0.0040000000000000036,
+          "node": 71,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.33,
+          "referenceAccuracy": 0.327
+        },
+        {
+          "cart": {
+            "scale": 1,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "8761c1a296b40447884535956c1b0172ac8ca96b70dbb6cdb6200eb002ddbfc8",
+            "backboneAfterHash": "8761c1a296b40447884535956c1b0172ac8ca96b70dbb6cdb6200eb002ddbfc8",
+            "checkBefore": 1.75992692761626,
+            "checkAfter": 1.741591568879801
+          },
+          "cartAccuracy": 0.387,
+          "delta": 0.016000000000000014,
+          "node": 72,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.371,
+          "referenceAccuracy": 0.381
+        },
+        {
+          "cart": {
+            "scale": 1,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "5118326d789e7d0e2ddfd71461e513788892fbe3e9c64f0c4b7e78d0ae2697a7",
+            "backboneAfterHash": "5118326d789e7d0e2ddfd71461e513788892fbe3e9c64f0c4b7e78d0ae2697a7",
+            "checkBefore": 1.7331971271172346,
+            "checkAfter": 1.717299521814304
+          },
+          "cartAccuracy": 0.35,
+          "delta": 0.009999999999999953,
+          "node": 73,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.34,
+          "referenceAccuracy": 0.363
+        },
+        {
+          "cart": {
+            "scale": 1,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "2c09c83b243f0187a24ac629fbb59d01a0655e2017b2bcff0ad3b24e69127f7a",
+            "backboneAfterHash": "2c09c83b243f0187a24ac629fbb59d01a0655e2017b2bcff0ad3b24e69127f7a",
+            "checkBefore": 1.6628955424586844,
+            "checkAfter": 1.5851007046965218
+          },
+          "cartAccuracy": 0.363,
+          "delta": 0.023999999999999966,
+          "node": 74,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.339,
+          "referenceAccuracy": 0.388
+        },
+        {
+          "cart": {
+            "scale": 1,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "46bd90244410eb028f6b46257c637654fe6fd364379f74184ebe5718aa1aeee7",
+            "backboneAfterHash": "46bd90244410eb028f6b46257c637654fe6fd364379f74184ebe5718aa1aeee7",
+            "checkBefore": 2.029535759780783,
+            "checkAfter": 2.017989954801801
+          },
+          "cartAccuracy": 0.333,
+          "delta": 0.006000000000000005,
+          "node": 75,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.327,
+          "referenceAccuracy": 0.34
+        },
+        {
+          "cart": {
+            "scale": 0,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "0851030c98a2287d14361d079e94adf6502de93855ddd451612774a1469cff67",
+            "backboneAfterHash": "0851030c98a2287d14361d079e94adf6502de93855ddd451612774a1469cff67",
+            "checkBefore": 1.391320158887658,
+            "checkAfter": 1.391320158887658
+          },
+          "cartAccuracy": 0.394,
+          "delta": 0,
+          "node": 76,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.394,
+          "referenceAccuracy": 0.331
+        },
+        {
+          "cart": {
+            "scale": 0.75,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "9123c21f28058738d93c4ea27fc9c201bf4c61638eb3d12320b664b4438b53df",
+            "backboneAfterHash": "9123c21f28058738d93c4ea27fc9c201bf4c61638eb3d12320b664b4438b53df",
+            "checkBefore": 1.2685897322088837,
+            "checkAfter": 1.2566559833170476
+          },
+          "cartAccuracy": 0.427,
+          "delta": 0.014000000000000012,
+          "node": 77,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.413,
+          "referenceAccuracy": 0.447
+        },
+        {
+          "cart": {
+            "scale": 0,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "ed9a8a0118cdc7c6412389179cd4513ced526446dca578d3480d714c36c153c1",
+            "backboneAfterHash": "ed9a8a0118cdc7c6412389179cd4513ced526446dca578d3480d714c36c153c1",
+            "checkBefore": 1.1419300015312506,
+            "checkAfter": 1.1419300015312506
+          },
+          "cartAccuracy": 0.289,
+          "delta": 0,
+          "node": 78,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.289,
+          "referenceAccuracy": 0.292
+        },
+        {
+          "cart": {
+            "scale": 1,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "aaa2d3148f095b97478864efa1006ea1ae8967467207ae78718933904dc5bbce",
+            "backboneAfterHash": "aaa2d3148f095b97478864efa1006ea1ae8967467207ae78718933904dc5bbce",
+            "checkBefore": 1.740987344396777,
+            "checkAfter": 1.6965881929774949
+          },
+          "cartAccuracy": 0.329,
+          "delta": 0.015000000000000013,
+          "node": 79,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.314,
+          "referenceAccuracy": 0.338
+        },
+        {
+          "cart": {
+            "scale": 1,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "d53fa54769deda7ff8f1724eb06fc1ac3e4a25581bc8c3e90946d0028a2e52fe",
+            "backboneAfterHash": "d53fa54769deda7ff8f1724eb06fc1ac3e4a25581bc8c3e90946d0028a2e52fe",
+            "checkBefore": 2.0011667895239045,
+            "checkAfter": 1.897546012624205
+          },
+          "cartAccuracy": 0.273,
+          "delta": 0.010000000000000009,
+          "node": 80,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.263,
+          "referenceAccuracy": 0.302
+        },
+        {
+          "cart": {
+            "scale": 0,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "130c846c5237b648c27ee63b8771580a870dbabb3103c87c3135cdea7e2eb5da",
+            "backboneAfterHash": "130c846c5237b648c27ee63b8771580a870dbabb3103c87c3135cdea7e2eb5da",
+            "checkBefore": 1.6078355525892387,
+            "checkAfter": 1.6078355525892387
+          },
+          "cartAccuracy": 0.312,
+          "delta": 0,
+          "node": 81,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.312,
+          "referenceAccuracy": 0.272
+        },
+        {
+          "cart": {
+            "scale": 0,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "03efd7c7c279d6ab8bc50611d7b77a4041f524abbc5a42874a6f370df4000202",
+            "backboneAfterHash": "03efd7c7c279d6ab8bc50611d7b77a4041f524abbc5a42874a6f370df4000202",
+            "checkBefore": 2.0126085389866537,
+            "checkAfter": 2.0126085389866537
+          },
+          "cartAccuracy": 0.26,
+          "delta": 0,
+          "node": 82,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.26,
+          "referenceAccuracy": 0.262
+        },
+        {
+          "cart": {
+            "scale": 0.5,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "d08fe7ecf3c9723d37d8bcffb29a35a26e782b556fb73e551bbabc0ad3a2a271",
+            "backboneAfterHash": "d08fe7ecf3c9723d37d8bcffb29a35a26e782b556fb73e551bbabc0ad3a2a271",
+            "checkBefore": 1.8085133412551297,
+            "checkAfter": 1.7980232834121346
+          },
+          "cartAccuracy": 0.318,
+          "delta": 0.0040000000000000036,
+          "node": 83,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.314,
+          "referenceAccuracy": 0.33
+        },
+        {
+          "cart": {
+            "scale": 1,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "918185671258295b0272581c274ef7808bf3ae4b12e5bc440460c8d8f2e1b0ea",
+            "backboneAfterHash": "918185671258295b0272581c274ef7808bf3ae4b12e5bc440460c8d8f2e1b0ea",
+            "checkBefore": 1.4747937323423301,
+            "checkAfter": 1.4603168172255454
+          },
+          "cartAccuracy": 0.386,
+          "delta": 0.015000000000000013,
+          "node": 84,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.371,
+          "referenceAccuracy": 0.382
+        },
+        {
+          "cart": {
+            "scale": 1,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "a11a65c92e15e9652c22b6a9a6bc5bfbd33a749d836bb76e8465b2d5de0f2f40",
+            "backboneAfterHash": "a11a65c92e15e9652c22b6a9a6bc5bfbd33a749d836bb76e8465b2d5de0f2f40",
+            "checkBefore": 1.3034464639360621,
+            "checkAfter": 1.2981840027029654
+          },
+          "cartAccuracy": 0.359,
+          "delta": 0.0020000000000000018,
+          "node": 85,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.357,
+          "referenceAccuracy": 0.376
+        },
+        {
+          "cart": {
+            "scale": 1,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "44c040568107c658483e00d6d7c11956c48f568dab21013efa55d524788ea488",
+            "backboneAfterHash": "44c040568107c658483e00d6d7c11956c48f568dab21013efa55d524788ea488",
+            "checkBefore": 1.7497529081671481,
+            "checkAfter": 1.7310466770879733
+          },
+          "cartAccuracy": 0.314,
+          "delta": 0.0050000000000000044,
+          "node": 86,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.309,
+          "referenceAccuracy": 0.354
+        },
+        {
+          "cart": {
+            "scale": 1,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "da7c97d83f5c38d2d8e37edcd7d062986442a1ffda210165b59222f49e69e5ed",
+            "backboneAfterHash": "da7c97d83f5c38d2d8e37edcd7d062986442a1ffda210165b59222f49e69e5ed",
+            "checkBefore": 1.7885016619174732,
+            "checkAfter": 1.7102192094624153
+          },
+          "cartAccuracy": 0.349,
+          "delta": 0.019999999999999962,
+          "node": 87,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.329,
+          "referenceAccuracy": 0.373
+        },
+        {
+          "cart": {
+            "scale": 0,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "bcd5b3da40a27da54a064ebd4f090939f5c2c797fa25247c301a780b0ca1247a",
+            "backboneAfterHash": "bcd5b3da40a27da54a064ebd4f090939f5c2c797fa25247c301a780b0ca1247a",
+            "checkBefore": 1.4070844531377622,
+            "checkAfter": 1.4070844531377622
+          },
+          "cartAccuracy": 0.259,
+          "delta": 0,
+          "node": 88,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.259,
+          "referenceAccuracy": 0.272
+        },
+        {
+          "cart": {
+            "scale": 0,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "dd86e25ee144cc2555b3c6de5a41a2b71f771d487b8025d1df24052203c588f7",
+            "backboneAfterHash": "dd86e25ee144cc2555b3c6de5a41a2b71f771d487b8025d1df24052203c588f7",
+            "checkBefore": 1.7150988600567283,
+            "checkAfter": 1.7150988600567283
+          },
+          "cartAccuracy": 0.259,
+          "delta": 0,
+          "node": 89,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.259,
+          "referenceAccuracy": 0.298
+        },
+        {
+          "cart": {
+            "scale": 1,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "3747a1aeeca5d2e152a4959a0fba3978acd036b9029c7cc08fdb7ade84823aa2",
+            "backboneAfterHash": "3747a1aeeca5d2e152a4959a0fba3978acd036b9029c7cc08fdb7ade84823aa2",
+            "checkBefore": 1.7800875590151652,
+            "checkAfter": 1.7494549542067892
+          },
+          "cartAccuracy": 0.326,
+          "delta": 0.0040000000000000036,
+          "node": 90,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.322,
+          "referenceAccuracy": 0.331
+        },
+        {
+          "cart": {
+            "scale": 1,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "3d431e9f32d1814a3d1491dff8463f512ad302cf1af1553337b18e6688e17190",
+            "backboneAfterHash": "3d431e9f32d1814a3d1491dff8463f512ad302cf1af1553337b18e6688e17190",
+            "checkBefore": 1.4528367004974563,
+            "checkAfter": 1.44729288268575
+          },
+          "cartAccuracy": 0.39,
+          "delta": 0.0050000000000000044,
+          "node": 91,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.385,
+          "referenceAccuracy": 0.387
+        },
+        {
+          "cart": {
+            "scale": 1,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "ee876994935222d73145497e888b2b52095fae7d5b2a38ba2ccb4386c8020672",
+            "backboneAfterHash": "ee876994935222d73145497e888b2b52095fae7d5b2a38ba2ccb4386c8020672",
+            "checkBefore": 1.3788205400423084,
+            "checkAfter": 1.3440531280072407
+          },
+          "cartAccuracy": 0.382,
+          "delta": 0.015000000000000013,
+          "node": 92,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.367,
+          "referenceAccuracy": 0.393
+        },
+        {
+          "cart": {
+            "scale": 1,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "3f89ffc6ebae5f08a27f01598bdb0cd6dbafee90efe28e5c91a0800f7507048c",
+            "backboneAfterHash": "3f89ffc6ebae5f08a27f01598bdb0cd6dbafee90efe28e5c91a0800f7507048c",
+            "checkBefore": 1.536432108335397,
+            "checkAfter": 1.5105603371999652
+          },
+          "cartAccuracy": 0.41,
+          "delta": 0.01699999999999996,
+          "node": 93,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.393,
+          "referenceAccuracy": 0.417
+        },
+        {
+          "cart": {
+            "scale": 1,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "d08b96a4cd83f9718530960ac35fa4f35a1321a7ca6d93212de6fcc45e4cef16",
+            "backboneAfterHash": "d08b96a4cd83f9718530960ac35fa4f35a1321a7ca6d93212de6fcc45e4cef16",
+            "checkBefore": 1.6662076843307696,
+            "checkAfter": 1.6315762321370428
+          },
+          "cartAccuracy": 0.364,
+          "delta": 0.019000000000000017,
+          "node": 94,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.345,
+          "referenceAccuracy": 0.373
+        },
+        {
+          "cart": {
+            "scale": 0,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "8aea67f0b91b0923c94a4e0b2dd19bb384b10a5c98d7ab85927faee8174390fc",
+            "backboneAfterHash": "8aea67f0b91b0923c94a4e0b2dd19bb384b10a5c98d7ab85927faee8174390fc",
+            "checkBefore": 1.4821833879101585,
+            "checkAfter": 1.4821833879101585
+          },
+          "cartAccuracy": 0.306,
+          "delta": 0,
+          "node": 95,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.306,
+          "referenceAccuracy": 0.321
+        },
+        {
+          "cart": {
+            "scale": 1,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "636caeea92898e4f05358248e4ddfa99b4b745d4b67a77d0d07cc32ba9deee07",
+            "backboneAfterHash": "636caeea92898e4f05358248e4ddfa99b4b745d4b67a77d0d07cc32ba9deee07",
+            "checkBefore": 1.7410642313609155,
+            "checkAfter": 1.6535629523769986
+          },
+          "cartAccuracy": 0.349,
+          "delta": 0.012999999999999956,
+          "node": 96,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.336,
+          "referenceAccuracy": 0.366
+        },
+        {
+          "cart": {
+            "scale": 0,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "16773a8dd2ad26324c8428c27f00b00225d7b50d4c4e394beca475146522d41f",
+            "backboneAfterHash": "16773a8dd2ad26324c8428c27f00b00225d7b50d4c4e394beca475146522d41f",
+            "checkBefore": 1.3835635074797128,
+            "checkAfter": 1.3835635074797128
+          },
+          "cartAccuracy": 0.4,
+          "delta": 0,
+          "node": 97,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.4,
+          "referenceAccuracy": 0.375
+        },
+        {
+          "cart": {
+            "scale": 1,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "c24d4078727b1fc119eb5fdb53395ecfc29f5db75e16e172b94f3891f98b8135",
+            "backboneAfterHash": "c24d4078727b1fc119eb5fdb53395ecfc29f5db75e16e172b94f3891f98b8135",
+            "checkBefore": 1.6368091406293623,
+            "checkAfter": 1.5393845658532705
+          },
+          "cartAccuracy": 0.339,
+          "delta": 0.017000000000000015,
+          "node": 98,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.322,
+          "referenceAccuracy": 0.36
+        },
+        {
+          "cart": {
+            "scale": 0.5,
+            "fitCheckDisjoint": true,
+            "backboneBeforeHash": "eca498df86f04aed428c996b7190e06f23a9a8d3e30053d6f75d8ec153bfebbb",
+            "backboneAfterHash": "eca498df86f04aed428c996b7190e06f23a9a8d3e30053d6f75d8ec153bfebbb",
+            "checkBefore": 1.4174813425520767,
+            "checkAfter": 1.4167471968685337
+          },
+          "cartAccuracy": 0.34,
+          "delta": 0.006000000000000005,
+          "node": 99,
+          "optimizerSteps": 5,
+          "proposalAccuracy": 0.334,
+          "referenceAccuracy": 0.354
+        }
+      ],
+      "seed": 2025,
+      "source": {
+        "basil_core/attacks.py": "e1b653952cffd20983d9c4b0835fd11725e7df1cccff11c62e30569b952f119f",
+        "basil_core/data/cifar.py": "9bacb38333fe1b27b74919f7422e74415ebc58bd54e64431845f930a9ebfe180",
+        "basil_core/execution_profile.py": "222e60d95b643a364b30a400b28ed38baf4913db04b5acae5fa6f558ed84cfbe",
+        "basil_core/factorial_model.py": "07baaac3ae5d5a7a698fc4d37b37574f93f95510e43976cb8fbacdeb55f8142f",
+        "basil_core/factorial_study.py": "51ba798ee07f4d80a90a3b7e5c11280073e2cf2fabe1555b50e0505d1022884f",
+        "basil_core/iid_runtime.py": "f0069317dd6fbc583726cb734d89d8c32c50b2e5af564a491df513fee2ed9c58",
+        "basil_core/lazy_imports.py": "5d7039af5f56bcf16099ceef788e0b6515a70af7ff94cb8b9cd6fee8759f15b4",
+        "basil_core/models.py": "49169fb67c9c59d00d86e09d62d88189b164a777820680624d42bab1a47bd0cb",
+        "basil_core/research_protocol.py": "cb4fcaeb4f0b11079598001cd98ecfe8965db7ff6a806973b04b6af3393e7c15",
+        "basil_core/sharp_cart.py": "48ad43fe155f5e61c8122fcbe80e2dd3cb10b9afdf4f0506c244a466c561eeb8",
+        "basil_core/sharp_data.py": "bb636a1b6b4a95b246fa62b6168a790b92e70a11268c399b093d4689cd4eaf18",
+        "basil_core/sharp_math.py": "be9528e3ce10d8e084a44577fdb046fa8e82c61cf5d1824f6aa8494c63fb0831",
+        "basil_core/sharp_protocol.py": "564a836b74682e18e1a7d28b701b38c4b6d4aeaed1b9913cc4dbb959220e610f",
+        "basil_core/sharp_study.py": "2af5e2d52ea92f64f1a098a23fa20c9b4f172b1ee1e622fd0b6988ae16435dad",
+        "basil_core/sharp_worker.py": "42f64e76afb8a1093e23b95e874edab4e6aac12e3ef58de0318259b6c081fce7",
+        "basil_core/trainer.py": "61782cd28a44443618f07d4ed9fd8a5ac4a51ade940e4f0d1b6e9dbc245e3124",
+        "docs/specifications/SHARP_professor_20261027.pdf": "b010c9c79a2282c5835e0b9b4bc5cd95500afbcf7395dd9d04fd6a2a0b9ce700",
+        "scripts/run_sharp_study.py": "2f1909042567548c5a8d7efceda7b831aa60c8782f1f02e45774a4592d741869"
+      },
+      "sourceConfig": {
+        "actualAttackers": 0,
+        "allFailPolicy": "keep_all_and_record_pdf_algorithm_1",
+        "attackStart": 1,
+        "attackType": "hidden",
+        "basilWindow": 34,
+        "batchSize": 80,
+        "byzantineBudget": 33,
+        "calibrationDraws": 19,
+        "cart": false,
+        "cartMode": "coherent_classifier_residual_transport",
+        "cartProbePerClass": 16,
+        "cartRidgeFraction": 0.01,
+        "channel": "absolute_independent_gaussian_per_link",
+        "classes": 10,
+        "condition": "clean",
+        "curvature": 1,
+        "dataset": "cifar10",
+        "dirichletAlpha": 0.5,
+        "evaluationOrigin": "stratified_heldout_TRAIN",
+        "evaluationSamples": 1000,
+        "gradientClipping": null,
+        "hopDenominator": "actual_selected",
+        "learningRate": 0.03,
+        "learningRateSchedule": "eta0_over_1_plus_eta0_round",
+        "localEpochs": null,
+        "localSteps": 5,
+        "method": "sharp",
+        "model": "resnet20",
+        "momentum": 0,
+        "nodes": 100,
+        "officialTestUsed": false,
+        "partition": "dirichlet",
+        "performanceClaim": "not_established",
+        "primaryEndpoint": "mean_node_validation_accuracy_last_10_rounds",
+        "proximalMu": 0,
+        "researchValid": false,
+        "revision": "sharp_professor_20261027_v1",
+        "rounds": 5,
+        "runId": "cifar10-dirichlet-2025-clean-s0-sharp-7ee48b0d8267",
+        "seed": 2025,
+        "sigma": 0,
+        "startup": "empty_real_windows_with_initial_model_fallback",
+        "switches": {
+          "attack": false,
+          "byzantine_mitigation": false,
+          "cart": false,
+          "name": "clean",
+          "noise": false,
+          "noise_mitigation": false
+        },
+        "trainPerClass": null,
+        "validationPerClass": null,
+        "weightDecay": 0,
+        "window": 66
+      },
+      "sourceRun": "cifar10-dirichlet-2025-clean-s0-sharp-7ee48b0d8267",
+      "status": "COMPLETED_MECHANISM_CHECK",
+      "worsenedReceivers": 11,
+      "mechanismCheckProgramSha256": "f33462d658b26bca077ed25f3d1cf8031ed6c1a9db9cab4bde6a40d90020a1f7"
+    }
+  ]
+}

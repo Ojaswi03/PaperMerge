@@ -1,0 +1,6 @@
+{
+  "sourceReceipt": "docs/validation/SHARP_CART_RETENTION_20261027.json",
+  "sourceSha256": "db5d18782a0eab540241a69b4566349289f8a92d70ee939d6f376a9672ba4eba",
+  "programSha256": "77804b22d9e117ffb1a7487be616236bbb62682eeef8ede341b3996d98cf2683",
+  "scope": "Isolated local adaptation, one seed per dataset, no attack/noise; no significance claim."
+}

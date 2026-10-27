@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 from pathlib import Path
 import sys
@@ -18,11 +19,15 @@ def verify(root,*,require_complete=False):
     from basil_core.sharp_data import training_data,prepare_partition
     from basil_core.sharp_protocol import load_state,evaluate,vector_hash
     from basil_core.sharp_math import hop_coefficient
+    from basil_core.research_protocol import resolve_attackers
     from scripts.run_sharp_study import check_source,write_json
     tf.config.threading.set_intra_op_parallelism_threads(1)
     tf.config.threading.set_inter_op_parallelism_threads(1)
     tf.config.experimental.enable_op_determinism()
     plan=json.loads((root/'plan.json').read_text());check_source(plan['source'])
+    for name,digest in plan.get('executionProgram',{}).items():
+        if hashlib.sha256((ROOT/name).read_bytes()).hexdigest()!=digest:
+            raise ValueError('Validation execution program changed after its plan was frozen.')
     reports=[];pending=[];rows={}
     for cfg in plan['configs']:
         folder=root/cfg['runId'];path=folder/'run.json'
@@ -51,10 +56,26 @@ def verify(root,*,require_complete=False):
         discrepancies=np.sum(np.abs(np.rint(np.asarray(fresh_classes)*counts)-np.rint(per_class[-1]*counts)),axis=1)
         if discrepancies.max()>1:raise ValueError('Independent per-class correct counts disagree.')
         scales=[];active_gates=0;all_fail=0
+        attackers=resolve_attackers(cfg['seed'],cfg['actualAttackers'],cfg['nodes'])
+        post_selected=0;post_attackers=0
         for index,record in enumerate(state['telemetry']):
             if record['activation']!=index+1 or (record['round'],record['node'])!=divmod(index,cfg['nodes']):
                 raise ValueError('Telemetry cursor/order mismatch.')
             training=record['training'];selection=record['selection']
+            node=record['node'];round_id=record['round']
+            allowed=[(node-distance)%cfg['nodes'] for distance in range(1,cfg['window']+1)
+                if round_id>0 or (node-distance)%cfg['nodes']<node]
+            senders=selection['selectedSenders']
+            if (len(set(senders))!=len(senders) or not set(senders).issubset(allowed)
+                    or selection['availableCopies']!=len(allowed)
+                    or selection['selectedCount']!=(len(senders) if allowed else 1)):
+                raise ValueError('Selected senders violate the ring/window definition.')
+            if (record['configuredByzantine']!=(node in attackers)
+                    or record['attackActive']!=(node in attackers and round_id>=cfg['attackStart'])
+                    or record['selectedConfiguredAttackers']!=sum(s in attackers for s in senders)):
+                raise ValueError('Attack audit disagrees with the seeded adversary set.')
+            if round_id>cfg['attackStart']:
+                post_selected+=len(senders);post_attackers+=record['selectedConfiguredAttackers']
             if training['optimizerSteps']!=cfg['localSteps']:raise ValueError('Local steps differ from PDF/config.')
             eta=cfg['learningRate']/(1+cfg['learningRate']*record['round'])
             q=selection['selectedCount'] if cfg['hopDenominator']=='actual_selected' else cfg['byzantineBudget']
@@ -76,6 +97,8 @@ def verify(root,*,require_complete=False):
             finalWorstClassMean=float(np.asarray(fresh_classes).mean(axis=0).min()),
             cpuGpuMaxAccuracyDifference=difference,nonzeroCartCorrections=sum(s>0 for s in scales),
             activeClassGates=active_gates,screenAllFailFallbacks=int(all_fail),
+            resolvedAttackerIds=list(attackers),
+            selectedAttackerFractionAfterAllSendersActive=post_attackers/post_selected if post_selected else None,
             checkpointComplete=True,officialTestUsed=False))
         rows[(cfg['dataset'],cfg['partition'],cfg['method'],cfg['seed'],cfg['sigma'],cfg['condition'])]=state['telemetry']
         print(f'VERIFIED {cfg["runId"]}: mean {np.mean(fresh):.2%}, CART commits {sum(s>0 for s in scales)}',flush=True)
@@ -89,7 +112,8 @@ def verify(root,*,require_complete=False):
                     raise ValueError('Control/CART differ before a receiver has any historical memory.')
     if require_complete and pending:raise ValueError(f'{len(pending)} selected experiments are not complete.')
     result=dict(status='ALL_SELECTED_RUNS_VERIFIED' if not pending else 'COMPLETED_SUBSET_VERIFIED',
-        verified=len(reports),pending=pending,rows=reports,officialTestUsed=False)
+        verified=len(reports),pending=pending,rows=reports,officialTestUsed=False,
+        verificationProgramSha256=hashlib.sha256(Path(__file__).read_bytes()).hexdigest())
     write_json(root/'independent_validation.json',result)
     return result
 

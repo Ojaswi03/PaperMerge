@@ -15,6 +15,8 @@ the specified noise-aware objective and a frozen proximal anchor. CART then
 optionally applies the existing receiver-owned classifier transport correction.
 Its benefit is measured against an otherwise identical SHARP run without CART.
 
+![Full SHARP and optional CART flow](figures/sharp-study/architecture.svg)
+
 | Setting | New default |
 | --- | --- |
 | Full network | 100 logical clients, sequential ring |
@@ -290,3 +292,22 @@ COMMON arguments and source revision. Keep the previous output namespace.
 
 Local test results and the final readiness evidence are recorded separately;
 this implementation document does not fabricate their completion status.
+
+## Separate final official-TEST evaluation
+
+Development and the commands above report the reserved TRAIN holdout. Once
+the intended configuration/analysis is frozen and all selected training runs
+complete, evaluate saved final checkpoints without further training:
+
+```bash
+python scripts/evaluate_sharp_official_test.py --output "$RUN" \
+  --profile hpc --gpu 0 --device GPU
+```
+
+This explicit inference-only action reads the full 10,000-image official TEST
+split for each dataset. It never calls SGD, candidate selection or CART fitting,
+and preserves the training manifests. It writes distinct per-run final-TEST
+receipts and `official_test_summary.json`, grouping the same configuration and
+sigma across seeds. An existing receipt with different data/config identity is
+not overwritten. The final-TEST tool has been checked with synthetic fixtures;
+official TEST has **not** been consumed during the local development studies.
