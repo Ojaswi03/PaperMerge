@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 from pathlib import Path
 import sys
 
@@ -13,6 +14,7 @@ sys.path.insert(0,str(ROOT))
 
 
 def verify(root,*,require_complete=False):
+    os.environ['CUDA_VISIBLE_DEVICES']='-1'
     import numpy as np
     import tensorflow as tf
     from basil_core.sharp_worker import SharpWorker
@@ -21,6 +23,7 @@ def verify(root,*,require_complete=False):
     from basil_core.sharp_math import hop_coefficient
     from basil_core.research_protocol import resolve_attackers
     from scripts.run_sharp_study import check_source,write_json
+    tf.config.set_visible_devices([],'GPU')
     tf.config.threading.set_intra_op_parallelism_threads(1)
     tf.config.threading.set_inter_op_parallelism_threads(1)
     tf.config.experimental.enable_op_determinism()

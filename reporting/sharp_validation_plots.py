@@ -37,7 +37,9 @@ def plot_retention(receipt,output):
     fig.text(.5,.025,'No attack or channel noise in this isolated check. One seed per dataset; client outcomes are not independent seed replications.',
              ha='center',fontsize=8)
     fig.tight_layout(rect=(0,.065,1,.92))
-    for extension in ('svg','pdf','png'):fig.savefig(output/f'cart_retention.{extension}',dpi=160,bbox_inches='tight')
+    for extension in ('svg','pdf','png'):
+        path=output/f'cart_retention.{extension}';fig.savefig(path,dpi=160,bbox_inches='tight')
+        if extension=='svg':path.write_text('\n'.join(line.rstrip() for line in path.read_text().splitlines())+'\n')
     plt.close(fig)
     (output/'plot_provenance.json').write_text(json.dumps(dict(
         sourceReceipt=str(receipt),sourceSha256=hashlib.sha256(receipt.read_bytes()).hexdigest(),
@@ -74,7 +76,9 @@ def plot_seed_study(receipt,output):
     fig.suptitle('MNIST | 100 clients | Dirichlet 0.5 | three seeds | explicit CPU validation',fontsize=11)
     fig.text(.5,.015,'Shading: ±1 sample SD across seeds, not a confidence interval. Official TEST was not used.',ha='center',fontsize=8)
     fig.tight_layout(rect=(0,.06,1,.93))
-    for ext in ('svg','pdf','png'):fig.savefig(output/f'mnist_seed_study.{ext}',dpi=160,bbox_inches='tight')
+    for ext in ('svg','pdf','png'):
+        path=output/f'mnist_seed_study.{ext}';fig.savefig(path,dpi=160,bbox_inches='tight')
+        if ext=='svg':path.write_text('\n'.join(line.rstrip() for line in path.read_text().splitlines())+'\n')
     plt.close(fig)
     (output/'seed_plot_provenance.json').write_text(json.dumps(dict(sourceReceipt=str(receipt),
         sourceSha256=hashlib.sha256(receipt.read_bytes()).hexdigest(),

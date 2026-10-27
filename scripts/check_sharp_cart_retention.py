@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 from pathlib import Path
 import sys
 
@@ -17,6 +18,7 @@ sys.path.insert(0,str(ROOT))
 
 
 def main():
+    os.environ['CUDA_VISIBLE_DEVICES']='-1'
     from basil_core.lazy_imports import lazy_module
     np=lazy_module('numpy')
     import tensorflow as tf
@@ -32,6 +34,7 @@ def main():
     parser.add_argument('--dataset',choices=('mnist','cifar10','cifar100'),required=True)
     parser.add_argument('--output',type=Path,required=True)
     args=parser.parse_args()
+    tf.config.set_visible_devices([],'GPU')
     tf.config.threading.set_intra_op_parallelism_threads(1)
     tf.config.threading.set_inter_op_parallelism_threads(1)
     tf.config.experimental.enable_op_determinism()
