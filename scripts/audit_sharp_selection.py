@@ -49,6 +49,9 @@ def analyze(cfg,telemetry,metrics):
             fallback=selection['screenAllFailFallback']
             if fallback!= (not passed):raise ValueError('Peak fallback evidence is inconsistent.')
             retained=set(available) if fallback else passed
+            if selection.get('screenGuardFallback'):
+                if cfg.get('method')!='sharp_guarded':raise ValueError('Undeclared guarded-selection behavior.')
+                retained=set(available)
             if not set(selected).issubset(retained):raise ValueError('A rejected copy was selected.')
             row['screenedActivations']+=1;row['allFailFallbacks']+=fallback
             for s in available:
@@ -118,7 +121,7 @@ def text_report(reports,*,all_rounds=False):
     percent=lambda x:f'{100*x:.2f}' if x is not None else '--'
     lines=[]
     for report in reports:
-        cfg=report['config'];lines.append(f'{cfg["dataset"]}/{cfg["partition"]} seed{cfg["seed"]} '
+        cfg=report['config'];lines.append(f'{cfg.get("method","sharp")} {cfg["dataset"]}/{cfg["partition"]} seed{cfg["seed"]} '
             f'{cfg["condition"]} sigma{cfg["sigma"]:g} | {report["status"]}')
         if not report['checkpointAvailable']:
             lines.append('No checkpoint committed yet.');continue
@@ -138,7 +141,7 @@ def text_report(reports,*,all_rounds=False):
                 f'{percent(row["selectedDirectAttackFraction"]):>15} {percent(row["attackAncestryInputFraction"]):>14} '
                 f'{percent(row["unattackedRetainedFraction"]):>17} {percent(row["attackedRetainedFraction"]):>15} '
                 f'{row["allFailFallbacks"]:7} {row["meanSelectedCount"]:5.1f}')
-        lines.append('Retention rates use full-window screens and include the recorded all-fail fallback.')
+        lines.append('Retention rates use full-window screens and include recorded fallback policies.')
         lines.append('Attack labels are post-hoc audit information, never inputs to training decisions.')
     return '\n'.join(lines)
 

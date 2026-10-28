@@ -61,7 +61,7 @@ def aggregate_final_results(results):
     import numpy as np
     groups={}
     for row in results:
-        cfg=row['config'];basis={k:v for k,v in cfg.items() if k not in ('seed','runId')}
+        cfg=row['config'];basis={k:v for k,v in cfg.items() if k not in ('seed','runId','baseRunId')}
         key=json.dumps(basis,sort_keys=True)
         group=groups.setdefault(key,dict(config=basis,seeds=[],seedMeanAccuracy=[]))
         if cfg['seed'] in group['seeds']:raise ValueError('Duplicate final TEST seed result.')
@@ -81,7 +81,22 @@ def evaluate(args):
     from basil_core.sharp_protocol import load_state,evaluate as infer
     from basil_core.sharp_data import digest
     from scripts.run_sharp_study import check_source,write_json
-    plan=json.loads((args.output/'plan.json').read_text());check_source(plan['source'])
+    plan=json.loads((args.output/'plan.json').read_text())
+    guarded={c['method']=='sharp_guarded' for c in plan['configs']}
+    if not guarded or len(guarded)>1:raise ValueError('Use one nonempty, frozen method family per final-evaluation plan.')
+    if guarded=={True}:
+        from basil_core.sharp_guarded_protocol import check_source as check_guarded,validate_config
+        source=dict(plan['source']);launcher='scripts/run_guarded_sharp_study.py'
+        extra=source.pop(launcher,None);check_guarded(source)
+        if extra is not None and hashlib.sha256((ROOT/launcher).read_bytes()).hexdigest()!=extra:
+            raise ValueError('Guarded launcher changed from the frozen final-evaluation plan.')
+    else:
+        from basil_core.sharp_study import validate_config
+        check_source(plan['source'])
+    for cfg in plan['configs']:validate_config(cfg)
+    for name,digest_value in plan.get('executionProgram',{}).items():
+        if hashlib.sha256((ROOT/name).read_bytes()).hexdigest()!=digest_value:
+            raise ValueError('A frozen training/continuation executor changed.')
     # Check completion before loading any official TEST example.
     manifests=[]
     for cfg in plan['configs']:

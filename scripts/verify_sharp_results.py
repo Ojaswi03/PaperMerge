@@ -27,7 +27,21 @@ def verify(root,*,require_complete=False):
     tf.config.threading.set_intra_op_parallelism_threads(1)
     tf.config.threading.set_inter_op_parallelism_threads(1)
     tf.config.experimental.enable_op_determinism()
-    plan=json.loads((root/'plan.json').read_text());check_source(plan['source'])
+    plan=json.loads((root/'plan.json').read_text())
+    guarded={c['method']=='sharp_guarded' for c in plan['configs']}
+    if len(guarded)>1:raise ValueError('Original and guarded protocols require separate frozen plans.')
+    if guarded=={True}:
+        from basil_core.sharp_guarded_protocol import check_source as check_guarded,validate_config
+        protocol_source=dict(plan['source'])
+        launcher='scripts/run_guarded_sharp_study.py'
+        extra=protocol_source.pop(launcher,None)
+        check_guarded(protocol_source)
+        if extra is not None and hashlib.sha256((ROOT/launcher).read_bytes()).hexdigest()!=extra:
+            raise ValueError('Guarded GPU launcher changed from the frozen plan.')
+    else:
+        from basil_core.sharp_study import validate_config
+        check_source(plan['source'])
+    for cfg in plan['configs']:validate_config(cfg)
     for name,digest in plan.get('executionProgram',{}).items():
         if hashlib.sha256((ROOT/name).read_bytes()).hexdigest()!=digest:
             raise ValueError('Validation execution program changed after its plan was frozen.')
@@ -80,9 +94,19 @@ def verify(root,*,require_complete=False):
             if round_id>cfg['attackStart']:
                 post_selected+=len(senders);post_attackers+=record['selectedConfiguredAttackers']
             if training['optimizerSteps']!=cfg['localSteps']:raise ValueError('Local steps differ from PDF/config.')
+            if cfg['method']=='sharp_guarded' and cfg['switches']['byzantine_mitigation'] and allowed:
+                raw=selection['rawSurvivorCount'];b=cfg['byzantineBudget']
+                if selection.get('screenApplied'):
+                    observed=sum(v<=selection['peakThreshold'] for v in selection['peakRatios'])
+                else:observed=len(allowed)
+                target=1 if raw<=b else min(b,raw-b)
+                if (raw!=observed or selection['screenGuardFallback']!=(raw<=b)
+                        or selection['targetCount']!=target or selection['selectedCount']>target
+                        or selection['survivorUnattackedLowerBound']!=max(0,raw-b)):
+                    raise ValueError('Guarded survivor count/fallback is inconsistent.')
             eta=cfg['learningRate']/(1+cfg['learningRate']*record['round'])
             q=selection['selectedCount'] if cfg['hopDenominator']=='actual_selected' else cfg['byzantineBudget']
-            expected=(hop_coefficient(cfg['sigma'],q,eta,cfg['curvature']) if cfg['method']=='sharp' else cfg['sigma']**2) if cfg['switches']['noise_mitigation'] else 0.
+            expected=(hop_coefficient(cfg['sigma'],q,eta,cfg['curvature']) if cfg['method'] in ('sharp','sharp_guarded') else cfg['sigma']**2) if cfg['switches']['noise_mitigation'] else 0.
             if not np.isclose(training['rlaCoefficient'],expected,rtol=1e-12,atol=1e-15):raise ValueError('Wrong hop-aware RLA coefficient.')
             if not record['attackActive'] and record['outboundHash']!=record['trainedHash']:raise ValueError('Unrequested outbound mutation.')
             all_fail+=selection['screenAllFailFallback']

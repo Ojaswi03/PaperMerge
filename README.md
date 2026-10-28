@@ -23,6 +23,14 @@ identified a peak-screen failure in the IID attack-defense condition. The
 read-only checkpoint audit documents actual corrupted-copy admission; the
 running HPC training source remains frozen.
 
+A separately versioned [survivor-aware selector correction](docs/SHARP_SURVIVOR_GUARD.md)
+now has verified 100-node, 35-round MNIST development results across three seeds:
+attack-defense averages 89.62% IID and 82.80% non-IID, below clean controls of
+96.70% and 96.11%. The correction is separate from CART. In the matched
+one-seed joint-noise pilot, unchanged CART **reduces** final accuracy by 1.96
+and 4.37 percentage points respectively. All outcomes, validation receipts and
+separate HPC pilot commands are documented; no general CART benefit is claimed.
+
 All archived research PDFs and their source/download records are linked in
 the [complete paper index](papers/FIRECRAWL_REFERENCE_INDEX.md).
 

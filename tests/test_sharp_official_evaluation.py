@@ -1,6 +1,7 @@
 import json
 from pathlib import Path
 from types import SimpleNamespace
+import pytest
 
 
 def test_official_mnist_loader_reads_only_test_keys(tmp_path,monkeypatch):
@@ -49,7 +50,8 @@ def test_official_summary_never_averages_different_sigmas():
     with pytest.raises(ValueError,match='Duplicate'):aggregate_final_results([*rows,rows[0]])
 
 
-def test_final_evaluation_never_calls_training_and_preserves_training_manifest(tmp_path,monkeypatch):
+@pytest.mark.parametrize('guarded',[False,True])
+def test_final_evaluation_never_calls_training_and_preserves_training_manifest(tmp_path,monkeypatch,guarded):
     import sys
     from basil_core.lazy_imports import lazy_module
     np=lazy_module('numpy')
@@ -59,6 +61,10 @@ def test_final_evaluation_never_calls_training_and_preserves_training_manifest(t
     import basil_core.sharp_protocol as protocol
     from basil_core.sharp_study import configuration
     cfg=configuration('mnist','iid',2025,'clean',0.,nodes=4,rounds=2)
+    if guarded:
+        import basil_core.sharp_guarded_protocol as guarded_protocol
+        cfg=guarded_protocol.guarded_configuration(cfg)
+        monkeypatch.setattr(guarded_protocol,'check_source',lambda _:None)
     folder=tmp_path/cfg['runId'];folder.mkdir()
     original=dict(config=cfg,source={'test':'fixed'},status='COMPLETED',data={},partition={},runtime={},initialHash='initial')
     (tmp_path/'plan.json').write_text(json.dumps(dict(configs=[cfg],source={'test':'fixed'})))
@@ -80,3 +86,17 @@ def test_final_evaluation_never_calls_training_and_preserves_training_manifest(t
     result=json.loads((folder/'official_test_evaluation.json').read_text())
     assert result['officialTestUsed'] and not result['trainingPerformed'] and not result['cartDecisionsUsedTest']
     assert result['meanAccuracy']==.75 and json.loads((folder/'run.json').read_text())==original
+
+
+def test_guarded_final_summary_groups_derived_ids_by_seed_and_separates_methods():
+    from basil_core.sharp_study import configuration
+    from basil_core.sharp_guarded_protocol import guarded_configuration
+    from scripts.evaluate_sharp_official_test import aggregate_final_results
+    rows=[]
+    for seed in (2025,2026,2027):
+        base=configuration('mnist','iid',seed,'attack_noise_defense_rla_cart',.01)
+        for cfg in (base,guarded_configuration(base)):
+            rows.append(dict(config=cfg,meanAccuracy=.8+.01*(seed-2025)))
+    groups=aggregate_final_results(rows)
+    assert len(groups)==2 and {g['config']['method'] for g in groups}=={'sharp','sharp_guarded'}
+    assert all(g['seeds']==[2025,2026,2027] and g['sampleStd']==pytest.approx(.01) for g in groups)
