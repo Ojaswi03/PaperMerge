@@ -50,6 +50,12 @@ completion/failure alerts. The local two-case CIFAR-10 benchmark measured
 2.01x throughput with exact matching training state; HPC speedup still needs
 its own measurements. The frozen CART training source is unchanged.
 
+[Higher-concurrency execution](docs/CART_HIGH_CONCURRENCY.md) adds a separate
+one-to-eight-slot launcher with CUDA-context and host-RAM budgets. Six workers
+completed a local CIFAR-10 benchmark 2.24x faster than two, with identical
+training state. The guide restores the explicit 100-round final-study target;
+HPC throughput and CART efficacy still require their own evidence.
+
 ## Historical A/B/C/D results — non-IID 100 and 500 rounds
 
 [Full results, ten analysis tables, numerical checks and limitations](newResults/nonIID/500round/FINAL_ABCD_RESULTS_ANALYSIS.md).

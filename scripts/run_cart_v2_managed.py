@@ -60,7 +60,8 @@ def run(args,forwarded):
         save()
         try:
             if not args.watch and not args.postprocess_only:
-                command=[sys.executable,str(ROOT/'scripts/run_cart_v2_parallel.py'),'--execute','--output',str(root),*forwarded]
+                launcher='run_cart_v2_scaled.py' if getattr(args,'scheduler','standard')=='scaled' else 'run_cart_v2_parallel.py'
+                command=[sys.executable,str(ROOT/'scripts'/launcher),'--execute','--output',str(root),*forwarded]
                 with (root/'supervisor.log').open('a') as log:
                     process=subprocess.Popen(command,cwd=ROOT,stdout=log,stderr=subprocess.STDOUT)
                     while process.poll() is None:
@@ -104,6 +105,7 @@ def run(args,forwarded):
 def main():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('--output',type=Path);p.add_argument('--figures',type=Path)
+    p.add_argument('--scheduler',choices=('standard','scaled'),default='standard')
     p.add_argument('--ntfy-topic');p.add_argument('--ntfy-server',default='https://ntfy.sh')
     p.add_argument('--ntfy-token-file',type=Path);p.add_argument('--timing-from',nargs='*',type=Path,default=[])
     p.add_argument('--tmux');action=p.add_mutually_exclusive_group()

@@ -1,0 +1,181 @@
+{
+  "status": "SIX_SLOT_CART_STATE_EQUIVALENCE_VERIFIED",
+  "rows": [
+    {
+      "runId": "mnist-iid-2025-attack_noise_defense_rla_cart-s0.01-cartv2-2760bc1edc28",
+      "exactArraySha256": {
+        "nodeParams": "fc8f7bf5b27bb6fa47bd835c3a5edb54efc32272b83c3b9e755abbe7bad5e231",
+        "outbound": "6bcae570d58e71e20fcc8a5326f329bf4f1bf4489eb9754323ee786de1655c57",
+        "senderRounds": "1b897dddd4c151e2a2e6e3e91b7ea0f7fc4fd5ed00ef1c9669e8566393a02586",
+        "referenceParams": "4a629dc533d2bceb7809b5a1b26817722de31735e832e7a7d21bba94b798f71f"
+      },
+      "telemetryExact": true,
+      "roundMetricsExact": true,
+      "nonzeroCorrections": 0
+    },
+    {
+      "runId": "mnist-iid-2026-attack_noise_defense_rla_cart-s0.01-cartv2-7b74b6537918",
+      "exactArraySha256": {
+        "nodeParams": "4d2980f2563f2d1c4617da12433f41c32c48401407d1f133646984690d736779",
+        "outbound": "b17dccb61dffc15da910e1e5c547568a87b877eff4fbed1155ca544bb26b7581",
+        "senderRounds": "1b897dddd4c151e2a2e6e3e91b7ea0f7fc4fd5ed00ef1c9669e8566393a02586",
+        "referenceParams": "ce5e870b1af7180aef1bf6c12acb62c603ec99d26d7a630286bee3cfed679a4a"
+      },
+      "telemetryExact": true,
+      "roundMetricsExact": true,
+      "nonzeroCorrections": 0
+    },
+    {
+      "runId": "mnist-iid-2027-attack_noise_defense_rla_cart-s0.01-cartv2-f8834ea1d27e",
+      "exactArraySha256": {
+        "nodeParams": "b597cd0b14d0139a672840e0de1df8747064aa54f0cf5daebe8704d449bd951d",
+        "outbound": "97a88c7acef71c2e034698d50a497574f25bf2a37de60f7a756dcc2195a9388e",
+        "senderRounds": "1b897dddd4c151e2a2e6e3e91b7ea0f7fc4fd5ed00ef1c9669e8566393a02586",
+        "referenceParams": "2ae94f2a8ff701239fe88da29d352d583a033dd6a8e70ed38171d5ab431531fc"
+      },
+      "telemetryExact": true,
+      "roundMetricsExact": true,
+      "nonzeroCorrections": 1
+    },
+    {
+      "runId": "mnist-dirichlet-2025-attack_noise_defense_rla_cart-s0.01-cartv2-318f3a9dcc1a",
+      "exactArraySha256": {
+        "nodeParams": "007c875411965ff944a1946860a9571b3be9fd0fb97357bfd15897c0fa27e209",
+        "outbound": "1751d9722b45235acba7f13791ca3c1e5d7f63ac5e24fbe1cb7dc4d6d580d0d1",
+        "senderRounds": "1b897dddd4c151e2a2e6e3e91b7ea0f7fc4fd5ed00ef1c9669e8566393a02586",
+        "referenceParams": "15a8b8643e53305f57d9b977f90c6f9eb816d1d2d1f66a5e2e72c1a77a48ee60"
+      },
+      "telemetryExact": true,
+      "roundMetricsExact": true,
+      "nonzeroCorrections": 0
+    },
+    {
+      "runId": "mnist-dirichlet-2026-attack_noise_defense_rla_cart-s0.01-cartv2-534656e17d95",
+      "exactArraySha256": {
+        "nodeParams": "e2d37a0b612ce869710a1710a6def790dac43857e8d904ae98e5aee73365ee09",
+        "outbound": "2f789155df5692cc9e9264cf40aa650986b5df0118ff43e21f9a2a6991b34fad",
+        "senderRounds": "1b897dddd4c151e2a2e6e3e91b7ea0f7fc4fd5ed00ef1c9669e8566393a02586",
+        "referenceParams": "68871a08194fa02968c03c0447919b3d4736891e6161b6eb2a9e05ed1f6dfc2f"
+      },
+      "telemetryExact": true,
+      "roundMetricsExact": true,
+      "nonzeroCorrections": 1
+    },
+    {
+      "runId": "mnist-dirichlet-2027-attack_noise_defense_rla_cart-s0.01-cartv2-5746c0eef3f7",
+      "exactArraySha256": {
+        "nodeParams": "c8cb874e3d4d8a10fc9427bc02da55de137506914a8129bc2bd3801ca7a28833",
+        "outbound": "1c44e9bc03cb133aea4a94e7035d77a54e35eb688ae3ec462a4dd7f14cddff7a",
+        "senderRounds": "1b897dddd4c151e2a2e6e3e91b7ea0f7fc4fd5ed00ef1c9669e8566393a02586",
+        "referenceParams": "2a8a5d3544d862f8f46e45d5d87372e519eb19fc2980b14500a55ebbec1dee06"
+      },
+      "telemetryExact": true,
+      "roundMetricsExact": true,
+      "nonzeroCorrections": 1
+    },
+    {
+      "runId": "cifar10-iid-2025-attack_noise_defense_rla_cart-s0.01-cartv2-76628cd903ab",
+      "exactArraySha256": {
+        "nodeParams": "3ddaf10c7a5b0a7a805687006103bdd5d0a98493c6462b3ae958293fdb740972",
+        "outbound": "adf5dfc2b31d4e9580f57eef3857c99d0c9d9d668923729b33e59f18b814147d",
+        "senderRounds": "1b897dddd4c151e2a2e6e3e91b7ea0f7fc4fd5ed00ef1c9669e8566393a02586",
+        "referenceParams": "689444cfccbf2b48dfde9fee7606cef6e75aa4388cb819929cf46332c826b33a"
+      },
+      "telemetryExact": true,
+      "roundMetricsExact": true,
+      "nonzeroCorrections": 0
+    },
+    {
+      "runId": "cifar10-iid-2026-attack_noise_defense_rla_cart-s0.01-cartv2-18bac9716b62",
+      "exactArraySha256": {
+        "nodeParams": "5338f232bf175fd88ef6a4c979c7f1c1398cc6e5de43c59166a8aede4f8997ee",
+        "outbound": "daebd77ff0f224104de8611ca78c2a4836562542ff0c983a7d7de14ba9861237",
+        "senderRounds": "1b897dddd4c151e2a2e6e3e91b7ea0f7fc4fd5ed00ef1c9669e8566393a02586",
+        "referenceParams": "7862ed3c04d373f0dac43649c0dfd7f683dea6c5671a98c8a237f03d4133c578"
+      },
+      "telemetryExact": true,
+      "roundMetricsExact": true,
+      "nonzeroCorrections": 0
+    },
+    {
+      "runId": "cifar10-iid-2027-attack_noise_defense_rla_cart-s0.01-cartv2-a81b9228a8c2",
+      "exactArraySha256": {
+        "nodeParams": "10798f60052a05413c8ab209620dd075a3f43153344a9e4af1ecbf3d312596c1",
+        "outbound": "1f1890ed250b560636e4b3ce3c62e3014a1efe1015194d2b8c3f66a17a4d99dc",
+        "senderRounds": "1b897dddd4c151e2a2e6e3e91b7ea0f7fc4fd5ed00ef1c9669e8566393a02586",
+        "referenceParams": "28c057512056760cf8f6354ea0414f92f31cabab73bb14ed593a1bd92f1753f7"
+      },
+      "telemetryExact": true,
+      "roundMetricsExact": true,
+      "nonzeroCorrections": 0
+    },
+    {
+      "runId": "cifar10-dirichlet-2025-attack_noise_defense_rla_cart-s0.01-cartv2-9e2ccb2fa854",
+      "exactArraySha256": {
+        "nodeParams": "dd6410192e607c234879b4b842f6460cbd90fc94343cd41e4ca58e8dd5fa7b6b",
+        "outbound": "a7acc3b2fae6c1811ce7bb9f4b42ecfdfdb95c93bcf75863acc2bd71487f470f",
+        "senderRounds": "1b897dddd4c151e2a2e6e3e91b7ea0f7fc4fd5ed00ef1c9669e8566393a02586",
+        "referenceParams": "a98818e0a0d26d628f6a33412e0aed88a32d70a9e0fb571f13af40ce1b529e86"
+      },
+      "telemetryExact": true,
+      "roundMetricsExact": true,
+      "nonzeroCorrections": 1
+    },
+    {
+      "runId": "cifar10-dirichlet-2026-attack_noise_defense_rla_cart-s0.01-cartv2-dfeef22291cf",
+      "exactArraySha256": {
+        "nodeParams": "df913d78bc80f373540b65c187956e89fbc39ba4284774530f9b0358b5a58347",
+        "outbound": "09b5a7337ba48684e0e9d1ced2956cdb5cdaea013d6e02113b57e86365cb9f6d",
+        "senderRounds": "1b897dddd4c151e2a2e6e3e91b7ea0f7fc4fd5ed00ef1c9669e8566393a02586",
+        "referenceParams": "200167cc5e392ef5628a4f3f5bedb28ab34bd00fc1a93fe11e0977982151a44c"
+      },
+      "telemetryExact": true,
+      "roundMetricsExact": true,
+      "nonzeroCorrections": 0
+    },
+    {
+      "runId": "cifar10-dirichlet-2027-attack_noise_defense_rla_cart-s0.01-cartv2-61f389116e54",
+      "exactArraySha256": {
+        "nodeParams": "66f03d34e19e8c1bc50b90df27b5192408a32685fe772e3b2efe0e6bd3eb552f",
+        "outbound": "e3bfdf03fe230aa388fd9e7ac1c2cdbf0bebbf71c9cec4a857a1224e84800a99",
+        "senderRounds": "1b897dddd4c151e2a2e6e3e91b7ea0f7fc4fd5ed00ef1c9669e8566393a02586",
+        "referenceParams": "1e2be893aa95b90b136041b9a36f013232bdce823defc405a45fc58d4b76f4b0"
+      },
+      "telemetryExact": true,
+      "roundMetricsExact": true,
+      "nonzeroCorrections": 1
+    }
+  ],
+  "nonzeroCorrections": 5,
+  "sourceSha256": {
+    "basil_core/attacks.py": "e1b653952cffd20983d9c4b0835fd11725e7df1cccff11c62e30569b952f119f",
+    "basil_core/data/cifar.py": "9bacb38333fe1b27b74919f7422e74415ebc58bd54e64431845f930a9ebfe180",
+    "basil_core/execution_profile.py": "222e60d95b643a364b30a400b28ed38baf4913db04b5acae5fa6f558ed84cfbe",
+    "basil_core/factorial_model.py": "07baaac3ae5d5a7a698fc4d37b37574f93f95510e43976cb8fbacdeb55f8142f",
+    "basil_core/factorial_study.py": "51ba798ee07f4d80a90a3b7e5c11280073e2cf2fabe1555b50e0505d1022884f",
+    "basil_core/iid_runtime.py": "f0069317dd6fbc583726cb734d89d8c32c50b2e5af564a491df513fee2ed9c58",
+    "basil_core/lazy_imports.py": "5d7039af5f56bcf16099ceef788e0b6515a70af7ff94cb8b9cd6fee8759f15b4",
+    "basil_core/models.py": "49169fb67c9c59d00d86e09d62d88189b164a777820680624d42bab1a47bd0cb",
+    "basil_core/research_protocol.py": "cb4fcaeb4f0b11079598001cd98ecfe8965db7ff6a806973b04b6af3393e7c15",
+    "basil_core/sharp_cart.py": "48ad43fe155f5e61c8122fcbe80e2dd3cb10b9afdf4f0506c244a466c561eeb8",
+    "basil_core/sharp_cart_v2.py": "9d1a06ad3dc75175fa778cfdbd7fd60f1eed39e6c05b17981f06e3cb0fd824f4",
+    "basil_core/sharp_cart_v2_protocol.py": "7772f152295caf21242bd606804c13cdd887dea62b8c24539ad9ca1f49ed3170",
+    "basil_core/sharp_data.py": "bb636a1b6b4a95b246fa62b6168a790b92e70a11268c399b093d4689cd4eaf18",
+    "basil_core/sharp_guarded_protocol.py": "5b2113512479dfc562e6bf7160ff51cc02728a98a941722485acf9dcdbd4d55c",
+    "basil_core/sharp_math.py": "be9528e3ce10d8e084a44577fdb046fa8e82c61cf5d1824f6aa8494c63fb0831",
+    "basil_core/sharp_protocol.py": "564a836b74682e18e1a7d28b701b38c4b6d4aeaed1b9913cc4dbb959220e610f",
+    "basil_core/sharp_study.py": "2af5e2d52ea92f64f1a098a23fa20c9b4f172b1ee1e622fd0b6988ae16435dad",
+    "basil_core/sharp_worker.py": "42f64e76afb8a1093e23b95e874edab4e6aac12e3ef58de0318259b6c081fce7",
+    "basil_core/trainer.py": "61782cd28a44443618f07d4ed9fd8a5ac4a51ade940e4f0d1b6e9dbc245e3124",
+    "docs/specifications/SHARP_professor_20261027.pdf": "b010c9c79a2282c5835e0b9b4bc5cd95500afbcf7395dd9d04fd6a2a0b9ce700",
+    "scripts/run_cart_v2_study.py": "d594dd989ae96c4e2f38a42b8b5c6f2a6d7fa08eb890512ed366f812848ae587",
+    "scripts/run_guarded_sharp_case.py": "9219f4685f71f02d4dc2c9bcdc6697779f705f5b32903fbcba6c6e924b2de980",
+    "scripts/run_sharp_study.py": "2f1909042567548c5a8d7efceda7b831aa60c8782f1f02e45774a4592d741869"
+  },
+  "executionProgramSha256": {
+    "scripts/cart_v2_slot_worker.py": "2b37a1a47a0d37a89e4181412eb578b45e4596fa682868ca8423b2162200ac2b",
+    "scripts/run_cart_v2_scaled.py": "a3ee3af55c745a49328faea641ff5b977dbf8d4bd6bb9596042241637f0b936e"
+  },
+  "scope": "Twelve small real TRAIN-data cases: two datasets,two partitions,three seeds,CART,N4,R2,TRAIN20/class,report5/class,onset0. Identical 512MiB caps, controlled local WSL memory-accounting mode. Execution equivalence, not a full efficacy study.",
+  "officialTestUsed": false
+}
