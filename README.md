@@ -18,6 +18,11 @@ CART improves the configured primary endpoint in all nine seed/noise pairs;
 the separate five-round early-attack GPU study worsens in all three seeds.
 These bounded results do not establish near-clean or general CART superiority.
 
+A later [35-round noiseless Hidden-attack reproduction](docs/SHARP_SCREEN_FAILURE.md)
+identified a peak-screen failure in the IID attack-defense condition. The
+read-only checkpoint audit documents actual corrupted-copy admission; the
+running HPC training source remains frozen.
+
 All archived research PDFs and their source/download records are linked in
 the [complete paper index](papers/FIRECRAWL_REFERENCE_INDEX.md).
 

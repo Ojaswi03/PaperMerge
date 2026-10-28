@@ -356,6 +356,40 @@ Code: [run_sharp_study.py](../scripts/run_sharp_study.py),
 [ETA monitor](../scripts/monitor_sharp_study.py),
 [independent result verification](../scripts/verify_sharp_results.py).
 
+### Read-only audit when accuracy collapses under attack
+
+An execution status of COMPLETED, or a failed counter of zero, does not establish
+that the defense retained useful accuracy. To inspect actual attacked-copy
+admission and screening at the latest atomic checkpoint while training continues:
+
+```bash
+python scripts/audit_sharp_selection.py \
+  --output "$PWD/.papermerge/local-tests/sharp-hpc-100nodes-v1" \
+  --dataset mnist --partition iid --seed 2025 --condition attack_defense
+```
+
+The audit reads checkpoint metadata only, imports no TensorFlow, performs no
+training and changes no experiment files. It distinguishes an actually attacked
+sender version from a configured attacker whose previous transmission predates
+attack onset. It also traces attack ancestry through subsequent selected models;
+ancestry records exposure, not a proof of lasting damage. Ground-truth attack
+labels are used solely for this post-hoc audit, never as a selection oracle.
+The displayed checkpoint can lag the live activation count by a round.
+
+The table shows accuracy, directly attacked copies selected, input ancestry,
+screen retention for unattacked/attacked copies, all-fail fallbacks and mean
+selected count. Rates of retention include the specified all-fail fallback;
+`--json` additionally exposes raw pre-fallback passing counts. `--all-rounds`
+shows the full history instead of attack-onset and recent rounds.
+
+The peak ratio measures shape, not overall deviation size. A new counterexample
+test demonstrates that small sparse benign changes can all fail the peak test,
+while a large dense Hidden-corrupted copy passes. With no passing copies the
+fallback keeps the benign window; introducing the dense passing copy can disable
+that fallback and leave only the attacked copy. This identifies a mathematical
+limitation to investigate in v1, not evidence that a repaired method has passed.
+Do not change a running campaign's frozen training files to retune this rule.
+
 ## HPC commands
 
 Use the same arguments for verification, execution and recovery. These are
