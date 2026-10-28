@@ -35,7 +35,9 @@ def copy_matching(source,target):
 def write_matching(target,value):
     raw=json.dumps(value,indent=2,allow_nan=False)+'\n'
     if target.exists():
-        if json.loads(target.read_text())!=value:raise FileExistsError(f'Conflicting export file: {target}. Use a fresh destination.')
+        try:matching=json.loads(target.read_text())==value
+        except (ValueError,UnicodeError):matching=False
+        if not matching:raise FileExistsError(f'Conflicting export file: {target}. Use a fresh destination.')
         return
     target.parent.mkdir(parents=True,exist_ok=True)
     temporary=target.with_name(target.name+'.export-tmp');temporary.write_text(raw);temporary.replace(target)
