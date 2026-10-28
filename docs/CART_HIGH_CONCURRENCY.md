@@ -1,5 +1,11 @@
 # Higher concurrency without changing CART training
 
+For new launches use the [failure-isolating execution guide](CART_FAILURE_RECOVERY.md):
+`run_cart_v2_resilient.py` retains these resource bounds and continues peer
+workers after an individual failure. It also supports frozen-plan recovery.
+The older scaled launcher retains its original fail-fast behavior; the commands
+below now select the resilient launcher.
+
 The separate `run_cart_v2_scaled.py` entry supports one through eight independent
 workers per GPU. The active two-slot launcher remains unchanged. Each worker
 still owns its model, ring state and random streams. Logical nodes within one
@@ -97,7 +103,7 @@ python scripts/hpc.py gpu-status
 # Wait until your old workers have exited, then continue.
 git pull --ff-only
 
-RUN100="$PWD/.papermerge/local-tests/cart-v2-focused-72-100r-6slot-v1"
+RUN100="$PWD/.papermerge/local-tests/cart-v2-focused-72-100r-6slot-resilient-v1"
 export MPLCONFIGDIR="$RUN100/matplotlib-cache"
 COMMON100=(
   --profile hpc --gpus 0,1,2,3 --output "$RUN100"
@@ -113,10 +119,10 @@ COMMON100=(
 )
 
 python scripts/run_cart_v2_managed.py --test-notification --ntfy-topic papermerge-ojaswi &&
-python scripts/run_cart_v2_scaled.py --preflight "${COMMON100[@]}" &&
-python scripts/run_cart_v2_scaled.py --verify-gpus "${COMMON100[@]}" &&
-python scripts/run_cart_v2_managed.py --execute --scheduler scaled "${COMMON100[@]}" \
-  --ntfy-topic papermerge-ojaswi --tmux cart-v2-managed-100r
+python scripts/run_cart_v2_resilient.py --preflight "${COMMON100[@]}" &&
+python scripts/run_cart_v2_resilient.py --verify-gpus "${COMMON100[@]}" &&
+python scripts/run_cart_v2_managed.py --execute --scheduler resilient "${COMMON100[@]}" \
+  --ntfy-topic papermerge-ojaswi --tmux cart-v2-resilient-100r
 
 python scripts/monitor_sharp_study.py --output "$RUN100" --timezone America/New_York
 ```

@@ -56,6 +56,11 @@ completed a local CIFAR-10 benchmark 2.24x faster than two, with identical
 training state. The guide restores the explicit 100-round final-study target;
 HPC throughput and CART efficacy still require their own evidence.
 
+[Failure-isolating execution and recovery](docs/CART_FAILURE_RECOVERY.md)
+keeps other configurations running when a worker fails, records failed runs
+for later retry, and tolerates temporary monitoring filesystem errors.
+It includes the current 100-node/100-round/six-workers-per-GPU commands.
+
 ## Historical A/B/C/D results — non-IID 100 and 500 rounds
 
 [Full results, ten analysis tables, numerical checks and limitations](newResults/nonIID/500round/FINAL_ABCD_RESULTS_ANALYSIS.md).

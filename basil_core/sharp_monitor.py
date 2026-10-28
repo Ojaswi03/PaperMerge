@@ -43,6 +43,8 @@ def snapshot(directory,*,timing_roots=()):
     configs=plan['configs']
     if not configs:raise ValueError('The frozen plan contains no experiments.')
     campaign=read_json(root/'campaign.json',dict(status='PREPARED'))
+    continuing=campaign.get('workerFailurePolicy')=='continue'
+    queued=set(campaign.get('pendingRunIds',[]));active_ids=set(campaign.get('activeRunIds',[]))
     gpus=[p['gpu'] for p in plan.get('profiles',[])] or [None]
     lanes=gpus if len(set(gpus))==len(gpus) else [f'{gpu}/slot{index}' for index,gpu in enumerate(gpus)]
     concurrency=plan.get('jobsPerGpu',max(gpus.count(gpu) for gpu in gpus))
@@ -64,6 +66,9 @@ def snapshot(directory,*,timing_roots=()):
                 history[timing_key(cfg)].append(elapsed/cursor)
     for index,cfg in enumerate(configs):
         row=read_json(root/cfg['runId']/'run.json',dict(status='PENDING'))
+        if continuing and cfg['runId'] in queued:row=dict(row,status='PENDING')
+        elif continuing and cfg['runId'] in active_ids and row['status'] in ('FAILED','INTERRUPTED'):
+            row=dict(row,status='RUNNING')
         total=cfg['nodes']*cfg['rounds'];cursor=row.get('completedActivations',0)
         if type(cursor) is not int or not 0<=cursor<=total:
             raise ValueError(f'Invalid activation counter in {cfg["runId"]}.')
@@ -88,6 +93,8 @@ def snapshot(directory,*,timing_roots=()):
     unknown=[];history_jobs=0
     for row in entries:
         if row['status']=='COMPLETED':continue
+        if continuing and row['status'] in ('FAILED','INTERRUPTED'):
+            row['eta']=None;continue
         key=timing_key(row['config']);samples=local_rates.get((key,row['lane'])) or rates.get(key)
         if row['rate'] is not None:rate=row['rate'];origin='measured';spread=.20
         elif samples:rate=statistics.median(samples);origin='measured';spread=.25
@@ -101,8 +108,8 @@ def snapshot(directory,*,timing_roots=()):
         estimate=rate*(row['total']-row['cursor'])
         row.update(eta=estimate,etaSource=origin)
         remaining[row['lane']]+=estimate;lower[row['lane']]+=estimate*(1-spread);upper[row['lane']]+=estimate*(1+spread)
-    eta=0. if status=='COMPLETED' else None
-    if status in ('RUNNING','PREPARED') and not stopped:eta=max(remaining.values())
+    eta=0. if status in ('COMPLETED','COMPLETED_WITH_FAILURES') else None
+    if status in ('RUNNING','PREPARED') and (continuing or not stopped):eta=max(remaining.values())
     return dict(status=status,entries=entries,completed=done,failed=failed,total=len(entries),
         pending=sum(r['status']=='PENDING' for r in entries),
         completedActivations=sum(r['cursor'] for r in entries),totalActivations=sum(r['total'] for r in entries),
@@ -121,15 +128,16 @@ def render(state,*,width=100,height=30,timezone='America/New_York'):
         f'Progress {state["completedActivations"]/state["totalActivations"]:.2%} | '
         f'{state["completedActivations"]}/{state["totalActivations"]} activations',
         f'Elapsed {duration(state["elapsed"] or 0)} | Campaign ETA {duration(state["eta"]) if state["eta"] is not None else "not running"}']
-    if state['eta'] is not None and state['status']!='COMPLETED':
+    if state['eta'] is not None and state['status'] in ('RUNNING','PREPARED'):
         finish=(datetime.now(ZoneInfo(timezone))+timedelta(seconds=state['eta'])).strftime('%a %b %d %H:%M %Z')
         lines.append(f'Estimated finish {finish} | planning range {duration(state["etaLow"])} to {duration(state["etaHigh"])}')
-    if state['untimedJobs'] and state['status'] not in ('COMPLETED','FAILED','INTERRUPTED'):
+    if state['untimedJobs'] and state['status'] not in ('COMPLETED','COMPLETED_WITH_FAILURES','FAILED','INTERRUPTED'):
         lines.append(f'ETA uses workload priors for {state["untimedJobs"]} jobs; replaces them with measurements as runs progress.')
     elif state.get('historyJobs',0):lines.append(f'ETA uses matching prior campaign timings for {state["historyJobs"]} jobs.')
     wrap=lambda values:[part for line in values for part in (textwrap.wrap(line,width,break_long_words=True) or [''])]
     lines=wrap(lines);lines.append('')
-    active=[r for r in state['entries'] if r['status'] in ('RUNNING','FAILED','INTERRUPTED')]
+    active=[r for r in state['entries'] if r['status']=='RUNNING']+[
+        r for r in state['entries'] if r['status'] in ('FAILED','INTERRUPTED')]
     recent=[r for r in state['entries'] if r['status']=='COMPLETED'][-4:]
     visible=active+recent;shown=0
     for row in visible:
@@ -142,6 +150,7 @@ def render(state,*,width=100,height=30,timezone='America/New_York'):
         lines.extend(block);shown+=1
     if shown<len(active):lines.append(f'Showing {shown}/{len(active)} active/stopped jobs; enlarge terminal for more.')
     if state['status']=='COMPLETED':lines.append('ALL EXPERIMENTS COMPLETE.')
+    elif state['status']=='COMPLETED_WITH_FAILURES':lines.append('Queue finished with failures; completed results are preserved. Retry failed runs for final figures.')
     elif state['status'] in ('FAILED','INTERRUPTED'):lines.append('Campaign stopped; inspect worker logs before recovery.')
     else:
         lines.append('ETA is a forecast; setup/JIT and workload variation can change it.')
@@ -155,6 +164,6 @@ def monitor(directory,*,once=False,timing_roots=(),timezone='America/New_York'):
             state=snapshot(directory,timing_roots=timing_roots);size=shutil.get_terminal_size(fallback=(100,30))
             if not once and sys.stdout.isatty():print('\033[2J\033[H',end='')
             print(render(state,width=size.columns,height=size.lines,timezone=timezone),end='',flush=True)
-            if once or state['status'] in ('COMPLETED','FAILED','INTERRUPTED'):return
+            if once or state['status'] in ('COMPLETED','COMPLETED_WITH_FAILURES','FAILED','INTERRUPTED'):return
             time.sleep(5)
     except KeyboardInterrupt:print('\nMonitor closed.',flush=True)

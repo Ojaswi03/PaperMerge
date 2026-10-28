@@ -37,12 +37,12 @@ def export_figures(root,destination):
 def run(args,forwarded):
     from basil_core.ntfy_notifications import publish
     from basil_core.sharp_monitor import snapshot,duration
-    from scripts.run_cart_v2_study import write_json
+    from basil_core.cart_campaign_io import write_json,read_json,retry_io,transient_io
     root=args.output.resolve();root.mkdir(parents=True,exist_ok=True)
     figures=args.figures.resolve() if args.figures else root/'figures'
     status=dict(status='STARTING',ownerPid=__import__('os').getpid(),
         supervisorSha256=hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),notifications=[])
-    process=None;stopped=False;started=time.monotonic()
+    process=None;stopped=False;started=time.monotonic();notified_failures=set()
     def save():
         status['wallSeconds']=time.monotonic()-started;write_json(root/'managed_status.json',status)
     def notify(title,message):
@@ -60,26 +60,54 @@ def run(args,forwarded):
         save()
         try:
             if not args.watch and not args.postprocess_only:
-                launcher='run_cart_v2_scaled.py' if getattr(args,'scheduler','standard')=='scaled' else 'run_cart_v2_parallel.py'
+                launcher={'standard':'run_cart_v2_parallel.py','scaled':'run_cart_v2_scaled.py',
+                    'resilient':'run_cart_v2_resilient.py'}[getattr(args,'scheduler','resilient')]
                 command=[sys.executable,str(ROOT/'scripts'/launcher),'--execute','--output',str(root),*forwarded]
                 with (root/'supervisor.log').open('a') as log:
                     process=subprocess.Popen(command,cwd=ROOT,stdout=log,stderr=subprocess.STDOUT)
                     while process.poll() is None:
-                        if (root/'plan.json').exists():
-                            live=snapshot(root,timing_roots=args.timing_from)
-                            status.update(status='RUNNING',etaSeconds=live['eta'],etaLow=live['etaLow'],etaHigh=live['etaHigh'],
-                                completed=live['completed'],total=live['total']);save()
-                            print(f'{live["completed"]}/{live["total"]} done | training ETA {duration(live["eta"])}',flush=True)
+                        try:
+                            if (root/'plan.json').exists():
+                                live=retry_io(snapshot,root,timing_roots=args.timing_from)
+                                status.update(status='RUNNING',etaSeconds=live['eta'],etaLow=live['etaLow'],etaHigh=live['etaHigh'],
+                                    completed=live['completed'],total=live['total']);save()
+                                print(f'{live["completed"]}/{live["total"]} done | training ETA {duration(live["eta"])}',flush=True)
+                                current=read_json(root/'campaign.json')
+                                for failure in current.get('failures',[]):
+                                    identity=failure['runId']
+                                    if identity in notified_failures:continue
+                                    notify('PaperMerge configuration failed',
+                                        f'{identity}: {failure["error"][:800]}. Other configurations continue. '
+                                        f'Log: {root/failure["log"]}')
+                                    notified_failures.add(identity)
+                        except OSError as error:
+                            if not transient_io(error):raise
+                            # Telemetry is not a training dependency. A repeated
+                            # monitoring read failure must not cancel healthy peers.
+                            print(f'Monitor filesystem error; training continues: {error}',file=sys.stderr,flush=True)
                         time.sleep(5)
                 if stopped:raise InterruptedError('Managed campaign stopped; committed checkpoints preserved.')
-                if process.returncode:raise RuntimeError('Training supervisor failed; inspect supervisor.log and worker logs.')
+                outcome=read_json(root/'campaign.json') if (root/'campaign.json').exists() else {}
+                if process.returncode and not (process.returncode==2 and outcome.get('status')=='COMPLETED_WITH_FAILURES'):
+                    raise RuntimeError('Training supervisor failed; inspect supervisor.log and worker logs.')
             elif args.watch:
                 while True:
                     if stopped:raise InterruptedError('Notification watcher stopped; training is independent.')
-                    live=snapshot(root,timing_roots=args.timing_from)
-                    if live['status'] in ('COMPLETED','FAILED','INTERRUPTED'):break
+                    live=retry_io(snapshot,root,timing_roots=args.timing_from)
+                    if live['status'] in ('COMPLETED','COMPLETED_WITH_FAILURES','FAILED','INTERRUPTED'):break
                     status.update(status='WATCHING',etaSeconds=live.get('eta'));save();time.sleep(5)
-            campaign=json.loads((root/'campaign.json').read_text())
+            campaign=read_json(root/'campaign.json')
+            if campaign['status']=='COMPLETED_WITH_FAILURES':
+                status.update(status='COMPLETED_WITH_FAILURES',completed=campaign['completed'],
+                    total=campaign['total'],failed=campaign['failed'],failures=campaign['failures'],
+                    figuresDeferred='Final figures require complete matched three-seed groups; retry failed runs first.')
+                save()
+                notify(f'PaperMerge finished: {campaign["failed"]} failed',
+                    f'Queue exhausted: {campaign["completed"]}/{campaign["total"]} completed, {campaign["failed"]} failed. '
+                    'Other workers continued. Completed results and checkpoints are preserved. '
+                    f'Inspect worker_failure_events.jsonl and worker logs in {root}. Final figures await retries.')
+                print(f'COMPLETED_WITH_FAILURES: {campaign["completed"]}/{campaign["total"]}; failed {campaign["failed"]}.',flush=True)
+                return 2
             if campaign['status']!='COMPLETED':raise RuntimeError('Campaign is not complete: '+campaign['status'])
             status['status']='GENERATING_FIGURES';save()
             manifest=export_figures(root,figures)
@@ -105,7 +133,7 @@ def run(args,forwarded):
 def main():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('--output',type=Path);p.add_argument('--figures',type=Path)
-    p.add_argument('--scheduler',choices=('standard','scaled'),default='standard')
+    p.add_argument('--scheduler',choices=('standard','scaled','resilient'),default='resilient')
     p.add_argument('--ntfy-topic');p.add_argument('--ntfy-server',default='https://ntfy.sh')
     p.add_argument('--ntfy-token-file',type=Path);p.add_argument('--timing-from',nargs='*',type=Path,default=[])
     p.add_argument('--tmux');action=p.add_mutually_exclusive_group()

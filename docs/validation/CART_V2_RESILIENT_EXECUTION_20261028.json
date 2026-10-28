@@ -1,0 +1,124 @@
+{
+  "status": "RESILIENT_SIX_SLOT_EXECUTION_EQUIVALENCE_VERIFIED",
+  "cases": 12,
+  "checks": [
+    {
+      "runId": "mnist-iid-2025-attack_noise_defense_rla_cart-s0.01-cartv2-2760bc1edc28",
+      "arraysExact": true,
+      "telemetryExact": true,
+      "roundMetricsExact": true,
+      "referenceMetadataExact": true
+    },
+    {
+      "runId": "mnist-iid-2026-attack_noise_defense_rla_cart-s0.01-cartv2-7b74b6537918",
+      "arraysExact": true,
+      "telemetryExact": true,
+      "roundMetricsExact": true,
+      "referenceMetadataExact": true
+    },
+    {
+      "runId": "mnist-iid-2027-attack_noise_defense_rla_cart-s0.01-cartv2-f8834ea1d27e",
+      "arraysExact": true,
+      "telemetryExact": true,
+      "roundMetricsExact": true,
+      "referenceMetadataExact": true
+    },
+    {
+      "runId": "mnist-dirichlet-2025-attack_noise_defense_rla_cart-s0.01-cartv2-318f3a9dcc1a",
+      "arraysExact": true,
+      "telemetryExact": true,
+      "roundMetricsExact": true,
+      "referenceMetadataExact": true
+    },
+    {
+      "runId": "mnist-dirichlet-2026-attack_noise_defense_rla_cart-s0.01-cartv2-534656e17d95",
+      "arraysExact": true,
+      "telemetryExact": true,
+      "roundMetricsExact": true,
+      "referenceMetadataExact": true
+    },
+    {
+      "runId": "mnist-dirichlet-2027-attack_noise_defense_rla_cart-s0.01-cartv2-5746c0eef3f7",
+      "arraysExact": true,
+      "telemetryExact": true,
+      "roundMetricsExact": true,
+      "referenceMetadataExact": true
+    },
+    {
+      "runId": "cifar10-iid-2025-attack_noise_defense_rla_cart-s0.01-cartv2-76628cd903ab",
+      "arraysExact": true,
+      "telemetryExact": true,
+      "roundMetricsExact": true,
+      "referenceMetadataExact": true
+    },
+    {
+      "runId": "cifar10-iid-2026-attack_noise_defense_rla_cart-s0.01-cartv2-18bac9716b62",
+      "arraysExact": true,
+      "telemetryExact": true,
+      "roundMetricsExact": true,
+      "referenceMetadataExact": true
+    },
+    {
+      "runId": "cifar10-iid-2027-attack_noise_defense_rla_cart-s0.01-cartv2-a81b9228a8c2",
+      "arraysExact": true,
+      "telemetryExact": true,
+      "roundMetricsExact": true,
+      "referenceMetadataExact": true
+    },
+    {
+      "runId": "cifar10-dirichlet-2025-attack_noise_defense_rla_cart-s0.01-cartv2-9e2ccb2fa854",
+      "arraysExact": true,
+      "telemetryExact": true,
+      "roundMetricsExact": true,
+      "referenceMetadataExact": true
+    },
+    {
+      "runId": "cifar10-dirichlet-2026-attack_noise_defense_rla_cart-s0.01-cartv2-dfeef22291cf",
+      "arraysExact": true,
+      "telemetryExact": true,
+      "roundMetricsExact": true,
+      "referenceMetadataExact": true
+    },
+    {
+      "runId": "cifar10-dirichlet-2027-attack_noise_defense_rla_cart-s0.01-cartv2-61f389116e54",
+      "arraysExact": true,
+      "telemetryExact": true,
+      "roundMetricsExact": true,
+      "referenceMetadataExact": true
+    }
+  ],
+  "acceptedCorrections": 5,
+  "sourceSha256": {
+    "basil_core/attacks.py": "e1b653952cffd20983d9c4b0835fd11725e7df1cccff11c62e30569b952f119f",
+    "basil_core/data/cifar.py": "9bacb38333fe1b27b74919f7422e74415ebc58bd54e64431845f930a9ebfe180",
+    "basil_core/execution_profile.py": "222e60d95b643a364b30a400b28ed38baf4913db04b5acae5fa6f558ed84cfbe",
+    "basil_core/factorial_model.py": "07baaac3ae5d5a7a698fc4d37b37574f93f95510e43976cb8fbacdeb55f8142f",
+    "basil_core/factorial_study.py": "51ba798ee07f4d80a90a3b7e5c11280073e2cf2fabe1555b50e0505d1022884f",
+    "basil_core/iid_runtime.py": "f0069317dd6fbc583726cb734d89d8c32c50b2e5af564a491df513fee2ed9c58",
+    "basil_core/lazy_imports.py": "5d7039af5f56bcf16099ceef788e0b6515a70af7ff94cb8b9cd6fee8759f15b4",
+    "basil_core/models.py": "49169fb67c9c59d00d86e09d62d88189b164a777820680624d42bab1a47bd0cb",
+    "basil_core/research_protocol.py": "cb4fcaeb4f0b11079598001cd98ecfe8965db7ff6a806973b04b6af3393e7c15",
+    "basil_core/sharp_cart.py": "48ad43fe155f5e61c8122fcbe80e2dd3cb10b9afdf4f0506c244a466c561eeb8",
+    "basil_core/sharp_cart_v2.py": "9d1a06ad3dc75175fa778cfdbd7fd60f1eed39e6c05b17981f06e3cb0fd824f4",
+    "basil_core/sharp_cart_v2_protocol.py": "7772f152295caf21242bd606804c13cdd887dea62b8c24539ad9ca1f49ed3170",
+    "basil_core/sharp_data.py": "bb636a1b6b4a95b246fa62b6168a790b92e70a11268c399b093d4689cd4eaf18",
+    "basil_core/sharp_guarded_protocol.py": "5b2113512479dfc562e6bf7160ff51cc02728a98a941722485acf9dcdbd4d55c",
+    "basil_core/sharp_math.py": "be9528e3ce10d8e084a44577fdb046fa8e82c61cf5d1824f6aa8494c63fb0831",
+    "basil_core/sharp_protocol.py": "564a836b74682e18e1a7d28b701b38c4b6d4aeaed1b9913cc4dbb959220e610f",
+    "basil_core/sharp_study.py": "2af5e2d52ea92f64f1a098a23fa20c9b4f172b1ee1e622fd0b6988ae16435dad",
+    "basil_core/sharp_worker.py": "42f64e76afb8a1093e23b95e874edab4e6aac12e3ef58de0318259b6c081fce7",
+    "basil_core/trainer.py": "61782cd28a44443618f07d4ed9fd8a5ac4a51ade940e4f0d1b6e9dbc245e3124",
+    "docs/specifications/SHARP_professor_20261027.pdf": "b010c9c79a2282c5835e0b9b4bc5cd95500afbcf7395dd9d04fd6a2a0b9ce700",
+    "scripts/run_cart_v2_study.py": "d594dd989ae96c4e2f38a42b8b5c6f2a6d7fa08eb890512ed366f812848ae587",
+    "scripts/run_guarded_sharp_case.py": "9219f4685f71f02d4dc2c9bcdc6697779f705f5b32903fbcba6c6e924b2de980",
+    "scripts/run_sharp_study.py": "2f1909042567548c5a8d7efceda7b831aa60c8782f1f02e45774a4592d741869"
+  },
+  "executionProgramSha256": {
+    "basil_core/cart_campaign_io.py": "3655d41d806e5778a28c952037196da840b186db5541d623033da4dcb3a7dcc9",
+    "scripts/cart_v2_slot_worker.py": "2b37a1a47a0d37a89e4181412eb578b45e4596fa682868ca8423b2162200ac2b",
+    "scripts/run_cart_v2_resilient.py": "922fbcfefac5ff7020a9a2dc989cd372311f886342c11e8adddd534107fddd38",
+    "scripts/run_cart_v2_scaled.py": "a3ee3af55c745a49328faea641ff5b977dbf8d4bd6bb9596042241637f0b936e"
+  },
+  "officialTestUsed": false,
+  "scope": "Twelve small real-data MNIST/CIFAR10 IID/nonIID CART cases, three seeds, N4 R2 onset0. Exact state versus prior six-slot launcher. Not long-horizon efficacy. Worker-failure isolation and EIO injection are tested separately with actual CPU child processes and fault fixtures."
+}

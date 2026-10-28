@@ -1,5 +1,10 @@
 # CART execution, runtime estimates, figures and phone alerts
 
+For new launches use [failure-isolating execution and recovery](CART_FAILURE_RECOVERY.md).
+It supersedes the two-slot/35-round launch sequence below with the requested
+six-slot/100-round study and continues peers after worker failures. The older
+parallel launcher remains available to preserve existing frozen contracts.
+
 These changes preserve the frozen CART v2 training source. They change the
 execution and reporting layer: independent worker slots, resource admission,
 progress estimation, saved-metric figures and ntfy messages.
