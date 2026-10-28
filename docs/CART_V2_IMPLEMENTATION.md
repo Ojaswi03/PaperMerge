@@ -215,6 +215,45 @@ still requires direct comparison. This is why the next HPC command is a pilot.
 
 ## HPC execution
 
+### Faster focused study
+
+The six-condition subset is `clean`, `attack_noise`,
+`attack_noise_defense`, `attack_noise_rla`, `attack_noise_defense_rla`, and
+`attack_noise_defense_rla_cart`. At one noisy sigma0.01, three seeds and both
+partitions, this is 36 runs per dataset or **72 across MNIST and CIFAR-10**.
+Clean has sigma0. The launcher still requires three declared sigmas; use
+`--sigmas 0.005 0.01 0.02 --only-sigma 0.01` to select only the central level.
+
+Use 100 nodes, 35 rounds and onset20 for a longer focused study. Based on the
+displayed HPC pilot timings, budget roughly 1.5–2.5 hours for MNIST and 5–7
+hours for CIFAR-10 once all four GPUs are free. These are workload estimates,
+not measured runtimes of a completed 35-round HPC subset. Selecting this
+subset does not establish CIFAR-10 learning or a CART advantage.
+
+To reduce further while preserving a direct CART comparison, extend only
+`clean`, `attack_noise_defense_rla`, and `attack_noise_defense_rla_cart`:
+18 runs per dataset. Keep the other three conditions as separate ten-round
+pilot evidence. Never pool different horizons or attack onsets in one table.
+
+Completed pilot groups can be summarized immediately with the read-only
+[partial report tool](../scripts/report_cart_v2_completed.py), even while
+unrelated jobs remain pending. For example:
+
+```bash
+python scripts/report_cart_v2_completed.py \
+  --output "$PWD/.papermerge/local-tests/cart-v2-hpc-100n-10r-pilot-v1" \
+  --datasets mnist cifar10 --sigma 0.01 \
+  --conditions clean attack_noise attack_noise_defense attack_noise_rla \
+    attack_noise_defense_rla attack_noise_defense_rla_cart \
+  --report "$PWD/.papermerge/analysis/cart-v2-pilot-central-summary-v1.json"
+```
+
+Use a fresh report filename for each snapshot. The tool writes outside the
+campaign, keeps sigmas separate, lists pending groups and averages only complete
+three-seed groups. It checks paired initialization/data/partition and numerical
+runtime, permitting different physical GPUs. It reads saved metrics without
+recomputing inference; independent verification remains a separate step.
+
 Use a new output directory. The old SHARP and guarded-CART checkpoints must
 not be resumed under CART v2. Keep the stopped 288-run campaign as evidence.
 The following pilot runs **all 288 combinations**, with 100 nodes and ten
