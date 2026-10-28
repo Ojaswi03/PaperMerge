@@ -2,6 +2,7 @@
 """Schedule independent frozen CART workers in bounded slots per physical GPU."""
 from __future__ import annotations
 import argparse
+from collections import deque
 from dataclasses import asdict
 import fcntl
 import hashlib
@@ -51,7 +52,10 @@ def profiles(args):
 
 def verify(args):
     hardware=profiles(args);configs=core.selected(args);args.output.mkdir(parents=True,exist_ok=True)
-    chosen=[next(c for c in configs if c['dataset']==d) for d in dict.fromkeys(c['dataset'] for c in configs)]
+    chosen=[]
+    for dataset in dict.fromkeys(c['dataset'] for c in configs):
+        candidates=[c for c in configs if c['dataset']==dataset]
+        chosen.append(next((c for c in candidates if c['switches']['noise_mitigation']),candidates[0]))
     core.write_json(args.output/'verification_plan.json',dict(source=core.fingerprint(),configs=chosen))
     for p in hardware:
         command=[sys.executable,str(ROOT/'scripts/run_cart_v2_study.py'),'--verify-worker',str(p.gpu),'--output',str(args.output)]
@@ -82,7 +86,7 @@ def execute(args):
         for name in {**source,**plan['executionProgram']}:
             target=args.output/'source_snapshots'/name;target.parent.mkdir(parents=True,exist_ok=True)
             target.write_bytes((ROOT/name).read_bytes())
-        queues={slot:[] for slot in range(len(slots))}
+        queues={slot:deque() for slot in range(len(slots))}
         for index,cfg in enumerate(configs):
             row=args.output/cfg['runId']/'run.json'
             if row.exists() and json.loads(row.read_text())['status']=='COMPLETED':continue
@@ -107,7 +111,7 @@ def execute(args):
                 if stopped:raise InterruptedError('Supervisor stop requested.')
                 for slot,p in enumerate(slots):
                     if queues[slot] and slot not in active:
-                        core.check_source(source);index=queues[slot].pop(0);cfg=configs[index]
+                        core.check_source(source);index=queues[slot].popleft();cfg=configs[index]
                         log=(args.output/(cfg['runId']+'.log')).open('a')
                         fd=leases[p.gpu].fileno()
                         command=[sys.executable,str(ROOT/'scripts/cart_v2_slot_worker.py'),'--worker',str(index),

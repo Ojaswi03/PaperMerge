@@ -23,6 +23,9 @@ not establish long-horizon efficacy, non-IID performance, or the same speedup
 on the HPC's different GPUs. If similar throughput transfers, the earlier
 5–7 hour CIFAR-10 estimate becomes roughly 2.5–4 hours; observe live HPC rates
 before treating that as a schedule.
+The benchmark executor is preserved in commit `b1c0f290`; the subsequent
+constant-time deque queue and stronger startup-objective selection change
+scheduling housekeeping/verification only, not the frozen training worker.
 
 The [managed-workflow validation](validation/CART_V2_MANAGED_VALIDATION_20261028.json)
 also completed 72 small real-data GPU cases across both datasets, splits,
@@ -47,6 +50,9 @@ Do not clear the model or compiled graphs during its activations: that would
 discard useful state or force expensive recompilation. Do not drop operating
 system caches. Heavy libraries remain lazy in orchestration; chart generation
 loads NumPy/Matplotlib only after training finishes.
+Pending queues use constant-time deque insertion/removal; worker/slot lookup
+uses dictionaries. These small orchestration savings do not replace the
+necessary model evaluations.
 Persistent CUDA compilation caches are retained so Blackwell does not repeat
 avoidable PTX compilation for every configuration.
 

@@ -181,3 +181,18 @@ def test_orchestration_help_does_not_import_training_or_plot_libraries():
             '\nassert not {"numpy","tensorflow","matplotlib"}.intersection(sys.modules)')
         result=subprocess.run([sys.executable,'-I','-c',code],cwd='/tmp',capture_output=True,text=True)
         assert result.returncode==0,result.stderr
+
+
+def test_gpu_precheck_prefers_the_second_order_objective_when_selected(tmp_path,monkeypatch):
+    import scripts.run_cart_v2_parallel as parallel
+    from basil_core.execution_profile import ExecutionProfile
+    profile=ExecutionProfile(name='hpc',gpu_uuid='GPU-aaaa',output_root=str(tmp_path))
+    clean=dict(dataset='mnist',switches={'noise_mitigation':False})
+    robust=dict(dataset='mnist',switches={'noise_mitigation':True})
+    monkeypatch.setattr(parallel,'profiles',lambda _:[profile])
+    monkeypatch.setattr(parallel.core,'selected',lambda _:[clean,robust])
+    monkeypatch.setattr(parallel.core,'fingerprint',lambda:{})
+    monkeypatch.setattr(parallel.core,'worker_environment',lambda _:{})
+    monkeypatch.setattr(parallel.subprocess,'run',lambda *_,**__:None)
+    parallel.verify(SimpleNamespace(output=tmp_path))
+    assert json.loads((tmp_path/'verification_plan.json').read_text())['configs']==[robust]
