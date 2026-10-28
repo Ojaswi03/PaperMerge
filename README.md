@@ -74,6 +74,11 @@ completed rounds. It can be pulled during training without restarting workers.
 at sigma 0.01 and supports two or three explicit levels for future plans.
 CART-only previews contain 12, 24 or 36 configurations, respectively.
 
+[CIFAR learning-failure evidence](docs/CIFAR_LEARNING_FAILURE_20261028.md)
+separates the HPC pre-attack failure from eight paired local handoff diagnostics.
+Historical selection remains weak even without noise or proximal anchoring;
+these findings motivate method development rather than a CART superiority claim.
+
 ## Historical A/B/C/D results — non-IID 100 and 500 rounds
 
 [Full results, ten analysis tables, numerical checks and limitations](newResults/nonIID/500round/FINAL_ABCD_RESULTS_ANALYSIS.md).
