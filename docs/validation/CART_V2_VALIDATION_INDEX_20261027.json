@@ -1,0 +1,47 @@
+{
+  "fullResearchMatrixExecuted": false,
+  "fullSuite": {
+    "passed": 1250,
+    "skipped": 4,
+    "subtests": 644
+  },
+  "interpretation": "Correctness-qualified CART v2 is implemented and active, with exact CPU/GPU recovery. One-seed ten-round efficacy is mixed and original CART is better in the matched comparison. No general gain, near-clean performance, or novelty certification is claimed.",
+  "laterFocusedChecksPassed": 34,
+  "logicalConfigurationAndSwitchCases": 288,
+  "officialTestUsed": false,
+  "originalV1TrainingSourceUnchanged": true,
+  "realGpuSwitchCases": 40,
+  "receiptSha256": {
+    "docs/validation/CART_V2_FRESH_CPU_RECOVERY_20261027.json": "a14d78ac245a94c26c58edb71075ac80967ff2d79b7a2e6bb220ad3a6c9e97d0",
+    "docs/validation/CART_V2_FRESH_GPU_RECOVERY_20261027.json": "6b7e7d97f8bf0230725725468ecc3bb9872cab92a69115cd4ee98a893a734ad1",
+    "docs/validation/CART_V2_GPU_ALL_SWITCHES_20261027.json": "74132748981c49b922576edd396db874f3b08fcace27d7a50e3922f2c94f6c98",
+    "docs/validation/CART_V2_MATCHED_LEGACY_COMPARISON_20261027.json": "2178104644c8d6b45d8f6d3f3192cb18af971c27939ed210391e8f98488a391e",
+    "docs/validation/CART_V2_MNIST_100NODE_10R_20261027.json": "9e2a36ef60c5e5a9528b95c1a2bbffa8def0204a899814a5040cb8a71e5eec77"
+  },
+  "sourceSha256": {
+    "basil_core/attacks.py": "e1b653952cffd20983d9c4b0835fd11725e7df1cccff11c62e30569b952f119f",
+    "basil_core/data/cifar.py": "9bacb38333fe1b27b74919f7422e74415ebc58bd54e64431845f930a9ebfe180",
+    "basil_core/execution_profile.py": "222e60d95b643a364b30a400b28ed38baf4913db04b5acae5fa6f558ed84cfbe",
+    "basil_core/factorial_model.py": "07baaac3ae5d5a7a698fc4d37b37574f93f95510e43976cb8fbacdeb55f8142f",
+    "basil_core/factorial_study.py": "51ba798ee07f4d80a90a3b7e5c11280073e2cf2fabe1555b50e0505d1022884f",
+    "basil_core/iid_runtime.py": "f0069317dd6fbc583726cb734d89d8c32c50b2e5af564a491df513fee2ed9c58",
+    "basil_core/lazy_imports.py": "5d7039af5f56bcf16099ceef788e0b6515a70af7ff94cb8b9cd6fee8759f15b4",
+    "basil_core/models.py": "49169fb67c9c59d00d86e09d62d88189b164a777820680624d42bab1a47bd0cb",
+    "basil_core/research_protocol.py": "cb4fcaeb4f0b11079598001cd98ecfe8965db7ff6a806973b04b6af3393e7c15",
+    "basil_core/sharp_cart.py": "48ad43fe155f5e61c8122fcbe80e2dd3cb10b9afdf4f0506c244a466c561eeb8",
+    "basil_core/sharp_cart_v2.py": "9d1a06ad3dc75175fa778cfdbd7fd60f1eed39e6c05b17981f06e3cb0fd824f4",
+    "basil_core/sharp_cart_v2_protocol.py": "7772f152295caf21242bd606804c13cdd887dea62b8c24539ad9ca1f49ed3170",
+    "basil_core/sharp_data.py": "bb636a1b6b4a95b246fa62b6168a790b92e70a11268c399b093d4689cd4eaf18",
+    "basil_core/sharp_guarded_protocol.py": "5b2113512479dfc562e6bf7160ff51cc02728a98a941722485acf9dcdbd4d55c",
+    "basil_core/sharp_math.py": "be9528e3ce10d8e084a44577fdb046fa8e82c61cf5d1824f6aa8494c63fb0831",
+    "basil_core/sharp_protocol.py": "564a836b74682e18e1a7d28b701b38c4b6d4aeaed1b9913cc4dbb959220e610f",
+    "basil_core/sharp_study.py": "2af5e2d52ea92f64f1a098a23fa20c9b4f172b1ee1e622fd0b6988ae16435dad",
+    "basil_core/sharp_worker.py": "42f64e76afb8a1093e23b95e874edab4e6aac12e3ef58de0318259b6c081fce7",
+    "basil_core/trainer.py": "61782cd28a44443618f07d4ed9fd8a5ac4a51ade940e4f0d1b6e9dbc245e3124",
+    "docs/specifications/SHARP_professor_20261027.pdf": "b010c9c79a2282c5835e0b9b4bc5cd95500afbcf7395dd9d04fd6a2a0b9ce700",
+    "scripts/run_cart_v2_study.py": "d594dd989ae96c4e2f38a42b8b5c6f2a6d7fa08eb890512ed366f812848ae587",
+    "scripts/run_guarded_sharp_case.py": "9219f4685f71f02d4dc2c9bcdc6697779f705f5b32903fbcba6c6e924b2de980",
+    "scripts/run_sharp_study.py": "2f1909042567548c5a8d7efceda7b831aa60c8782f1f02e45774a4592d741869"
+  },
+  "status": "IMPLEMENTATION_AND_BOUNDED_VALIDATION_COMPLETE"
+}

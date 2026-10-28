@@ -34,6 +34,15 @@ separate HPC pilot commands are documented; no general CART benefit is claimed.
 All archived research PDFs and their source/download records are linked in
 the [complete paper index](papers/FIRECRAWL_REFERENCE_INDEX.md).
 
+**CART v2 development revision:** [mechanism, mathematics, evidence and HPC
+commands](docs/CART_V2_IMPLEMENTATION.md). It qualifies saved class knowledge
+on two local probes, fits only correct-reference/incorrect-proposal targets,
+and rejects corrections that reduce a checked class's correct count. The
+100-node ten-round MNIST pilot gives final CART effects of +0.042 points IID
+and −0.148 points non-IID (one seed, sigma0.01); this establishes implementation
+and bounded recovery, not consistent superiority. Use its separate launcher
+and fresh outputs for the all-288-combination HPC pilot.
+
 ## Historical A/B/C/D results — non-IID 100 and 500 rounds
 
 [Full results, ten analysis tables, numerical checks and limitations](newResults/nonIID/500round/FINAL_ABCD_RESULTS_ANALYSIS.md).

@@ -87,8 +87,8 @@ def snapshot(directory):
 def render(state,*,width=100,height=30):
     width=max(width,30)
     if state['status']=='WAITING_FOR_PLAN':return f'Waiting for frozen plan in {state["output"]}\n'
-    guarded=any(r['config'].get('method')=='sharp_guarded' for r in state['entries'])
-    title='SHARP GUARD + CART' if guarded else 'SHARP + CART'
+    methods={r['config'].get('method') for r in state['entries']}
+    title='SHARP + CART v2' if 'sharp_cart_v2' in methods else ('SHARP GUARD + CART' if 'sharp_guarded' in methods else 'SHARP + CART')
     lines=[f'{title} | {state["status"]} | {state["completed"]}/{state["total"]} complete | '
         f'failed {state["failed"]} | pending {state["pending"]}',
         f'Progress {state["completedActivations"]/state["totalActivations"]:.2%} | '

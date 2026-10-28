@@ -50,7 +50,7 @@ def test_official_summary_never_averages_different_sigmas():
     with pytest.raises(ValueError,match='Duplicate'):aggregate_final_results([*rows,rows[0]])
 
 
-@pytest.mark.parametrize('guarded',[False,True])
+@pytest.mark.parametrize('guarded',[False,True,'v2'])
 def test_final_evaluation_never_calls_training_and_preserves_training_manifest(tmp_path,monkeypatch,guarded):
     import sys
     from basil_core.lazy_imports import lazy_module
@@ -65,6 +65,10 @@ def test_final_evaluation_never_calls_training_and_preserves_training_manifest(t
         import basil_core.sharp_guarded_protocol as guarded_protocol
         cfg=guarded_protocol.guarded_configuration(cfg)
         monkeypatch.setattr(guarded_protocol,'check_source',lambda _:None)
+        if guarded=='v2':
+            import basil_core.sharp_cart_v2_protocol as v2
+            cfg=v2.configuration(cfg)
+            monkeypatch.setattr(v2,'check_source',lambda _:None)
     folder=tmp_path/cfg['runId'];folder.mkdir()
     original=dict(config=cfg,source={'test':'fixed'},status='COMPLETED',data={},partition={},runtime={},initialHash='initial')
     (tmp_path/'plan.json').write_text(json.dumps(dict(configs=[cfg],source={'test':'fixed'})))

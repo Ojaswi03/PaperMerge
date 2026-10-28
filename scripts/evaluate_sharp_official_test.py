@@ -61,7 +61,7 @@ def aggregate_final_results(results):
     import numpy as np
     groups={}
     for row in results:
-        cfg=row['config'];basis={k:v for k,v in cfg.items() if k not in ('seed','runId','baseRunId')}
+        cfg=row['config'];basis={k:v for k,v in cfg.items() if k not in ('seed','runId','baseRunId','guardedRunId')}
         key=json.dumps(basis,sort_keys=True)
         group=groups.setdefault(key,dict(config=basis,seeds=[],seedMeanAccuracy=[]))
         if cfg['seed'] in group['seeds']:raise ValueError('Duplicate final TEST seed result.')
@@ -82,9 +82,14 @@ def evaluate(args):
     from basil_core.sharp_data import digest
     from scripts.run_sharp_study import check_source,write_json
     plan=json.loads((args.output/'plan.json').read_text())
-    guarded={c['method']=='sharp_guarded' for c in plan['configs']}
+    methods={c['method'] for c in plan['configs']}
+    guarded={c['method'] in ('sharp_guarded','sharp_cart_v2') for c in plan['configs']}
     if not guarded or len(guarded)>1:raise ValueError('Use one nonempty, frozen method family per final-evaluation plan.')
-    if guarded=={True}:
+    if 'sharp_cart_v2' in methods:
+        if methods!={'sharp_cart_v2'}:raise ValueError('CART v2 requires its own final-evaluation plan.')
+        from basil_core.sharp_cart_v2_protocol import check_source as check_v2,validate_config
+        check_v2(plan['source'])
+    elif guarded=={True}:
         from basil_core.sharp_guarded_protocol import check_source as check_guarded,validate_config
         source=dict(plan['source']);launcher='scripts/run_guarded_sharp_study.py'
         extra=source.pop(launcher,None);check_guarded(source)

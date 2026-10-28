@@ -28,9 +28,14 @@ def verify(root,*,require_complete=False):
     tf.config.threading.set_inter_op_parallelism_threads(1)
     tf.config.experimental.enable_op_determinism()
     plan=json.loads((root/'plan.json').read_text())
-    guarded={c['method']=='sharp_guarded' for c in plan['configs']}
+    methods={c['method'] for c in plan['configs']}
+    guarded={c['method'] in ('sharp_guarded','sharp_cart_v2') for c in plan['configs']}
     if len(guarded)>1:raise ValueError('Original and guarded protocols require separate frozen plans.')
-    if guarded=={True}:
+    if 'sharp_cart_v2' in methods:
+        if methods!={'sharp_cart_v2'}:raise ValueError('CART v2 requires its own frozen plan.')
+        from basil_core.sharp_cart_v2_protocol import check_source as check_v2,validate_config
+        check_v2(plan['source'])
+    elif guarded=={True}:
         from basil_core.sharp_guarded_protocol import check_source as check_guarded,validate_config
         protocol_source=dict(plan['source'])
         launcher='scripts/run_guarded_sharp_study.py'
@@ -74,6 +79,29 @@ def verify(root,*,require_complete=False):
         if discrepancies.max()>1:raise ValueError('Independent per-class correct counts disagree.')
         scales=[];active_gates=0;all_fail=0
         attackers=resolve_attackers(cfg['seed'],cfg['actualAttackers'],cfg['nodes'])
+        if cfg['method']=='sharp_cart_v2':
+            from basil_core.research_protocol import keyed_rng
+            from basil_core.attacks import applyAttack
+            from basil_core.sharp_protocol import link_vector
+            for sender,params in enumerate(state['nodeParams']):
+                expected_outbound=params.copy();r=cfg['rounds']-1
+                if sender in attackers and r>=cfg['attackStart']:
+                    if cfg['attackType']=='hidden':
+                        pieces=applyAttack(worker.tensors(params),'hidden',rng=keyed_rng(cfg['seed'],'sharp_attack',r,sender))
+                        expected_outbound=np.concatenate([p.ravel() for p in pieces]).astype(np.float32)
+                    else:
+                        coordinate=int(keyed_rng(cfg['seed'],'sharp_spike',r,sender).integers(len(params)))
+                        expected_outbound[coordinate]+=np.float32(20*max(float(np.sqrt(np.mean(params.astype(np.float64)**2))),.01)*np.sqrt(len(params)))
+                np.testing.assert_array_equal(state['outbound'][sender],expected_outbound,
+                    err_msg='Final outbound attack differs from the declared seeded transformation.')
+            if cfg['sigma']:
+                base=state['outbound'][0];r=cfg['rounds']-1
+                first=link_vector(base,cfg['seed'],r,0,1,cfg['sigma'])
+                repeat=link_vector(base,cfg['seed'],r,0,1,cfg['sigma'])
+                other=link_vector(base,cfg['seed'],r,0,2,cfg['sigma'])
+                np.testing.assert_array_equal(first,repeat)
+                if np.array_equal(first,base) or np.array_equal(first,other):
+                    raise ValueError('Declared channel is absent or reused between receivers.')
         post_selected=0;post_attackers=0
         for index,record in enumerate(state['telemetry']):
             if record['activation']!=index+1 or (record['round'],record['node'])!=divmod(index,cfg['nodes']):
@@ -94,7 +122,7 @@ def verify(root,*,require_complete=False):
             if round_id>cfg['attackStart']:
                 post_selected+=len(senders);post_attackers+=record['selectedConfiguredAttackers']
             if training['optimizerSteps']!=cfg['localSteps']:raise ValueError('Local steps differ from PDF/config.')
-            if cfg['method']=='sharp_guarded' and cfg['switches']['byzantine_mitigation'] and allowed:
+            if cfg['method'] in ('sharp_guarded','sharp_cart_v2') and cfg['switches']['byzantine_mitigation'] and allowed:
                 raw=selection['rawSurvivorCount'];b=cfg['byzantineBudget']
                 if selection.get('screenApplied'):
                     observed=sum(v<=selection['peakThreshold'] for v in selection['peakRatios'])
@@ -106,7 +134,7 @@ def verify(root,*,require_complete=False):
                     raise ValueError('Guarded survivor count/fallback is inconsistent.')
             eta=cfg['learningRate']/(1+cfg['learningRate']*record['round'])
             q=selection['selectedCount'] if cfg['hopDenominator']=='actual_selected' else cfg['byzantineBudget']
-            expected=(hop_coefficient(cfg['sigma'],q,eta,cfg['curvature']) if cfg['method'] in ('sharp','sharp_guarded') else cfg['sigma']**2) if cfg['switches']['noise_mitigation'] else 0.
+            expected=(hop_coefficient(cfg['sigma'],q,eta,cfg['curvature']) if cfg['method'] in ('sharp','sharp_guarded','sharp_cart_v2') else cfg['sigma']**2) if cfg['switches']['noise_mitigation'] else 0.
             if not np.isclose(training['rlaCoefficient'],expected,rtol=1e-12,atol=1e-15):raise ValueError('Wrong hop-aware RLA coefficient.')
             if not record['attackActive'] and record['outboundHash']!=record['trainedHash']:raise ValueError('Unrequested outbound mutation.')
             all_fail+=selection['screenAllFailFallback']
@@ -117,6 +145,12 @@ def verify(root,*,require_complete=False):
                 if len(cart['classGates'])!=cfg['classes']:raise ValueError('Wrong CART class count.')
                 if cart['checkBefore'] is not None and cart['checkAfter']>cart['checkBefore']+1e-6:
                     raise ValueError('CART accepted a worse checked macro loss.')
+                if cfg['method']=='sharp_cart_v2':
+                    if cart['referenceMistakeTargets']!=0:raise ValueError('CART v2 copied a reference mistake.')
+                    if cart['checkCorrectBefore'] is not None and np.any(np.asarray(cart['checkCorrectAfter'])<cart['checkCorrectBefore']):
+                        raise ValueError('CART v2 decreased a checked class correct count.')
+                    if cart['scale']>0 and not cart['repairedFitExamples']:
+                        raise ValueError('CART v2 correction has no demonstrated forgetting target.')
                 scales.append(cart['scale']);active_gates+=len(cart.get('activeGateClasses',[]))
         reports.append(dict(runId=cfg['runId'],dataset=cfg['dataset'],partition=cfg['partition'],seed=cfg['seed'],
             sigma=cfg['sigma'],condition=cfg['condition'],nodes=cfg['nodes'],rounds=cfg['rounds'],
@@ -127,6 +161,8 @@ def verify(root,*,require_complete=False):
             resolvedAttackerIds=list(attackers),
             selectedAttackerFractionAfterAllSendersActive=post_attackers/post_selected if post_selected else None,
             checkpointComplete=True,officialTestUsed=False))
+        if cfg['method']=='sharp_cart_v2':reports[-1].update(finalAttackTransformVerified=True,
+            channelReplayAndReceiverIndependenceVerified=bool(cfg['sigma']))
         rows[(cfg['dataset'],cfg['partition'],cfg['method'],cfg['seed'],cfg['sigma'],cfg['condition'])]=state['telemetry']
         print(f'VERIFIED {cfg["runId"]}: mean {np.mean(fresh):.2%}, CART commits {sum(s>0 for s in scales)}',flush=True)
     for key,history in rows.items():
