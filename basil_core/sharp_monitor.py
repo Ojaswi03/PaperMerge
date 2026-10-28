@@ -1,7 +1,7 @@
-"""Read-only SHARP progress and measured runtime estimates.
+"""Read-only SHARP progress with measured and explicitly labeled prior ETAs.
 
 Kept outside the frozen training fingerprint so active workers need no changes.
-Unknown dataset/model/condition timings never borrow a different workload's rate.
+Unseen workloads use their own planning prior, never another dataset's speed.
 """
 from __future__ import annotations
 
@@ -14,6 +14,8 @@ import statistics
 import sys
 import textwrap
 import time
+from datetime import datetime,timedelta
+from zoneinfo import ZoneInfo
 
 
 def duration(seconds):
@@ -26,7 +28,8 @@ def duration(seconds):
 
 def timing_key(cfg):
     # Pool timing samples across seeds/noisy sigmas only, never accuracy values.
-    return json.dumps({k:v for k,v in cfg.items() if k not in ('seed','sigma','runId')},sort_keys=True)
+    return json.dumps({k:v for k,v in cfg.items() if k not in
+        ('seed','sigma','runId','baseRunId','guardedRunId','rounds','attackStart')},sort_keys=True)
 
 
 def read_json(path,default=None):
@@ -34,14 +37,31 @@ def read_json(path,default=None):
     except FileNotFoundError:return default
 
 
-def snapshot(directory):
+def snapshot(directory,*,timing_roots=()):
     root=Path(directory);plan=read_json(root/'plan.json')
     if plan is None:return dict(status='WAITING_FOR_PLAN',output=str(root),entries=[])
     configs=plan['configs']
     if not configs:raise ValueError('The frozen plan contains no experiments.')
     campaign=read_json(root/'campaign.json',dict(status='PREPARED'))
     gpus=[p['gpu'] for p in plan.get('profiles',[])] or [None]
-    entries=[];rates=defaultdict(list);local_rates=defaultdict(list)
+    lanes=gpus if len(set(gpus))==len(gpus) else [f'{gpu}/slot{index}' for index,gpu in enumerate(gpus)]
+    concurrency=plan.get('jobsPerGpu',max(gpus.count(gpu) for gpu in gpus))
+    entries=[];rates=defaultdict(list);local_rates=defaultdict(list);history=defaultdict(list)
+    for location in timing_roots:
+        previous=Path(location)
+        if previous.resolve()==root.resolve():continue
+        old=read_json(previous/'plan.json')
+        if not old or old.get('source')!=plan.get('source'):continue
+        if old.get('jobsPerGpu',1)!=concurrency:continue
+        old_campaign=read_json(previous/'campaign.json',{})
+        if campaign.get('host') and old_campaign.get('host')!=campaign['host']:continue
+        if campaign.get('profile') and old_campaign.get('profile')!=campaign['profile']:continue
+        for cfg in old['configs']:
+            row=read_json(previous/cfg['runId']/'run.json',{})
+            elapsed=row.get('elapsedSeconds');cursor=row.get('completedActivations',0)
+            if (row.get('status')=='COMPLETED' and isinstance(elapsed,(int,float)) and math.isfinite(elapsed)
+                    and elapsed>0 and cursor>=cfg['nodes']):
+                history[timing_key(cfg)].append(elapsed/cursor)
     for index,cfg in enumerate(configs):
         row=read_json(root/cfg['runId']/'run.json',dict(status='PENDING'))
         total=cfg['nodes']*cfg['rounds'];cursor=row.get('completedActivations',0)
@@ -52,39 +72,46 @@ def snapshot(directory):
                 and cursor>=cfg['nodes'] and row['status'] in ('RUNNING','COMPLETED')):
             rate=elapsed/cursor
             rates[timing_key(cfg)].append(rate)
-            local_rates[(timing_key(cfg),gpus[index%len(gpus)])].append(rate)
+            local_rates[(timing_key(cfg),lanes[index%len(lanes)])].append(rate)
         eta=0. if row['status']=='COMPLETED' else None
         if row['status']=='RUNNING' and rate is not None:eta=rate*(total-cursor)
         entries.append(dict(config=cfg,status=row['status'],cursor=cursor,total=total,
             rounds=row.get('completedRounds',0),elapsed=elapsed,eta=eta,
-            gpu=row.get('physicalGpuId',gpus[index%len(gpus)]),lane=gpus[index%len(gpus)],
+            gpu=row.get('physicalGpuId',gpus[index%len(gpus)]),lane=lanes[index%len(lanes)],
             mean=row.get('meanAccuracy'),rate=rate,error=row.get('error')))
     done=sum(r['status']=='COMPLETED' for r in entries)
     failed=sum(r['status']=='FAILED' for r in entries)
     stopped=any(r['status'] in ('FAILED','INTERRUPTED') for r in entries)
     status='COMPLETED' if done==len(entries) else campaign['status']
-    remaining={gpu:0. for gpu in gpus};unknown=[]
+    from basil_core.sharp_eta import prior_rate
+    remaining={lane:0. for lane in lanes};lower={lane:0. for lane in lanes};upper={lane:0. for lane in lanes}
+    unknown=[];history_jobs=0
     for row in entries:
         if row['status']=='COMPLETED':continue
-        if row['status']=='RUNNING':estimate=row['eta']
-        elif row['status']=='PENDING':
-            key=timing_key(row['config'])
-            samples=local_rates.get((key,row['lane'])) or rates.get(key)
-            estimate=statistics.median(samples)*row['total'] if samples else None
-        else:estimate=None
-        if estimate is None:
-            unknown.append(row['config']['dataset']);remaining[row['lane']]=None
-        elif remaining[row['lane']] is not None:remaining[row['lane']]+=estimate
+        key=timing_key(row['config']);samples=local_rates.get((key,row['lane'])) or rates.get(key)
+        if row['rate'] is not None:rate=row['rate'];origin='measured';spread=.20
+        elif samples:rate=statistics.median(samples);origin='measured';spread=.25
+        elif history.get(key):
+            rate=statistics.median(history[key]);origin='history';spread=.35;history_jobs+=1
+        else:
+            # Initial two-worker forecasts include an explicit contention
+            # buffer. Live rates replace it; this is not a measured speedup.
+            rate=prior_rate(row['config'])*(1+.4*(concurrency-1))
+            origin='prior';spread=.5;unknown.append(row['config']['dataset'])
+        estimate=rate*(row['total']-row['cursor'])
+        row.update(eta=estimate,etaSource=origin)
+        remaining[row['lane']]+=estimate;lower[row['lane']]+=estimate*(1-spread);upper[row['lane']]+=estimate*(1+spread)
     eta=0. if status=='COMPLETED' else None
-    if status=='RUNNING' and not unknown and not stopped:eta=max(remaining.values())
+    if status in ('RUNNING','PREPARED') and not stopped:eta=max(remaining.values())
     return dict(status=status,entries=entries,completed=done,failed=failed,total=len(entries),
         pending=sum(r['status']=='PENDING' for r in entries),
         completedActivations=sum(r['cursor'] for r in entries),totalActivations=sum(r['total'] for r in entries),
         elapsed=campaign.get('elapsedSeconds'),eta=eta,remainingByGpu=remaining,
-        untimedJobs=len(unknown),untimedDatasets=sorted(set(unknown)),output=str(root))
+        untimedJobs=len(unknown),untimedDatasets=sorted(set(unknown)),historyJobs=history_jobs,
+        etaLow=max(lower.values()),etaHigh=max(upper.values()),output=str(root))
 
 
-def render(state,*,width=100,height=30):
+def render(state,*,width=100,height=30,timezone='America/New_York'):
     width=max(width,30)
     if state['status']=='WAITING_FOR_PLAN':return f'Waiting for frozen plan in {state["output"]}\n'
     methods={r['config'].get('method') for r in state['entries']}
@@ -93,10 +120,13 @@ def render(state,*,width=100,height=30):
         f'failed {state["failed"]} | pending {state["pending"]}',
         f'Progress {state["completedActivations"]/state["totalActivations"]:.2%} | '
         f'{state["completedActivations"]}/{state["totalActivations"]} activations',
-        f'Elapsed {duration(state["elapsed"])} | Campaign ETA {duration(state["eta"])}']
+        f'Elapsed {duration(state["elapsed"] or 0)} | Campaign ETA {duration(state["eta"]) if state["eta"] is not None else "not running"}']
+    if state['eta'] is not None and state['status']!='COMPLETED':
+        finish=(datetime.now(ZoneInfo(timezone))+timedelta(seconds=state['eta'])).strftime('%a %b %d %H:%M %Z')
+        lines.append(f'Estimated finish {finish} | planning range {duration(state["etaLow"])} to {duration(state["etaHigh"])}')
     if state['untimedJobs'] and state['status'] not in ('COMPLETED','FAILED','INTERRUPTED'):
-        lines.append(f'Waiting for timing samples: {state["untimedJobs"]} jobs '
-            f'({", ".join(state["untimedDatasets"])})')
+        lines.append(f'ETA uses workload priors for {state["untimedJobs"]} jobs; replaces them with measurements as runs progress.')
+    elif state.get('historyJobs',0):lines.append(f'ETA uses matching prior campaign timings for {state["historyJobs"]} jobs.')
     wrap=lambda values:[part for line in values for part in (textwrap.wrap(line,width,break_long_words=True) or [''])]
     lines=wrap(lines);lines.append('')
     active=[r for r in state['entries'] if r['status'] in ('RUNNING','FAILED','INTERRUPTED')]
@@ -107,24 +137,24 @@ def render(state,*,width=100,height=30):
         mean=f'{row["mean"]:.2%}' if row['mean'] is not None else '--'
         block=wrap([f'{gpu} {row["status"]} {cfg["dataset"]}/{cfg["partition"]} S{cfg["seed"]} sigma={cfg["sigma"]:g}',
             f'{cfg["condition"]} | R{row["rounds"]}/{cfg["rounds"]} A{row["cursor"]}/{row["total"]}',
-            f'mean {mean} | elapsed {duration(row["elapsed"])} | ETA {duration(row["eta"])}'])
+            f'mean {mean} | elapsed {duration(row["elapsed"] or 0)} | ETA {duration(row["eta"])}'])
         if len(lines)+len(block)+4>height:break
         lines.extend(block);shown+=1
     if shown<len(active):lines.append(f'Showing {shown}/{len(active)} active/stopped jobs; enlarge terminal for more.')
     if state['status']=='COMPLETED':lines.append('ALL EXPERIMENTS COMPLETE.')
     elif state['status'] in ('FAILED','INTERRUPTED'):lines.append('Campaign stopped; inspect worker logs before recovery.')
     else:
-        lines.append('ETA uses recorded training speed; setup/JIT and later workloads can change it.')
+        lines.append('ETA is a forecast; setup/JIT and workload variation can change it.')
         lines.append('Refresh 5 seconds | Ctrl+C closes only this monitor')
     return '\n'.join(wrap(lines))+'\n'
 
 
-def monitor(directory,*,once=False):
+def monitor(directory,*,once=False,timing_roots=(),timezone='America/New_York'):
     try:
         while True:
-            state=snapshot(directory);size=shutil.get_terminal_size(fallback=(100,30))
+            state=snapshot(directory,timing_roots=timing_roots);size=shutil.get_terminal_size(fallback=(100,30))
             if not once and sys.stdout.isatty():print('\033[2J\033[H',end='')
-            print(render(state,width=size.columns,height=size.lines),end='',flush=True)
+            print(render(state,width=size.columns,height=size.lines,timezone=timezone),end='',flush=True)
             if once or state['status'] in ('COMPLETED','FAILED','INTERRUPTED'):return
             time.sleep(5)
     except KeyboardInterrupt:print('\nMonitor closed.',flush=True)

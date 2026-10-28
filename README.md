@@ -43,6 +43,13 @@ and −0.148 points non-IID (one seed, sigma0.01); this establishes implementati
 and bounded recovery, not consistent superiority. Use its separate launcher
 and fresh outputs for the all-288-combination HPC pilot.
 
+[Managed execution and reporting](docs/CART_EXECUTION_AND_REPORTING.md) add
+bounded concurrent slots per GPU, coordinated GPU leases, always-present
+labeled runtime forecasts, three-seed line/bar charts and CSVs, and ntfy
+completion/failure alerts. The local two-case CIFAR-10 benchmark measured
+2.01x throughput with exact matching training state; HPC speedup still needs
+its own measurements. The frozen CART training source is unchanged.
+
 ## Historical A/B/C/D results — non-IID 100 and 500 rounds
 
 [Full results, ten analysis tables, numerical checks and limitations](newResults/nonIID/500round/FINAL_ABCD_RESULTS_ANALYSIS.md).

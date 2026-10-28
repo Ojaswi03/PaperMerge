@@ -46,13 +46,14 @@ def test_unknown_workloads_do_not_borrow_clean_mnist_speed(tmp_path,condition,da
     setup(tmp_path,[(2025,'clean','mnist',running(20,40)),(2026,condition,dataset,None)])
     state=snapshot(tmp_path)
     assert state['entries'][0]['eta']==160
-    assert state['eta'] is None and state['untimedJobs']==1 and state['remainingByGpu'][3] is None
-    assert 'Campaign ETA unavailable' in render(state)
+    assert state['eta']>0 and state['untimedJobs']==1 and state['remainingByGpu'][3]>0
+    assert state['entries'][1]['etaSource']=='prior'
+    assert 'Campaign ETA unavailable' not in render(state)
 
 
 def test_rates_wait_for_one_full_ring_and_pool_only_seed_and_sigma(tmp_path):
     configs=setup(tmp_path,[(2025,'noise_only','mnist',running(5,20)),(2026,'noise_only','mnist',None)])
-    assert snapshot(tmp_path)['eta'] is None
+    assert snapshot(tmp_path)['eta']>0 and snapshot(tmp_path)['untimedJobs']==2
     (tmp_path/'job-0'/'run.json').write_text(json.dumps(running(20,40)))
     plan=json.loads((tmp_path/'plan.json').read_text());plan['configs'][1]['sigma']=.02
     (tmp_path/'plan.json').write_text(json.dumps(plan))

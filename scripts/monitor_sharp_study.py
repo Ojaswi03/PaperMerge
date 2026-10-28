@@ -18,9 +18,11 @@ def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output',type=Path,required=True)
     parser.add_argument('--once',action='store_true',help='Print one snapshot and exit.')
+    parser.add_argument('--timing-from',nargs='*',type=Path,default=[])
+    parser.add_argument('--timezone',default='America/New_York')
     args=parser.parse_args()
     if not args.output.is_dir():parser.error(f'Campaign directory does not exist: {args.output}')
-    try:monitor(args.output.resolve(),once=args.once)
+    try:monitor(args.output.resolve(),once=args.once,timing_roots=args.timing_from,timezone=args.timezone)
     except (OSError,ValueError,KeyError) as error:parser.exit(2,f'Monitor could not read campaign: {error}\n')
 
 
