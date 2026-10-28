@@ -323,8 +323,37 @@ The monitor clears the terminal and refreshes every five seconds. It identifies
 dataset, split, seed, sigma, condition and GPU, and exits when all experiments
 complete or the campaign stops. It does not refresh a completed campaign.
 
+For the read-only monitor with **per-run ETA and measured queue ETA**, use:
+
+```bash
+python scripts/monitor_sharp_study.py --output "$RUN"
+```
+
+This is a separate reader so it can be added while an older frozen SHARP
+campaign is already running. It changes no training files, checkpoints or
+configuration and imports neither TensorFlow nor NumPy. The training runner's
+existing `--monitor` remains available but does not display ETA.
+
+An active run's ETA starts after one complete ring traversal and uses its
+recorded seconds per activation. Queued jobs use the median measured rate of
+matching dataset, partition, model, condition and remaining configuration;
+timing samples may combine seeds and positive sigmas, while accuracy values
+remain separate. Same-GPU samples are preferred. Queue time is summed within
+each GPU's actual sequential assignment, then the slowest GPU determines the
+campaign ETA. If any unfinished workload has no matching timing, overall ETA
+stays unavailable and lists the untimed jobs/datasets. MNIST timing is never
+used to predict CIFAR time, nor clean timing to predict defense/CART workloads.
+
+These are estimates from recorded training progress, not deadlines. Startup,
+PTX/JIT compilation, changing class support and hardware contention can change
+them. The monitor fits the terminal, refreshes every five seconds, catches
+Ctrl+C cleanly and exits immediately after completion or a stopped campaign.
+`--once` prints one snapshot without waiting. Campaign elapsed time is the
+current supervisor session; per-run elapsed time includes recovered work.
+
 Code: [run_sharp_study.py](../scripts/run_sharp_study.py),
 [sharp_protocol.py](../basil_core/sharp_protocol.py),
+[ETA monitor](../scripts/monitor_sharp_study.py),
 [independent result verification](../scripts/verify_sharp_results.py).
 
 ## HPC commands
@@ -348,7 +377,7 @@ python scripts/run_sharp_study.py --prepare-data --datasets mnist cifar10
 python scripts/run_sharp_study.py --preflight "${COMMON[@]}"
 python scripts/run_sharp_study.py --verify-gpus "${COMMON[@]}"
 python scripts/run_sharp_study.py --execute "${COMMON[@]}" --tmux sharp-pilot
-python scripts/run_sharp_study.py --monitor --output "$RUN"
+python scripts/monitor_sharp_study.py --output "$RUN"
 python scripts/run_sharp_study.py --report --output "$RUN"
 ```
 
@@ -383,7 +412,7 @@ COMMON=(--profile hpc --gpus 0,1,2,3 --output "$RUN"
 python scripts/run_sharp_study.py --preflight "${COMMON[@]}"
 python scripts/run_sharp_study.py --verify-gpus "${COMMON[@]}"
 python scripts/run_sharp_study.py --execute "${COMMON[@]}" --tmux sharp-mnist-25r
-python scripts/run_sharp_study.py --monitor --output "$RUN"
+python scripts/monitor_sharp_study.py --output "$RUN"
 python scripts/run_sharp_study.py --report --output "$RUN"
 ```
 
@@ -403,7 +432,7 @@ COMMON=(--profile hpc --gpus 0,1,2,3 --output "$RUN"
 python scripts/run_sharp_study.py --preflight "${COMMON[@]}"
 python scripts/run_sharp_study.py --verify-gpus "${COMMON[@]}"
 python scripts/run_sharp_study.py --execute "${COMMON[@]}" --tmux sharp-full
-python scripts/run_sharp_study.py --monitor --output "$RUN"
+python scripts/monitor_sharp_study.py --output "$RUN"
 python scripts/run_sharp_study.py --report --output "$RUN"
 ```
 
