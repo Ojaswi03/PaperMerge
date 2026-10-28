@@ -70,6 +70,10 @@ provenance separately from the unchanged mathematical/checkpoint contract.
 manager timestamps, ETA assumptions and CART/control accuracy at matching
 completed rounds. It can be pulled during training without restarting workers.
 
+[Modular noise selection](docs/CART_NOISE_SELECTION.md) defaults to one level
+at sigma 0.01 and supports two or three explicit levels for future plans.
+CART-only previews contain 12, 24 or 36 configurations, respectively.
+
 ## Historical A/B/C/D results — non-IID 100 and 500 rounds
 
 [Full results, ten analysis tables, numerical checks and limitations](newResults/nonIID/500round/FINAL_ABCD_RESULTS_ANALYSIS.md).
