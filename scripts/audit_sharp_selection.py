@@ -33,6 +33,18 @@ def analyze(cfg,telemetry,metrics):
             screenedUnattackedAvailable=0,screenedUnattackedRawPass=0,screenedUnattackedRetained=0,
             screenedAttackedAvailable=0,screenedAttackedRawPass=0,screenedAttackedRetained=0,
             selectedDirectAttackLosses=[],bestUnexposedLosses=[],firstDirectAdmission=None))
+        for key in ('cartReferenceVisits','cartGateActivations','cartAcceptedCorrections','cartReferenceAdmissions'):
+            row.setdefault(key,0)
+        row.setdefault('localTrainCE',[]);row.setdefault('rlaCoefficients',[])
+        training=record.get('training',{})
+        for source,target in [('localTrainingLoss','localTrainCE'),('rlaCoefficient','rlaCoefficients')]:
+            value=training.get(source)
+            if isinstance(value,(int,float)) and math.isfinite(value):row[target].append(value)
+        cart=record.get('cart') or {}
+        row['cartReferenceVisits']+=bool(cart.get('referenceUsed'))
+        row['cartGateActivations']+=any(g>0 for g in cart.get('classGates',[]))
+        row['cartAcceptedCorrections']+=cart.get('scale',0)>0
+        row['cartReferenceAdmissions']+=bool(cart.get('referenceAdmitted'))
         direct=sum(latest[s]['direct'] for s in selected)
         exposed=any(latest[s]['exposed'] for s in selected)
         row['activations']+=1;row['selectedCopies']+=len(selected)
@@ -50,7 +62,7 @@ def analyze(cfg,telemetry,metrics):
             if fallback!= (not passed):raise ValueError('Peak fallback evidence is inconsistent.')
             retained=set(available) if fallback else passed
             if selection.get('screenGuardFallback'):
-                if cfg.get('method')!='sharp_guarded':raise ValueError('Undeclared guarded-selection behavior.')
+                if cfg.get('method') not in ('sharp_guarded','sharp_cart_v2'):raise ValueError('Undeclared guarded-selection behavior.')
                 retained=set(available)
             if not set(selected).issubset(retained):raise ValueError('A rejected copy was selected.')
             row['screenedActivations']+=1;row['allFailFallbacks']+=fallback
@@ -84,9 +96,22 @@ def analyze(cfg,telemetry,metrics):
             row[f'{group.lower()}RawPassFraction']=ratio('screened'+group+'RawPass','screened'+group+'Available')
             row[f'{group.lower()}RetainedFraction']=ratio('screened'+group+'Retained','screened'+group+'Available')
         row['meanSelectedCount']=statistics.mean(row.pop('selectedCounts'))
+        for key in ('localTrainCE','rlaCoefficients'):
+            values=row.pop(key);row[key+'Mean']=statistics.mean(values) if values else None
         for key in ('selectedDirectAttackLosses','bestUnexposedLosses'):
             values=row.pop(key);row[key+'Mean']=statistics.mean(values) if values else None
     return list(rounds.values())
+
+
+def phases(cfg,rounds):
+    before=[r for r in rounds if r['roundIndex']<cfg['attackStart'] and r['meanAccuracy'] is not None]
+    after=[r for r in rounds if r['roundIndex']>=cfg['attackStart'] and r['meanAccuracy'] is not None]
+    point=lambda r:dict(displayRound=r['displayRound'],meanAccuracy=r['meanAccuracy']) if r else None
+    return dict(attackStartsDisplayRound=cfg['attackStart']+1,
+        lastBeforeAttack=point(before[-1] if before else None),
+        firstAfterAttack=point(after[0] if after else None),latestAfterAttack=point(after[-1] if after else None),
+        cartAcceptedCorrections=sum(r['cartAcceptedCorrections'] for r in rounds),
+        cartGateActivations=sum(r['cartGateActivations'] for r in rounds))
 
 
 def audit(output,*,dataset='mnist',partition='iid',seed=2025,condition='attack_defense',sigma=None):
@@ -107,12 +132,13 @@ def audit(output,*,dataset='mnist',partition='iid',seed=2025,condition='attack_d
         if contract['config']!=cfg or contract['source']!=plan['source']:
             raise ValueError('Checkpoint differs from its frozen plan.')
         if metadata['cursor']!=len(metadata['telemetry']):raise ValueError('Checkpoint telemetry is incomplete.')
+        rows=analyze(cfg,metadata['telemetry'],metadata['roundMetrics'])
         reports.append(dict(config=cfg,status=run['status'],checkpointAvailable=True,
             checkpointActivations=metadata['cursor'],liveReportedActivations=run.get('completedActivations'),
             sourceSha256=plan['source'],dataIdentity=contract['data'],
             partitionHash=contract['partition']['partitionHash'],
             auditProgramSha256=hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
-            rounds=analyze(cfg,metadata['telemetry'],metadata['roundMetrics']),
+            rounds=rows,phaseSummary=phases(cfg,rows),
             officialTestUsed=False,interpretation='Read-only post-hoc transmission provenance. Attack ancestry is exposure, not proof of a lasting harmful effect. Unattacked copies can have attacked ancestors.'))
     return reports
 
@@ -126,21 +152,28 @@ def text_report(reports,*,all_rounds=False):
         if not report['checkpointAvailable']:
             lines.append('No checkpoint committed yet.');continue
         lines.append(f'Checkpoint A{report["checkpointActivations"]}; live counter A{report["liveReportedActivations"]}.')
+        summary=report.get('phaseSummary')
+        if summary:
+            lines.append(f'Attack begins displayed round {summary["attackStartsDisplayRound"]}. Last pre-attack: '
+                f'{summary["lastBeforeAttack"]}; first post-attack: {summary["firstAfterAttack"]}.')
+            lines.append(f'CART positive-gate activations: {summary["cartGateActivations"]}; accepted corrections: {summary["cartAcceptedCorrections"]}.')
         first=next((r['firstDirectAdmission'] for r in report['rounds'] if r['firstDirectAdmission']),None)
         if first:
             lines.append(f'First direct attack admission: A{first["activation"]}, node{first["node"]}, '
                 f'round{first["roundIndex"]+1}; before screen {first["availableUnattacked"]} unattacked/'
                 f'{first["availableAttacked"]} attacked; retained {first["retainedUnattacked"]} unattacked/'
                 f'{first["retainedAttacked"]} attacked.')
-        lines.append('Round Acc% SelectedAttack% InputAncestry% RetainUnattacked% RetainAttacked% AllFail MeanQ')
+        lines.append('Round Acc% SelectedAttack% InputAncestry% RetainUnattacked% RetainAttacked% AllFail MeanQ TrainCE CARTgate/CARTaccept')
         rows=report['rounds'];last=rows[-1]['roundIndex'] if rows else -1
         for row in rows:
             r=row['roundIndex']
             if not all_rounds and not (cfg['attackStart']-2<=r<=cfg['attackStart']+6 or r>=last-2):continue
+            ce=f'{row["localTrainCEMean"]:.4g}' if row['localTrainCEMean'] is not None else '--'
             lines.append(f'{row["displayRound"]:5} {percent(row["meanAccuracy"]):>6} '
                 f'{percent(row["selectedDirectAttackFraction"]):>15} {percent(row["attackAncestryInputFraction"]):>14} '
                 f'{percent(row["unattackedRetainedFraction"]):>17} {percent(row["attackedRetainedFraction"]):>15} '
-                f'{row["allFailFallbacks"]:7} {row["meanSelectedCount"]:5.1f}')
+                f'{row["allFailFallbacks"]:7} {row["meanSelectedCount"]:5.1f} {ce:>7} '
+                f'{row["cartGateActivations"]}/{row["cartAcceptedCorrections"]}')
         lines.append('Retention rates use full-window screens and include recorded fallback policies.')
         lines.append('Attack labels are post-hoc audit information, never inputs to training decisions.')
     return '\n'.join(lines)

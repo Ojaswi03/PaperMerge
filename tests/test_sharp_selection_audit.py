@@ -92,3 +92,20 @@ def test_v1_counterexample_sparse_benign_drift_can_lose_to_dense_hidden_attack()
     mixed[-1]=applyAttack([base],'hidden',rng=np.random.default_rng(8))[0]
     retained,after=peak_screen(mixed,full_window=True)
     assert retained.tolist()==[65] and not after['screenAllFailFallback']
+
+
+@pytest.mark.parametrize('method',['sharp_guarded','sharp_cart_v2'])
+def test_versioned_survivor_guard_and_cart_activity_are_auditable(method):
+    from scripts.audit_sharp_selection import phases
+    cfg,records,metrics=history();cfg['method']=method
+    selection=records[5]['selection']
+    selection.update(peakRatios=[50.,1.],screenGuardFallback=True)
+    records[5].update(cart=dict(referenceUsed=True,classGates=[.2,0.],scale=.5,referenceAdmitted=True),
+        training=dict(localTrainingLoss=1.2,rlaCoefficient=.003))
+    rows=analyze(cfg,records,metrics);last=rows[-1]
+    assert last['cartAcceptedCorrections']==1 and last['cartGateActivations']==1
+    assert last['localTrainCEMean']==1.2 and last['rlaCoefficientsMean']==.003
+    result=phases(cfg,rows)
+    assert result['lastBeforeAttack']['meanAccuracy']==.9
+    assert result['firstAfterAttack']['meanAccuracy']==.1
+    assert result['attackStartsDisplayRound']==2 and result['cartAcceptedCorrections']==1

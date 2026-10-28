@@ -58,3 +58,28 @@ alignment, noise separation, missing-seed handling, invalid identity/metric
 rejection, and manager-status disagreement. The inspector was also run against
 the saved 72-case tiny real-data workflow (12 seed comparisons/four groups).
 Those small workflow metrics are not results of the active HPC campaign.
+
+## When protected CIFAR-10 stays near chance
+
+Do not confuse zero failed processes with successful learning. If protected
+accuracy is still around 10–15% after many rounds, use the checkpoint audit to
+separate pre-attack learning problems from attack-active degradation. This
+audit supports the CART v2 survivor guard and reports local training CE, mean
+selection count, direct attacked-copy admission, and CART gate/correction counts.
+
+```bash
+for AUDIT_CONDITION in attack_noise_defense attack_noise_defense_rla attack_noise_defense_rla_cart
+do
+  python scripts/audit_sharp_selection.py --output "$RUN" \
+    --dataset cifar10 --partition iid --seed 2025 --sigma 0.01 \
+    --condition "$AUDIT_CONDITION" --all-rounds
+done | tee /tmp/papermerge-cifar-selection-audit.txt
+```
+
+It reads only the JSON metadata member of each atomic checkpoint, not its
+model arrays. Attacker labels are used post hoc for auditing, never as inputs
+to training. With zero-based attackStart=20, the first attack-active displayed
+round is 21. Poor learning before then cannot be attributed to the active
+Hidden transformation. A larger CART-versus-control difference while both
+models remain near chance is not evidence of near-clean recovery. Preserve
+the current experiment when developing a separate CART revision.
