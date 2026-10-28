@@ -1,0 +1,14 @@
+{
+  "planSha256": "47ac6224a1433d33795b1a051bb50d3fa57d2b57f34b7b72da3c5c59b52b7391",
+  "programSha256": {
+    "basil_core/cart_campaign_io.py": "3655d41d806e5778a28c952037196da840b186db5541d623033da4dcb3a7dcc9",
+    "basil_core/sharp_compiled_transfer.py": "bb44a909f2ac062389800264fcafb851fe8024099a7de9390fee88c9c8af82e9",
+    "scripts/cart_v2_slot_worker.py": "2b37a1a47a0d37a89e4181412eb578b45e4596fa682868ca8423b2162200ac2b",
+    "scripts/cart_v2_transfer_worker.py": "a0fc80601338c45a4331af62f9874830aaac903dbe8f3fc975a40f4862fe7f85",
+    "scripts/run_cart_v2_resilient.py": "922fbcfefac5ff7020a9a2dc989cd372311f886342c11e8adddd534107fddd38",
+    "scripts/run_cart_v2_scaled.py": "a3ee3af55c745a49328faea641ff5b977dbf8d4bd6bb9596042241637f0b936e",
+    "scripts/run_cart_v2_transfer.py": "34ded0e19586fd8f4c326a65ba32a92ed55b80ce4aeec326be6ba60d70396019",
+    "scripts/verify_cart_v2_transfer.py": "e60bd8714bc55739c808209d001ffe028aac13097adcdca9fdbcd0d12ad167ce"
+  },
+  "workerFailurePolicy": "record-and-continue; one attempt per invocation"
+}
