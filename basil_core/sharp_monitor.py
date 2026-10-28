@@ -56,14 +56,18 @@ def snapshot(directory,*,timing_roots=()):
         if not old or old.get('source')!=plan.get('source'):continue
         if old.get('jobsPerGpu',1)!=concurrency:continue
         old_campaign=read_json(previous/'campaign.json',{})
+        if old_campaign.get('runtimeAdapter')!=campaign.get('runtimeAdapter'):continue
         if campaign.get('host') and old_campaign.get('host')!=campaign['host']:continue
         if campaign.get('profile') and old_campaign.get('profile')!=campaign['profile']:continue
         for cfg in old['configs']:
             row=read_json(previous/cfg['runId']/'run.json',{})
             elapsed=row.get('elapsedSeconds');cursor=row.get('completedActivations',0)
+            adapter=row.get('runtimeAdapter',{})
+            cursor-=adapter.get('startedCursor',0)
+            if isinstance(elapsed,(int,float)):elapsed-=adapter.get('startedElapsedSeconds',0.)
             if (row.get('status')=='COMPLETED' and isinstance(elapsed,(int,float)) and math.isfinite(elapsed)
                     and elapsed>0 and cursor>=cfg['nodes']):
-                history[timing_key(cfg)].append(elapsed/cursor)
+                history[(timing_key(cfg),row.get('runtimeAdapter',{}).get('name'))].append(elapsed/cursor)
     for index,cfg in enumerate(configs):
         row=read_json(root/cfg['runId']/'run.json',dict(status='PENDING'))
         if continuing and cfg['runId'] in queued:row=dict(row,status='PENDING')
@@ -73,17 +77,23 @@ def snapshot(directory,*,timing_roots=()):
         if type(cursor) is not int or not 0<=cursor<=total:
             raise ValueError(f'Invalid activation counter in {cfg["runId"]}.')
         elapsed=row.get('elapsedSeconds');rate=None
+        adapter=row.get('runtimeAdapter',{})
+        backend=adapter.get('name') or (campaign.get('runtimeAdapter') if row['status']!='COMPLETED' else None)
+        sampled_cursor=cursor-adapter.get('startedCursor',0)
+        sampled_elapsed=elapsed-adapter.get('startedElapsedSeconds',0.) if isinstance(elapsed,(int,float)) else elapsed
+        key=(timing_key(cfg),backend)
         if (isinstance(elapsed,(int,float)) and math.isfinite(elapsed) and elapsed>0
-                and cursor>=cfg['nodes'] and row['status'] in ('RUNNING','COMPLETED')):
-            rate=elapsed/cursor
-            rates[timing_key(cfg)].append(rate)
-            local_rates[(timing_key(cfg),lanes[index%len(lanes)])].append(rate)
+                and isinstance(sampled_elapsed,(int,float)) and sampled_elapsed>0
+                and sampled_cursor>=cfg['nodes'] and row['status'] in ('RUNNING','COMPLETED')):
+            rate=sampled_elapsed/sampled_cursor
+            rates[key].append(rate)
+            local_rates[(key,lanes[index%len(lanes)])].append(rate)
         eta=0. if row['status']=='COMPLETED' else None
         if row['status']=='RUNNING' and rate is not None:eta=rate*(total-cursor)
         entries.append(dict(config=cfg,status=row['status'],cursor=cursor,total=total,
             rounds=row.get('completedRounds',0),elapsed=elapsed,eta=eta,
             gpu=row.get('physicalGpuId',gpus[index%len(gpus)]),lane=lanes[index%len(lanes)],
-            mean=row.get('meanAccuracy'),rate=rate,error=row.get('error')))
+            mean=row.get('meanAccuracy'),rate=rate,error=row.get('error'),runtimeAdapter=backend))
     done=sum(r['status']=='COMPLETED' for r in entries)
     failed=sum(r['status']=='FAILED' for r in entries)
     stopped=any(r['status'] in ('FAILED','INTERRUPTED') for r in entries)
@@ -95,7 +105,7 @@ def snapshot(directory,*,timing_roots=()):
         if row['status']=='COMPLETED':continue
         if continuing and row['status'] in ('FAILED','INTERRUPTED'):
             row['eta']=None;continue
-        key=timing_key(row['config']);samples=local_rates.get((key,row['lane'])) or rates.get(key)
+        key=(timing_key(row['config']),row['runtimeAdapter']);samples=local_rates.get((key,row['lane'])) or rates.get(key)
         if row['rate'] is not None:rate=row['rate'];origin='measured';spread=.20
         elif samples:rate=statistics.median(samples);origin='measured';spread=.25
         elif history.get(key):

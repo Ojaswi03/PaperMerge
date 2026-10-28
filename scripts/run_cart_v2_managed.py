@@ -61,7 +61,7 @@ def run(args,forwarded):
         try:
             if not args.watch and not args.postprocess_only:
                 launcher={'standard':'run_cart_v2_parallel.py','scaled':'run_cart_v2_scaled.py',
-                    'resilient':'run_cart_v2_resilient.py'}[getattr(args,'scheduler','resilient')]
+                    'resilient':'run_cart_v2_resilient.py','transfer':'run_cart_v2_transfer.py'}[getattr(args,'scheduler','resilient')]
                 command=[sys.executable,str(ROOT/'scripts'/launcher),'--execute','--output',str(root),*forwarded]
                 with (root/'supervisor.log').open('a') as log:
                     process=subprocess.Popen(command,cwd=ROOT,stdout=log,stderr=subprocess.STDOUT)
@@ -133,7 +133,7 @@ def run(args,forwarded):
 def main():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('--output',type=Path);p.add_argument('--figures',type=Path)
-    p.add_argument('--scheduler',choices=('standard','scaled','resilient'),default='resilient')
+    p.add_argument('--scheduler',choices=('standard','scaled','resilient','transfer'),default='resilient')
     p.add_argument('--ntfy-topic');p.add_argument('--ntfy-server',default='https://ntfy.sh')
     p.add_argument('--ntfy-token-file',type=Path);p.add_argument('--timing-from',nargs='*',type=Path,default=[])
     p.add_argument('--tmux');action=p.add_mutually_exclusive_group()
