@@ -1,0 +1,34 @@
+# CART continuity: downloaded primary papers
+
+Downloaded 28 October 2026 using public author/publisher PDFs. These papers were
+useful in the Firecrawl-assisted mechanism review. Every PDF is accompanied by
+its URL, byte count and SHA-256 in [download_receipts.json](download_receipts.json).
+The arXiv author version is distinguished from the venue page where applicable.
+
+| Paper | Local PDF and primary source | Important part to read | What CART must distinguish |
+|---|---|---|---|
+| FedFomo: Personalized Federated Learning with First Order Model Optimization, ICLR 2021 | [PDF](fedfomo_iclr_2021_arxiv.pdf), [author version](https://arxiv.org/abs/2012.08565) | Section 3, especially Equation 3: local loss improvement relative to the previous client model determines model weights; negative benefits retain the local model | Keeping a previous local model when peers look worse is already prior work. A scalar local-loss gate alone is not our novelty. |
+| FedWeIT: Federated Continual Learning with Weighted Inter-client Transfer, ICML 2021 | [PDF](fedweit_icml_2021.pdf), [publisher](https://proceedings.mlr.press/v139/yoon21b.html) | Section 3, parameter decomposition and weighted task-adaptive transfer | Dense shared parameters, sparse task parameters and inter-client transfer already address interference. CART currently trains a complete model rather than this decomposition. |
+| FedKNOW: Federated Continual Learning with Signature Task Knowledge Integration at Edge | [PDF](fedknow_2022_arxiv.pdf), [author preprint](https://arxiv.org/abs/2212.01738) | Framework and gradient integration sections: knowledge extractor, gradient restorer, gradient integrator | Remembering model knowledge and avoiding harmful transfer through gradient integration are established ideas. This download is an author preprint, not a claimed independent replication. |
+| Federated Continual Learning Goes Online: Uncertainty-Aware Memory Management for Vision Tasks and Beyond, ICLR 2025 | [PDF](uncertainty_aware_memory_iclr_2025.pdf), [venue page](https://iclr.cc/virtual/2025/poster/28896), [author version](https://arxiv.org/abs/2405.18925) | Method section: Bregman Information used to store/retrieve examples in a replay buffer | Predictive-uncertainty sample replay differs from our simulated parameter-channel allowance. Calling any uncertainty-based memory new would be incorrect. |
+
+The OpenReview PDF endpoint returned HTTP 403; the public arXiv version was
+successfully saved instead. No paywall or access control was bypassed.
+
+## Other closest work already in this repository
+
+[Bristle](../022-Bristle%20-%20Decentralized%20Federated%20Learning%20in%20Byzantine%2C%20Non-i.i.d.%20Environments.pdf),
+Sections 3.1–3.3, is especially important: it already combines decentralized
+Byzantine/non-IID learning and per-class performance-based integration. Its
+pretrained frozen backbone and output-layer exchange differ from the proposed
+complete-model routing, but that difference alone does not prove novelty or
+better performance.
+
+[GEM and GEC](../cart_novelty_audit_20261026/README.md) already constrain remembered
+loss/gradient interference. [FedCAD and ACIL](../cart_head_transport_20261027/README.md)
+cover class-aware distillation and analytic classifier fitting. These must be
+credited when describing the existing CART head repair.
+
+Read the [candidate architecture, equations and falsifiable tests](../../docs/CART_CONTINUITY_CANDIDATE.md)
+for the narrow research hypothesis. This targeted review does not establish an
+unpublished mechanism, patentability, or a successful new defense.

@@ -79,6 +79,15 @@ separates the HPC pre-attack failure from eight paired local handoff diagnostics
 Historical selection remains weak even without noise or proximal anchoring;
 these findings motivate method development rather than a CART superiority claim.
 
+**28 October completed HPC campaign:** [saved 72-run metrics and line/bar plots](docs/CART_HPC_72_RESULTS_20261028.md),
+[verified metric/provenance receipt](docs/validation/CART_HPC_EXPORTED_METRICS_20261028.json),
+and [continuity candidate, equations and novelty requirements](docs/CART_CONTINUITY_CANDIDATE.md).
+CART v2 does not improve the non-IID CIFAR-10 endpoint (10%); its IID CIFAR-10
+mean gain is 2.583 points with substantial seed variation. Four additional primary
+papers are [downloaded and indexed](papers/cart_continuity_novelty_20261028/README.md).
+Compact exports use `scripts/export_cart_campaign.py`; reruns reuse matching files
+without replacing old results. New candidate screens remain separate from v2.
+
 ## Historical A/B/C/D results — non-IID 100 and 500 rounds
 
 [Full results, ten analysis tables, numerical checks and limitations](newResults/nonIID/500round/FINAL_ABCD_RESULTS_ANALYSIS.md).

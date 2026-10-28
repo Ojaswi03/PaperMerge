@@ -1,5 +1,7 @@
 # CART: literature, attribution and proposed feature-memory extension
 
+**28 October 2026:** [continuity candidate and falsifiable novelty tests](CART_CONTINUITY_CANDIDATE.md), with [four newly downloaded primary papers and their important method sections](../papers/cart_continuity_novelty_20261028/README.md). The 72-run v2 results do not establish the intended non-IID improvement.
+
 **26 October 2026 follow-up:** the current class-loss barrier also needs direct
 comparison with GEM's remembered-loss constraints (NeurIPS 2017, Equations 5–8).
 The [mechanism comparison and downloaded official paper](../papers/cart_novelty_audit_20261026/README.md)

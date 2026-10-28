@@ -1,0 +1,37 @@
+[
+  {
+    "title": "FedKNOW: Federated Continual Learning with Signature Task Knowledge Integration at Edge",
+    "path": "fedknow_2022_arxiv.pdf",
+    "sourceUrl": "https://arxiv.org/pdf/2212.01738",
+    "bytes": 5573907,
+    "sha256": "21e236dd0c7c5b7cb962c9e7d84ab352cb465e61c9f569860b69205b780fa61c",
+    "verifiedAt": "2026-10-28T15:37:59.139966+00:00"
+  },
+  {
+    "title": "Federated Continual Learning with Weighted Inter-client Transfer",
+    "path": "fedweit_icml_2021.pdf",
+    "sourceUrl": "https://proceedings.mlr.press/v139/yoon21b/yoon21b.pdf",
+    "bytes": 5286153,
+    "sha256": "d17002482faa63a53a719095ae8dae3656573ddc898d3398d6fc6a2b84e636d7",
+    "verifiedAt": "2026-10-28T15:38:00.311452+00:00"
+  },
+  {
+    "title": "Federated Continual Learning Goes Online: Uncertainty-Aware Memory Management for Vision Tasks and Beyond",
+    "path": "uncertainty_aware_memory_iclr_2025.pdf",
+    "sourceUrl": "https://arxiv.org/pdf/2405.18925",
+    "officialPage": "https://iclr.cc/virtual/2025/poster/28896",
+    "unavailableEndpoint": "https://openreview.net/pdf?id=f65RuQgVlp",
+    "unavailableReason": "HTTP403",
+    "bytes": 896238,
+    "sha256": "e2246ddc0ae3373d43690dda06ab5780ede935e1db34f0a6f0d5e779b181533f",
+    "verifiedAt": "2026-10-28T15:38:35.197588+00:00"
+  },
+  {
+    "title": "Personalized Federated Learning with First Order Model Optimization",
+    "path": "fedfomo_iclr_2021_arxiv.pdf",
+    "sourceUrl": "https://arxiv.org/pdf/2012.08565",
+    "bytes": 3223756,
+    "sha256": "7d338197057abc493ae8da0d905c51de0e7a07e78027a644a1a17ac86a7e8042",
+    "verifiedAt": "2026-10-28T15:38:47.695277+00:00"
+  }
+]

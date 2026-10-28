@@ -127,3 +127,13 @@ The original `005` wireless channel-estimation paper was checked and matches its
 All 66 indexed files passed the PDF header check and `pdfinfo` parsing. First-page text was extracted to verify identity, and every available receipt hash matched the current file. SHA-256 hashes, sizes, page counts and first-page previews are in the [validated PDF inventory](firecrawl_reference_audit_20261027/validated_pdf_inventory.json). Original sources and any failed attempts for new downloads are in the [download receipts](firecrawl_reference_audit_20261027/download_receipts.json); the [manifest](firecrawl_reference_audit_20261027/download_manifest.json) records why each paper was included and the relevant Firecrawl artifact names.
 
 Original user PDFs were preserved. The title corrections above identify the actual contents so a misleading filename is not used as a citation.
+
+## Continuity mechanism review — 28 October 2026
+
+Four additional useful primary papers are downloaded in
+[cart_continuity_novelty_20261028](cart_continuity_novelty_20261028/README.md):
+FedFomo, FedWeIT, FedKNOW, and uncertainty-aware online federated continual
+learning. The index there identifies the important method paragraphs and links
+each local PDF to its public source. Byte counts and SHA-256 hashes are recorded
+in its download receipts. These sources constrain the novelty claim; they do not
+establish CART's novelty or performance.

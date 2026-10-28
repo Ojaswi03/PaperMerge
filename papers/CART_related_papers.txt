@@ -29,3 +29,7 @@ ACIL: Analytic Class-Incremental Learning with Absolute Memorization and Privacy
 SLCA: Slow Learner with Classifier Alignment for Continual Learning on a Pre-trained Model
 Multi-Anchor Distillation with Text-Guided Analytic Classifier for Continual Learning
 Class-Wise Adaptive Self Distillation for Heterogeneous Federated Learning
+Personalized Federated Learning with First Order Model Optimization
+Federated Continual Learning with Weighted Inter-client Transfer
+FedKNOW: Federated Continual Learning with Signature Task Knowledge Integration at Edge
+Federated Continual Learning Goes Online: Uncertainty-Aware Memory Management for Vision Tasks and Beyond
