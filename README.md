@@ -66,6 +66,10 @@ an optional faster model-loading path, guarded by exact per-device comparisons.
 It resumes the existing study after a graceful restart and records its runtime
 provenance separately from the unchanged mathematical/checkpoint contract.
 
+[Live campaign inspection](docs/CART_LIVE_INSPECTION.md) shows all workers,
+manager timestamps, ETA assumptions and CART/control accuracy at matching
+completed rounds. It can be pulled during training without restarting workers.
+
 ## Historical A/B/C/D results — non-IID 100 and 500 rounds
 
 [Full results, ten analysis tables, numerical checks and limitations](newResults/nonIID/500round/FINAL_ABCD_RESULTS_ANALYSIS.md).
