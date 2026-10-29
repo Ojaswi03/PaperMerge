@@ -1,0 +1,1152 @@
+{
+  "inputMetricAndFigureProvenance": [
+    {
+      "figure": "combined_revised_mnist_sigma_0.01_learning_curves.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/mnist-iid-2025-clean-s0-cartv2-c6b7b8f7f23e/metrics.npz",
+      "sha256": "665961e38bc8ffe2d15f8f80596cc70c319b9305c1cc7d9cda27721d26ff5d7d",
+      "description": "Clean iid"
+    },
+    {
+      "figure": "combined_revised_mnist_sigma_0.01_learning_curves.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/mnist-iid-2026-clean-s0-cartv2-5d359bd3ca13/metrics.npz",
+      "sha256": "3dc632d8e8e6b68f88182ea2bb1f0a013f97015b0c75dd3d525a1dc79f968bee",
+      "description": "Clean iid"
+    },
+    {
+      "figure": "combined_revised_mnist_sigma_0.01_learning_curves.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/mnist-iid-2027-clean-s0-cartv2-9f624ebc0fe4/metrics.npz",
+      "sha256": "d7ee3b71cceeecae3b1ed6be0bcc0f8ee9302b53cedd299ef9de7ef2ea58f2e7",
+      "description": "Clean iid"
+    },
+    {
+      "figure": "combined_revised_mnist_sigma_0.01_learning_curves.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/mnist-iid-2025-attack_noise-s0.01-cartv2-8232532aa372/metrics.npz",
+      "sha256": "6f9a4a046974f328aa42319d0395d023ef95f3ba5da1f9457eb1f0326c6379b8",
+      "description": "Attack + noise iid"
+    },
+    {
+      "figure": "combined_revised_mnist_sigma_0.01_learning_curves.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/mnist-iid-2026-attack_noise-s0.01-cartv2-f3aea8e11162/metrics.npz",
+      "sha256": "4cdb18a6cb551e6bdf384c74614ec3780cfc56c98a8f92fb8172e077e8656342",
+      "description": "Attack + noise iid"
+    },
+    {
+      "figure": "combined_revised_mnist_sigma_0.01_learning_curves.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/mnist-iid-2027-attack_noise-s0.01-cartv2-7d6eeefa6497/metrics.npz",
+      "sha256": "894ec27595fadb2dd84d2c224e78c995a75bdce4179b4bc6876b42cb32d91fa2",
+      "description": "Attack + noise iid"
+    },
+    {
+      "figure": "combined_revised_mnist_sigma_0.01_learning_curves.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/mnist-iid-2025-attack_noise_defense-s0.01-cartv2-fcd0af7679b8/metrics.npz",
+      "sha256": "28831173f6ef008e90a7a9f89bb744fb6567891b29dff5f9120360aef5b8359f",
+      "description": "Selection defense iid"
+    },
+    {
+      "figure": "combined_revised_mnist_sigma_0.01_learning_curves.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/mnist-iid-2026-attack_noise_defense-s0.01-cartv2-254413bdee8c/metrics.npz",
+      "sha256": "3bff474a09edd7580be6084a83b818d4ac8ee819fe972984c44fef7ec9659827",
+      "description": "Selection defense iid"
+    },
+    {
+      "figure": "combined_revised_mnist_sigma_0.01_learning_curves.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/mnist-iid-2027-attack_noise_defense-s0.01-cartv2-978a6a748a0f/metrics.npz",
+      "sha256": "e26f817a4b5662feba61d4b5ca7eb57b64061eee37a3ab5803ce0907f12422a5",
+      "description": "Selection defense iid"
+    },
+    {
+      "figure": "combined_revised_mnist_sigma_0.01_learning_curves.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/mnist-iid-2025-attack_noise_rla-s0.01-cartv2-e37d5b6e3aaf/metrics.npz",
+      "sha256": "e8a9d6311d779f84faedfc4e82d2cba027de8ed0cb99d1cff88ed5c0465df7cd",
+      "description": "Noise mitigation iid"
+    },
+    {
+      "figure": "combined_revised_mnist_sigma_0.01_learning_curves.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/mnist-iid-2026-attack_noise_rla-s0.01-cartv2-27c860006641/metrics.npz",
+      "sha256": "06400be721fabe65cd31c93ff78236a31acda9d35893582e4b4f2e286eda6398",
+      "description": "Noise mitigation iid"
+    },
+    {
+      "figure": "combined_revised_mnist_sigma_0.01_learning_curves.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/mnist-iid-2027-attack_noise_rla-s0.01-cartv2-a1a58d26d960/metrics.npz",
+      "sha256": "8409eda2ced2559138ce971f28a6e79aa86a4f56acba0b2b97d05a899759df7b",
+      "description": "Noise mitigation iid"
+    },
+    {
+      "figure": "combined_revised_mnist_sigma_0.01_learning_curves.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/mnist-iid-2025-attack_noise_defense_rla-s0.01-cartv2-d9f2874550cf/metrics.npz",
+      "sha256": "e60910363b02b083d73ca9dae1e5cf0f6b443b6c521d6f9055db94b58acf8a0d",
+      "description": "SHARP iid"
+    },
+    {
+      "figure": "combined_revised_mnist_sigma_0.01_learning_curves.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/mnist-iid-2026-attack_noise_defense_rla-s0.01-cartv2-13dfcf7af2e3/metrics.npz",
+      "sha256": "0b3e036ac327bbb2a3ef94b3410e3d28151694120d849eada3cd9b564b52b4df",
+      "description": "SHARP iid"
+    },
+    {
+      "figure": "combined_revised_mnist_sigma_0.01_learning_curves.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/mnist-iid-2027-attack_noise_defense_rla-s0.01-cartv2-a262625dcc99/metrics.npz",
+      "sha256": "434f75276ccc3cdf3c37e4ba046983de470e30aa5751a6b102a11e660ac5713b",
+      "description": "SHARP iid"
+    },
+    {
+      "figure": "combined_revised_mnist_sigma_0.01_learning_curves.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/mnist-iid-2025-attack_noise_defense_rla_cart-s0.01-cartv2-2274e79d7564/metrics.npz",
+      "sha256": "d0fd9ba1d7e72ac76b39205c791cf76003059ffdededdcdbaf8e7f7f13a79d6a",
+      "description": "SHARP + CART iid"
+    },
+    {
+      "figure": "combined_revised_mnist_sigma_0.01_learning_curves.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/mnist-iid-2026-attack_noise_defense_rla_cart-s0.01-cartv2-3346e7a4e3da/metrics.npz",
+      "sha256": "5e5ce2183eeb406782b3bf5024c2d57854be592eaec16cb7c1a923cfe13b0576",
+      "description": "SHARP + CART iid"
+    },
+    {
+      "figure": "combined_revised_mnist_sigma_0.01_learning_curves.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/mnist-iid-2027-attack_noise_defense_rla_cart-s0.01-cartv2-9742ce215b77/metrics.npz",
+      "sha256": "fa4ad806fad5476921e9493277a887a28a5beb79cc4c12d3e45c801bb03dcc71",
+      "description": "SHARP + CART iid"
+    },
+    {
+      "figure": "combined_revised_mnist_sigma_0.01_learning_curves.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/mnist-dirichlet-2025-clean-s0-cartv2-09429c47bf62/metrics.npz",
+      "sha256": "61302ed316f8d6ddd754c408f7e945adcdfa250b035c6d744b0c0108a8ab7892",
+      "description": "Clean dirichlet"
+    },
+    {
+      "figure": "combined_revised_mnist_sigma_0.01_learning_curves.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/mnist-dirichlet-2026-clean-s0-cartv2-bbe93ee178c1/metrics.npz",
+      "sha256": "1df7af7f6c721552aa1eb875dff89191d0b4d2d3182ebaf096a64b1f0d5efb05",
+      "description": "Clean dirichlet"
+    },
+    {
+      "figure": "combined_revised_mnist_sigma_0.01_learning_curves.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/mnist-dirichlet-2027-clean-s0-cartv2-1a8bafc8b283/metrics.npz",
+      "sha256": "cf40735434b988afab174875164bdb62b2b27c9b867b188326d29c34a07d42a7",
+      "description": "Clean dirichlet"
+    },
+    {
+      "figure": "combined_revised_mnist_sigma_0.01_learning_curves.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/mnist-dirichlet-2025-attack_noise-s0.01-cartv2-b95290cfeb4e/metrics.npz",
+      "sha256": "ab51486032d25c8408d2ec904fcc56119e0d3ab5f0ed0f6c90d3a81e3a68530f",
+      "description": "Attack + noise dirichlet"
+    },
+    {
+      "figure": "combined_revised_mnist_sigma_0.01_learning_curves.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/mnist-dirichlet-2026-attack_noise-s0.01-cartv2-aeb05765e6af/metrics.npz",
+      "sha256": "84a4ad335c794cc6a08c460896c38840f768af569cb864b640c57d4677955143",
+      "description": "Attack + noise dirichlet"
+    },
+    {
+      "figure": "combined_revised_mnist_sigma_0.01_learning_curves.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/mnist-dirichlet-2027-attack_noise-s0.01-cartv2-94bd133560eb/metrics.npz",
+      "sha256": "3178ef8d3755bb6a2062cc79e11198ff45c110902ee276b02b0a0fc94fe402f3",
+      "description": "Attack + noise dirichlet"
+    },
+    {
+      "figure": "combined_revised_mnist_sigma_0.01_learning_curves.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/mnist-dirichlet-2025-attack_noise_defense-s0.01-cartv2-8ae3ceedf7a2/metrics.npz",
+      "sha256": "2ee66cbd9ea6547f1319e79932b247e8089f39b4639775432348ec923f399411",
+      "description": "Selection defense dirichlet"
+    },
+    {
+      "figure": "combined_revised_mnist_sigma_0.01_learning_curves.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/mnist-dirichlet-2026-attack_noise_defense-s0.01-cartv2-8a77cea9f72c/metrics.npz",
+      "sha256": "f9afe4c5afb9960968687393855ddd2b0a376861e4e2225e704a7fe3879b6bbc",
+      "description": "Selection defense dirichlet"
+    },
+    {
+      "figure": "combined_revised_mnist_sigma_0.01_learning_curves.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/mnist-dirichlet-2027-attack_noise_defense-s0.01-cartv2-d711a95a9842/metrics.npz",
+      "sha256": "78cc2f2b52991332210d77334f1eb0b1a2df56c3313c63bbc524282759cc7aab",
+      "description": "Selection defense dirichlet"
+    },
+    {
+      "figure": "combined_revised_mnist_sigma_0.01_learning_curves.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/mnist-dirichlet-2025-attack_noise_rla-s0.01-cartv2-91a6b152aa91/metrics.npz",
+      "sha256": "3c52cdb03614554b579fb909ac080407e3795eef85aabb42ee9c27e2dfb7ce97",
+      "description": "Noise mitigation dirichlet"
+    },
+    {
+      "figure": "combined_revised_mnist_sigma_0.01_learning_curves.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/mnist-dirichlet-2026-attack_noise_rla-s0.01-cartv2-71563337f13a/metrics.npz",
+      "sha256": "312496de8f54a9ceee89e9de84289738786be67488e9eddd1fcb574c7061b95c",
+      "description": "Noise mitigation dirichlet"
+    },
+    {
+      "figure": "combined_revised_mnist_sigma_0.01_learning_curves.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/mnist-dirichlet-2027-attack_noise_rla-s0.01-cartv2-a31f59bc2507/metrics.npz",
+      "sha256": "1afb50214d77cdeb681f7cc14953d0749fcb0cca378c2ef4bc11168344a6b5a2",
+      "description": "Noise mitigation dirichlet"
+    },
+    {
+      "figure": "combined_revised_mnist_sigma_0.01_learning_curves.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/mnist-dirichlet-2025-attack_noise_defense_rla-s0.01-cartv2-026b43e5305d/metrics.npz",
+      "sha256": "1bb6c2e59c5f3e4aec8334330a8c9616edd2b208b69477eb353e75f8b38f816d",
+      "description": "SHARP dirichlet"
+    },
+    {
+      "figure": "combined_revised_mnist_sigma_0.01_learning_curves.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/mnist-dirichlet-2026-attack_noise_defense_rla-s0.01-cartv2-69e2ce1014d7/metrics.npz",
+      "sha256": "f593999dcab66f57227c829c2f1257af081db3702c5e9fcc08f33ae7ea047515",
+      "description": "SHARP dirichlet"
+    },
+    {
+      "figure": "combined_revised_mnist_sigma_0.01_learning_curves.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/mnist-dirichlet-2027-attack_noise_defense_rla-s0.01-cartv2-9c3ad71034dd/metrics.npz",
+      "sha256": "49f6ac36aa1897f85c49883a87b33931adcc202f6655b3728a55910cf4df271a",
+      "description": "SHARP dirichlet"
+    },
+    {
+      "figure": "combined_revised_mnist_sigma_0.01_learning_curves.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/mnist-dirichlet-2025-attack_noise_defense_rla_cart-s0.01-cartv2-c3ea88012c05/metrics.npz",
+      "sha256": "f907f0304404f6959d717680120dca8deb0c8d057b1aea37eb5c886b0b24ae1f",
+      "description": "SHARP + CART dirichlet"
+    },
+    {
+      "figure": "combined_revised_mnist_sigma_0.01_learning_curves.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/mnist-dirichlet-2026-attack_noise_defense_rla_cart-s0.01-cartv2-5d95274cf4dd/metrics.npz",
+      "sha256": "2979cbe8289b563e91a61c7fd7ba3ed29db4fc193b3deb257abccad34dc5c540",
+      "description": "SHARP + CART dirichlet"
+    },
+    {
+      "figure": "combined_revised_mnist_sigma_0.01_learning_curves.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/mnist-dirichlet-2027-attack_noise_defense_rla_cart-s0.01-cartv2-54baf6a6af24/metrics.npz",
+      "sha256": "adc83144ccc702c9b6a0caa2be1e6ee27273ebe7af56bfd4abd03f14cf830990",
+      "description": "SHARP + CART dirichlet"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_learning_curves.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-iid-2025-clean-s0-cartv2-ef6a723c72b8/metrics.npz",
+      "sha256": "15898ff278a425d58223f974e9c85aec38a50eb8bca3aa7cf23422054c56f1d6",
+      "description": "Clean iid"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_learning_curves.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-iid-2026-clean-s0-cartv2-28f4270fb9b0/metrics.npz",
+      "sha256": "24c7d5fcde4b11e00023e1cbdbba49c68334691f89d8a1059c48610685f50d9f",
+      "description": "Clean iid"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_learning_curves.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-iid-2027-clean-s0-cartv2-d3467fab5496/metrics.npz",
+      "sha256": "dc7d3ddc28068d6dc8a46a6f453a899e1aa0134d31255e750f20f73e14ac45ea",
+      "description": "Clean iid"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_learning_curves.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-iid-2025-attack_noise-s0.01-cartv2-d9e5eb1cbd7c/metrics.npz",
+      "sha256": "e134c532e977a755d6d0c7cfca57097cca52b05d05747678b962127d59beb1a4",
+      "description": "Attack + noise iid"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_learning_curves.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-iid-2026-attack_noise-s0.01-cartv2-9b036164f01f/metrics.npz",
+      "sha256": "1a141653aeffd16e7271929bd7ddae5b9d44dd0c2f242787faa50107ebbd1089",
+      "description": "Attack + noise iid"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_learning_curves.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-iid-2027-attack_noise-s0.01-cartv2-80ca381d3136/metrics.npz",
+      "sha256": "ef0154406e442a955aff4b1e318d65292785ec0b7c3f2ae62036b8fba04c16e7",
+      "description": "Attack + noise iid"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_learning_curves.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-iid-2025-attack_noise_defense-s0.01-cartv2-0985aa4b8e33/metrics.npz",
+      "sha256": "ac1ad9656f3069dea951d1d4f444103238f4312028d13e82784b1b2102094e2d",
+      "description": "Selection defense iid"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_learning_curves.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-iid-2026-attack_noise_defense-s0.01-cartv2-c829f180e30e/metrics.npz",
+      "sha256": "31c7a93d34ac0651e48c40601aca8bbd2eeb4001f6cc8f76b561b42e712508a5",
+      "description": "Selection defense iid"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_learning_curves.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-iid-2027-attack_noise_defense-s0.01-cartv2-0b33a9cd36b3/metrics.npz",
+      "sha256": "d24fc7f0d59591ff4b723c79393a4275466978747f44b353bcf6e2f7f96414f7",
+      "description": "Selection defense iid"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_learning_curves.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-iid-2025-attack_noise_rla-s0.01-cartv2-c5140ea4c2ff/metrics.npz",
+      "sha256": "99d8a860342aa6cd1cfafda4f17a9a92b5aea0f7c96eb7ae7ee075620e1c62b4",
+      "description": "Noise mitigation iid"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_learning_curves.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-iid-2026-attack_noise_rla-s0.01-cartv2-0a30c22adddf/metrics.npz",
+      "sha256": "0b0a7284f30fd1cc1666fdd993c335efa061f5e7a0e5bb84d89d4acd5856a68c",
+      "description": "Noise mitigation iid"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_learning_curves.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-iid-2027-attack_noise_rla-s0.01-cartv2-9cbf32635b6b/metrics.npz",
+      "sha256": "3fe3bd0bedd95b004612c4e367cd2a143f5e05154c3a51d0270ed944abe4b9e3",
+      "description": "Noise mitigation iid"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_learning_curves.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-iid-2025-attack_noise_defense_rla-s0.01-cartv2-6a32a542c729/metrics.npz",
+      "sha256": "08029c80010712cd73d1436c23d206a39f235d948a3423f0796184da5f776e68",
+      "description": "SHARP iid"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_learning_curves.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-iid-2026-attack_noise_defense_rla-s0.01-cartv2-05cbf2bb698b/metrics.npz",
+      "sha256": "f351d70ed2d363b5c60076590bb1c0c4aaaf720c7d6078d6df6c55c563c2df99",
+      "description": "SHARP iid"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_learning_curves.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-iid-2027-attack_noise_defense_rla-s0.01-cartv2-41e5eb616686/metrics.npz",
+      "sha256": "00b53a8d7f19768bf6ef3911632af89e5de37fd36249b26802960bb7261eb6a0",
+      "description": "SHARP iid"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_learning_curves.pdf",
+      "input": "docs/results/cart-admission-cifar6-100r-20261028/cifar10-iid-2025-attack_noise_defense_rla_cart-s0.01-cartv2-e53ff032b8aa/metrics.npz",
+      "sha256": "c2d395b37148bdfccfb216bbf3728e3e89b2f1aced6b2ab255f881ca27a6e985",
+      "description": "SHARP + CART iid"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_learning_curves.pdf",
+      "input": "docs/results/cart-admission-cifar6-100r-20261028/cifar10-iid-2026-attack_noise_defense_rla_cart-s0.01-cartv2-6d04f7e4913d/metrics.npz",
+      "sha256": "98c11552ac619bb0af341a026451112aee8d3753a479a716ef18e412b1652e3f",
+      "description": "SHARP + CART iid"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_learning_curves.pdf",
+      "input": "docs/results/cart-admission-cifar6-100r-20261028/cifar10-iid-2027-attack_noise_defense_rla_cart-s0.01-cartv2-a7a2882db72d/metrics.npz",
+      "sha256": "9974abebc81c7fbf3d355f8bfeb0a7e84c8564fcb4137bb31447275bd9a8b750",
+      "description": "SHARP + CART iid"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_learning_curves.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-dirichlet-2025-clean-s0-cartv2-31ca46b86e05/metrics.npz",
+      "sha256": "25b652fdd7c0167091b8ed64475f10651a5c06d3b73ac320de602708e4f7c491",
+      "description": "Clean dirichlet"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_learning_curves.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-dirichlet-2026-clean-s0-cartv2-dd04066c9cb5/metrics.npz",
+      "sha256": "6a871d0192c4ac8d741557470b6dc952efb98a5f87d44be3180787ceffbd4045",
+      "description": "Clean dirichlet"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_learning_curves.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-dirichlet-2027-clean-s0-cartv2-b56a0da9b85e/metrics.npz",
+      "sha256": "73c34bc2b173052e9e4f4050eec41f6546329a79c8d4effbf8db07e970f8678f",
+      "description": "Clean dirichlet"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_learning_curves.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-dirichlet-2025-attack_noise-s0.01-cartv2-593d292d65c7/metrics.npz",
+      "sha256": "de28827fa27232d5909f86fed4665d3082c79afe008251114441d51dda4edb4b",
+      "description": "Attack + noise dirichlet"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_learning_curves.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-dirichlet-2026-attack_noise-s0.01-cartv2-b1515af7394e/metrics.npz",
+      "sha256": "55ab3cefb3a74c7ba629c8976c4dda884fbde96c4b9e0f905bf6429f57db4ad4",
+      "description": "Attack + noise dirichlet"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_learning_curves.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-dirichlet-2027-attack_noise-s0.01-cartv2-9b1956a42002/metrics.npz",
+      "sha256": "c5ad03b484b1460f635fef39000296e1323e3f13470a5bae63fdc320c908274e",
+      "description": "Attack + noise dirichlet"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_learning_curves.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-dirichlet-2025-attack_noise_defense-s0.01-cartv2-bc0419d5fce7/metrics.npz",
+      "sha256": "dba6dac1b6e18264d3be4ff278bbbd48df32634251c4464e5d667803df943ce2",
+      "description": "Selection defense dirichlet"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_learning_curves.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-dirichlet-2026-attack_noise_defense-s0.01-cartv2-b70600e03fa2/metrics.npz",
+      "sha256": "d473464f90a7f65bddadc11d4198e2913fcec0a87329f4721f37e4f6383fd8b6",
+      "description": "Selection defense dirichlet"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_learning_curves.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-dirichlet-2027-attack_noise_defense-s0.01-cartv2-8f36704ae946/metrics.npz",
+      "sha256": "cc027e05c94b0556f38210181ab5b2ea52bab2a8be4fcc1f2f743017927fdfbf",
+      "description": "Selection defense dirichlet"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_learning_curves.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-dirichlet-2025-attack_noise_rla-s0.01-cartv2-6ebad1779790/metrics.npz",
+      "sha256": "5ab2242c09749a67ee362c801a653f5881d5f23de54749166f16d64cd2177833",
+      "description": "Noise mitigation dirichlet"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_learning_curves.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-dirichlet-2026-attack_noise_rla-s0.01-cartv2-679eacf937e3/metrics.npz",
+      "sha256": "e7837553644697a76fb996c65cd4b52aa47dfe09c5e5675936c36d1fcc889c4d",
+      "description": "Noise mitigation dirichlet"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_learning_curves.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-dirichlet-2027-attack_noise_rla-s0.01-cartv2-d7e78c4485e8/metrics.npz",
+      "sha256": "2182b75768eb2146ac092fe508d8155ed92c42bcb3356b9375216f0722da56c2",
+      "description": "Noise mitigation dirichlet"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_learning_curves.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-dirichlet-2025-attack_noise_defense_rla-s0.01-cartv2-edcbfe4e9532/metrics.npz",
+      "sha256": "cd5259ed78d7e19bdb062c9a28b747584264098d18ef5bd5b0aeaf56410b47fe",
+      "description": "SHARP dirichlet"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_learning_curves.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-dirichlet-2026-attack_noise_defense_rla-s0.01-cartv2-51c65ba31901/metrics.npz",
+      "sha256": "5c98ba781a726e6383998394f3217237c0ea0887d25c8e68c42f50537dce2e75",
+      "description": "SHARP dirichlet"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_learning_curves.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-dirichlet-2027-attack_noise_defense_rla-s0.01-cartv2-b6384fef52c3/metrics.npz",
+      "sha256": "09136247f73f7822ca6bb29b8ec4df547f2c228d467df1097b80d74eb37ec6b6",
+      "description": "SHARP dirichlet"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_learning_curves.pdf",
+      "input": "docs/results/cart-admission-cifar6-100r-20261028/cifar10-dirichlet-2025-attack_noise_defense_rla_cart-s0.01-cartv2-8409280686d2/metrics.npz",
+      "sha256": "7636bd78cf988183606089d935eaa4b77833c3183273b4b805294c5ef9b8ef9f",
+      "description": "SHARP + CART dirichlet"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_learning_curves.pdf",
+      "input": "docs/results/cart-admission-cifar6-100r-20261028/cifar10-dirichlet-2026-attack_noise_defense_rla_cart-s0.01-cartv2-ec639270e5d7/metrics.npz",
+      "sha256": "4da6685180ed1f8382e7a894e7c581d74eafee3b5834157d0b33f77b1c111c9e",
+      "description": "SHARP + CART dirichlet"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_learning_curves.pdf",
+      "input": "docs/results/cart-admission-cifar6-100r-20261028/cifar10-dirichlet-2027-attack_noise_defense_rla_cart-s0.01-cartv2-2678a7e5dec3/metrics.npz",
+      "sha256": "73deecdeba387d59bdf4002875d4f08f4da18ac91302966b6d863d09c30f5759",
+      "description": "SHARP + CART dirichlet"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_primary_bars.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-iid-2025-clean-s0-cartv2-ef6a723c72b8/metrics.npz",
+      "sha256": "15898ff278a425d58223f974e9c85aec38a50eb8bca3aa7cf23422054c56f1d6",
+      "description": "Clean iid"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_primary_bars.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-iid-2026-clean-s0-cartv2-28f4270fb9b0/metrics.npz",
+      "sha256": "24c7d5fcde4b11e00023e1cbdbba49c68334691f89d8a1059c48610685f50d9f",
+      "description": "Clean iid"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_primary_bars.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-iid-2027-clean-s0-cartv2-d3467fab5496/metrics.npz",
+      "sha256": "dc7d3ddc28068d6dc8a46a6f453a899e1aa0134d31255e750f20f73e14ac45ea",
+      "description": "Clean iid"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_primary_bars.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-iid-2025-attack_noise-s0.01-cartv2-d9e5eb1cbd7c/metrics.npz",
+      "sha256": "e134c532e977a755d6d0c7cfca57097cca52b05d05747678b962127d59beb1a4",
+      "description": "Attack + noise iid"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_primary_bars.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-iid-2026-attack_noise-s0.01-cartv2-9b036164f01f/metrics.npz",
+      "sha256": "1a141653aeffd16e7271929bd7ddae5b9d44dd0c2f242787faa50107ebbd1089",
+      "description": "Attack + noise iid"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_primary_bars.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-iid-2027-attack_noise-s0.01-cartv2-80ca381d3136/metrics.npz",
+      "sha256": "ef0154406e442a955aff4b1e318d65292785ec0b7c3f2ae62036b8fba04c16e7",
+      "description": "Attack + noise iid"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_primary_bars.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-iid-2025-attack_noise_defense-s0.01-cartv2-0985aa4b8e33/metrics.npz",
+      "sha256": "ac1ad9656f3069dea951d1d4f444103238f4312028d13e82784b1b2102094e2d",
+      "description": "Selection defense iid"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_primary_bars.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-iid-2026-attack_noise_defense-s0.01-cartv2-c829f180e30e/metrics.npz",
+      "sha256": "31c7a93d34ac0651e48c40601aca8bbd2eeb4001f6cc8f76b561b42e712508a5",
+      "description": "Selection defense iid"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_primary_bars.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-iid-2027-attack_noise_defense-s0.01-cartv2-0b33a9cd36b3/metrics.npz",
+      "sha256": "d24fc7f0d59591ff4b723c79393a4275466978747f44b353bcf6e2f7f96414f7",
+      "description": "Selection defense iid"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_primary_bars.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-iid-2025-attack_noise_rla-s0.01-cartv2-c5140ea4c2ff/metrics.npz",
+      "sha256": "99d8a860342aa6cd1cfafda4f17a9a92b5aea0f7c96eb7ae7ee075620e1c62b4",
+      "description": "Noise mitigation iid"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_primary_bars.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-iid-2026-attack_noise_rla-s0.01-cartv2-0a30c22adddf/metrics.npz",
+      "sha256": "0b0a7284f30fd1cc1666fdd993c335efa061f5e7a0e5bb84d89d4acd5856a68c",
+      "description": "Noise mitigation iid"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_primary_bars.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-iid-2027-attack_noise_rla-s0.01-cartv2-9cbf32635b6b/metrics.npz",
+      "sha256": "3fe3bd0bedd95b004612c4e367cd2a143f5e05154c3a51d0270ed944abe4b9e3",
+      "description": "Noise mitigation iid"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_primary_bars.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-iid-2025-attack_noise_defense_rla-s0.01-cartv2-6a32a542c729/metrics.npz",
+      "sha256": "08029c80010712cd73d1436c23d206a39f235d948a3423f0796184da5f776e68",
+      "description": "SHARP iid"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_primary_bars.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-iid-2026-attack_noise_defense_rla-s0.01-cartv2-05cbf2bb698b/metrics.npz",
+      "sha256": "f351d70ed2d363b5c60076590bb1c0c4aaaf720c7d6078d6df6c55c563c2df99",
+      "description": "SHARP iid"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_primary_bars.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-iid-2027-attack_noise_defense_rla-s0.01-cartv2-41e5eb616686/metrics.npz",
+      "sha256": "00b53a8d7f19768bf6ef3911632af89e5de37fd36249b26802960bb7261eb6a0",
+      "description": "SHARP iid"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_primary_bars.pdf",
+      "input": "docs/results/cart-admission-cifar6-100r-20261028/cifar10-iid-2025-attack_noise_defense_rla_cart-s0.01-cartv2-e53ff032b8aa/metrics.npz",
+      "sha256": "c2d395b37148bdfccfb216bbf3728e3e89b2f1aced6b2ab255f881ca27a6e985",
+      "description": "SHARP + CART iid"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_primary_bars.pdf",
+      "input": "docs/results/cart-admission-cifar6-100r-20261028/cifar10-iid-2026-attack_noise_defense_rla_cart-s0.01-cartv2-6d04f7e4913d/metrics.npz",
+      "sha256": "98c11552ac619bb0af341a026451112aee8d3753a479a716ef18e412b1652e3f",
+      "description": "SHARP + CART iid"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_primary_bars.pdf",
+      "input": "docs/results/cart-admission-cifar6-100r-20261028/cifar10-iid-2027-attack_noise_defense_rla_cart-s0.01-cartv2-a7a2882db72d/metrics.npz",
+      "sha256": "9974abebc81c7fbf3d355f8bfeb0a7e84c8564fcb4137bb31447275bd9a8b750",
+      "description": "SHARP + CART iid"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_primary_bars.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-dirichlet-2025-clean-s0-cartv2-31ca46b86e05/metrics.npz",
+      "sha256": "25b652fdd7c0167091b8ed64475f10651a5c06d3b73ac320de602708e4f7c491",
+      "description": "Clean dirichlet"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_primary_bars.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-dirichlet-2026-clean-s0-cartv2-dd04066c9cb5/metrics.npz",
+      "sha256": "6a871d0192c4ac8d741557470b6dc952efb98a5f87d44be3180787ceffbd4045",
+      "description": "Clean dirichlet"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_primary_bars.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-dirichlet-2027-clean-s0-cartv2-b56a0da9b85e/metrics.npz",
+      "sha256": "73c34bc2b173052e9e4f4050eec41f6546329a79c8d4effbf8db07e970f8678f",
+      "description": "Clean dirichlet"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_primary_bars.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-dirichlet-2025-attack_noise-s0.01-cartv2-593d292d65c7/metrics.npz",
+      "sha256": "de28827fa27232d5909f86fed4665d3082c79afe008251114441d51dda4edb4b",
+      "description": "Attack + noise dirichlet"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_primary_bars.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-dirichlet-2026-attack_noise-s0.01-cartv2-b1515af7394e/metrics.npz",
+      "sha256": "55ab3cefb3a74c7ba629c8976c4dda884fbde96c4b9e0f905bf6429f57db4ad4",
+      "description": "Attack + noise dirichlet"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_primary_bars.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-dirichlet-2027-attack_noise-s0.01-cartv2-9b1956a42002/metrics.npz",
+      "sha256": "c5ad03b484b1460f635fef39000296e1323e3f13470a5bae63fdc320c908274e",
+      "description": "Attack + noise dirichlet"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_primary_bars.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-dirichlet-2025-attack_noise_defense-s0.01-cartv2-bc0419d5fce7/metrics.npz",
+      "sha256": "dba6dac1b6e18264d3be4ff278bbbd48df32634251c4464e5d667803df943ce2",
+      "description": "Selection defense dirichlet"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_primary_bars.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-dirichlet-2026-attack_noise_defense-s0.01-cartv2-b70600e03fa2/metrics.npz",
+      "sha256": "d473464f90a7f65bddadc11d4198e2913fcec0a87329f4721f37e4f6383fd8b6",
+      "description": "Selection defense dirichlet"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_primary_bars.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-dirichlet-2027-attack_noise_defense-s0.01-cartv2-8f36704ae946/metrics.npz",
+      "sha256": "cc027e05c94b0556f38210181ab5b2ea52bab2a8be4fcc1f2f743017927fdfbf",
+      "description": "Selection defense dirichlet"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_primary_bars.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-dirichlet-2025-attack_noise_rla-s0.01-cartv2-6ebad1779790/metrics.npz",
+      "sha256": "5ab2242c09749a67ee362c801a653f5881d5f23de54749166f16d64cd2177833",
+      "description": "Noise mitigation dirichlet"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_primary_bars.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-dirichlet-2026-attack_noise_rla-s0.01-cartv2-679eacf937e3/metrics.npz",
+      "sha256": "e7837553644697a76fb996c65cd4b52aa47dfe09c5e5675936c36d1fcc889c4d",
+      "description": "Noise mitigation dirichlet"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_primary_bars.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-dirichlet-2027-attack_noise_rla-s0.01-cartv2-d7e78c4485e8/metrics.npz",
+      "sha256": "2182b75768eb2146ac092fe508d8155ed92c42bcb3356b9375216f0722da56c2",
+      "description": "Noise mitigation dirichlet"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_primary_bars.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-dirichlet-2025-attack_noise_defense_rla-s0.01-cartv2-edcbfe4e9532/metrics.npz",
+      "sha256": "cd5259ed78d7e19bdb062c9a28b747584264098d18ef5bd5b0aeaf56410b47fe",
+      "description": "SHARP dirichlet"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_primary_bars.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-dirichlet-2026-attack_noise_defense_rla-s0.01-cartv2-51c65ba31901/metrics.npz",
+      "sha256": "5c98ba781a726e6383998394f3217237c0ea0887d25c8e68c42f50537dce2e75",
+      "description": "SHARP dirichlet"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_primary_bars.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-dirichlet-2027-attack_noise_defense_rla-s0.01-cartv2-b6384fef52c3/metrics.npz",
+      "sha256": "09136247f73f7822ca6bb29b8ec4df547f2c228d467df1097b80d74eb37ec6b6",
+      "description": "SHARP dirichlet"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_primary_bars.pdf",
+      "input": "docs/results/cart-admission-cifar6-100r-20261028/cifar10-dirichlet-2025-attack_noise_defense_rla_cart-s0.01-cartv2-8409280686d2/metrics.npz",
+      "sha256": "7636bd78cf988183606089d935eaa4b77833c3183273b4b805294c5ef9b8ef9f",
+      "description": "SHARP + CART dirichlet"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_primary_bars.pdf",
+      "input": "docs/results/cart-admission-cifar6-100r-20261028/cifar10-dirichlet-2026-attack_noise_defense_rla_cart-s0.01-cartv2-ec639270e5d7/metrics.npz",
+      "sha256": "4da6685180ed1f8382e7a894e7c581d74eafee3b5834157d0b33f77b1c111c9e",
+      "description": "SHARP + CART dirichlet"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_primary_bars.pdf",
+      "input": "docs/results/cart-admission-cifar6-100r-20261028/cifar10-dirichlet-2027-attack_noise_defense_rla_cart-s0.01-cartv2-2678a7e5dec3/metrics.npz",
+      "sha256": "73deecdeba387d59bdf4002875d4f08f4da18ac91302966b6d863d09c30f5759",
+      "description": "SHARP + CART dirichlet"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_final_bars.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-iid-2025-clean-s0-cartv2-ef6a723c72b8/metrics.npz",
+      "sha256": "15898ff278a425d58223f974e9c85aec38a50eb8bca3aa7cf23422054c56f1d6",
+      "description": "Clean iid"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_final_bars.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-iid-2026-clean-s0-cartv2-28f4270fb9b0/metrics.npz",
+      "sha256": "24c7d5fcde4b11e00023e1cbdbba49c68334691f89d8a1059c48610685f50d9f",
+      "description": "Clean iid"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_final_bars.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-iid-2027-clean-s0-cartv2-d3467fab5496/metrics.npz",
+      "sha256": "dc7d3ddc28068d6dc8a46a6f453a899e1aa0134d31255e750f20f73e14ac45ea",
+      "description": "Clean iid"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_final_bars.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-iid-2025-attack_noise-s0.01-cartv2-d9e5eb1cbd7c/metrics.npz",
+      "sha256": "e134c532e977a755d6d0c7cfca57097cca52b05d05747678b962127d59beb1a4",
+      "description": "Attack + noise iid"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_final_bars.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-iid-2026-attack_noise-s0.01-cartv2-9b036164f01f/metrics.npz",
+      "sha256": "1a141653aeffd16e7271929bd7ddae5b9d44dd0c2f242787faa50107ebbd1089",
+      "description": "Attack + noise iid"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_final_bars.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-iid-2027-attack_noise-s0.01-cartv2-80ca381d3136/metrics.npz",
+      "sha256": "ef0154406e442a955aff4b1e318d65292785ec0b7c3f2ae62036b8fba04c16e7",
+      "description": "Attack + noise iid"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_final_bars.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-iid-2025-attack_noise_defense-s0.01-cartv2-0985aa4b8e33/metrics.npz",
+      "sha256": "ac1ad9656f3069dea951d1d4f444103238f4312028d13e82784b1b2102094e2d",
+      "description": "Selection defense iid"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_final_bars.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-iid-2026-attack_noise_defense-s0.01-cartv2-c829f180e30e/metrics.npz",
+      "sha256": "31c7a93d34ac0651e48c40601aca8bbd2eeb4001f6cc8f76b561b42e712508a5",
+      "description": "Selection defense iid"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_final_bars.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-iid-2027-attack_noise_defense-s0.01-cartv2-0b33a9cd36b3/metrics.npz",
+      "sha256": "d24fc7f0d59591ff4b723c79393a4275466978747f44b353bcf6e2f7f96414f7",
+      "description": "Selection defense iid"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_final_bars.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-iid-2025-attack_noise_rla-s0.01-cartv2-c5140ea4c2ff/metrics.npz",
+      "sha256": "99d8a860342aa6cd1cfafda4f17a9a92b5aea0f7c96eb7ae7ee075620e1c62b4",
+      "description": "Noise mitigation iid"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_final_bars.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-iid-2026-attack_noise_rla-s0.01-cartv2-0a30c22adddf/metrics.npz",
+      "sha256": "0b0a7284f30fd1cc1666fdd993c335efa061f5e7a0e5bb84d89d4acd5856a68c",
+      "description": "Noise mitigation iid"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_final_bars.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-iid-2027-attack_noise_rla-s0.01-cartv2-9cbf32635b6b/metrics.npz",
+      "sha256": "3fe3bd0bedd95b004612c4e367cd2a143f5e05154c3a51d0270ed944abe4b9e3",
+      "description": "Noise mitigation iid"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_final_bars.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-iid-2025-attack_noise_defense_rla-s0.01-cartv2-6a32a542c729/metrics.npz",
+      "sha256": "08029c80010712cd73d1436c23d206a39f235d948a3423f0796184da5f776e68",
+      "description": "SHARP iid"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_final_bars.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-iid-2026-attack_noise_defense_rla-s0.01-cartv2-05cbf2bb698b/metrics.npz",
+      "sha256": "f351d70ed2d363b5c60076590bb1c0c4aaaf720c7d6078d6df6c55c563c2df99",
+      "description": "SHARP iid"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_final_bars.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-iid-2027-attack_noise_defense_rla-s0.01-cartv2-41e5eb616686/metrics.npz",
+      "sha256": "00b53a8d7f19768bf6ef3911632af89e5de37fd36249b26802960bb7261eb6a0",
+      "description": "SHARP iid"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_final_bars.pdf",
+      "input": "docs/results/cart-admission-cifar6-100r-20261028/cifar10-iid-2025-attack_noise_defense_rla_cart-s0.01-cartv2-e53ff032b8aa/metrics.npz",
+      "sha256": "c2d395b37148bdfccfb216bbf3728e3e89b2f1aced6b2ab255f881ca27a6e985",
+      "description": "SHARP + CART iid"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_final_bars.pdf",
+      "input": "docs/results/cart-admission-cifar6-100r-20261028/cifar10-iid-2026-attack_noise_defense_rla_cart-s0.01-cartv2-6d04f7e4913d/metrics.npz",
+      "sha256": "98c11552ac619bb0af341a026451112aee8d3753a479a716ef18e412b1652e3f",
+      "description": "SHARP + CART iid"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_final_bars.pdf",
+      "input": "docs/results/cart-admission-cifar6-100r-20261028/cifar10-iid-2027-attack_noise_defense_rla_cart-s0.01-cartv2-a7a2882db72d/metrics.npz",
+      "sha256": "9974abebc81c7fbf3d355f8bfeb0a7e84c8564fcb4137bb31447275bd9a8b750",
+      "description": "SHARP + CART iid"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_final_bars.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-dirichlet-2025-clean-s0-cartv2-31ca46b86e05/metrics.npz",
+      "sha256": "25b652fdd7c0167091b8ed64475f10651a5c06d3b73ac320de602708e4f7c491",
+      "description": "Clean dirichlet"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_final_bars.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-dirichlet-2026-clean-s0-cartv2-dd04066c9cb5/metrics.npz",
+      "sha256": "6a871d0192c4ac8d741557470b6dc952efb98a5f87d44be3180787ceffbd4045",
+      "description": "Clean dirichlet"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_final_bars.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-dirichlet-2027-clean-s0-cartv2-b56a0da9b85e/metrics.npz",
+      "sha256": "73c34bc2b173052e9e4f4050eec41f6546329a79c8d4effbf8db07e970f8678f",
+      "description": "Clean dirichlet"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_final_bars.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-dirichlet-2025-attack_noise-s0.01-cartv2-593d292d65c7/metrics.npz",
+      "sha256": "de28827fa27232d5909f86fed4665d3082c79afe008251114441d51dda4edb4b",
+      "description": "Attack + noise dirichlet"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_final_bars.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-dirichlet-2026-attack_noise-s0.01-cartv2-b1515af7394e/metrics.npz",
+      "sha256": "55ab3cefb3a74c7ba629c8976c4dda884fbde96c4b9e0f905bf6429f57db4ad4",
+      "description": "Attack + noise dirichlet"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_final_bars.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-dirichlet-2027-attack_noise-s0.01-cartv2-9b1956a42002/metrics.npz",
+      "sha256": "c5ad03b484b1460f635fef39000296e1323e3f13470a5bae63fdc320c908274e",
+      "description": "Attack + noise dirichlet"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_final_bars.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-dirichlet-2025-attack_noise_defense-s0.01-cartv2-bc0419d5fce7/metrics.npz",
+      "sha256": "dba6dac1b6e18264d3be4ff278bbbd48df32634251c4464e5d667803df943ce2",
+      "description": "Selection defense dirichlet"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_final_bars.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-dirichlet-2026-attack_noise_defense-s0.01-cartv2-b70600e03fa2/metrics.npz",
+      "sha256": "d473464f90a7f65bddadc11d4198e2913fcec0a87329f4721f37e4f6383fd8b6",
+      "description": "Selection defense dirichlet"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_final_bars.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-dirichlet-2027-attack_noise_defense-s0.01-cartv2-8f36704ae946/metrics.npz",
+      "sha256": "cc027e05c94b0556f38210181ab5b2ea52bab2a8be4fcc1f2f743017927fdfbf",
+      "description": "Selection defense dirichlet"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_final_bars.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-dirichlet-2025-attack_noise_rla-s0.01-cartv2-6ebad1779790/metrics.npz",
+      "sha256": "5ab2242c09749a67ee362c801a653f5881d5f23de54749166f16d64cd2177833",
+      "description": "Noise mitigation dirichlet"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_final_bars.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-dirichlet-2026-attack_noise_rla-s0.01-cartv2-679eacf937e3/metrics.npz",
+      "sha256": "e7837553644697a76fb996c65cd4b52aa47dfe09c5e5675936c36d1fcc889c4d",
+      "description": "Noise mitigation dirichlet"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_final_bars.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-dirichlet-2027-attack_noise_rla-s0.01-cartv2-d7e78c4485e8/metrics.npz",
+      "sha256": "2182b75768eb2146ac092fe508d8155ed92c42bcb3356b9375216f0722da56c2",
+      "description": "Noise mitigation dirichlet"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_final_bars.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-dirichlet-2025-attack_noise_defense_rla-s0.01-cartv2-edcbfe4e9532/metrics.npz",
+      "sha256": "cd5259ed78d7e19bdb062c9a28b747584264098d18ef5bd5b0aeaf56410b47fe",
+      "description": "SHARP dirichlet"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_final_bars.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-dirichlet-2026-attack_noise_defense_rla-s0.01-cartv2-51c65ba31901/metrics.npz",
+      "sha256": "5c98ba781a726e6383998394f3217237c0ea0887d25c8e68c42f50537dce2e75",
+      "description": "SHARP dirichlet"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_final_bars.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-dirichlet-2027-attack_noise_defense_rla-s0.01-cartv2-b6384fef52c3/metrics.npz",
+      "sha256": "09136247f73f7822ca6bb29b8ec4df547f2c228d467df1097b80d74eb37ec6b6",
+      "description": "SHARP dirichlet"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_final_bars.pdf",
+      "input": "docs/results/cart-admission-cifar6-100r-20261028/cifar10-dirichlet-2025-attack_noise_defense_rla_cart-s0.01-cartv2-8409280686d2/metrics.npz",
+      "sha256": "7636bd78cf988183606089d935eaa4b77833c3183273b4b805294c5ef9b8ef9f",
+      "description": "SHARP + CART dirichlet"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_final_bars.pdf",
+      "input": "docs/results/cart-admission-cifar6-100r-20261028/cifar10-dirichlet-2026-attack_noise_defense_rla_cart-s0.01-cartv2-ec639270e5d7/metrics.npz",
+      "sha256": "4da6685180ed1f8382e7a894e7c581d74eafee3b5834157d0b33f77b1c111c9e",
+      "description": "SHARP + CART dirichlet"
+    },
+    {
+      "figure": "combined_revised_cifar10_sigma_0.01_final_bars.pdf",
+      "input": "docs/results/cart-admission-cifar6-100r-20261028/cifar10-dirichlet-2027-attack_noise_defense_rla_cart-s0.01-cartv2-2678a7e5dec3/metrics.npz",
+      "sha256": "73deecdeba387d59bdf4002875d4f08f4da18ac91302966b6d863d09c30f5759",
+      "description": "SHARP + CART dirichlet"
+    },
+    {
+      "figure": "cifar10_iid_class_recall_recomputed.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-iid-2025-clean-s0-cartv2-ef6a723c72b8/metrics.npz",
+      "sha256": "15898ff278a425d58223f974e9c85aec38a50eb8bca3aa7cf23422054c56f1d6",
+      "description": "Clean"
+    },
+    {
+      "figure": "cifar10_iid_class_recall_recomputed.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-iid-2026-clean-s0-cartv2-28f4270fb9b0/metrics.npz",
+      "sha256": "24c7d5fcde4b11e00023e1cbdbba49c68334691f89d8a1059c48610685f50d9f",
+      "description": "Clean"
+    },
+    {
+      "figure": "cifar10_iid_class_recall_recomputed.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-iid-2027-clean-s0-cartv2-d3467fab5496/metrics.npz",
+      "sha256": "dc7d3ddc28068d6dc8a46a6f453a899e1aa0134d31255e750f20f73e14ac45ea",
+      "description": "Clean"
+    },
+    {
+      "figure": "cifar10_iid_class_recall_recomputed.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-iid-2025-attack_noise_defense_rla-s0.01-cartv2-6a32a542c729/metrics.npz",
+      "sha256": "08029c80010712cd73d1436c23d206a39f235d948a3423f0796184da5f776e68",
+      "description": "SHARP"
+    },
+    {
+      "figure": "cifar10_iid_class_recall_recomputed.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-iid-2026-attack_noise_defense_rla-s0.01-cartv2-05cbf2bb698b/metrics.npz",
+      "sha256": "f351d70ed2d363b5c60076590bb1c0c4aaaf720c7d6078d6df6c55c563c2df99",
+      "description": "SHARP"
+    },
+    {
+      "figure": "cifar10_iid_class_recall_recomputed.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-iid-2027-attack_noise_defense_rla-s0.01-cartv2-41e5eb616686/metrics.npz",
+      "sha256": "00b53a8d7f19768bf6ef3911632af89e5de37fd36249b26802960bb7261eb6a0",
+      "description": "SHARP"
+    },
+    {
+      "figure": "cifar10_iid_class_recall_recomputed.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-iid-2025-attack_noise_defense_rla_cart-s0.01-cartv2-e53ff032b8aa/metrics.npz",
+      "sha256": "d1a350c06577465666125420001730cfb94967c2abf7ab493aa4e5730460b490",
+      "description": "CART repair"
+    },
+    {
+      "figure": "cifar10_iid_class_recall_recomputed.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-iid-2026-attack_noise_defense_rla_cart-s0.01-cartv2-6d04f7e4913d/metrics.npz",
+      "sha256": "cec7589c94780fe906037c9a654acb0d56f6bbbfe30f1f89d7876b2ae1733a5e",
+      "description": "CART repair"
+    },
+    {
+      "figure": "cifar10_iid_class_recall_recomputed.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-iid-2027-attack_noise_defense_rla_cart-s0.01-cartv2-a7a2882db72d/metrics.npz",
+      "sha256": "8c232541760efe940107acfb227f354dfb9f9c4e8e98452a7b21bb9a1d05c809",
+      "description": "CART repair"
+    },
+    {
+      "figure": "cifar10_iid_class_recall_recomputed.pdf",
+      "input": "docs/results/cart-admission-cifar6-100r-20261028/cifar10-iid-2025-attack_noise_defense_rla_cart-s0.01-cartv2-e53ff032b8aa/metrics.npz",
+      "sha256": "c2d395b37148bdfccfb216bbf3728e3e89b2f1aced6b2ab255f881ca27a6e985",
+      "description": "CART admission + commit"
+    },
+    {
+      "figure": "cifar10_iid_class_recall_recomputed.pdf",
+      "input": "docs/results/cart-admission-cifar6-100r-20261028/cifar10-iid-2026-attack_noise_defense_rla_cart-s0.01-cartv2-6d04f7e4913d/metrics.npz",
+      "sha256": "98c11552ac619bb0af341a026451112aee8d3753a479a716ef18e412b1652e3f",
+      "description": "CART admission + commit"
+    },
+    {
+      "figure": "cifar10_iid_class_recall_recomputed.pdf",
+      "input": "docs/results/cart-admission-cifar6-100r-20261028/cifar10-iid-2027-attack_noise_defense_rla_cart-s0.01-cartv2-a7a2882db72d/metrics.npz",
+      "sha256": "9974abebc81c7fbf3d355f8bfeb0a7e84c8564fcb4137bb31447275bd9a8b750",
+      "description": "CART admission + commit"
+    },
+    {
+      "figure": "cifar10_dirichlet_class_recall_recomputed.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-dirichlet-2025-clean-s0-cartv2-31ca46b86e05/metrics.npz",
+      "sha256": "25b652fdd7c0167091b8ed64475f10651a5c06d3b73ac320de602708e4f7c491",
+      "description": "Clean"
+    },
+    {
+      "figure": "cifar10_dirichlet_worst_client_recomputed.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-dirichlet-2025-clean-s0-cartv2-31ca46b86e05/metrics.npz",
+      "sha256": "25b652fdd7c0167091b8ed64475f10651a5c06d3b73ac320de602708e4f7c491",
+      "description": "Clean"
+    },
+    {
+      "figure": "cifar10_dirichlet_class_recall_recomputed.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-dirichlet-2026-clean-s0-cartv2-dd04066c9cb5/metrics.npz",
+      "sha256": "6a871d0192c4ac8d741557470b6dc952efb98a5f87d44be3180787ceffbd4045",
+      "description": "Clean"
+    },
+    {
+      "figure": "cifar10_dirichlet_worst_client_recomputed.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-dirichlet-2026-clean-s0-cartv2-dd04066c9cb5/metrics.npz",
+      "sha256": "6a871d0192c4ac8d741557470b6dc952efb98a5f87d44be3180787ceffbd4045",
+      "description": "Clean"
+    },
+    {
+      "figure": "cifar10_dirichlet_class_recall_recomputed.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-dirichlet-2027-clean-s0-cartv2-b56a0da9b85e/metrics.npz",
+      "sha256": "73c34bc2b173052e9e4f4050eec41f6546329a79c8d4effbf8db07e970f8678f",
+      "description": "Clean"
+    },
+    {
+      "figure": "cifar10_dirichlet_worst_client_recomputed.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-dirichlet-2027-clean-s0-cartv2-b56a0da9b85e/metrics.npz",
+      "sha256": "73c34bc2b173052e9e4f4050eec41f6546329a79c8d4effbf8db07e970f8678f",
+      "description": "Clean"
+    },
+    {
+      "figure": "cifar10_dirichlet_class_recall_recomputed.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-dirichlet-2025-attack_noise_defense_rla-s0.01-cartv2-edcbfe4e9532/metrics.npz",
+      "sha256": "cd5259ed78d7e19bdb062c9a28b747584264098d18ef5bd5b0aeaf56410b47fe",
+      "description": "SHARP"
+    },
+    {
+      "figure": "cifar10_dirichlet_worst_client_recomputed.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-dirichlet-2025-attack_noise_defense_rla-s0.01-cartv2-edcbfe4e9532/metrics.npz",
+      "sha256": "cd5259ed78d7e19bdb062c9a28b747584264098d18ef5bd5b0aeaf56410b47fe",
+      "description": "SHARP"
+    },
+    {
+      "figure": "cifar10_dirichlet_class_recall_recomputed.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-dirichlet-2026-attack_noise_defense_rla-s0.01-cartv2-51c65ba31901/metrics.npz",
+      "sha256": "5c98ba781a726e6383998394f3217237c0ea0887d25c8e68c42f50537dce2e75",
+      "description": "SHARP"
+    },
+    {
+      "figure": "cifar10_dirichlet_worst_client_recomputed.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-dirichlet-2026-attack_noise_defense_rla-s0.01-cartv2-51c65ba31901/metrics.npz",
+      "sha256": "5c98ba781a726e6383998394f3217237c0ea0887d25c8e68c42f50537dce2e75",
+      "description": "SHARP"
+    },
+    {
+      "figure": "cifar10_dirichlet_class_recall_recomputed.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-dirichlet-2027-attack_noise_defense_rla-s0.01-cartv2-b6384fef52c3/metrics.npz",
+      "sha256": "09136247f73f7822ca6bb29b8ec4df547f2c228d467df1097b80d74eb37ec6b6",
+      "description": "SHARP"
+    },
+    {
+      "figure": "cifar10_dirichlet_worst_client_recomputed.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-dirichlet-2027-attack_noise_defense_rla-s0.01-cartv2-b6384fef52c3/metrics.npz",
+      "sha256": "09136247f73f7822ca6bb29b8ec4df547f2c228d467df1097b80d74eb37ec6b6",
+      "description": "SHARP"
+    },
+    {
+      "figure": "cifar10_dirichlet_class_recall_recomputed.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-dirichlet-2025-attack_noise_defense_rla_cart-s0.01-cartv2-8409280686d2/metrics.npz",
+      "sha256": "1508eb1308d5e4e663c2c240221e5ecdbfd51320d3ddf8f18fbc6d93d77711cc",
+      "description": "CART repair"
+    },
+    {
+      "figure": "cifar10_dirichlet_worst_client_recomputed.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-dirichlet-2025-attack_noise_defense_rla_cart-s0.01-cartv2-8409280686d2/metrics.npz",
+      "sha256": "1508eb1308d5e4e663c2c240221e5ecdbfd51320d3ddf8f18fbc6d93d77711cc",
+      "description": "CART repair"
+    },
+    {
+      "figure": "cifar10_dirichlet_class_recall_recomputed.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-dirichlet-2026-attack_noise_defense_rla_cart-s0.01-cartv2-ec639270e5d7/metrics.npz",
+      "sha256": "fdbea2292ba3c848bb2701396a75cddc9609a5907af44b3ad09feb115ea6b743",
+      "description": "CART repair"
+    },
+    {
+      "figure": "cifar10_dirichlet_worst_client_recomputed.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-dirichlet-2026-attack_noise_defense_rla_cart-s0.01-cartv2-ec639270e5d7/metrics.npz",
+      "sha256": "fdbea2292ba3c848bb2701396a75cddc9609a5907af44b3ad09feb115ea6b743",
+      "description": "CART repair"
+    },
+    {
+      "figure": "cifar10_dirichlet_class_recall_recomputed.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-dirichlet-2027-attack_noise_defense_rla_cart-s0.01-cartv2-2678a7e5dec3/metrics.npz",
+      "sha256": "e0df1032ceb6ced94053428c0cfd0f40a0d8be2bf3b496daef23d05d0402ebc4",
+      "description": "CART repair"
+    },
+    {
+      "figure": "cifar10_dirichlet_worst_client_recomputed.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/cifar10-dirichlet-2027-attack_noise_defense_rla_cart-s0.01-cartv2-2678a7e5dec3/metrics.npz",
+      "sha256": "e0df1032ceb6ced94053428c0cfd0f40a0d8be2bf3b496daef23d05d0402ebc4",
+      "description": "CART repair"
+    },
+    {
+      "figure": "cifar10_dirichlet_class_recall_recomputed.pdf",
+      "input": "docs/results/cart-admission-cifar6-100r-20261028/cifar10-dirichlet-2025-attack_noise_defense_rla_cart-s0.01-cartv2-8409280686d2/metrics.npz",
+      "sha256": "7636bd78cf988183606089d935eaa4b77833c3183273b4b805294c5ef9b8ef9f",
+      "description": "CART admission + commit"
+    },
+    {
+      "figure": "cifar10_dirichlet_worst_client_recomputed.pdf",
+      "input": "docs/results/cart-admission-cifar6-100r-20261028/cifar10-dirichlet-2025-attack_noise_defense_rla_cart-s0.01-cartv2-8409280686d2/metrics.npz",
+      "sha256": "7636bd78cf988183606089d935eaa4b77833c3183273b4b805294c5ef9b8ef9f",
+      "description": "CART admission + commit"
+    },
+    {
+      "figure": "cifar10_dirichlet_class_recall_recomputed.pdf",
+      "input": "docs/results/cart-admission-cifar6-100r-20261028/cifar10-dirichlet-2026-attack_noise_defense_rla_cart-s0.01-cartv2-ec639270e5d7/metrics.npz",
+      "sha256": "4da6685180ed1f8382e7a894e7c581d74eafee3b5834157d0b33f77b1c111c9e",
+      "description": "CART admission + commit"
+    },
+    {
+      "figure": "cifar10_dirichlet_worst_client_recomputed.pdf",
+      "input": "docs/results/cart-admission-cifar6-100r-20261028/cifar10-dirichlet-2026-attack_noise_defense_rla_cart-s0.01-cartv2-ec639270e5d7/metrics.npz",
+      "sha256": "4da6685180ed1f8382e7a894e7c581d74eafee3b5834157d0b33f77b1c111c9e",
+      "description": "CART admission + commit"
+    },
+    {
+      "figure": "cifar10_dirichlet_class_recall_recomputed.pdf",
+      "input": "docs/results/cart-admission-cifar6-100r-20261028/cifar10-dirichlet-2027-attack_noise_defense_rla_cart-s0.01-cartv2-2678a7e5dec3/metrics.npz",
+      "sha256": "73deecdeba387d59bdf4002875d4f08f4da18ac91302966b6d863d09c30f5759",
+      "description": "CART admission + commit"
+    },
+    {
+      "figure": "cifar10_dirichlet_worst_client_recomputed.pdf",
+      "input": "docs/results/cart-admission-cifar6-100r-20261028/cifar10-dirichlet-2027-attack_noise_defense_rla_cart-s0.01-cartv2-2678a7e5dec3/metrics.npz",
+      "sha256": "73deecdeba387d59bdf4002875d4f08f4da18ac91302966b6d863d09c30f5759",
+      "description": "CART admission + commit"
+    },
+    {
+      "figure": "mnist_partition_class_balance.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/mnist-iid-2025-clean-s0-cartv2-c6b7b8f7f23e/run.json",
+      "sha256": "a7546f0037363052b3d61b5480042ed81241b9cefb056d738f990f0930b5e81f",
+      "description": "iid"
+    },
+    {
+      "figure": "mnist_partition_class_balance.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/mnist-iid-2026-clean-s0-cartv2-5d359bd3ca13/run.json",
+      "sha256": "9752cff9e56a46165a121949b36a0f058069cbb51e50993358265bd4a67f2999",
+      "description": "iid"
+    },
+    {
+      "figure": "mnist_partition_class_balance.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/mnist-iid-2027-clean-s0-cartv2-9f624ebc0fe4/run.json",
+      "sha256": "d4adb62346286a3dbcd5389670585dd8afbfe3516c17473986fe5713f51e334e",
+      "description": "iid"
+    },
+    {
+      "figure": "mnist_partition_class_balance.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/mnist-dirichlet-2025-clean-s0-cartv2-09429c47bf62/run.json",
+      "sha256": "34d8f55ddde0a3893070364fd9bdccc1f628ca86778dc119e21e2c69e1137f9e",
+      "description": "dirichlet"
+    },
+    {
+      "figure": "mnist_partition_class_balance.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/mnist-dirichlet-2026-clean-s0-cartv2-bbe93ee178c1/run.json",
+      "sha256": "e4f5408ae5c514876054d7bbfae2fe55a50f5cae90a3956fb1fb4cdf4aa52dd1",
+      "description": "dirichlet"
+    },
+    {
+      "figure": "mnist_partition_class_balance.pdf",
+      "input": "docs/results/cart-v2-72-100r-20261028/mnist-dirichlet-2027-clean-s0-cartv2-1a8bafc8b283/run.json",
+      "sha256": "5ab4f0024273fb41fcb0318674628842067666994753041f7971305ee300d2ea",
+      "description": "dirichlet"
+    }
+  ],
+  "officialTestUsed": false,
+  "independentInferencePerformed": false,
+  "outputSha256": {
+    "combined_revised_mnist_sigma_0.01_learning_curves.pdf": "fad985947a7f78bb8529fd1390eb549e784ce75b7bd9184967d3c24ddb9f3701",
+    "combined_revised_mnist_sigma_0.01_learning_curves.svg": "a38d4239b65e68cf08bbab362f9776f103e5c86e5a03784656cf539839f65c03",
+    "combined_revised_mnist_sigma_0.01_learning_curves.png": "173b02a25286b7145037d61d6432c1dcf7cc7577129968ed8bbc486a5732ea2d",
+    "combined_revised_cifar10_sigma_0.01_learning_curves.pdf": "b2ff5af8b21bc70f1077caf7e657f7ae9fd10b994f90db83f79cd4c4272d1b9c",
+    "combined_revised_cifar10_sigma_0.01_learning_curves.svg": "bc4f6d3c1b9a04fc947f779c9187b30a74751242bece7e56af37041489f76e01",
+    "combined_revised_cifar10_sigma_0.01_learning_curves.png": "75d9c774b14b2943443ee294f15d76ef3b42285cf16d96923853fda96efafa9b",
+    "combined_revised_cifar10_sigma_0.01_primary_bars.pdf": "a2cf4bb57347cc1a3e49ee576748514c35e091d6ffc29c7d84b4449da0625cc5",
+    "combined_revised_cifar10_sigma_0.01_primary_bars.svg": "c55759c0f467adc0596efc246fae2a2f823d49b939102ea59b6154d2ed2036b7",
+    "combined_revised_cifar10_sigma_0.01_primary_bars.png": "3973a7b0b80f32ceec2508e1fe194c7435487cee67745721209076b12d239e79",
+    "combined_revised_cifar10_sigma_0.01_final_bars.pdf": "ac5a19535ef8b77bd7f97053e4ab400012e30c5a646e8fe986054bcc04850f36",
+    "combined_revised_cifar10_sigma_0.01_final_bars.svg": "5d4b456eed7094158c82dbd28a143ec4b7ee6277ecdaee85bd8e19c2827410d8",
+    "combined_revised_cifar10_sigma_0.01_final_bars.png": "ad97ed8e6b9551c10aa9a5370bf61ac97212ad6af789953cb5ea3629ff81136b",
+    "cifar10_iid_class_recall_recomputed.pdf": "0628812565be6065a14e437f3c860c45cea8ef20d6d868a7346d54e02bb9512c",
+    "cifar10_iid_class_recall_recomputed.svg": "14c4497098cf3fe404f86c646c6dffc2da0c88ed91146ca69f1415da7ccac8a2",
+    "cifar10_iid_class_recall_recomputed.png": "57ebb48a8bb78cabb67433fa2c51ce17c17a0ef423cafdef42bd25f76660a6ea",
+    "cifar10_dirichlet_class_recall_recomputed.pdf": "7cb08b84e783142b416b40e88f80b66dbcaddac00abdcf143476966eb7e99a07",
+    "cifar10_dirichlet_class_recall_recomputed.svg": "8cc5d204e76898101387664700886265f57d17f242358862e339ef2f5ee125a8",
+    "cifar10_dirichlet_class_recall_recomputed.png": "c80a20aaec7bf18448af05e042b31152c2f70957f68cc83a4672999e7bb824e3",
+    "cifar10_dirichlet_worst_client_recomputed.pdf": "ba509b93ff0e7b8c6785627988e86f260d79895776903245ed3da4b233319cd9",
+    "cifar10_dirichlet_worst_client_recomputed.svg": "6fd088e7ba136c6d751fb0ee32c46f4158b8efff23417e1bb85c23c039f6fe3d",
+    "cifar10_dirichlet_worst_client_recomputed.png": "84af5ceafd52cb937ab87dd05f39d6990d66b402909fa4ed092e3ac2144fcf00",
+    "figure_provenance.csv": "0bd5c48a884b9e5a9fffd919dadd1a1cb1331b063deeac090611a30b10507f19",
+    "diagnostic_seed_metrics.csv": "182594e6666145f729a8aebd884b6133ec360ae40c154f9baa824cede9625762",
+    "mnist_partition_class_balance.pdf": "8ba79f99b287d5cd214d5a83534c909c0e6d351553c866a8cbd7ac163bc16248",
+    "mnist_partition_class_balance.svg": "21741770a47df66d993470a9548ecd0bc4a1f9507e5a1c52d76e766675b1e613",
+    "mnist_partition_class_balance.png": "68f3f9220a087279af7fd7ac8fdf8f97af633a89df95acb27d0c8cc1d833ca43",
+    "mnist_partition_audit.csv": "8af666df3103ca5697e8805836dcff674bfaf0d308efaa69eac7007153aacd51"
+  },
+  "generatorSha256": "b87c6e786a419a8ef0912fe60045a4d45c2af9eceffcf021a483e48192512ccf"
+}

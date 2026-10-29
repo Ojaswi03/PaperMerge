@@ -156,7 +156,7 @@ def table_rows(entries,width):
         values={'GPU':f'G{row["gpu"]}' if row['gpu'] is not None else 'CPU',
             'STATUS':'STOPPED' if row['status']=='INTERRUPTED' else row['status'],
             'DATA/SPLIT':cfg['dataset']+'/'+split,'SEED':cfg['seed'],'SIGMA':f'{cfg["sigma"]:g}',
-            'CONDITION':condition_names.get(cfg['condition'],cfg['condition']),
+            'CONDITION':cfg.get('comparisonLabel') or condition_names.get(cfg['condition'],cfg['condition']),
             'ROUND':f'{row["rounds"]}/{cfg["rounds"]}', 'ACTIVATIONS':f'{row["cursor"]}/{row["total"]}',
             'ACC':f'{row["mean"]:.2%}' if row['mean'] is not None else '--',
             'ELAPSED':duration(row['elapsed']) if row['elapsed'] is not None else '--',

@@ -3,13 +3,21 @@
 PaperMerge studies Byzantine-resilient decentralized learning under noisy
 communication using Python, TensorFlow and a Tkinter experiment workspace.
 
-**Next CIFAR CART evaluation:** [six-run HPC commands](docs/CART_NEXT_HPC_RUN.md),
-[revised admission/commit architecture and limitations](docs/CART_TRANSACTIONAL_ADMISSION.md).
-The completed 72-run study exposed CIFAR non-IID collapse. The revision checks
-both the incoming complete model and the complete local update; short local
-screens improve over the collapsed result, but 100-round robustness and novelty
-remain unestablished. The runner isolates worker failures, resumes checkpoints,
-updates compatible complete-seed averages/plots, and sends concise spaced ntfy alerts.
+**Current evidence:** the completed 72-run study and six-run CIFAR admission/
+commitment revision are preserved in [result exports](docs/results/).
+Revised CIFAR final validation means are 31.71% IID and 23.35% non-IID over
+three seeds, still substantially below clean. Class-penalty benefit, broader
+robustness and novelty remain unestablished.
+
+**Next comparisons:** [mechanism ablations, physical-impairment controls and
+SHARP + ACDS](docs/CART_COMPARISON_STUDY.md) use isolated source-frozen outputs,
+failure-isolating workers, checkpoint recovery and exportable routing/commit
+receipts. ACDS adds explicitly labeled raw fitting-data access.
+
+**Thesis figures:** [exact filenames and LaTeX mapping](docs/THESIS_FIGURE_GUIDE.md)
+link cleanly labeled PDF, SVG and PNG figures derived from the completed exports.
+See the [admission/commit architecture](docs/CART_TRANSACTIONAL_ADMISSION.md) for
+the method and its limits.
 
 [Share the live browser monitor](docs/CART_BROWSER_MONITOR.md) with a professor:
 the public read-only dashboard shows sanitized HPC progress without SSH access
