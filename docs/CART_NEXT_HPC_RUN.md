@@ -84,8 +84,17 @@ tmux after SSH disconnect. ETA is a forecast, initially using workload priors;
 measurements replace those priors. A six-run study should be much shorter than
 repeating 72 runs, but no fixed speedup is guaranteed before HPC measurements.
 
-The monitor displays GPU/configuration rows, including planned assignments and
-worker initialization. Before the supervisor starts, it shows a planning duration
+The standalone monitor refreshes the current terminal page every five seconds
+instead of appending snapshots. Its bordered table has labeled columns and keeps one row per configuration,
+including GPU, status, dataset/split, seed, noise, condition, round, accuracy and
+ETA. Wider terminals also show activation counts and worker elapsed time. The six
+focused configurations fit on a standard 80-column terminal. `--details` restores
+the multiline view; `--once` prints one plain snapshot for logs. Use the standalone
+command above for page refresh; the source-frozen runner's legacy `--monitor`
+continues to print repeated snapshots.
+
+The monitor includes planned assignments and worker initialization.
+Before the supervisor starts, it shows a planning duration
 rather than a predicted finish time. If startup fails before `campaign.json` is
 created, it displays the manager failure instead of remaining `PREPARED` forever.
 The manager tolerates the normal delay before the supervisor creates this file;

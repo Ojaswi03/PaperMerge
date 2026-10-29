@@ -156,3 +156,48 @@ def test_assigned_worker_has_a_gpu_row_while_python_is_initializing(tmp_path):
     state=snapshot(tmp_path)
     assert state['entries'][0]['status']=='STARTING'
     assert 'G1 STARTING mnist/iid' in render(state,width=120,height=40)
+
+
+@pytest.mark.parametrize('width',[80,100,140])
+def test_table_keeps_all_six_configurations_in_one_terminal_page(tmp_path,width):
+    rows=[(seed,'attack_noise_defense_rla_cart','cifar10',running(20,40))
+        for seed in (2025,2026,2027) for _ in range(2)]
+    setup(tmp_path,rows);state=snapshot(tmp_path);before=copy.deepcopy(state)
+    for index,row in enumerate(state['entries']):row['config']['partition']='dirichlet' if index%2 else 'iid'
+    before=copy.deepcopy(state);text=render(state,width=width,height=23,table=True)
+    assert len(text.splitlines())<=23 and max(map(len,text.splitlines()))<=width
+    assert text.count('both+CART')==6
+    assert all(text.count(str(seed))==2 for seed in (2025,2026,2027))
+    assert 'cifar10/nonIID' in text and 'cifar10/IID' in text
+    assert '|GPU|STATUS' in text and '+---+---------' in text
+    assert all(line.startswith('|') and line.endswith('|') for line in text.splitlines() if 'both+CART' in line)
+    assert 'Showing' not in text and state==before
+
+
+def test_interactive_monitor_replaces_the_screen_on_every_refresh(tmp_path,monkeypatch):
+    import io
+    import sys
+    setup(tmp_path,[(2025,'clean','mnist',running(20,40))])
+    class Terminal(io.StringIO):
+        def isatty(self):return True
+    terminal=Terminal();monkeypatch.setattr(sys,'stdout',terminal)
+    sleeps=[]
+    def refresh(_):
+        sleeps.append(True)
+        if len(sleeps)==2:raise KeyboardInterrupt
+    monkeypatch.setattr('basil_core.sharp_monitor.time.sleep',refresh)
+    monitor(tmp_path)
+    frames=terminal.getvalue().split('\033[2J\033[H')[1:]
+    assert len(frames)==2
+    assert all(frame.count('DATA/SPLIT')==1 and frame.count('mnist/IID')==1 for frame in frames)
+
+
+def test_once_snapshot_does_not_clear_the_terminal(tmp_path,monkeypatch):
+    import io
+    import sys
+    setup(tmp_path,[(2025,'clean','mnist',running(20,40))])
+    class Terminal(io.StringIO):
+        def isatty(self):return True
+    terminal=Terminal();monkeypatch.setattr(sys,'stdout',terminal)
+    monitor(tmp_path,once=True)
+    assert '\033[' not in terminal.getvalue() and 'DATA/SPLIT' in terminal.getvalue()

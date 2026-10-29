@@ -137,7 +137,36 @@ def snapshot(directory,*,timing_roots=()):
         etaLow=max(lower.values()),etaHigh=max(upper.values()),output=str(root),revision=plan.get('revision'),startup=startup)
 
 
-def render(state,*,width=100,height=30,timezone='America/New_York'):
+def table_rows(entries,width):
+    """One configuration per line; add timing detail as terminal width permits."""
+    condition_names=dict(clean='clean',attack_only='attack',attack_defense='attack+def',
+        noise_only='noise',noise_rla='noise+RLA',attack_noise='attack+noise',
+        attack_noise_defense='attack+no+def',attack_noise_rla='attack+no+RLA',
+        attack_noise_defense_rla='both defenses',attack_noise_defense_rla_cart='both+CART')
+    columns=[('GPU',3),('STATUS',9),('DATA/SPLIT',14),('SEED',4),('SIGMA',5),('CONDITION',13),('ROUND',7)]
+    if width>=92:columns.append(('ACTIVATIONS',11))
+    columns.append(('ACC',7))
+    if width>=101:columns.append(('ELAPSED',8))
+    columns.append(('ETA',8))
+    def line(values):return '|'+ '|'.join(str(values[k])[:size].ljust(size) for k,size in columns)+'|'
+    border='+'+'+'.join('-'*size for _,size in columns)+'+'
+    result=[border,line({k:k for k,_ in columns}),border]
+    for row in entries:
+        cfg=row['config'];split='nonIID' if cfg['partition']=='dirichlet' else cfg['partition'].upper()
+        values={'GPU':f'G{row["gpu"]}' if row['gpu'] is not None else 'CPU',
+            'STATUS':'STOPPED' if row['status']=='INTERRUPTED' else row['status'],
+            'DATA/SPLIT':cfg['dataset']+'/'+split,'SEED':cfg['seed'],'SIGMA':f'{cfg["sigma"]:g}',
+            'CONDITION':condition_names.get(cfg['condition'],cfg['condition']),
+            'ROUND':f'{row["rounds"]}/{cfg["rounds"]}', 'ACTIVATIONS':f'{row["cursor"]}/{row["total"]}',
+            'ACC':f'{row["mean"]:.2%}' if row['mean'] is not None else '--',
+            'ELAPSED':duration(row['elapsed']) if row['elapsed'] is not None else '--',
+            'ETA':duration(row['eta']) if row['eta'] is not None else '--'}
+        result.append(line(values))
+    result.append(border)
+    return result
+
+
+def render(state,*,width=100,height=30,timezone='America/New_York',table=False):
     width=max(width,30)
     if state['status']=='WAITING_FOR_PLAN':return f'Waiting for frozen plan in {state["output"]}\n'
     methods={r['config'].get('method') for r in state['entries']}
@@ -165,6 +194,25 @@ def render(state,*,width=100,height=30,timezone='America/New_York'):
         lines.append('Training activations finished for a worker; final evaluation/checkpoint writes can still be running.')
     wrap=lambda values:[part for line in values for part in (textwrap.wrap(line,width,break_long_words=True) or [''])]
     lines=wrap(lines);lines.append('')
+    if table and width>=80:
+        footer=[]
+        if state['status']=='COMPLETED':footer.append('ALL EXPERIMENTS COMPLETE.')
+        elif state['status']=='COMPLETED_WITH_FAILURES':footer.append('Queue finished with failures; completed results are preserved.')
+        elif state['status'] in ('FAILED','INTERRUPTED'):footer.append('Campaign stopped; inspect manager/supervisor logs before recovery.')
+        elif state['status']=='COMPLETED_REPORT_FAILED':footer.append('Training complete; plot generation needs attention. No retraining is needed.')
+        else:footer+=['ETA is a forecast; setup/JIT and workload variation can change it.',
+            'Refresh 5 seconds | Ctrl+C closes only this monitor']
+        footer=wrap(footer)
+        available=max(0,height-len(lines)-len(footer)-6)
+        entries=state['entries']
+        if len(entries)>available:
+            priority={'RUNNING':0,'STARTING':0,'FAILED':1,'INTERRUPTED':1,'PENDING':2,'COMPLETED':3}
+            entries=sorted(entries,key=lambda row:priority.get(row['status'],2))
+        visible=entries[:available]
+        lines+=table_rows(visible,width)
+        if len(visible)<len(entries):lines.append(f'Showing {len(visible)}/{len(entries)} configurations; enlarge terminal for more.')
+        lines.append('');lines+=footer
+        return '\n'.join(lines)+'\n'
     active=[r for r in state['entries'] if r['status'] in ('RUNNING','STARTING')]+[
         r for r in state['entries'] if r['status'] in ('FAILED','INTERRUPTED')]
     recent=[r for r in state['entries'] if r['status']=='COMPLETED'][-4:]
@@ -189,12 +237,12 @@ def render(state,*,width=100,height=30,timezone='America/New_York'):
     return '\n'.join(wrap(lines))+'\n'
 
 
-def monitor(directory,*,once=False,timing_roots=(),timezone='America/New_York'):
+def monitor(directory,*,once=False,timing_roots=(),timezone='America/New_York',table=True):
     try:
         while True:
             state=snapshot(directory,timing_roots=timing_roots);size=shutil.get_terminal_size(fallback=(100,30))
             if not once and sys.stdout.isatty():print('\033[2J\033[H',end='')
-            print(render(state,width=size.columns,height=size.lines,timezone=timezone),end='',flush=True)
+            print(render(state,width=size.columns,height=max(1,size.lines-1),timezone=timezone,table=table),end='',flush=True)
             if once or state['status'] in ('COMPLETED','COMPLETED_WITH_FAILURES','FAILED','INTERRUPTED','COMPLETED_REPORT_FAILED'):return
             time.sleep(5)
     except KeyboardInterrupt:print('\nMonitor closed.',flush=True)

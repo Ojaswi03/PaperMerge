@@ -20,9 +20,10 @@ def main():
     parser.add_argument('--once',action='store_true',help='Print one snapshot and exit.')
     parser.add_argument('--timing-from',nargs='*',type=Path,default=[])
     parser.add_argument('--timezone',default='America/New_York')
+    parser.add_argument('--details',action='store_true',help='Use the older multiline layout instead of the compact configuration table.')
     args=parser.parse_args()
     if not args.output.is_dir():parser.error(f'Campaign directory does not exist: {args.output}')
-    try:monitor(args.output.resolve(),once=args.once,timing_roots=args.timing_from,timezone=args.timezone)
+    try:monitor(args.output.resolve(),once=args.once,timing_roots=args.timing_from,timezone=args.timezone,table=not args.details)
     except (OSError,ValueError,KeyError) as error:parser.exit(2,f'Monitor could not read campaign: {error}\n')
 
 
