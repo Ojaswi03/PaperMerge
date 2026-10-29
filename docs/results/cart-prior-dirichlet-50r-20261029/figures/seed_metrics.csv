@@ -1,0 +1,2 @@
+dataset,partition,seed,arm,environment,sigma,rounds,nodes,attackStart,localSteps,alpha,primary,final,revision,shareFraction,runId,dataSharing,initialHash,ownerPartitionHash,holdoutHash
+cifar10,dirichlet,2025,prior_cart,joint,0.01,50,100,20,5,0.5,0.277085,0.27720000000000006,cart_mechanism_comparison_20261029_v1,0.0,cifar10-dirichlet-2025-joint-prior_cart-7f4b5a1b298e,False,f05fe9576edbfa3e4957ffd042a983b6f6f86feb7494a9ea097e02a685a1350b,06f119a1b77cd1d8e6c2c1d9cc4bad23d70a7c3ee7bdd56bcfaca1802369d4ca,9787fe8dd95494425fae734ce6462467cc6bedb52d5ca7e904283ab0d0217f7e

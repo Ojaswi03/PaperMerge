@@ -1,5 +1,5 @@
 {
-  "status": "PILOTS_VERIFIED_50_ROUND_EXPERIMENT_RUNNING",
+  "status": "PILOTS_AND_50_ROUND_EXPERIMENT_VERIFIED",
   "testsPassed": 59,
   "changes": {
     "balanced_commit": "Continuous balanced CE commitment, original ingress and SGD unchanged; pilot did not improve accuracy",
@@ -175,6 +175,58 @@
     "sigma": 0.01,
     "nodes": 100,
     "attackStartZeroBased": 20,
-    "scope": "One exploratory trajectory; no final outcome yet"
+    "scope": "One completed and independently checked exploratory trajectory; no multi-seed confirmation",
+    "status": "COMPLETED",
+    "completedActivations": 5000,
+    "optimizerSteps": 25000,
+    "metrics": {
+      "final": 0.27720000000000006,
+      "primary": 0.277085,
+      "round20": 0.27427,
+      "gainAfterRound30": 0.0010500000000001064,
+      "worstClient": 0.238,
+      "clientP10": 0.2599,
+      "medianClient": 0.279,
+      "clientsAtOrBelow10_5Percent": 0,
+      "finalMeanClassRecall": [
+        0.3195,
+        0.27009999999999984,
+        0.06069999999999998,
+        0.1506,
+        0.2182,
+        0.29750000000000004,
+        0.45659999999999995,
+        0.2784999999999999,
+        0.4328,
+        0.28749999999999987
+      ]
+    },
+    "finalMechanisms": {
+      "activations": 100,
+      "calibrationDraws": 1900,
+      "commitChecks": 100,
+      "commitScales": {
+        "0.0": 41,
+        "0.125": 13,
+        "0.25": 20,
+        "0.5": 13,
+        "1.0": 13
+      },
+      "displayRound": 50,
+      "meanLocalTrainCE": 1.3526320890188217,
+      "meanQualifiedClassCounts": 3.58,
+      "meanRlaCoefficients": 0.00016728108198924734,
+      "meanSelectedCounts": 1.61,
+      "ownRouteFraction": 0.94,
+      "routes": {
+        "neighbor": 4,
+        "own": 94,
+        "pool": 2
+      },
+      "zeroCommitFractionAmongChecks": 0.41
+    },
+    "independentInference": "ALL_COMPARISON_MODELS_VERIFIED",
+    "maximumInferenceDifference": 0.0,
+    "interpretation": "One seed; early gains followed by plateau; historical HPC control uses a different TensorFlow version"
   }
 }

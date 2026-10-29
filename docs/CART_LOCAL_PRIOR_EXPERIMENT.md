@@ -52,7 +52,7 @@ objective, uses one worker capped at 6 GiB, and starts a detached tmux session.
 It sends the existing self-notification on completion. The HPC launchers and
 longer comparison matrices remain separate.
 
-## Completed execution check and current longer run
+## Completed execution check and 50-round run
 
 The three-round, seed-2025 Dirichlet execution check finished without failures,
 with 300 activations and 1,500 SGD steps. Fresh final-model CPU inference
@@ -64,11 +64,42 @@ profile. This short early-onset-attack comparison is exploratory, not evidence
 of a sustained gain or an independent final test. Its archive is
 `docs/results/cart-prior-dirichlet-3r-20261029/`.
 
-The local 50-round trajectory was launched separately under
-`.papermerge/local-tests/cart-prior-dirichlet-50r-20261029/`. Its terminal status,
-complete metrics, and subsequent independent inference must be checked before
-reporting its outcome. The onset-20 run is not pooled with the onset-1 check.
-The source and checkpoints are frozen separately for each run.
+The local 50-round trajectory completed separately under
+`.papermerge/local-tests/cart-prior-dirichlet-50r-20261029/`, with no failures,
+5,000 activations, and 25,000 SGD steps in 43 minutes 22 seconds of supervisor
+wall time. Independent final-model CPU inference reproduced all saved client
+accuracies exactly. The onset-20 run is not pooled with the onset-1 check.
+The source and checkpoints are frozen separately for each run. Its verified
+compact archive is `docs/results/cart-prior-dirichlet-50r-20261029/`.
+
+| Endpoint | Mean client accuracy |
+| --- | ---: |
+| Round 10 | 27.044% |
+| Round 20, before attack | 27.427% |
+| Round 30 | 27.615% |
+| Round 50 | 27.720% |
+| Last ten rounds | 27.7085% |
+
+At round 50, worst-client accuracy is 23.8%, the tenth-percentile client is
+25.99%, and honest-client mean accuracy is 27.6955%. No client is at or below
+10.5%. Class recognition remains uneven: mean bird recall is 6.07%, cat recall
+15.06%, and frog recall 45.66%.
+
+This run does not solve the plateau. Gain from round 30 through round 50 is
+only 0.105 percentage points. At the last round, 94 of 100 activations select
+the receiver-owned model, four select a coherent peer, and two select the
+SHARP pool. Of 100 checked updates, 41 take scale zero; only 13 take the full
+step. The method is mostly carrying its own model forward, so accepting more
+local updates does not establish effective continuing knowledge transfer.
+
+For descriptive context, the seed-2025 archived ordinary-CART HPC trajectory
+at round 50 has 24.509% mean and 10% worst-client accuracy. The new mean is
+3.211 percentage points higher, but the TensorFlow versions differ. This is
+not a matched-runtime causal estimate or a multi-seed conclusion. A paired
+same-runtime ordinary-CART versus prior-CART comparison is needed before
+attributing that difference to the loss change. The next mechanism question
+is why useful fresh peer candidates rarely pass ingress, rather than simply
+running many more rounds of an already flat trajectory.
 
 Published pilot SVGs have trailing whitespace normalized; the figure manifests
 record the original and normalized hashes. Original local run artifacts remain
