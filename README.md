@@ -11,6 +11,10 @@ screens improve over the collapsed result, but 100-round robustness and novelty
 remain unestablished. The runner isolates worker failures, resumes checkpoints,
 updates compatible complete-seed averages/plots, and sends concise spaced ntfy alerts.
 
+[Share the live browser monitor](docs/CART_BROWSER_MONITOR.md) with a professor:
+the public read-only dashboard shows sanitized HPC progress without SSH access
+or training controls. Its publisher runs independently of the experiment.
+
 **27 October 2026 — professor SHARP specification:** the new
 [implementation and HPC commands](docs/SHARP_IMPLEMENTATION.md) support
 100-node rings, screened/ranked averaging, hop-aware RLA, a frozen proximal

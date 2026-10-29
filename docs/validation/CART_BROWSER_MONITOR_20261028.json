@@ -1,0 +1,15 @@
+{
+  "status": "DEPLOYED_AND_API_VERIFIED",
+  "url": "https://papermerge-cart-live.foggycoati69.chatgpt.site",
+  "projectId": "appgprj_6ae2993257bc8191a020788a13055455",
+  "siteSourceCommit": "9dfa25e6290f88b5b0a1dc297603f3eb05ef8e31",
+  "versionId": "appgprj_6ae2993257bc8191a020788a13055455~appgver_82bcf709a6cc8191a4531f1093143952",
+  "deploymentId": "appgdep_6ae29aef0bb48191b131726696a704c6",
+  "audience": "public; anyone with the campaign link",
+  "pythonTestsPassed": 53,
+  "workerTestsPassed": 3,
+  "hostedApiChecks": ["create test feed", "authorized upload", "persistent anonymous read", "no public write credential", "anonymous write returns 401", "authorized test-feed cleanup"],
+  "trainingSourceUnchanged": true,
+  "hpcConnectionStillRequired": true,
+  "browserVisualQA": "Not performed; embedded browser JavaScript parsed, public HTML served successfully and hosted API exercised over HTTPS."
+}
