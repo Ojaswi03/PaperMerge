@@ -29,26 +29,39 @@ def data():
 
 
 def test_full_cart_adapter_reproduces_original_revision_exactly():
+    import importlib.util
+    from pathlib import Path
     from basil_core.cart_comparison_study import configure_worker,intervention
     from basil_core.cart_revision_study import configure_worker as original_worker
     import basil_core.sharp_cart_v2_protocol as protocol
     import basil_core.sharp_cart_v2 as repair
     from basil_core.cart_prior_neutral_commit import transport
+    import basil_core.cart_prior_neutral_commit as commit_module
+    frozen=Path(__file__).resolve().parents[1]/'docs/results/cart-prior-dirichlet-50r-20261029/source_snapshots/basil_core/cart_prior_neutral_routing.py'
+    spec=importlib.util.spec_from_file_location('frozen_eight_peer_routing',frozen)
+    historical=importlib.util.module_from_spec(spec);spec.loader.exec_module(historical)
+    current_route=commit_module.route_selector
+    def historical_route(original,mode,*,peer_budget=8):
+        assert peer_budget==8
+        return historical.selector(original,mode)
     view=case();cfg=view['comparisonCase']['protocolConfig'];x,y,chunks=data()
     old,wrap=original_worker(cfg,'CPU');new=configure_worker(view,'CPU')
     np.testing.assert_array_equal(old.export(),new.export())
     original_select,original_repair=protocol.select_input,repair.transport
     try:
+        commit_module.route_selector=historical_route
         protocol.select_input=wrap(original_select);repair.transport=transport(original_repair)
         expected=protocol.run(cfg,old,x,y,chunks,x[:20],y[:20])
-    finally:protocol.select_input=original_select;repair.transport=original_repair
+    finally:
+        protocol.select_input=original_select;repair.transport=original_repair
+        commit_module.route_selector=current_route
     with intervention(view,new) as effective:actual=protocol.run(effective,new,x,y,chunks,x[:20],y[:20])
     np.testing.assert_array_equal(expected['nodeParams'],actual['nodeParams'])
     np.testing.assert_array_equal(expected['outbound'],actual['outbound'])
     assert expected['roundMetrics']==actual['roundMetrics']
 
 
-@pytest.mark.parametrize('arm',['macro','balanced_commit','prior_cart'])
+@pytest.mark.parametrize('arm',['macro','balanced_commit','prior_cart','prior_macro','prior_wide'])
 def test_comparison_interruption_recovery_preserves_full_model_and_metrics(tmp_path,arm):
     from basil_core.cart_comparison_study import configure_worker,intervention
     from basil_core.sharp_protocol import save_state,load_state

@@ -8,17 +8,20 @@ ROOT=Path(__file__).resolve().parents[1]
 REVISION='cart_mechanism_comparison_20261029_v1'
 ARMS=('sharp','cart','macro','ingress_only','commit_only','local_only','fresh_peer',
       'no_calibration','no_repair','acds')
-EXPERIMENTAL_ARMS=('balanced_commit','prior_cart')
+EXPERIMENTAL_ARMS=('balanced_commit','prior_cart','prior_macro','prior_wide')
 ALL_ARMS=ARMS+EXPERIMENTAL_ARMS
 LABELS=dict(sharp='SHARP',cart='SHARP + CART',macro='CART macro only',
     ingress_only='CART ingress only',commit_only='CART commit only',
     local_only='Local only',fresh_peer='Fresh peer',no_calibration='CART no calibration',
     no_repair='CART no head repair',acds='SHARP + ACDS (5% data)',
-    balanced_commit='CART balanced-loss check',prior_cart='CART local-prior training')
+    balanced_commit='CART balanced-loss check',prior_cart='CART local-prior training',
+    prior_macro='CART local prior, macro only',prior_wide='CART local prior, full peer window')
 ENVIRONMENTS=('joint','clean','noise_only','attack_only')
 PRESETS=dict(screen=dict(arms=ARMS,rounds=10,attack_start=3,seeds=[2025],environments=['joint']),
     isolation=dict(arms=('sharp','cart','macro','acds'),rounds=10,attack_start=3,seeds=[2025],environments=ENVIRONMENTS),
-    confirm=dict(arms=('cart','acds'),rounds=100,attack_start=20,seeds=[2025,2026,2027],environments=['joint']))
+    confirm=dict(arms=('cart','acds'),rounds=100,attack_start=20,seeds=[2025,2026,2027],environments=['joint']),
+    easy=dict(arms=('cart','prior_cart','prior_macro','prior_wide'),rounds=5,attack_start=3,
+        seeds=[2025],environments=['clean','joint']))
 
 
 def revision(_=None):return REVISION
@@ -126,7 +129,7 @@ def configure_worker(view,device='GPU'):
     from basil_core.cart_batched_scoring import BatchedAdmittedWorker
     from basil_core.sharp_compiled_transfer import CompiledTransferWorker
     cfg=effective_config(view);arm=view['comparisonCase']['arm']
-    if arm=='prior_cart':
+    if arm in ('prior_cart','prior_macro','prior_wide'):
         from basil_core.cart_local_prior import LocalPriorWorker
         return LocalPriorWorker(cfg,device)
     if arm in ('sharp','acds'):
@@ -183,10 +186,11 @@ def intervention(view,worker):
     def validate(actual):
         original_validate(inner)
         if actual!=cfg:raise ValueError('Execution overrides differ from declared comparison case.')
-    choose=selector(pooled,'macro' if arm=='macro' else 'class')
+    choose=selector(pooled,'macro' if arm in ('macro','prior_macro') else 'class',
+        peer_budget=cfg['window'] if arm=='prior_wide' else 8)
     def select(c,state,w,x,y,node,r,batch):
         w.quality_context=None
-        if arm in ('cart','macro','ingress_only','no_calibration','no_repair','balanced_commit','prior_cart'):
+        if arm in ('cart','macro','ingress_only','no_calibration','no_repair','balanced_commit','prior_cart','prior_macro','prior_wide'):
             # Only the allowance intervention changes calibration draws.
             return choose(dict(c,calibrationDraws=0) if arm=='no_calibration' else c,state,w,x,y,node,r,batch)
         if arm=='local_only':

@@ -13,6 +13,8 @@ def test_comparison_presets_and_modular_noise_require_no_training(tmp_path):
     for preset,count in [('screen',20),('isolation',32),('confirm',12)]:
         row=json.loads(subprocess.check_output(base+['--preset',preset],text=True))
         assert row['configs']==count and not row['trainingStarted']
+    row=json.loads(subprocess.check_output(base+['--preset','easy','--partitions','dirichlet'],text=True))
+    assert row['configs']==8 and row['rounds']==5 and not row['trainingStarted']
     row=json.loads(subprocess.check_output(base+['--preset','confirm','--datasets','mnist','cifar10','--noise-levels','3'],text=True))
     assert row['configs']==72 and not tmp_path.joinpath('plan.json').exists()
     bad=subprocess.run(base+['--resume','--execute','--rounds','30'],capture_output=True,text=True)

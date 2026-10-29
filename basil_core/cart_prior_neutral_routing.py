@@ -11,8 +11,9 @@ from basil_core.cart_quality_routing_candidate import utility
 from basil_core.cart_class_skill import class_skill as class_f1
 
 
-def selector(original,mode):
+def selector(original,mode,*,peer_budget=8):
     if mode not in ('class','macro'):raise ValueError('Unknown quality-routing ablation.')
+    if type(peer_budget) is not int or peer_budget<1:raise ValueError('Positive integer peer candidate budget required.')
     def select(cfg,state,worker,x,y,node,round_id,batch):
         pool,base=original(cfg,state,worker,x,y,node,round_id,batch)
         own=state['nodeParams'][node] if state['senderRounds'][node]>=0 else None
@@ -31,7 +32,7 @@ def selector(original,mode):
         senders=[(node-d)%cfg['nodes'] for d in range(1,cfg['window']+1) if state['senderRounds'][(node-d)%cfg['nodes']]>=0]
         passed=[s for j,s in enumerate(senders) if not base.get('screenApplied') or base['peakRatios'][j]<=base['peakThreshold']]
         passed.sort(key=lambda s:(-int(state['senderRounds'][s]),(node-s)%cfg['nodes']))
-        for sender in passed[:8]:
+        for sender in passed[:peer_budget]:
             value=link_vector(state['outbound'][sender],cfg['seed'],int(state['senderRounds'][sender]),sender,node,cfg['sigma'])
             candidates.append(dict(kind='neighbor',params=value,senders=[sender],q=1,priority=(node-sender)%cfg['nodes']))
         if own is not None:candidates.append(dict(kind='own',params=own.copy(),senders=[],q=1,priority=cfg['nodes']+1))
@@ -55,10 +56,16 @@ def selector(original,mode):
         if informative and own is not None and chosen['score']<own_row['score']-.01-1e-12:raise AssertionError('Quality band violated carrier score.')
         record=dict(mode=mode,route='own' if chosen['kind']=='own' else 'peer',actualRoute=chosen['kind'],softRetention=True,
             supportedClasses=classes.tolist(),qualifiedClasses=classes[qualified].tolist(),classTargets=target.tolist(),
-            channelF1Allowance=allowance.tolist(),calibrationDraws=draws,nearPeerBudget=8,scoreBand=.01,
+            channelF1Allowance=allowance.tolist(),calibrationDraws=draws,nearPeerBudget=peer_budget,scoreBand=.01,
+            probeFitPositiveCounts=[int(np.sum(y[fit]==c)) for c in classes],
+            probeCheckPositiveCounts=[int(np.sum(y[check]==c)) for c in classes],
             qualityScoreBoundApplied=informative,nullSkillReference=reference,qualityMeasure='one-vs-rest Matthews correlation coefficient',recognitionEvidenceSource='receiver carrier on both probes',
             selectedScore=chosen['score'],carrierScore=own_row['score'] if own is not None else None,
-            candidates=[dict(kind=c['kind'],senders=c['senders'],score=c['score'],fitSkill=c['fit'].tolist(),checkSkill=c['check'].tolist()) for c in candidates])
+            candidates=[dict(kind=c['kind'],senders=c['senders'],score=c['score'],
+                macroScore=min(float(c['fit'].mean()),float(c['check'].mean())),
+                classPenalty=min(float(c['fit'].mean()),float(c['check'].mean()))-c['score'],
+                senderVersions=[int(state['senderRounds'][s]) for s in c['senders']],priority=c['priority'],
+                fitSkill=c['fit'].tolist(),checkSkill=c['check'].tolist()) for c in candidates])
         worker.admitted_route=chosen['kind'];worker.admitted_has_channel=chosen['kind']!='own' and base.get('availableCopies',0)>0
         worker.continuity_anchor=chosen['params'].copy()
         return chosen['params'].copy(),dict(base,selectedSenders=chosen['senders'],selectedCount=chosen['q'],continuity=record,

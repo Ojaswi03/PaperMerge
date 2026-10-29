@@ -1,0 +1,111 @@
+{
+  "status": "SHORT_LOCAL_SCREEN_RUNNING",
+  "testsPassed": 65,
+  "unchangedDefaultRouting": "Exact model/outbound/metric equivalence to frozen eight-peer routing on bounded CPU fixture",
+  "gpuGate": "PASSED",
+  "checkpointAudit": {
+    "status": "COMPLETED",
+    "sampledReceivers": 20,
+    "elapsedSeconds": 19.15991614900122,
+    "checkpointUnchanged": true,
+    "optimizerStepsAdded": 0,
+    "summary": {
+      "preLink_nearEight": {
+        "macroPeerBeatsOwned": 0,
+        "peerBeatsOwned": 0,
+        "peerWithinOriginalBand": 0,
+        "receivers": 20,
+        "scoreMarginQuantiles": [
+          -0.3093219517479657,
+          -0.12410297742234816,
+          -0.0854820899561704,
+          -0.0540941827478212,
+          -0.02445208717055325
+        ]
+      },
+      "preLink_screenedWindow": {
+        "macroPeerBeatsOwned": 3,
+        "peerBeatsOwned": 3,
+        "peerWithinOriginalBand": 4,
+        "receivers": 20,
+        "scoreMarginQuantiles": [
+          -0.237302676805703,
+          -0.08028392988274312,
+          -0.05373848172172907,
+          -0.014120644232123995,
+          0.015004589274916852
+        ]
+      },
+      "preLink_wholeWindow": {
+        "macroPeerBeatsOwned": 3,
+        "peerBeatsOwned": 3,
+        "peerWithinOriginalBand": 4,
+        "receivers": 20,
+        "scoreMarginQuantiles": [
+          -0.237302676805703,
+          -0.08028392988274312,
+          -0.052923822706230986,
+          -0.014120644232123995,
+          0.015004589274916852
+        ]
+      },
+      "received_nearEight": {
+        "macroPeerBeatsOwned": 1,
+        "peerBeatsOwned": 0,
+        "peerWithinOriginalBand": 1,
+        "receivers": 20,
+        "scoreMarginQuantiles": [
+          -0.33547943068360625,
+          -0.14342124831984435,
+          -0.08474756133791936,
+          -0.06428784084112776,
+          -0.008924156767189967
+        ]
+      },
+      "received_screenedWindow": {
+        "macroPeerBeatsOwned": 3,
+        "peerBeatsOwned": 2,
+        "peerWithinOriginalBand": 3,
+        "receivers": 20,
+        "scoreMarginQuantiles": [
+          -0.25658850457728843,
+          -0.08205339330905617,
+          -0.0558670126894711,
+          -0.02871908418815467,
+          0.005645105727321353
+        ]
+      },
+      "received_wholeWindow": {
+        "macroPeerBeatsOwned": 3,
+        "peerBeatsOwned": 2,
+        "peerWithinOriginalBand": 3,
+        "receivers": 20,
+        "scoreMarginQuantiles": [
+          -0.25658850457728843,
+          -0.07085507566950773,
+          -0.05439827036735191,
+          -0.02871908418815467,
+          0.005645105727321353
+        ]
+      }
+    }
+  },
+  "trainingScreen": {
+    "output": ".papermerge/local-tests/cart-easy-dirichlet-20261029",
+    "cases": 8,
+    "rounds": 5,
+    "seed": 2025,
+    "partition": "dirichlet",
+    "arms": [
+      "cart",
+      "prior_cart",
+      "prior_macro",
+      "prior_wide"
+    ],
+    "environments": [
+      "clean",
+      "joint"
+    ],
+    "longRunsAutomaticallyQueued": false
+  }
+}
