@@ -1,9 +1,45 @@
 import hashlib
 import json
+import subprocess
+import sys
 from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
+
+
+def test_manager_waits_for_real_child_to_publish_campaign_instead_of_interrupting_startup(tmp_path,monkeypatch):
+    from tests.test_sharp_monitor import setup
+    from types import SimpleNamespace
+    import basil_core.sharp_monitor as tracking
+    import scripts.run_cart_v2_managed as managed
+    setup(tmp_path,[(2025,'clean','mnist',None)])
+    (tmp_path/'campaign.json').unlink()
+    original_snapshot=tracking.snapshot
+    def observe(root,**kwargs):
+        value=original_snapshot(root,**kwargs)
+        if not (root/'campaign.json').exists():(root/'startup-observed').touch()
+        return value
+    monkeypatch.setattr(tracking,'snapshot',observe)
+    # The actual child cannot publish campaign.json until the parent has
+    # observed its absence. This deterministically exercises the startup race.
+    code=('import json,time;from pathlib import Path;'
+        f'root=Path({str(tmp_path)!r});deadline=time.monotonic()+10;'
+        '\nwhile not (root/"startup-observed").exists() and time.monotonic()<deadline:time.sleep(.01)'
+        '\nassert (root/"startup-observed").exists()'
+        '\n(root/"campaign.json").write_text(json.dumps(dict(status="COMPLETED",completed=1,total=1)))')
+    real_popen=subprocess.Popen;children=[]
+    def launch(*args,**kwargs):
+        child=real_popen([sys.executable,'-c',code],**kwargs);children.append(child);return child
+    monkeypatch.setattr(managed.subprocess,'Popen',launch)
+    monkeypatch.setattr(managed,'export_figures',lambda *_:dict(files=[]))
+    real_sleep=managed.time.sleep;monkeypatch.setattr(managed.time,'sleep',lambda _:real_sleep(.01))
+    args=SimpleNamespace(output=tmp_path,figures=None,ntfy_topic=None,watch=False,postprocess_only=False,
+        timing_from=[],scheduler='admission')
+    assert managed.run(args,[])==0
+    assert children[0].returncode==0
+    saved=json.loads((tmp_path/'managed_status.json').read_text())
+    assert saved['status']=='COMPLETED' and saved['supervisorPid']==children[0].pid
 
 
 def test_eta_pools_derived_run_ids_and_separates_shared_gpu_slots(tmp_path):

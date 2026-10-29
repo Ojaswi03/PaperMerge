@@ -130,3 +130,29 @@ def test_revision_label_and_finalization_do_not_claim_worker_completion(tmp_path
     assert 'CART admission revision | RUNNING | 0/1 complete' in text
     assert 'final evaluation/checkpoint' in text and 'ALL EXPERIMENTS COMPLETE' not in text
     assert state['entries'][0]['phase']=='FINALIZING_METRICS'
+
+
+def test_prepared_plan_shows_planned_gpus_without_a_fictitious_finish_time(tmp_path):
+    setup(tmp_path,[(2025,'clean','mnist',None)])
+    (tmp_path/'campaign.json').unlink()
+    text=render(snapshot(tmp_path),width=120,height=40)
+    assert 'G1 PENDING mnist/iid' in text
+    assert 'training has not started' in text and 'Estimated finish' not in text
+
+
+def test_manager_startup_failure_is_visible_even_before_campaign_exists(tmp_path):
+    setup(tmp_path,[(2025,'clean','mnist',None)])
+    (tmp_path/'campaign.json').unlink()
+    (tmp_path/'managed_status.json').write_text(json.dumps(dict(status='FAILED',error='startup failed')))
+    state=snapshot(tmp_path);text=render(state,width=120,height=40)
+    assert state['status']=='FAILED' and state['eta'] is None
+    assert 'Manager error: startup failed' in text and 'Campaign stopped' in text
+
+
+def test_assigned_worker_has_a_gpu_row_while_python_is_initializing(tmp_path):
+    configs=setup(tmp_path,[(2025,'clean','mnist',None)])
+    (tmp_path/'campaign.json').write_text(json.dumps(dict(status='RUNNING',workerFailurePolicy='continue',
+        activeRunIds=[configs[0]['runId']],pendingRunIds=[])))
+    state=snapshot(tmp_path)
+    assert state['entries'][0]['status']=='STARTING'
+    assert 'G1 STARTING mnist/iid' in render(state,width=120,height=40)

@@ -208,7 +208,7 @@ def test_manager_monitor_eio_does_not_cancel_training(tmp_path,monkeypatch,capsy
     (tmp_path/'plan.json').write_text('{"configs":[]}')
     (tmp_path/'campaign.json').write_text('{"status":"COMPLETED"}')
     class Process:
-        def __init__(self,*_,**__):self.returncode=None;self.polls=0
+        def __init__(self,*_,**__):self.returncode=None;self.polls=0;self.pid=12345
         def poll(self):
             self.polls+=1
             if self.polls==3:self.returncode=0

@@ -1,0 +1,21 @@
+{
+  "status": "PASSED",
+  "cause": "Manager read campaign.json before supervisor created it, treated FileNotFoundError as fatal, then sent SIGINT during Python startup.",
+  "focusedTestsPassed": 52,
+  "delayedRealSubprocessRegressionPassed": true,
+  "productionManagerGpuSmoke": {
+    "configurations": 1,
+    "completed": 1,
+    "failed": 0,
+    "nodes": 4,
+    "rounds": 2,
+    "status": "COMPLETED",
+    "plotsGenerated": true
+  },
+  "frozenTrainingSourceUnchanged": true,
+  "existingPlansAndGpuGatesCompatible": true,
+  "programSha256": {
+    "scripts/run_cart_v2_managed.py": "ff60704a01d6b11a4886c6626495ed789b6320ac923bbe4964e5e2bf54432776",
+    "basil_core/sharp_monitor.py": "e55764f943f50019f223a7669dc7c326016cd691a9b85d4bd7641ac5e2fe2860"
+  }
+}

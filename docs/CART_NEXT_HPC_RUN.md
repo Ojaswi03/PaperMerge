@@ -76,13 +76,20 @@ a standalone study. Do not reuse a plan with changed settings.
 ## Monitor, disconnect and retry
 
 ```bash
-python scripts/run_cart_revision_study.py --monitor --output "$RUN"
+python scripts/monitor_sharp_study.py --output "$RUN"
 ```
 
 Ctrl+C closes only this monitor. Training, plotting and notifications run inside
 tmux after SSH disconnect. ETA is a forecast, initially using workload priors;
 measurements replace those priors. A six-run study should be much shorter than
 repeating 72 runs, but no fixed speedup is guaranteed before HPC measurements.
+
+The monitor displays GPU/configuration rows, including planned assignments and
+worker initialization. Before the supervisor starts, it shows a planning duration
+rather than a predicted finish time. If startup fails before `campaign.json` is
+created, it displays the manager failure instead of remaining `PREPARED` forever.
+The manager tolerates the normal delay before the supervisor creates this file;
+it must not interrupt a healthy child just because startup is still in progress.
 
 A failed worker is recorded in `failed_runs.json` and `worker_failure_events.jsonl`;
 its slot proceeds to the next assigned experiment. Healthy workers keep running.

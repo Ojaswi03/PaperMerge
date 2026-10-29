@@ -42,7 +42,14 @@ def snapshot(directory,*,timing_roots=()):
     if plan is None:return dict(status='WAITING_FOR_PLAN',output=str(root),entries=[])
     configs=plan['configs']
     if not configs:raise ValueError('The frozen plan contains no experiments.')
-    campaign=read_json(root/'campaign.json',dict(status='PREPARED'))
+    campaign=read_json(root/'campaign.json')
+    startup=None
+    if campaign is None:
+        managed=read_json(root/'managed_status.json',{})
+        stage=managed.get('status')
+        status=stage if stage in ('FAILED','INTERRUPTED') else ('STARTING' if managed else 'PREPARED')
+        campaign=dict(status=status,elapsedSeconds=managed.get('wallSeconds'))
+        startup=dict(managerStatus=stage,error=managed.get('error'),supervisorPid=managed.get('supervisorPid'))
     continuing=campaign.get('workerFailurePolicy')=='continue'
     queued=set(campaign.get('pendingRunIds',[]));active_ids=set(campaign.get('activeRunIds',[]))
     gpus=[p['gpu'] for p in plan.get('profiles',[])] or [None]
@@ -73,6 +80,8 @@ def snapshot(directory,*,timing_roots=()):
         if continuing and cfg['runId'] in queued:row=dict(row,status='PENDING')
         elif continuing and cfg['runId'] in active_ids and row['status'] in ('FAILED','INTERRUPTED'):
             row=dict(row,status='RUNNING')
+        elif continuing and cfg['runId'] in active_ids and row['status']=='PENDING':
+            row=dict(row,status='STARTING',phase='WORKER_INITIALIZATION')
         total=cfg['nodes']*cfg['rounds'];cursor=row.get('completedActivations',0)
         if type(cursor) is not int or not 0<=cursor<=total:
             raise ValueError(f'Invalid activation counter in {cfg["runId"]}.')
@@ -119,13 +128,13 @@ def snapshot(directory,*,timing_roots=()):
         row.update(eta=estimate,etaSource=origin)
         remaining[row['lane']]+=estimate;lower[row['lane']]+=estimate*(1-spread);upper[row['lane']]+=estimate*(1+spread)
     eta=0. if status in ('COMPLETED','COMPLETED_WITH_FAILURES') else None
-    if status in ('RUNNING','PREPARED') and (continuing or not stopped):eta=max(remaining.values())
+    if status in ('RUNNING','PREPARED','STARTING') and (continuing or not stopped):eta=max(remaining.values())
     return dict(status=status,entries=entries,completed=done,failed=failed,total=len(entries),
         pending=sum(r['status']=='PENDING' for r in entries),
         completedActivations=sum(r['cursor'] for r in entries),totalActivations=sum(r['total'] for r in entries),
         elapsed=campaign.get('elapsedSeconds'),eta=eta,remainingByGpu=remaining,
         untimedJobs=len(unknown),untimedDatasets=sorted(set(unknown)),historyJobs=history_jobs,
-        etaLow=max(lower.values()),etaHigh=max(upper.values()),output=str(root),revision=plan.get('revision'))
+        etaLow=max(lower.values()),etaHigh=max(upper.values()),output=str(root),revision=plan.get('revision'),startup=startup)
 
 
 def render(state,*,width=100,height=30,timezone='America/New_York'):
@@ -134,12 +143,19 @@ def render(state,*,width=100,height=30,timezone='America/New_York'):
     methods={r['config'].get('method') for r in state['entries']}
     title='SHARP + CART v2' if 'sharp_cart_v2' in methods else ('SHARP GUARD + CART' if 'sharp_guarded' in methods else 'SHARP + CART')
     if state.get('revision'):title='CART admission revision'
+    preparing=state['status'] in ('PREPARED','STARTING')
+    timing=(f'Planning duration {duration(state["eta"])} | training has not started' if preparing else
+        f'Elapsed {duration(state["elapsed"] or 0)} | Campaign ETA {duration(state["eta"]) if state["eta"] is not None else "not running"}')
     lines=[f'{title} | {state["status"]} | {state["completed"]}/{state["total"]} complete | '
         f'failed {state["failed"]} | pending {state["pending"]}',
         f'Progress {state["completedActivations"]/state["totalActivations"]:.2%} | '
         f'{state["completedActivations"]}/{state["totalActivations"]} activations',
-        f'Elapsed {duration(state["elapsed"] or 0)} | Campaign ETA {duration(state["eta"]) if state["eta"] is not None else "not running"}']
-    if state['eta'] is not None and state['status'] in ('RUNNING','PREPARED'):
+        timing]
+    if state.get('startup'):
+        startup=state['startup']
+        if startup.get('error'):lines.append('Manager error: '+startup['error'])
+        elif preparing:lines.append('Waiting for supervisor startup; showing planned GPU assignments below.')
+    if state['eta'] is not None and state['status']=='RUNNING':
         finish=(datetime.now(ZoneInfo(timezone))+timedelta(seconds=state['eta'])).strftime('%a %b %d %H:%M %Z')
         lines.append(f'Estimated finish {finish} | planning range {duration(state["etaLow"])} to {duration(state["etaHigh"])}')
     if state['untimedJobs'] and state['status'] not in ('COMPLETED','COMPLETED_WITH_FAILURES','FAILED','INTERRUPTED'):
@@ -149,10 +165,11 @@ def render(state,*,width=100,height=30,timezone='America/New_York'):
         lines.append('Training activations finished for a worker; final evaluation/checkpoint writes can still be running.')
     wrap=lambda values:[part for line in values for part in (textwrap.wrap(line,width,break_long_words=True) or [''])]
     lines=wrap(lines);lines.append('')
-    active=[r for r in state['entries'] if r['status']=='RUNNING']+[
+    active=[r for r in state['entries'] if r['status'] in ('RUNNING','STARTING')]+[
         r for r in state['entries'] if r['status'] in ('FAILED','INTERRUPTED')]
     recent=[r for r in state['entries'] if r['status']=='COMPLETED'][-4:]
-    visible=active+recent;shown=0
+    pending=[r for r in state['entries'] if r['status']=='PENDING']
+    visible=active+recent if active or recent else pending;shown=0
     for row in visible:
         cfg=row['config'];gpu=f'G{row["gpu"]}' if row['gpu'] is not None else 'CPU'
         mean=f'{row["mean"]:.2%}' if row['mean'] is not None else '--'
@@ -162,6 +179,7 @@ def render(state,*,width=100,height=30,timezone='America/New_York'):
         if len(lines)+len(block)+4>height:break
         lines.extend(block);shown+=1
     if shown<len(active):lines.append(f'Showing {shown}/{len(active)} active/stopped jobs; enlarge terminal for more.')
+    elif not active and not recent and shown<len(pending):lines.append(f'Showing {shown}/{len(pending)} planned jobs; enlarge terminal for more.')
     if state['status']=='COMPLETED':lines.append('ALL EXPERIMENTS COMPLETE.')
     elif state['status']=='COMPLETED_WITH_FAILURES':lines.append('Queue finished with failures; completed results are preserved. Retry failed runs for final figures.')
     elif state['status'] in ('FAILED','INTERRUPTED'):lines.append('Campaign stopped; inspect worker logs before recovery.')
@@ -177,6 +195,6 @@ def monitor(directory,*,once=False,timing_roots=(),timezone='America/New_York'):
             state=snapshot(directory,timing_roots=timing_roots);size=shutil.get_terminal_size(fallback=(100,30))
             if not once and sys.stdout.isatty():print('\033[2J\033[H',end='')
             print(render(state,width=size.columns,height=size.lines,timezone=timezone),end='',flush=True)
-            if once or state['status'] in ('COMPLETED','COMPLETED_WITH_FAILURES','FAILED','INTERRUPTED'):return
+            if once or state['status'] in ('COMPLETED','COMPLETED_WITH_FAILURES','FAILED','INTERRUPTED','COMPLETED_REPORT_FAILED'):return
             time.sleep(5)
     except KeyboardInterrupt:print('\nMonitor closed.',flush=True)

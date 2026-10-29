@@ -12,6 +12,7 @@ import json
 from pathlib import Path
 import shlex
 import signal
+import socket
 import subprocess
 import sys
 import time
@@ -47,11 +48,13 @@ def run(args,forwarded):
     from basil_core.cart_campaign_io import write_json,read_json,retry_io,transient_io
     root=args.output.resolve();root.mkdir(parents=True,exist_ok=True)
     figures=args.figures.resolve() if args.figures else root/'figures'
-    status=dict(status='STARTING',ownerPid=__import__('os').getpid(),
+    status=dict(status='STARTING',ownerPid=__import__('os').getpid(),host=socket.gethostname(),
         supervisorSha256=hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),notifications=[])
     process=None;stopped=False;started=time.monotonic();notified_failures=set()
     def save():
-        status['wallSeconds']=time.monotonic()-started;write_json(root/'managed_status.json',status)
+        from datetime import datetime,timezone
+        status.update(wallSeconds=time.monotonic()-started,updatedUtc=datetime.now(timezone.utc).isoformat())
+        write_json(root/'managed_status.json',status)
     def notify(title,message):
         if not args.ntfy_topic:return
         receipt=publish(args.ntfy_topic,title,message,server=args.ntfy_server,token_file=args.ntfy_token_file)
@@ -72,14 +75,18 @@ def run(args,forwarded):
                 command=[sys.executable,str(ROOT/'scripts'/launcher),'--execute','--output',str(root),*forwarded]
                 with (root/'supervisor.log').open('a') as log:
                     process=subprocess.Popen(command,cwd=ROOT,stdout=log,stderr=subprocess.STDOUT)
+                    status['supervisorPid']=process.pid;save()
                     while process.poll() is None:
                         try:
                             if (root/'plan.json').exists():
                                 live=retry_io(snapshot,root,timing_roots=args.timing_from)
-                                status.update(status='RUNNING',etaSeconds=live['eta'],etaLow=live['etaLow'],etaHigh=live['etaHigh'],
+                                stage='STARTING' if live['status'] in ('PREPARED','STARTING') else 'RUNNING'
+                                status.update(status=stage,etaSeconds=live['eta'],etaLow=live['etaLow'],etaHigh=live['etaHigh'],
                                     completed=live['completed'],total=live['total']);save()
-                                print(f'{live["completed"]}/{live["total"]} done | training ETA {duration(live["eta"])}',flush=True)
-                                current=read_json(root/'campaign.json')
+                                timing='startup planning duration' if stage=='STARTING' else 'training ETA'
+                                print(f'{stage}: {live["completed"]}/{live["total"]} done | {timing} {duration(live["eta"])}',flush=True)
+                                try:current=read_json(root/'campaign.json')
+                                except FileNotFoundError:current={}
                                 for failure in current.get('failures',[]):
                                     identity=failure['runId']
                                     if identity in notified_failures:continue
