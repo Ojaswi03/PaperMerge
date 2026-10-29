@@ -144,6 +144,7 @@ def table_rows(entries,width):
         attack_noise_defense='attack+no+def',attack_noise_rla='attack+no+RLA',
         attack_noise_defense_rla='both defenses',attack_noise_defense_rla_cart='both+CART')
     columns=[('GPU',3),('STATUS',9),('DATA/SPLIT',14),('SEED',4),('SIGMA',5),('CONDITION',13),('ROUND',7)]
+    if width>=125 and any(r['config'].get('comparisonCase') for r in entries):columns.insert(5,('ENV',12))
     if width>=92:columns.append(('ACTIVATIONS',11))
     columns.append(('ACC',7))
     if width>=101:columns.append(('ELAPSED',8))
@@ -152,11 +153,13 @@ def table_rows(entries,width):
     border='+'+'+'.join('-'*size for _,size in columns)+'+'
     result=[border,line({k:k for k,_ in columns}),border]
     for row in entries:
+        from basil_core.cart_display_labels import comparison_label,ENVIRONMENTS
         cfg=row['config'];split='nonIID' if cfg['partition']=='dirichlet' else cfg['partition'].upper()
         values={'GPU':f'G{row["gpu"]}' if row['gpu'] is not None else 'CPU',
             'STATUS':'STOPPED' if row['status']=='INTERRUPTED' else row['status'],
             'DATA/SPLIT':cfg['dataset']+'/'+split,'SEED':cfg['seed'],'SIGMA':f'{cfg["sigma"]:g}',
-            'CONDITION':cfg.get('comparisonLabel') or condition_names.get(cfg['condition'],cfg['condition']),
+            'CONDITION':comparison_label(cfg) or cfg.get('comparisonLabel') or condition_names.get(cfg['condition'],cfg['condition']),
+            'ENV':ENVIRONMENTS.get(cfg.get('comparisonCase',{}).get('environment'),'--'),
             'ROUND':f'{row["rounds"]}/{cfg["rounds"]}', 'ACTIVATIONS':f'{row["cursor"]}/{row["total"]}',
             'ACC':f'{row["mean"]:.2%}' if row['mean'] is not None else '--',
             'ELAPSED':duration(row['elapsed']) if row['elapsed'] is not None else '--',

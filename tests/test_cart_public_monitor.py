@@ -26,6 +26,22 @@ def test_publisher_preserves_one_private_write_key_and_returns_only_public_link(
     with pytest.raises(ValueError,match='different dashboard'):module.connection(tmp_path,'https://other.test')
 
 
+def test_comparison_baseline_and_updated_cart_are_distinct_in_browser_and_terminal(tmp_path):
+    from basil_core.sharp_monitor import snapshot,render
+    from basil_core.cart_public_monitor import public_snapshot
+    setup(tmp_path,[(2025,'attack_noise_defense_rla','cifar10',running(20,40)),
+                    (2025,'attack_noise_defense_rla_cart','cifar10',running(20,40))])
+    path=tmp_path/'plan.json';plan=json.loads(path.read_text())
+    for cfg,arm in zip(plan['configs'],['acds','prior_fallback']):
+        cfg['comparisonCase']=dict(arm=arm,environment='joint');cfg['comparisonLabel']=arm
+    path.write_text(json.dumps(plan))
+    result=public_snapshot(tmp_path)
+    assert result['runs'][0]['condition']=='SHARP+ACDS / attack+noise'
+    assert result['runs'][1]['condition']=='SHARP+CART / attack+noise'
+    text=render(snapshot(tmp_path),width=160,height=40,table=True)
+    assert 'ENV' in text and 'SHARP+ACDS' in text and 'SHARP+CART' in text and 'attack+noise' in text
+
+
 def test_publisher_uploads_final_state_then_exits_without_touching_training(tmp_path,monkeypatch,capsys):
     from scripts import share_cart_monitor as module
     setup(tmp_path,[(2025,'clean','mnist',dict(running(100,40),status='COMPLETED'))])

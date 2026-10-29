@@ -16,17 +16,19 @@ while (($#)); do
     --output) RUN_ARG="${2:?Missing output directory}"; shift 2 ;;
     --dry-run) DRY_RUN=1; shift ;;
     --help|-h)
-      echo 'Usage: bash scripts/launch_cart_comparison_hpc.sh [screen|isolation|confirm|acds] [--gpu-count 1|2|3|4] [--gpus 0,1] [--jobs-per-gpu 1..8] [--output PATH] [--dry-run]'
+      echo 'Usage: bash scripts/launch_cart_comparison_hpc.sh [screen|isolation|confirm|acds|full] [--gpu-count 1|2|3|4] [--gpus 0,1] [--jobs-per-gpu 1..8] [--output PATH] [--dry-run]'
       echo 'Default: detect up to four GPUs; two workers/GPU. Resume retains saved GPUs and workers.'
       exit 0 ;;
     *) echo "Unknown argument: $1" >&2; exit 2 ;;
   esac
 done
-case "$MODE" in screen|isolation|confirm|acds) ;; *) echo 'Use screen, isolation, acds or confirm.' >&2; exit 2;; esac
+case "$MODE" in screen|isolation|confirm|acds|full) ;; *) echo 'Use screen, isolation, confirm, acds or full.' >&2; exit 2;; esac
 [[ -f .venv-hpc/bin/activate ]] || { echo 'Create the server environment first: bash scripts/setup_hpc.sh' >&2; exit 1; }
 source .venv-hpc/bin/activate
 PRESET="$MODE"
-if [[ "$MODE" == acds ]]; then PRESET=confirm; fi
+if [[ "$MODE" == acds || "$MODE" == full ]]; then PRESET=confirm; fi
+DATASETS=(cifar10)
+if [[ "$MODE" == full ]]; then DATASETS=(mnist cifar10); fi
 RUN="${RUN_ARG:-${CART_COMPARISON_OUTPUT:-$PWD/.papermerge/local-tests/cart-comparison-${MODE}-v1}}"
 if (( ! GPU_EXPLICIT )); then
   if [[ -n "${CART_COMPARISON_GPU_COUNT:-}" ]]; then GPU_ARGS+=(--gpu-count "$CART_COMPARISON_GPU_COUNT"); fi
@@ -46,10 +48,14 @@ COMMON=(--preset "$PRESET" --output "$RUN" --profile hpc
   --gpus "$GPU_IDS" --jobs-per-gpu "$JOBS_PER_GPU"
   --gpu-memory-mib 8192 --gpu-headroom-mib 8192 --context-overhead-mib 1024
   --ram-mib-per-worker 32768 --ram-headroom-mib 32768
-  --datasets cifar10 --partitions iid dirichlet --noise-levels 1 --noise-values 0.01
+  --datasets "${DATASETS[@]}" --partitions iid dirichlet --noise-levels 1 --noise-values 0.01
   --share-fraction 0.05 --acds-batches 5)
 if [[ "$MODE" == acds ]]; then
   COMMON+=(--arms acds --reference "$PWD/docs/results/cart-admission-cifar6-100r-20261028")
+fi
+if [[ "$MODE" == full ]]; then
+  COMMON+=(--arms acds prior_fallback --nodes 100 --rounds 100 --local-steps 5
+    --attack-start 20 --seeds 2025 2026 2027)
 fi
 if [[ -f "$RUN/campaign.json" ]]; then
   python scripts/run_cart_comparison.py --execute --resume --output "$RUN" \

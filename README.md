@@ -3,6 +3,13 @@
 PaperMerge studies Byzantine-resilient decentralized learning under noisy
 communication using Python, TensorFlow and a Tkinter experiment workspace.
 
+The [full ACDS/CART comparison](docs/CART_FULL_ACDS_COMPARISON.md) runs 24 matched
+100-round, 100-client configurations on MNIST/CIFAR-10 with three seeds. Use
+`launch_cart_comparison_hpc.sh full --gpu-count 4`; GPU counts one through four
+are supported. See the [isolation findings](docs/CART_ISOLATION_FINDINGS_20261029.md)
+for the tested fallback correction and the [contribution wording](docs/CART_NOVELTY_POSITION_20261029.md)
+for the current limits of the novelty claim. Full comparison results are pending.
+
 **Current evidence:** the completed 72-run study and six-run CIFAR admission/
 commitment revision are preserved in [result exports](docs/results/).
 Revised CIFAR final validation means are 31.71% IID and 23.35% non-IID over

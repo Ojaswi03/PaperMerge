@@ -12,8 +12,8 @@ from basil_core.cart_class_skill import class_skill as class_f1
 from basil_core.sharp_cart import probes
 
 
-def selector(original,mode,*,peer_budget=8):
-    choose=route_selector(original,mode,peer_budget=peer_budget)
+def selector(original,mode,*,peer_budget=8,guard_fallback=False):
+    choose=route_selector(original,mode,peer_budget=peer_budget,guard_fallback=guard_fallback)
     def select(cfg,state,worker,x,y,node,round_id,batch):
         chosen,row=choose(cfg,state,worker,x,y,node,round_id,batch)
         record=row['continuity'];worker.quality_context=None

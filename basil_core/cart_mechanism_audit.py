@@ -43,18 +43,25 @@ def telemetry_summary(records,nodes):
             raise ValueError('Incomplete or unordered activation telemetry.')
         row=buckets.setdefault(r['round'],dict(displayRound=r['round']+1,activations=0,routes=Counter(),
             commitScales=Counter(),commitChecks=0,qualifiedClassCounts=[],selectedCounts=[],
-            rlaCoefficients=[],localTrainCE=[],calibrationDraws=0))
+            rlaCoefficients=[],localTrainCE=[],calibrationDraws=0,screenApplied=0,screenAllFail=0,
+            screenGuardFallback=0,peerFallbackApplied=0,coherentCandidateCounts=[],rawSurvivorCounts=[]))
         row['activations']+=1;s=r['selection'];c=s.get('continuity',{});t=r.get('training',{})
         row['routes'][c.get('actualRoute','pool')]+=1
         row['selectedCounts'].append(s['selectedCount']);row['qualifiedClassCounts'].append(len(c.get('qualifiedClasses',[])))
         row['calibrationDraws']+=c.get('calibrationDraws',0)
+        row['screenApplied']+=int(bool(s.get('screenApplied')))
+        row['screenAllFail']+=int(bool(s.get('screenAllFailFallback')))
+        row['screenGuardFallback']+=int(bool(s.get('screenGuardFallback')))
+        row['peerFallbackApplied']+=int(bool(c.get('peerFallbackApplied')))
+        row['coherentCandidateCounts'].append(sum(v.get('kind')=='neighbor' for v in c.get('candidates',[])))
+        if s.get('rawSurvivorCount') is not None:row['rawSurvivorCounts'].append(s['rawSurvivorCount'])
         qc=(r.get('cart') or {}).get('qualityCommit',{})
         if qc.get('applied'):
             row['commitChecks']+=1;row['commitScales'][str(qc['scale'])]+=1
         for name,target in [('rlaCoefficient','rlaCoefficients'),('localTrainingLoss','localTrainCE')]:
             if t.get(name) is not None:row[target].append(float(t[name]))
     for row in buckets.values():
-        for name in ('qualifiedClassCounts','selectedCounts','rlaCoefficients','localTrainCE'):
+        for name in ('qualifiedClassCounts','selectedCounts','rlaCoefficients','localTrainCE','coherentCandidateCounts','rawSurvivorCounts'):
             values=row.pop(name);row['mean'+name[0].upper()+name[1:]]=sum(values)/len(values) if values else None
         row['routes']=dict(row['routes']);row['commitScales']=dict(row['commitScales'])
         row['ownRouteFraction']=row['routes'].get('own',0)/row['activations']

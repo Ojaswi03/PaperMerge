@@ -19,9 +19,12 @@ def public_snapshot(directory):
         untimedJobs=state['untimedJobs'],runs=[])
     for row in state['entries']:
         cfg=row['config']
+        from basil_core.cart_display_labels import comparison_label
         public['runs'].append(dict(gpu=row['gpu'],status=row['status'],
             **{key:cfg.get(key) for key in ('dataset','partition','seed','sigma','condition','nodes','rounds','localSteps','attackStart')},
             completedRounds=row['rounds'],completedActivations=row['cursor'],totalActivations=row['total'],
             accuracy=finite(row['mean']),elapsedSeconds=finite(row['elapsed']),etaSeconds=finite(row['eta']),
             etaSource=row.get('etaSource'),phase=row.get('phase')))
+        label=comparison_label(cfg,include_environment=True)
+        if label:public['runs'][-1]['condition']=label
     return public

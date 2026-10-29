@@ -11,7 +11,7 @@ from basil_core.cart_quality_routing_candidate import utility
 from basil_core.cart_class_skill import class_skill as class_f1
 
 
-def selector(original,mode,*,peer_budget=8):
+def selector(original,mode,*,peer_budget=8,guard_fallback=False):
     if mode not in ('class','macro'):raise ValueError('Unknown quality-routing ablation.')
     if type(peer_budget) is not int or peer_budget<1:raise ValueError('Positive integer peer candidate budget required.')
     def select(cfg,state,worker,x,y,node,round_id,batch):
@@ -29,9 +29,8 @@ def selector(original,mode,*,peer_budget=8):
             logits=worker.outputs(flat,x[indices])
             return (class_f1(logits[:split],y[fit],classes),class_f1(logits[split:],y[check],classes))
         candidates=[dict(kind='pool',params=pool,senders=base['selectedSenders'],q=base['selectedCount'],priority=cfg['nodes'])]
-        senders=[(node-d)%cfg['nodes'] for d in range(1,cfg['window']+1) if state['senderRounds'][(node-d)%cfg['nodes']]>=0]
-        passed=[s for j,s in enumerate(senders) if not base.get('screenApplied') or base['peakRatios'][j]<=base['peakThreshold']]
-        passed.sort(key=lambda s:(-int(state['senderRounds'][s]),(node-s)%cfg['nodes']))
+        from basil_core.cart_peer_candidates import eligible_senders
+        passed,eligibility=eligible_senders(cfg,state,node,base,guard_fallback=guard_fallback)
         for sender in passed[:peer_budget]:
             value=link_vector(state['outbound'][sender],cfg['seed'],int(state['senderRounds'][sender]),sender,node,cfg['sigma'])
             candidates.append(dict(kind='neighbor',params=value,senders=[sender],q=1,priority=(node-sender)%cfg['nodes']))
@@ -55,6 +54,7 @@ def selector(original,mode,*,peer_budget=8):
         chosen=min((c for c in candidates if not informative or c['score']>=best-.01),key=lambda c:(c['priority'],c['kind']))
         if informative and own is not None and chosen['score']<own_row['score']-.01-1e-12:raise AssertionError('Quality band violated carrier score.')
         record=dict(mode=mode,route='own' if chosen['kind']=='own' else 'peer',actualRoute=chosen['kind'],softRetention=True,
+            **eligibility,
             supportedClasses=classes.tolist(),qualifiedClasses=classes[qualified].tolist(),classTargets=target.tolist(),
             channelF1Allowance=allowance.tolist(),calibrationDraws=draws,nearPeerBudget=peer_budget,scoreBand=.01,
             probeFitPositiveCounts=[int(np.sum(y[fit]==c)) for c in classes],

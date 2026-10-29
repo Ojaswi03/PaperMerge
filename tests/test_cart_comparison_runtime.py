@@ -41,8 +41,8 @@ def test_full_cart_adapter_reproduces_original_revision_exactly():
     spec=importlib.util.spec_from_file_location('frozen_eight_peer_routing',frozen)
     historical=importlib.util.module_from_spec(spec);spec.loader.exec_module(historical)
     current_route=commit_module.route_selector
-    def historical_route(original,mode,*,peer_budget=8):
-        assert peer_budget==8
+    def historical_route(original,mode,*,peer_budget=8,guard_fallback=False):
+        assert peer_budget==8 and not guard_fallback
         return historical.selector(original,mode)
     view=case();cfg=view['comparisonCase']['protocolConfig'];x,y,chunks=data()
     old,wrap=original_worker(cfg,'CPU');new=configure_worker(view,'CPU')
@@ -61,7 +61,7 @@ def test_full_cart_adapter_reproduces_original_revision_exactly():
     assert expected['roundMetrics']==actual['roundMetrics']
 
 
-@pytest.mark.parametrize('arm',['macro','balanced_commit','prior_cart','prior_macro','prior_wide'])
+@pytest.mark.parametrize('arm',['macro','balanced_commit','prior_cart','prior_macro','prior_wide','cart_fallback','prior_fallback'])
 def test_comparison_interruption_recovery_preserves_full_model_and_metrics(tmp_path,arm):
     from basil_core.cart_comparison_study import configure_worker,intervention
     from basil_core.sharp_protocol import save_state,load_state

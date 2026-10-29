@@ -16,7 +16,7 @@ def verify(root,gpu,lease_fd):
     write_json(gate/'plan.json',dict(configs=[c['comparisonCase']['protocolConfig'] for c in plan['configs']],source=original_source()))
     original_verify(gate,gpu,lease_fd)
     receipt=read_json(gate/f'revision_gpu_{gpu}.json')
-    prior_configs=[c['comparisonCase']['protocolConfig'] for c in plan['configs'] if c['comparisonCase']['arm'] in ('prior_cart','prior_macro','prior_wide')]
+    prior_configs=[c['comparisonCase']['protocolConfig'] for c in plan['configs'] if c['comparisonCase']['arm'] in ('prior_cart','prior_macro','prior_wide','prior_fallback')]
     if prior_configs:
         from scripts.verify_cart_local_prior_gpu import verify as verify_prior
         for dataset in dict.fromkeys(c['dataset'] for c in prior_configs):

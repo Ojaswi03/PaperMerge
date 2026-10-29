@@ -35,6 +35,25 @@ def test_comparison_failures_do_not_stop_healthy_workers(queue,monkeypatch):
     assert module.execute(args)==0 and sorted(started)==[1,6] and plots
 
 
+def test_full_acds_and_updated_cart_contract_is_paired_across_both_datasets():
+    from basil_core.cart_comparison_study import selected,effective_config
+    _,configs=selected(arguments(arms=['acds','prior_fallback'],datasets=['mnist','cifar10'],
+        partitions=['iid','dirichlet'],seeds=[2025,2026,2027],rounds=100,nodes=100,local_steps=5,attack_start=20))
+    assert len(configs)==24 and len({c['runId'] for c in configs})==24
+    pairs={}
+    for c in configs:
+        cfg=effective_config(c);case=c['comparisonCase']
+        assert cfg['rounds']==100 and cfg['nodes']==100 and cfg['localSteps']==5
+        assert cfg['actualAttackers']==33 and cfg['sigma']==.01 and cfg['attackStart']==20
+        assert cfg['switches']['byzantine_mitigation'] and cfg['switches']['noise_mitigation']
+        assert case['shareFraction']==(.05 if case['arm']=='acds' else 0.)
+        pairs.setdefault((cfg['dataset'],cfg['partition'],cfg['seed']),[]).append(cfg)
+    for pair in pairs.values():
+        assert len(pair)==2
+        for key in ('learningRate','batchSize','proximalMu','dirichletAlpha','curvature'):
+            assert pair[0][key]==pair[1][key]
+
+
 def test_report_rejects_incomplete_and_changed_data_and_keeps_seed_endpoints(tmp_path,monkeypatch):
     from basil_core.cart_comparison_study import selected,effective_config
     import basil_core.cart_comparison_study as study

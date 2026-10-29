@@ -60,3 +60,33 @@ def test_launcher_uses_two_gpu_host_and_cli_overrides_old_four_gpu_environment(t
     command[command.index('2')]='3'
     failure=subprocess.run(command,env=env,text=True,capture_output=True)
     assert failure.returncode!=0 and 'only 2' in failure.stderr and not (repo/'.papermerge').exists()
+
+
+def test_full_launcher_assembles_the_requested_24_case_matrix_without_training(tmp_path):
+    root=Path(__file__).resolve().parents[1];repo=tmp_path/'repo'
+    (repo/'scripts').mkdir(parents=True);(repo/'basil_core').mkdir();(repo/'.venv-hpc/bin').mkdir(parents=True)
+    for name in ('launch_cart_comparison_hpc.sh','select_cart_gpus.py'):
+        shutil.copyfile(root/'scripts'/name,repo/'scripts'/name)
+    (repo/'basil_core/execution_profile.py').write_text('def gpu_inventory():\n return '+repr(inventory(range(4)))+'\n')
+    (repo/'.venv-hpc/bin/python').symlink_to(sys.executable)
+    (repo/'.venv-hpc/bin/activate').write_text('export PATH="'+str(repo/'.venv-hpc/bin')+':$PATH"\n')
+    (repo/'scripts/hpc.py').write_text('')
+    (repo/'scripts/run_cart_comparison.py').write_text(
+        'import json,sys\nfrom pathlib import Path\n'
+        'with Path("invocations.jsonl").open("a") as f:f.write(json.dumps(sys.argv[1:])+"\\n")\n')
+    result=subprocess.run(['bash',str(repo/'scripts/launch_cart_comparison_hpc.sh'),'full','--gpu-count','4'],
+        env={k:v for k,v in os.environ.items() if not k.startswith('CART_COMPARISON_')},capture_output=True,text=True)
+    assert result.returncode==0,result.stderr
+    import json
+    calls=[json.loads(line) for line in (repo/'invocations.jsonl').read_text().splitlines()]
+    assert len(calls)==3 and '--preflight' in calls[0] and '--verify-gpus' in calls[1] and '--execute' in calls[2]
+    def values(argv,flag):
+        start=argv.index(flag)+1;end=next((i for i in range(start,len(argv)) if argv[i].startswith('--')),len(argv))
+        return argv[start:end]
+    for call in calls[:2]:
+        assert values(call,'--datasets')==['mnist','cifar10']
+        assert values(call,'--arms')==['acds','prior_fallback']
+        assert values(call,'--partitions')==['iid','dirichlet']
+        assert values(call,'--seeds')==['2025','2026','2027']
+        assert values(call,'--nodes')==['100'] and values(call,'--rounds')==['100']
+        assert values(call,'--gpus')==['0,1,2,3']
