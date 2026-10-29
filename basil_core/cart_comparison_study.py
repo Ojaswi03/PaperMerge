@@ -8,10 +8,13 @@ ROOT=Path(__file__).resolve().parents[1]
 REVISION='cart_mechanism_comparison_20261029_v1'
 ARMS=('sharp','cart','macro','ingress_only','commit_only','local_only','fresh_peer',
       'no_calibration','no_repair','acds')
+EXPERIMENTAL_ARMS=('balanced_commit','prior_cart')
+ALL_ARMS=ARMS+EXPERIMENTAL_ARMS
 LABELS=dict(sharp='SHARP',cart='SHARP + CART',macro='CART macro only',
     ingress_only='CART ingress only',commit_only='CART commit only',
     local_only='Local only',fresh_peer='Fresh peer',no_calibration='CART no calibration',
-    no_repair='CART no head repair',acds='SHARP + ACDS (5% data)')
+    no_repair='CART no head repair',acds='SHARP + ACDS (5% data)',
+    balanced_commit='CART balanced-loss check',prior_cart='CART local-prior training')
 ENVIRONMENTS=('joint','clean','noise_only','attack_only')
 PRESETS=dict(screen=dict(arms=ARMS,rounds=10,attack_start=3,seeds=[2025],environments=['joint']),
     isolation=dict(arms=('sharp','cart','macro','acds'),rounds=10,attack_start=3,seeds=[2025],environments=ENVIRONMENTS),
@@ -24,7 +27,8 @@ def revision(_=None):return REVISION
 def source():
     from basil_core.cart_revision_study import source as base
     names=('basil_core/acds.py','basil_core/cart_comparison_study.py',
-        'basil_core/cart_mechanism_audit.py','scripts/run_cart_comparison.py',
+        'basil_core/cart_mechanism_audit.py','basil_core/cart_balanced_commit.py','basil_core/cart_local_prior.py',
+        'scripts/verify_cart_local_prior_gpu.py','scripts/run_cart_comparison.py',
         'scripts/cart_comparison_worker.py','scripts/verify_cart_comparison_gpu.py',
         'reporting/cart_comparison.py')
     return {**base(),**{n:hashlib.sha256((ROOT/n).read_bytes()).hexdigest() for n in names}}
@@ -86,7 +90,7 @@ def effective_config(view):
     from basil_core.sharp_cart_v2_protocol import validate_config
     case=view['comparisonCase'];cfg=case['protocolConfig'];validate_config(cfg)
     expected_sigma=case['effectiveSigma'];env=case['environment']
-    if case['arm'] not in ARMS or env not in ENVIRONMENTS:raise ValueError('Unknown comparison case.')
+    if case['arm'] not in ALL_ARMS or env not in ENVIRONMENTS:raise ValueError('Unknown comparison case.')
     if (env in ('joint','noise_only')) != (expected_sigma>0):raise ValueError('Environment/noise mismatch.')
     expected_attackers=cfg['byzantineBudget'] if env in ('joint','attack_only') else 0
     if case['effectiveAttackers']!=expected_attackers:raise ValueError('Environment/attacker mismatch.')
@@ -122,6 +126,9 @@ def configure_worker(view,device='GPU'):
     from basil_core.cart_batched_scoring import BatchedAdmittedWorker
     from basil_core.sharp_compiled_transfer import CompiledTransferWorker
     cfg=effective_config(view);arm=view['comparisonCase']['arm']
+    if arm=='prior_cart':
+        from basil_core.cart_local_prior import LocalPriorWorker
+        return LocalPriorWorker(cfg,device)
     if arm in ('sharp','acds'):
         class PooledWorker(BatchedAdmittedWorker):
             # Reuse exact candidate scoring but retain ordinary SHARP SGD,
@@ -179,7 +186,7 @@ def intervention(view,worker):
     choose=selector(pooled,'macro' if arm=='macro' else 'class')
     def select(c,state,w,x,y,node,r,batch):
         w.quality_context=None
-        if arm in ('cart','macro','ingress_only','no_calibration','no_repair'):
+        if arm in ('cart','macro','ingress_only','no_calibration','no_repair','balanced_commit','prior_cart'):
             # Only the allowance intervention changes calibration draws.
             return choose(dict(c,calibrationDraws=0) if arm=='no_calibration' else c,state,w,x,y,node,r,batch)
         if arm=='local_only':
@@ -202,6 +209,9 @@ def intervention(view,worker):
         if arm=='commit_only':_commit_context(c,state,w,x,y,node,value,row)
         return value,row
     def repair(w,proposal,previous,x,y,node,activation):
+        if arm=='balanced_commit':
+            from basil_core.cart_balanced_commit import transport as balanced_transport
+            return balanced_transport(original_transport)(w,proposal,previous,x,y,node,activation)
         if arm=='no_repair':
             context=getattr(w,'quality_context',None)
             chosen,qc=commit(w,proposal,context,x,y) if context else (proposal,dict(applied=False))

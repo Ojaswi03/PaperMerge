@@ -20,7 +20,7 @@ import time
 ROOT=Path(__file__).resolve().parents[1];sys.path.insert(0,str(ROOT))
 from scripts import run_cart_v2_scaled as scaled
 from basil_core.cart_campaign_io import read_json,write_json,retry_io
-from basil_core.cart_comparison_study import source,check_source,selected,revision,ARMS,ENVIRONMENTS,PRESETS,data_contract
+from basil_core.cart_comparison_study import source,check_source,selected,revision,ALL_ARMS,ENVIRONMENTS,PRESETS,data_contract
 core=scaled.core
 
 
@@ -190,7 +190,7 @@ def execute(args):
 def main():
     p=argparse.ArgumentParser(description=__doc__);action=p.add_mutually_exclusive_group()
     for name in ('preflight','verify-gpus','execute','monitor'):action.add_argument('--'+name,action='store_true')
-    p.add_argument('--output',type=Path,required=True);p.add_argument('--preset',choices=tuple(PRESETS),default='screen');p.add_argument('--arms',nargs='+',choices=ARMS)
+    p.add_argument('--output',type=Path,required=True);p.add_argument('--preset',choices=tuple(PRESETS),default='screen');p.add_argument('--arms',nargs='+',choices=ALL_ARMS)
     p.add_argument('--environments',nargs='+',choices=ENVIRONMENTS)
     p.add_argument('--share-fraction',type=float,default=.05);p.add_argument('--acds-batches',type=int,default=5)
     p.add_argument('--reference',type=Path);p.add_argument('--latest-figures',type=Path);p.add_argument('--resume',action='store_true');p.add_argument('--ntfy-topic')

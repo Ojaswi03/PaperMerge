@@ -1,0 +1,164 @@
+"""
+Project attack transformations with historical strength settings.
+
+Accuracy outcomes depend on the model, data, protocol and seed; the numerical
+defaults do not establish an expected accuracy or a robustness guarantee.
+"""
+import random
+
+
+def gaussianAttack(weights, mean=0.0, std=0.8, blend=0.55):
+    # blend original weights with scaled Gaussian noise per layer
+    import numpy as np
+    out = []
+    for w in weights:
+        weight_std = max(np.std(w), 0.01)
+        noise = np.random.normal(mean, std * weight_std, size=w.shape)
+        attacked = ((1.0 - blend) * w + blend * noise).astype(np.float32)
+        out.append(attacked)
+    return out
+
+
+def signFlipAttack(weights, flipProb=0.38):
+    # randomly flip the sign of individual weight values
+    import numpy as np
+    out = []
+    for w in weights:
+        mask = np.random.random(w.shape) < flipProb
+        attacked = np.where(mask, -w, w).astype(np.float32)
+        out.append(attacked)
+    return out
+
+
+def hiddenAttack(
+    weights,
+    maliciousWeights=None,
+    blendRatio=0.55,
+    attackStrength=1.4,
+    rng=None,
+):
+    # blend honest weights toward a malicious direction
+    import numpy as np
+    normal = rng.normal if rng is not None else np.random.normal
+    out = []
+    for idx, w in enumerate(weights):
+        if maliciousWeights is not None and idx < len(maliciousWeights):
+            m = maliciousWeights[idx]
+            attacked = ((1.0 - blendRatio) * w + blendRatio * m).astype(np.float32)
+        else:
+            weight_std = max(np.std(w), 0.01)
+            perturbation = -attackStrength * w + normal(
+                0.0, 0.05 * weight_std, size=w.shape
+            )
+            attacked = ((1.0 - blendRatio) * w + blendRatio * perturbation).astype(np.float32)
+        out.append(attacked)
+    return out
+
+
+def modelPoisonAttack(model, dataLoader, nSteps=10, poisonLr=0.015, noiseStd=0.01):
+    # run gradient ascent steps to maximize loss (poison the model)
+    from .trainer import lossFn, getParams
+    import numpy as np
+    import tensorflow as tf
+    for step in range(nSteps):
+        # Get one batch
+        for xBatch, yBatch in dataLoader:
+            xb = tf.convert_to_tensor(xBatch, dtype=tf.float32)
+            yb = tf.convert_to_tensor(yBatch, dtype=tf.int32)
+
+            with tf.GradientTape() as tape:
+                logits = model(xb, training=True)
+                loss = lossFn(yb, logits)
+
+            # Gradient ASCENT: add gradient to maximize loss
+            grads = tape.gradient(loss, model.trainable_variables)
+            for var, grad in zip(model.trainable_variables, grads):
+                if grad is not None:
+                    var.assign_add(poisonLr * grad)
+            break  # Only one batch per step
+
+    # Get poisoned params and add small noise to obscure the attack direction
+    params = getParams(model)
+    if noiseStd > 0:
+        out = []
+        for w in params:
+            noise = np.random.normal(0, noiseStd * max(np.std(w), 0.01), size=w.shape)
+            out.append((w + noise).astype(np.float32))
+        return out
+    return params
+
+
+def scalingAttack(weights, scaleFactor=10.0):
+    # Model replacement / scaling: multiply weights by a large negative factor
+    # to dominate FedAvg aggregation and push the global model in the wrong direction
+    import numpy as np
+    return [(-scaleFactor * w).astype(np.float32) for w in weights]
+
+
+def alieAttack(weights, zMax=1.5):
+    # A Little Is Enough (ALIE): shift all weights downward by z_max * std while
+    # preserving the weight structure so the attack stays within the honest weight
+    # distribution and evades norm-based defenses
+    import numpy as np
+    out = []
+    for w in weights:
+        std = max(np.std(w), 1e-6)
+        # subtract a constant shift per layer - preserves relative weight structure
+        out.append((w - zMax * std).astype(np.float32))
+    return out
+
+
+def innerProductAttack(weights, epsilon=3.0):
+    # Inner Product Manipulation (Fall of Empires): negate and scale weights to
+    # maximize the negative inner product with the honest gradient direction
+    import numpy as np
+    return [(-epsilon * w).astype(np.float32) for w in weights]
+
+
+def noiseAmplificationAttack(weights, amplification=5.0):
+    # Amplified noise: inject Gaussian noise scaled to each layer's weight std,
+    # producing large perturbations that evade per-layer magnitude checks
+    import numpy as np
+    out = []
+    for w in weights:
+        std = max(np.std(w), 0.01)
+        noise = np.random.normal(0, amplification * std, size=w.shape)
+        out.append((w + noise).astype(np.float32))
+    return out
+
+
+def applyAttack(weights, attackType, maliciousWeights=None, blendRatio=0.5, rng=None):
+    # normalize attack type string then dispatch to the right function
+    atk = (attackType or "none").lower().replace("-", "_")
+
+    if atk == "gaussian":
+        return gaussianAttack(weights, std=0.8, blend=0.55)
+
+    if atk in ("sign_flip", "signflip"):
+        return signFlipAttack(weights, flipProb=0.38)
+
+    if atk == "hidden":
+        return hiddenAttack(
+            weights,
+            maliciousWeights,
+            blendRatio=0.55,
+            attackStrength=1.4,
+            rng=rng,
+        )
+
+    if atk == "scaling":
+        return scalingAttack(weights, scaleFactor=10.0)
+
+    if atk == "alie":
+        return alieAttack(weights, zMax=1.5)
+
+    if atk in ("ipm", "inner_product"):
+        return innerProductAttack(weights, epsilon=3.0)
+
+    if atk in ("noise_amp", "noise_amplification"):
+        return noiseAmplificationAttack(weights, amplification=5.0)
+
+    if atk in ("none", "clean"):
+        return weights
+
+    raise ValueError(f"Unknown attack type: {attackType}")

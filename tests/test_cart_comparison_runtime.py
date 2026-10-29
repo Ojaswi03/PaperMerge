@@ -48,11 +48,12 @@ def test_full_cart_adapter_reproduces_original_revision_exactly():
     assert expected['roundMetrics']==actual['roundMetrics']
 
 
-def test_comparison_interruption_recovery_preserves_full_model_and_metrics(tmp_path):
+@pytest.mark.parametrize('arm',['macro','balanced_commit','prior_cart'])
+def test_comparison_interruption_recovery_preserves_full_model_and_metrics(tmp_path,arm):
     from basil_core.cart_comparison_study import configure_worker,intervention
     from basil_core.sharp_protocol import save_state,load_state
     import basil_core.sharp_cart_v2_protocol as protocol
-    view=case('macro');x,y,chunks=data();complete=configure_worker(view,'CPU')
+    view=case(arm);x,y,chunks=data();complete=configure_worker(view,'CPU')
     with intervention(view,complete) as cfg:expected=protocol.run(cfg,complete,x,y,chunks,x[:20],y[:20])
     interrupted=configure_worker(view,'CPU')
     with intervention(view,interrupted) as cfg:
@@ -65,6 +66,20 @@ def test_comparison_interruption_recovery_preserves_full_model_and_metrics(tmp_p
     np.testing.assert_array_equal(expected['outbound'],actual['outbound'])
     assert expected['roundMetrics']==actual['roundMetrics']
     assert [(r['activation'],r['trainedHash']) for r in expected['telemetry']]==[(r['activation'],r['trainedHash']) for r in actual['telemetry']]
+
+
+def test_prior_adjustment_is_training_only_and_preserves_the_sgd_budget():
+    from basil_core.cart_comparison_study import configure_worker
+    from basil_core.cart_local_prior import log_prior
+    view=case('prior_cart');worker=configure_worker(view,'CPU')
+    x,_,_=data();y=np.array([0]*70+[1]*10,np.int32);flat=worker.export()
+    before=worker.outputs(flat,x)
+    worker.admitted_route='own';worker.admitted_has_channel=False
+    trained,record=worker.train(flat,x,y,0,0,.001,np.arange(20))
+    assert record['optimizerSteps']==view['localSteps'] and record['rlaCoefficient']==0
+    np.testing.assert_array_equal(record['trainingLogPrior'],log_prior(y,10).astype(np.float64))
+    np.testing.assert_array_equal(before,worker.outputs(flat,x))
+    assert not np.array_equal(trained,flat)
 
 
 def test_local_only_does_not_benefit_from_or_consume_peer_transmissions():

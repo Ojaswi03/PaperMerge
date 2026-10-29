@@ -16,6 +16,11 @@ def verify(root,gpu,lease_fd):
     write_json(gate/'plan.json',dict(configs=[c['comparisonCase']['protocolConfig'] for c in plan['configs']],source=original_source()))
     original_verify(gate,gpu,lease_fd)
     receipt=read_json(gate/f'revision_gpu_{gpu}.json')
+    prior_configs=[c['comparisonCase']['protocolConfig'] for c in plan['configs'] if c['comparisonCase']['arm']=='prior_cart']
+    if prior_configs:
+        from scripts.verify_cart_local_prior_gpu import verify as verify_prior
+        for dataset in dict.fromkeys(c['dataset'] for c in prior_configs):
+            receipt['checks'].extend(verify_prior(next(c for c in prior_configs if c['dataset']==dataset)))
     receipt.update(source=plan['source'],scientificScope='Execution/objective equivalence only; efficacy requires the comparison runs.')
     write_json(root/f'revision_gpu_{gpu}.json',receipt)
 
