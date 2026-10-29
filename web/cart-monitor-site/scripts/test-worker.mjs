@@ -68,3 +68,56 @@ test('temporary feed expires, cannot be revived, and returns readable CORS error
   const missing=await worker.fetch(new Request('https://monitor.example'+path,{headers:{origin:'https://ojaswi03.github.io'}}),env);
   assert.equal(missing.status,404);assert.equal(missing.headers.get('access-control-allow-origin'),'https://ojaswi03.github.io');
 });
+
+function browser(){
+  class Element{
+    constructor(){this.children=[];this.style={};this.classList={toggle(){},add(){}};this.content='';}
+    set textContent(value){this.content=String(value);this.children=[];}
+    get textContent(){return this.content+this.children.map(c=>c.textContent).join('');}
+    append(child){this.children.push(child);}
+    replaceChildren(){this.children=[];this.content='';}
+    addEventListener(){}
+  }
+  const elements=new Map();
+  const document={getElementById(id){if(!elements.has(id))elements.set(id,new Element());return elements.get(id);},createElement(){return new Element();}};
+  const context=vm.createContext({document,URL,location:{href:'https://ojaswi03.github.io/PaperMerge/'},
+    navigator:{clipboard:{writeText:async()=>{}}},setInterval(){},Date,AbortSignal});
+  new vm.Script(PAGE.match(/<script>([\s\S]*?)<\/script>/)[1]).runInContext(context);
+  return {context,elements};
+}
+
+test('browser table headings and cell values match the wide terminal monitor',()=>{
+  const headings=[...PAGE.matchAll(/<th>(.*?)<\/th>/g)].map(m=>m[1]);
+  assert.deepEqual(headings,['GPU','STATUS','DATA/SPLIT','SEED','SIGMA','ENV','CONDITION','ROUND','ACTIVATIONS','ACC','ELAPSED','ETA']);
+  const {context,elements}=browser();const snapshot=sample();
+  snapshot.runs[0]={...snapshot.runs[0],dataset:'mnist',partition:'dirichlet',condition:'SHARP+ACDS / attack+noise',
+    completedRounds:56,completedActivations:5660,accuracy:.8952,elapsedSeconds:1257,etaSeconds:964};
+  context.render({snapshot,receivedAt:new Date().toISOString()});
+  assert.deepEqual(elements.get('runs').children[0].children.map(c=>c.textContent),
+    ['G0','RUNNING','mnist/nonIID','2025','0.01','attack+noise','SHARP+ACDS','56/100','5660/10000','89.52%','00:20:57','00:16:04']);
+  assert.match(PAGE,/<h1>CART mechanism comparison<\/h1>/);
+});
+
+test('CART and ACDS remain distinguishable and old feeds preserve their meaning',()=>{
+  const {context,elements}=browser();const snapshot=sample();
+  snapshot.runs=[{...snapshot.runs[0],condition:'SHARP+CART / attack+noise'},
+    {...snapshot.runs[0],condition:'SHARP+ACDS / clean',sigma:0,status:'INTERRUPTED'},
+    {...snapshot.runs[0],condition:'attack_noise_defense_rla_cart'}];
+  context.render({snapshot,receivedAt:new Date().toISOString()});
+  const cells=elements.get('runs').children.map(row=>row.children.map(c=>c.textContent));
+  assert.equal(cells[0][6],'SHARP+CART');assert.equal(cells[1][6],'SHARP+ACDS');
+  assert.equal(cells[1][5],'clean');assert.equal(cells[1][1],'STOPPED');
+  assert.equal(cells[2][6],'both+CART');assert.equal(cells[2][5],'attack+noise');
+  assert.equal(cells[0][9],'--');assert.equal(cells[0][2],'cifar10/IID');
+  context.endSession();assert.equal(elements.get('runs').children[0].children[0].colSpan,12);
+});
+
+test('no-pending ETA uses concurrent remaining work instead of summing old slots',()=>{
+  const {context,elements}=browser();const snapshot=sample();snapshot.etaSeconds=10000;
+  snapshot.runs=[{...snapshot.runs[0],etaSeconds:1000},{...snapshot.runs[0],etaSeconds:2000}];
+  context.render({snapshot,receivedAt:new Date().toISOString()});
+  assert.equal(elements.get('eta').textContent,'00:33:20');
+  snapshot.pending=1;context.render({snapshot,receivedAt:new Date().toISOString()});
+  assert.equal(elements.get('eta').textContent,'02:46:40');
+  assert.equal(context.duration(90061),'1d 01:01:01');
+});
