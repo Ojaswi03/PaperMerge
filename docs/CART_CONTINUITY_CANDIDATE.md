@@ -1,5 +1,10 @@
 # CART continuity candidate: architecture, mathematics and evidence
 
+The later [transactional admission revision](CART_TRANSACTIONAL_ADMISSION.md)
+documents the implemented successor and its positive/negative development
+screens. Use its [six-run HPC sequence](CART_NEXT_HPC_RUN.md) for the next study;
+the original proposals below remain as research history.
+
 Status: experimental research candidate, 28 October 2026. The complete-model
 continuity intervention is separate from CART v2. It is not enabled in the
 72-run HPC campaign, and its novelty and robustness are not established.

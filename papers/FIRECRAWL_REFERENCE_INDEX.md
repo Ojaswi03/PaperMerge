@@ -130,9 +130,9 @@ Original user PDFs were preserved. The title corrections above identify the actu
 
 ## Continuity mechanism review — 28 October 2026
 
-Four additional useful primary papers are downloaded in
+Eight useful primary papers are downloaded in
 [cart_continuity_novelty_20261028](cart_continuity_novelty_20261028/README.md):
-FedFomo, FedWeIT, FedKNOW, and uncertainty-aware online federated continual
+FedFomo, FedWeIT, FedKNOW, MCC/kappa metric analyses, Zeno, Zeno++, and uncertainty-aware online federated continual
 learning. The index there identifies the important method paragraphs and links
 each local PDF to its public source. Byte counts and SHA-256 hashes are recorded
 in its download receipts. These sources constrain the novelty claim; they do not

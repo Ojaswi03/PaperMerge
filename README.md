@@ -3,6 +3,14 @@
 PaperMerge studies Byzantine-resilient decentralized learning under noisy
 communication using Python, TensorFlow and a Tkinter experiment workspace.
 
+**Next CIFAR CART evaluation:** [six-run HPC commands](docs/CART_NEXT_HPC_RUN.md),
+[revised admission/commit architecture and limitations](docs/CART_TRANSACTIONAL_ADMISSION.md).
+The completed 72-run study exposed CIFAR non-IID collapse. The revision checks
+both the incoming complete model and the complete local update; short local
+screens improve over the collapsed result, but 100-round robustness and novelty
+remain unestablished. The runner isolates worker failures, resumes checkpoints,
+updates compatible complete-seed averages/plots, and sends concise spaced ntfy alerts.
+
 **27 October 2026 — professor SHARP specification:** the new
 [implementation and HPC commands](docs/SHARP_IMPLEMENTATION.md) support
 100-node rings, screened/ranked averaging, hop-aware RLA, a frozen proximal

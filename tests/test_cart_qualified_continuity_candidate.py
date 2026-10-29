@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 from basil_core.cart_qualified_continuity_candidate import qualified_classes,selector
 from tests.test_cart_fresh_continuity_candidate import setup
 from tests.test_cart_continuity_candidate import Worker
@@ -39,3 +40,56 @@ def test_passed_fresh_route_skips_unused_pool_loss_ranking():
     def unused(*_):raise AssertionError('Unused peer pool should not be scored.')
     _,row=selector(unused,'always')(cfg,state,worker,x,y,1,1,None)
     assert row['poolRankingSkipped'] and row['selectedCount']==1
+
+
+@pytest.mark.parametrize('pipeline',['qualified','admitted','semantic','prior_neutral_class','prior_neutral_macro','prior_neutral_no_commit'])
+def test_real_protocol_fresh_process_checkpoint_recovery_preserves_protected_training(tmp_path,monkeypatch,pipeline):
+    import tensorflow as tf
+    import basil_core.sharp_cart_v2_protocol as protocol
+    from basil_core.sharp_study import configuration as base
+    from basil_core.sharp_guarded_protocol import guarded_configuration
+    from basil_core.cart_continuity_candidate import ContinuityWorker
+    from basil_core.sharp_protocol import save_state,load_state
+    worker_class=ContinuityWorker;choose=selector
+    if pipeline in ('admitted','semantic') or pipeline.startswith('prior_neutral_'):
+        from basil_core.cart_admitted_continuity_candidate import AdmittedWorker
+        worker_class=AdmittedWorker
+        if pipeline=='admitted':
+            from basil_core.cart_admitted_continuity_candidate import selector as choose
+        elif pipeline=='semantic':
+            from basil_core.cart_semantic_admission_candidate import selector as choose
+        else:
+            from basil_core.cart_prior_neutral_commit import selector as choose
+            if pipeline!='prior_neutral_no_commit':
+                import basil_core.sharp_cart_v2 as cart
+                from basil_core.cart_prior_neutral_commit import transport
+                monkeypatch.setattr(cart,'transport',transport(cart.transport))
+    cfg=protocol.configuration(guarded_configuration(base('mnist','iid',2025,
+        'attack_noise_defense_rla_cart',.01,nodes=4,rounds=3,attack_start=1)))
+    def make():
+        inputs=tf.keras.Input((2,));features=tf.keras.layers.Dense(2,use_bias=False)(inputs)
+        model=tf.keras.Model(inputs,tf.keras.layers.Dense(10)(features))
+        model.layers[-2].kernel.assign(np.eye(2,dtype=np.float32))
+        head=np.zeros((2,10),np.float32);head[0,0]=4.;head[1,1]=4.
+        model.layers[-1].kernel.assign(head);model.layers[-1].bias.assign(np.zeros(10,np.float32))
+        return worker_class(cfg,model=model)
+    y=np.tile(np.repeat(np.arange(2,dtype=np.int32),32),4);x=np.eye(2,dtype=np.float32)[y]
+    partitions=[np.arange(i*64,(i+1)*64) for i in range(4)]
+    mode=('macro' if pipeline=='prior_neutral_macro' else 'class') if pipeline.startswith('prior_neutral_') else 'qualified'
+    monkeypatch.setattr(protocol,'select_input',choose(protocol.select_input,mode))
+    full=protocol.run(cfg,make(),x,y,partitions,x,y)
+    contract=dict(config=cfg,intervention='qualified-continuity test')
+    path=tmp_path/'checkpoint.npz';first=make()
+    from scripts.cart_revision_worker import compact_record
+    callback=(lambda record,_:compact_record(record)) if pipeline.startswith('prior_neutral_') else None
+    protocol.run(cfg,first,x,y,partitions,x,y,max_activations=5,checkpoint=lambda s:save_state(path,s,contract),on_activation=callback)
+    fresh=make();restored=load_state(path,contract,fresh.dimension)
+    resumed=protocol.run(cfg,fresh,x,y,partitions,x,y,state=restored,on_activation=callback)
+    np.testing.assert_array_equal(full['nodeParams'],resumed['nodeParams'])
+    np.testing.assert_array_equal(full['outbound'],resumed['outbound'])
+    if callback:
+        for record in full['telemetry']:compact_record(record)
+    assert full['telemetry']==resumed['telemetry'] and full['roundMetrics']==resumed['roundMetrics']
+    key='qualityScoreBoundApplied' if callback else 'qualifiedInitializationBound'
+    assert any(r['selection']['continuity'][key] for r in resumed['telemetry'])
+    assert any(r['attackActive'] for r in resumed['telemetry'])

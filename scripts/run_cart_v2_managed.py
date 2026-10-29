@@ -21,21 +21,28 @@ sys.path.insert(0,str(ROOT))
 
 
 def export_figures(root,destination):
-    from reporting import cart_v2_campaign as charts
+    plan=json.loads((root/'plan.json').read_text())
+    if plan.get('revision'):
+        from reporting import cart_revision as charts
+    else:
+        from reporting import cart_v2_campaign as charts
     manifest=destination/'artifacts_manifest.json'
-    if not manifest.exists():return charts.generate(root,destination)
+    if not manifest.exists():
+        return charts.generate(root,destination,reference=plan.get('reference')) if plan.get('revision') else charts.generate(root,destination)
     saved=json.loads(manifest.read_text())
     if saved['reportingProgramSha256']!=hashlib.sha256(Path(charts.__file__).read_bytes()).hexdigest():
         raise ValueError('Reporting code changed; use --figures with a fresh directory.')
     for name,value in saved['outputSha256'].items():
         if hashlib.sha256((destination/name).read_bytes()).hexdigest()!=value:raise ValueError('Saved figure artifact changed.')
     for run,value in saved['inputMetricSha256'].items():
-        if hashlib.sha256((root/run/'metrics.npz').read_bytes()).hexdigest()!=value:raise ValueError('Input metrics changed after plotting.')
+        path=Path(run) if Path(run).is_absolute() else root/run/'metrics.npz'
+        if hashlib.sha256(path.read_bytes()).hexdigest()!=value:raise ValueError('Input metrics changed after plotting.')
     return saved
 
 
 def run(args,forwarded):
     from basil_core.ntfy_notifications import publish
+    from basil_core.cart_notification_text import event as notice
     from basil_core.sharp_monitor import snapshot,duration
     from basil_core.cart_campaign_io import write_json,read_json,retry_io,transient_io
     root=args.output.resolve();root.mkdir(parents=True,exist_ok=True)
@@ -61,7 +68,7 @@ def run(args,forwarded):
         try:
             if not args.watch and not args.postprocess_only:
                 launcher={'standard':'run_cart_v2_parallel.py','scaled':'run_cart_v2_scaled.py',
-                    'resilient':'run_cart_v2_resilient.py','transfer':'run_cart_v2_transfer.py'}[getattr(args,'scheduler','resilient')]
+                    'resilient':'run_cart_v2_resilient.py','transfer':'run_cart_v2_transfer.py','admission':'run_cart_revision_study.py'}[getattr(args,'scheduler','resilient')]
                 command=[sys.executable,str(ROOT/'scripts'/launcher),'--execute','--output',str(root),*forwarded]
                 with (root/'supervisor.log').open('a') as log:
                     process=subprocess.Popen(command,cwd=ROOT,stdout=log,stderr=subprocess.STDOUT)
@@ -76,9 +83,7 @@ def run(args,forwarded):
                                 for failure in current.get('failures',[]):
                                     identity=failure['runId']
                                     if identity in notified_failures:continue
-                                    notify('PaperMerge configuration failed',
-                                        f'{identity}: {failure["error"][:800]}. Other configurations continue. '
-                                        f'Log: {root/failure["log"]}')
+                                    notify(*notice('worker_failed',root))
                                     notified_failures.add(identity)
                         except OSError as error:
                             if not transient_io(error):raise
@@ -88,6 +93,9 @@ def run(args,forwarded):
                         time.sleep(5)
                 if stopped:raise InterruptedError('Managed campaign stopped; committed checkpoints preserved.')
                 outcome=read_json(root/'campaign.json') if (root/'campaign.json').exists() else {}
+                if process.returncode==3 and outcome.get('status')=='COMPLETED_REPORT_FAILED':
+                    status.update(status='COMPLETED_REPORT_FAILED',trainingComplete=True);save()
+                    notify(*notice('report_failed',root));return 3
                 if process.returncode and not (process.returncode==2 and outcome.get('status')=='COMPLETED_WITH_FAILURES'):
                     raise RuntimeError('Training supervisor failed; inspect supervisor.log and worker logs.')
             elif args.watch:
@@ -102,10 +110,7 @@ def run(args,forwarded):
                     total=campaign['total'],failed=campaign['failed'],failures=campaign['failures'],
                     figuresDeferred='Final figures require complete matched three-seed groups; retry failed runs first.')
                 save()
-                notify(f'PaperMerge finished: {campaign["failed"]} failed',
-                    f'Queue exhausted: {campaign["completed"]}/{campaign["total"]} completed, {campaign["failed"]} failed. '
-                    'Other workers continued. Completed results and checkpoints are preserved. '
-                    f'Inspect worker_failure_events.jsonl and worker logs in {root}. Final figures await retries.')
+                notify(*notice('partial',root,completed=campaign['completed'],total=campaign['total'],failed=campaign['failed']))
                 print(f'COMPLETED_WITH_FAILURES: {campaign["completed"]}/{campaign["total"]}; failed {campaign["failed"]}.',flush=True)
                 return 2
             if campaign['status']!='COMPLETED':raise RuntimeError('Campaign is not complete: '+campaign['status'])
@@ -113,10 +118,8 @@ def run(args,forwarded):
             manifest=export_figures(root,figures)
             status.update(status='COMPLETED',figures=str(figures),artifacts=len(manifest['files']));save()
             plan=json.loads((root/'plan.json').read_text());count=len(plan['configs'])
-            notify(f'PaperMerge complete: {count}/{count}',
-                f'Training finished. Three-seed line and bar charts plus CSV averages are ready. '
-                f'Elapsed in this manager: {duration(status["wallSeconds"])}. Figures: {figures}. '
-                'Charts use saved TRAIN-holdout metrics; independent inference verification is a separate step.')
+            first=next(iter(plan['configs']),{})
+            notify(*notice('complete',root,completed=count,total=count,nodes=first.get('nodes'),rounds=first.get('rounds'),elapsed=duration(status['wallSeconds'])))
             print(f'COMPLETE: figures and averages in {figures}',flush=True)
             return 0
         except BaseException as error:
@@ -124,8 +127,7 @@ def run(args,forwarded):
                 process.send_signal(signal.SIGINT);process.wait()
             status.update(status='INTERRUPTED' if isinstance(error,(InterruptedError,KeyboardInterrupt)) else 'FAILED',
                 error=str(error));save()
-            notify('PaperMerge '+status['status'].lower(),
-                f'{status["status"]}: {error}. Output: {root}. Inspect managed_status.json and supervisor.log. Checkpoints are preserved.')
+            notify(*notice('interrupted' if status['status']=='INTERRUPTED' else 'failed',root))
             print(status['status']+': '+str(error),file=sys.stderr,flush=True)
             return 130 if status['status']=='INTERRUPTED' else 1
 
@@ -133,7 +135,7 @@ def run(args,forwarded):
 def main():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('--output',type=Path);p.add_argument('--figures',type=Path)
-    p.add_argument('--scheduler',choices=('standard','scaled','resilient','transfer'),default='resilient')
+    p.add_argument('--scheduler',choices=('standard','scaled','resilient','transfer','admission'),default='resilient')
     p.add_argument('--ntfy-topic');p.add_argument('--ntfy-server',default='https://ntfy.sh')
     p.add_argument('--ntfy-token-file',type=Path);p.add_argument('--timing-from',nargs='*',type=Path,default=[])
     p.add_argument('--tmux');action=p.add_mutually_exclusive_group()
@@ -146,8 +148,9 @@ def main():
     if args.test_notification:
         if not args.ntfy_topic:p.error('--ntfy-topic is required for the test.')
         from basil_core.ntfy_notifications import publish
-        receipt=publish(args.ntfy_topic,'PaperMerge HPC notification test',
-            'This is a test from your campaign environment. Completion and failure alerts will use this topic.',
+        from basil_core.cart_notification_text import event as notice
+        title,message=notice('test','CART')
+        receipt=publish(args.ntfy_topic,title,message,
             server=args.ntfy_server,token_file=args.ntfy_token_file)
         print(json.dumps(receipt));return 0 if receipt['deliveredToServer'] else 2
     if not args.output:p.error('--output is required.')

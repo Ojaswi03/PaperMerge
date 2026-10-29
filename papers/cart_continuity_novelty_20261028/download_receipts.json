@@ -33,5 +33,37 @@
     "bytes": 3223756,
     "sha256": "7d338197057abc493ae8da0d905c51de0e7a07e78027a644a1a17ac86a7e8042",
     "verifiedAt": "2026-10-28T15:38:47.695277+00:00"
+  },
+  {
+    "title": "The Matthews Correlation Coefficient (MCC) Is More Informative Than Cohen's Kappa and Brier Score in Binary Classification Assessment",
+    "path": "mcc_kappa_brier_ieee_access_2021.pdf",
+    "sourceUrl": "https://pure.rug.nl/ws/portalfiles/portal/173877725/09440903.pdf",
+    "bytes": 7452996,
+    "sha256": "19d1b309ebb55986b43f0e9f853f79b74224669abe9b7f5b17dc20c236140d96",
+    "verifiedAt": "2026-10-28T18:55:40.645002+00:00"
+  },
+  {
+    "title": "Why Cohen's Kappa should be avoided as performance measure in classification",
+    "path": "why_cohens_kappa_should_be_avoided_plos_2019.pdf",
+    "sourceUrl": "https://journals.plos.org/plosone/article/file?id=10.1371%2Fjournal.pone.0222916&type=printable",
+    "bytes": 1637245,
+    "sha256": "847843f1899e1ade30d5a52870b97dedbfad8d2c7cdca9bd1784695e5bcf6a14",
+    "verifiedAt": "2026-10-28T18:55:41.224951+00:00"
+  },
+  {
+    "title": "Zeno: Distributed Stochastic Gradient Descent with Suspicion-based Fault-tolerance",
+    "path": "zeno_icml_2019.pdf",
+    "sourceUrl": "https://proceedings.mlr.press/v97/xie19b/xie19b.pdf",
+    "bytes": 453169,
+    "sha256": "0a2ebd822ba92df07f44aa384069f749a2a610f489a324427d4e52cbecf3e1ba",
+    "verifiedAt": "2026-10-28T18:59:48.648995+00:00"
+  },
+  {
+    "title": "Zeno++: Robust Fully Asynchronous SGD",
+    "path": "zenopp_icml_2020.pdf",
+    "sourceUrl": "https://proceedings.mlr.press/v119/xie20c/xie20c.pdf",
+    "bytes": 419926,
+    "sha256": "a22f84f5070994a5dd314ab697ac9e2134a25f67f5627205107f31be1b6d1a82",
+    "verifiedAt": "2026-10-28T18:59:49.059373+00:00"
   }
 ]

@@ -121,3 +121,12 @@ def test_cli_reads_active_campaign_without_heavy_imports_or_file_changes(tmp_pat
     assert result.returncode==0,result.stderr
     assert 'ETA 00:02:40' in result.stdout
     assert {str(p):p.read_bytes() for p in tmp_path.rglob('*') if p.is_file()}==before
+
+
+def test_revision_label_and_finalization_do_not_claim_worker_completion(tmp_path):
+    setup(tmp_path,[(2025,'clean','mnist',dict(running(100,40),phase='FINALIZING_METRICS'))])
+    path=tmp_path/'plan.json';plan=json.loads(path.read_text());plan['revision']='new-candidate';path.write_text(json.dumps(plan))
+    state=snapshot(tmp_path);text=render(state,width=120,height=40)
+    assert 'CART admission revision | RUNNING | 0/1 complete' in text
+    assert 'final evaluation/checkpoint' in text and 'ALL EXPERIMENTS COMPLETE' not in text
+    assert state['entries'][0]['phase']=='FINALIZING_METRICS'

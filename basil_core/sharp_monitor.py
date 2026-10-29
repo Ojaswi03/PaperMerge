@@ -93,7 +93,7 @@ def snapshot(directory,*,timing_roots=()):
         entries.append(dict(config=cfg,status=row['status'],cursor=cursor,total=total,
             rounds=row.get('completedRounds',0),elapsed=elapsed,eta=eta,
             gpu=row.get('physicalGpuId',gpus[index%len(gpus)]),lane=lanes[index%len(lanes)],
-            mean=row.get('meanAccuracy'),rate=rate,error=row.get('error'),runtimeAdapter=backend))
+            mean=row.get('meanAccuracy'),rate=rate,error=row.get('error'),runtimeAdapter=backend,phase=row.get('phase')))
     done=sum(r['status']=='COMPLETED' for r in entries)
     failed=sum(r['status']=='FAILED' for r in entries)
     stopped=any(r['status'] in ('FAILED','INTERRUPTED') for r in entries)
@@ -125,7 +125,7 @@ def snapshot(directory,*,timing_roots=()):
         completedActivations=sum(r['cursor'] for r in entries),totalActivations=sum(r['total'] for r in entries),
         elapsed=campaign.get('elapsedSeconds'),eta=eta,remainingByGpu=remaining,
         untimedJobs=len(unknown),untimedDatasets=sorted(set(unknown)),historyJobs=history_jobs,
-        etaLow=max(lower.values()),etaHigh=max(upper.values()),output=str(root))
+        etaLow=max(lower.values()),etaHigh=max(upper.values()),output=str(root),revision=plan.get('revision'))
 
 
 def render(state,*,width=100,height=30,timezone='America/New_York'):
@@ -133,6 +133,7 @@ def render(state,*,width=100,height=30,timezone='America/New_York'):
     if state['status']=='WAITING_FOR_PLAN':return f'Waiting for frozen plan in {state["output"]}\n'
     methods={r['config'].get('method') for r in state['entries']}
     title='SHARP + CART v2' if 'sharp_cart_v2' in methods else ('SHARP GUARD + CART' if 'sharp_guarded' in methods else 'SHARP + CART')
+    if state.get('revision'):title='CART admission revision'
     lines=[f'{title} | {state["status"]} | {state["completed"]}/{state["total"]} complete | '
         f'failed {state["failed"]} | pending {state["pending"]}',
         f'Progress {state["completedActivations"]/state["totalActivations"]:.2%} | '
@@ -144,6 +145,8 @@ def render(state,*,width=100,height=30,timezone='America/New_York'):
     if state['untimedJobs'] and state['status'] not in ('COMPLETED','COMPLETED_WITH_FAILURES','FAILED','INTERRUPTED'):
         lines.append(f'ETA uses workload priors for {state["untimedJobs"]} jobs; replaces them with measurements as runs progress.')
     elif state.get('historyJobs',0):lines.append(f'ETA uses matching prior campaign timings for {state["historyJobs"]} jobs.')
+    if any(r['status']=='RUNNING' and r['cursor']==r['total'] for r in state['entries']):
+        lines.append('Training activations finished for a worker; final evaluation/checkpoint writes can still be running.')
     wrap=lambda values:[part for line in values for part in (textwrap.wrap(line,width,break_long_words=True) or [''])]
     lines=wrap(lines);lines.append('')
     active=[r for r in state['entries'] if r['status']=='RUNNING']+[

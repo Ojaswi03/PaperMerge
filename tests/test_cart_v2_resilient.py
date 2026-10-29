@@ -169,7 +169,8 @@ def test_manager_reports_queue_exhaustion_without_pretending_all_succeeded(tmp_p
     assert managed.run(args,[])==2
     saved=json.loads((tmp_path/'managed_status.json').read_text())
     assert saved['status']=='COMPLETED_WITH_FAILURES' and saved['failed']==1
-    assert 'Queue exhausted: 7/8 completed, 1 failed' in sent[-1][1]
+    assert 'Completed: 7 / 8\nFailed: 1' in sent[-1][1]
+    assert '\n\n' in sent[-1][1]
 
 
 def test_io_retries_transient_eio_but_not_full_disk(monkeypatch,tmp_path):

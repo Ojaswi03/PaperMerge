@@ -1,0 +1,11 @@
+dataset,partition,sigma,condition,round,meanAccuracy,sampleStd,revision
+cifar10,iid,0.01,attack_noise_defense_rla_cart,1,0.15874,0.0,cart_admission_20261028_prior_neutral_class_dev1
+cifar10,iid,0.01,attack_noise_defense_rla_cart,2,0.25611,0.0,cart_admission_20261028_prior_neutral_class_dev1
+cifar10,iid,0.01,attack_noise_defense_rla_cart,3,0.27118000000000003,0.0,cart_admission_20261028_prior_neutral_class_dev1
+cifar10,iid,0.01,attack_noise_defense_rla_cart,4,0.27495,0.0,cart_admission_20261028_prior_neutral_class_dev1
+cifar10,iid,0.01,attack_noise_defense_rla_cart,5,0.27828,0.0,cart_admission_20261028_prior_neutral_class_dev1
+cifar10,dirichlet,0.01,attack_noise_defense_rla_cart,1,0.10811,0.0,cart_admission_20261028_prior_neutral_class_dev1
+cifar10,dirichlet,0.01,attack_noise_defense_rla_cart,2,0.12767,0.0,cart_admission_20261028_prior_neutral_class_dev1
+cifar10,dirichlet,0.01,attack_noise_defense_rla_cart,3,0.1362,0.0,cart_admission_20261028_prior_neutral_class_dev1
+cifar10,dirichlet,0.01,attack_noise_defense_rla_cart,4,0.14300000000000002,0.0,cart_admission_20261028_prior_neutral_class_dev1
+cifar10,dirichlet,0.01,attack_noise_defense_rla_cart,5,0.14562,0.0,cart_admission_20261028_prior_neutral_class_dev1
