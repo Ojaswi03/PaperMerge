@@ -1,0 +1,127 @@
+{
+  "revision": "cart_mechanism_comparison_20261029_v1",
+  "source": {
+    "basil_core/acds.py": "a67bea10bfb0b57e01978c4d134d741470835e0a9fb06abb0dab296c71db4862",
+    "basil_core/attacks.py": "e1b653952cffd20983d9c4b0835fd11725e7df1cccff11c62e30569b952f119f",
+    "basil_core/cart_admitted_continuity_candidate.py": "bc7efb8b91474aae9b70cdce9d36b6e3ad76114b33cab77047b096ea67e8c697",
+    "basil_core/cart_balanced_commit.py": "3be2fbd3a3cf466de110f4c16f363501740e824475465009a5c8e36839e82763",
+    "basil_core/cart_batched_scoring.py": "77d0ee3ac9fc958e944d282a68d1fb4838ddb4dac6b99c7829444d6e78ef48e3",
+    "basil_core/cart_campaign_io.py": "3655d41d806e5778a28c952037196da840b186db5541d623033da4dcb3a7dcc9",
+    "basil_core/cart_class_skill.py": "7e2d4952f70f7bcda4f5b312a4edeb93541843a6d45f4e725c02e7085ec2b876",
+    "basil_core/cart_comparison_study.py": "7cdb5b85b0952aa664a65002a920b82583ddbebdb9c105269570c13dfddb2ed1",
+    "basil_core/cart_continuity_candidate.py": "fb1fdb973f59445f0069d7e37eb3d93820235b1da9c73cb67f7f6ddff9a0a93a",
+    "basil_core/cart_discriminative_admission_candidate.py": "35ef43ac1f6b47608a773dc1f73171547ce7ef38e6865dbccb3243f301ec03eb",
+    "basil_core/cart_discriminative_continuity_candidate.py": "62d11f505a1bf6014e8de543d0116f900a42082dc4f7ad91fbf28d197dfc1099",
+    "basil_core/cart_local_prior.py": "c1b3f396119d103d1affde23293db41e32e42c0e8b1555887a8b0c163bb77739",
+    "basil_core/cart_mechanism_audit.py": "2ee85fbad22350588c5793d676f19357e8d4586585d01440b9a799fb61b23797",
+    "basil_core/cart_noise_selection.py": "d9c7fdb0b42d625f26280c06122202b35db1e3ae1db06a2ac74e74619f206bb1",
+    "basil_core/cart_prior_neutral_commit.py": "f83f461bfd4060a7b38cb16acd6e2f8c07b5bff8af6020a15ec15251471ccbff",
+    "basil_core/cart_prior_neutral_routing.py": "e8d36fff92ee6ab8eb834805eb3ca4acc1114f214cd6d83fff9711bdc3377d6f",
+    "basil_core/cart_qualified_continuity_candidate.py": "34245444719db9f7c814013fca5f49c3284cfa32918d788a559a195ef77d5b02",
+    "basil_core/cart_quality_commit_candidate.py": "2eeb85810bcd8656fbbb1f89399cdfac51c0f1ea2d5eb34b8c5dfeea90b5020e",
+    "basil_core/cart_quality_routing_candidate.py": "d47314835462ef38c7c6ebce19f34032c0cb96a9cae66b7e6cae1146b265ab8c",
+    "basil_core/cart_revision_study.py": "d61d64fc0ec2654b1b708c71dab209fd35654d0eb68233cba252ed55f5989669",
+    "basil_core/cart_semantic_admission_candidate.py": "c732e79987b4d393432f18b8ddb3c738500769b070412daf99f92a917bb95929",
+    "basil_core/cart_transactional_quality_candidate.py": "c041a4e188bac1dfb38b1a4e39b7e6f11c28aacae99075c5af7ccecf8d07b047",
+    "basil_core/cart_uncertainty_admission_candidate.py": "644781cf6fe366f6304f6e27bd45bcf4139db304bd9db304bd0f02ede76631b6",
+    "basil_core/data/cifar.py": "9bacb38333fe1b27b74919f7422e74415ebc58bd54e64431845f930a9ebfe180",
+    "basil_core/execution_profile.py": "222e60d95b643a364b30a400b28ed38baf4913db04b5acae5fa6f558ed84cfbe",
+    "basil_core/factorial_model.py": "07baaac3ae5d5a7a698fc4d37b37574f93f95510e43976cb8fbacdeb55f8142f",
+    "basil_core/factorial_study.py": "51ba798ee07f4d80a90a3b7e5c11280073e2cf2fabe1555b50e0505d1022884f",
+    "basil_core/iid_runtime.py": "f0069317dd6fbc583726cb734d89d8c32c50b2e5af564a491df513fee2ed9c58",
+    "basil_core/lazy_imports.py": "5d7039af5f56bcf16099ceef788e0b6515a70af7ff94cb8b9cd6fee8759f15b4",
+    "basil_core/models.py": "49169fb67c9c59d00d86e09d62d88189b164a777820680624d42bab1a47bd0cb",
+    "basil_core/research_protocol.py": "cb4fcaeb4f0b11079598001cd98ecfe8965db7ff6a806973b04b6af3393e7c15",
+    "basil_core/sharp_cart.py": "48ad43fe155f5e61c8122fcbe80e2dd3cb10b9afdf4f0506c244a466c561eeb8",
+    "basil_core/sharp_cart_v2.py": "9d1a06ad3dc75175fa778cfdbd7fd60f1eed39e6c05b17981f06e3cb0fd824f4",
+    "basil_core/sharp_cart_v2_protocol.py": "7772f152295caf21242bd606804c13cdd887dea62b8c24539ad9ca1f49ed3170",
+    "basil_core/sharp_compiled_transfer.py": "bb44a909f2ac062389800264fcafb851fe8024099a7de9390fee88c9c8af82e9",
+    "basil_core/sharp_data.py": "bb636a1b6b4a95b246fa62b6168a790b92e70a11268c399b093d4689cd4eaf18",
+    "basil_core/sharp_guarded_protocol.py": "5b2113512479dfc562e6bf7160ff51cc02728a98a941722485acf9dcdbd4d55c",
+    "basil_core/sharp_math.py": "be9528e3ce10d8e084a44577fdb046fa8e82c61cf5d1824f6aa8494c63fb0831",
+    "basil_core/sharp_protocol.py": "564a836b74682e18e1a7d28b701b38c4b6d4aeaed1b9913cc4dbb959220e610f",
+    "basil_core/sharp_study.py": "2af5e2d52ea92f64f1a098a23fa20c9b4f172b1ee1e622fd0b6988ae16435dad",
+    "basil_core/sharp_worker.py": "42f64e76afb8a1093e23b95e874edab4e6aac12e3ef58de0318259b6c081fce7",
+    "basil_core/trainer.py": "61782cd28a44443618f07d4ed9fd8a5ac4a51ade940e4f0d1b6e9dbc245e3124",
+    "docs/specifications/SHARP_professor_20261027.pdf": "b010c9c79a2282c5835e0b9b4bc5cd95500afbcf7395dd9d04fd6a2a0b9ce700",
+    "reporting/cart_comparison.py": "939d5f253bf299bc08763507f393865c8755266d5f1466d58813b010dcfa09bd",
+    "scripts/cart_comparison_worker.py": "078d84aea1ca18b96019a3488609676358f98169eebe84903c2c91389a17d2eb",
+    "scripts/cart_revision_worker.py": "c4ce11a8d0e5de663cfc968864ce46d4b5f84fc98b4e5df5ddb3ab9754556246",
+    "scripts/cart_v2_slot_worker.py": "2b37a1a47a0d37a89e4181412eb578b45e4596fa682868ca8423b2162200ac2b",
+    "scripts/cart_v2_transfer_worker.py": "a0fc80601338c45a4331af62f9874830aaac903dbe8f3fc975a40f4862fe7f85",
+    "scripts/run_cart_comparison.py": "cdd202457ab4418c9c5374e27a06a39a1b5fd9751b8c3c338425735c307e675c",
+    "scripts/run_cart_revision_study.py": "0493edd890bde749501a724100a628fb80ff97e11cae187e68dc653f4ba877d0",
+    "scripts/run_cart_v2_resilient.py": "922fbcfefac5ff7020a9a2dc989cd372311f886342c11e8adddd534107fddd38",
+    "scripts/run_cart_v2_scaled.py": "a3ee3af55c745a49328faea641ff5b977dbf8d4bd6bb9596042241637f0b936e",
+    "scripts/run_cart_v2_study.py": "d594dd989ae96c4e2f38a42b8b5c6f2a6d7fa08eb890512ed366f812848ae587",
+    "scripts/run_cart_v2_transfer.py": "34ded0e19586fd8f4c326a65ba32a92ed55b80ce4aeec326be6ba60d70396019",
+    "scripts/run_guarded_sharp_case.py": "9219f4685f71f02d4dc2c9bcdc6697779f705f5b32903fbcba6c6e924b2de980",
+    "scripts/run_sharp_study.py": "2f1909042567548c5a8d7efceda7b831aa60c8782f1f02e45774a4592d741869",
+    "scripts/verify_cart_comparison_gpu.py": "712fe536ae012b3cc837af58423dc4b2ae2204ac6308b7fe247b2d37210f2775",
+    "scripts/verify_cart_local_prior_gpu.py": "d86aac4c6d56119535c4ab3139e7c43cc89347d46fe92d8cfc838a14b3660b74",
+    "scripts/verify_cart_revision_gpu.py": "389db37d60a2d4159f6f41f3a3d313448bb6a4ea45b648983ef9d5017a7d94d6",
+    "scripts/verify_cart_v2_transfer.py": "e60bd8714bc55739c808209d001ffe028aac13097adcdca9fdbcd0d12ad167ce"
+  },
+  "inputMetricSha256": {
+    "/home/ojaswi/PaperMerge/.papermerge/local-tests/cart-easy-dirichlet-20261029/cifar10-dirichlet-2025-clean-cart-d5732081fa44/metrics.npz": "ab4b7e93ae4fab4929ca5d5e384cd155db02f37ed3ac8514fcbbea16977b4d7f",
+    "/home/ojaswi/PaperMerge/.papermerge/local-tests/cart-easy-dirichlet-20261029/cifar10-dirichlet-2025-clean-prior_cart-568a71ac6107/metrics.npz": "84d0dde01c6dff9f2e379a0d590be2be7b3678ea7e9df97a29ffe46203812bd0",
+    "/home/ojaswi/PaperMerge/.papermerge/local-tests/cart-easy-dirichlet-20261029/cifar10-dirichlet-2025-clean-prior_macro-995d6bc9aceb/metrics.npz": "69aad9cf62c8fe37d591dd6a792a8cd575d0d4676dccd440d5cae278b913ea4b",
+    "/home/ojaswi/PaperMerge/.papermerge/local-tests/cart-easy-dirichlet-20261029/cifar10-dirichlet-2025-clean-prior_wide-7c983b3676fc/metrics.npz": "84d0dde01c6dff9f2e379a0d590be2be7b3678ea7e9df97a29ffe46203812bd0",
+    "/home/ojaswi/PaperMerge/.papermerge/local-tests/cart-easy-dirichlet-20261029/cifar10-dirichlet-2025-joint-cart-82cc00a395bd/metrics.npz": "9391558faca0f61078c4901886091cb4c52ed7f9492801317e9259e500f50352",
+    "/home/ojaswi/PaperMerge/.papermerge/local-tests/cart-easy-dirichlet-20261029/cifar10-dirichlet-2025-joint-prior_cart-8a18021b9624/metrics.npz": "c8724c53b5eb15fed4461f80b84fb11a692ffbf1a6dd238215a91b5343aef898",
+    "/home/ojaswi/PaperMerge/.papermerge/local-tests/cart-easy-dirichlet-20261029/cifar10-dirichlet-2025-joint-prior_macro-82fffd861e7a/metrics.npz": "0d90e537ac1bf55ba35e3eeccf67c15836a39fc27230de25a42b40078814fac8",
+    "/home/ojaswi/PaperMerge/.papermerge/local-tests/cart-easy-dirichlet-20261029/cifar10-dirichlet-2025-joint-prior_wide-417c4cea1569/metrics.npz": "4d6f7f9ca1c0741e52bf1ee955252411d3c8ad0d1af61a7991c76ad1bf7a049d"
+  },
+  "outputSha256": {
+    "cifar10_clean_sigma_0_learning_curves.pdf": "332104c6750730b5be776096095e3d1ad8c92adef7b3c9a5547cc18d29bbc405",
+    "cifar10_clean_sigma_0_learning_curves.svg": "c7358d2942cd07d90fe3e2ea973090d411135f1245b4dd0e0fa3f0d505822c63",
+    "cifar10_clean_sigma_0_learning_curves.png": "9b4b8313e318cbf23457df2127ff584f39114dde46e89fd3b7d30134b4f9740b",
+    "cifar10_clean_sigma_0_final_bars.pdf": "6b51ed1fac2f129ed8a5315facf0143165c69ecf3d5e02b49f5d6db5b82d7442",
+    "cifar10_clean_sigma_0_final_bars.svg": "519c770c8635fdbae3084c6af05fe475704e3da6e1b9f33182079e319de62217",
+    "cifar10_clean_sigma_0_final_bars.png": "39bcf5bc3a70ddb3e7f9b83db5d6208ee840e7a38bd5c5b49b71cf1c7cf912f6",
+    "cifar10_clean_sigma_0_primary_bars.pdf": "d82d12944d8ef28f2480296d19aafa1b9811a6fbce75efd98dc77885512d0e54",
+    "cifar10_clean_sigma_0_primary_bars.svg": "5ec344511efcdea8b7ab690d23ca71bcad592b087bd98c1f7c36d6561f20b868",
+    "cifar10_clean_sigma_0_primary_bars.png": "4cd78cb690be6332c5971185ceee10b94d0989fc71bd8e9947ca7ef4487fa2cc",
+    "cifar10_joint_sigma_0.01_learning_curves.pdf": "33f1a81560fbe713204e317a24c259ae2a022923ec4cab96d27c9decc8bb350e",
+    "cifar10_joint_sigma_0.01_learning_curves.svg": "cd5749c57d59928a461ad019f40c957541f8e8cd49a6c2cfe34372f306cb26cf",
+    "cifar10_joint_sigma_0.01_learning_curves.png": "2fa03b67af5b5f5ebe15015da646458eb427b63ec84a4a4e6ad8e1c09d3bc639",
+    "cifar10_joint_sigma_0.01_final_bars.pdf": "d4069e5d06317c35470dc55b832f1379a1371be6e0186a0f08f88206849a1f98",
+    "cifar10_joint_sigma_0.01_final_bars.svg": "cba35ffb1db9cd11da54f42f3b116d66c6b880e8181e2208a5b9fb9f69961bde",
+    "cifar10_joint_sigma_0.01_final_bars.png": "a1224fafde160d2dc7eb851cbcd76ab0e2af71f9f859f23af6bc34b6f71802cc",
+    "cifar10_joint_sigma_0.01_primary_bars.pdf": "eec3ace8c95da5ef84dce25e6bb24b9b698a36bc13dd5eed95a1c107f97a406b",
+    "cifar10_joint_sigma_0.01_primary_bars.svg": "3c27341fbda93348969078d98f0f30c09055d9ce2c127321c6086d6768a59441",
+    "cifar10_joint_sigma_0.01_primary_bars.png": "65e5d1a384748d192084c1f9818ac40c752680d07faac31c3464bd6fea5504fb",
+    "seed_metrics.csv": "2a1ae4cadc9782a4d1e08f1e7b64e36f3fa7ca77437d2d0ff577dd6d1e1b2d3b",
+    "summary.json": "41d3809c3563bb5dbf0095ca6dc1ba4861786bdd9a9da69cad1887df10a96078"
+  },
+  "destination": "/home/ojaswi/PaperMerge/.papermerge/local-tests/cart-easy-dirichlet-20261029/figures",
+  "publicationFormatting": {
+    "operation": "strip SVG trailing whitespace only; original run artifacts unchanged",
+    "files": {
+      "cifar10_clean_sigma_0_learning_curves.svg": {
+        "originalSha256": "bd8fadffc01a922ddd03e6af2f6f37bb8f035872b5be85837dbc91d327ae4e0f",
+        "normalizedSha256": "c7358d2942cd07d90fe3e2ea973090d411135f1245b4dd0e0fa3f0d505822c63"
+      },
+      "cifar10_clean_sigma_0_final_bars.svg": {
+        "originalSha256": "1b76b061ecd5f14444d2c0412ad6acefebf40cf83fc2aeb0da45da49b9e359bb",
+        "normalizedSha256": "519c770c8635fdbae3084c6af05fe475704e3da6e1b9f33182079e319de62217"
+      },
+      "cifar10_joint_sigma_0.01_primary_bars.svg": {
+        "originalSha256": "fef4d86d83ce8beba73e94920e2cfa648b42a9b0f9f65111c3cbe16e8c3da8ec",
+        "normalizedSha256": "3c27341fbda93348969078d98f0f30c09055d9ce2c127321c6086d6768a59441"
+      },
+      "cifar10_joint_sigma_0.01_learning_curves.svg": {
+        "originalSha256": "7a362edc0f760342ce2e354c7d8c3344143b5cfa608016a046fbe1ff0f27ea07",
+        "normalizedSha256": "cd5749c57d59928a461ad019f40c957541f8e8cd49a6c2cfe34372f306cb26cf"
+      },
+      "cifar10_clean_sigma_0_primary_bars.svg": {
+        "originalSha256": "235ff9b73e468ff3d220e066217ccfea2007bac49ce864b69929a6979f86f3dd",
+        "normalizedSha256": "5ec344511efcdea8b7ab690d23ca71bcad592b087bd98c1f7c36d6561f20b868"
+      },
+      "cifar10_joint_sigma_0.01_final_bars.svg": {
+        "originalSha256": "7f6665a5b5b217eeac21282be4bfa5605d0fd25d46c179f4e7566026c935dec8",
+        "normalizedSha256": "cba35ffb1db9cd11da54f42f3b116d66c6b880e8181e2208a5b9fb9f69961bde"
+      }
+    }
+  }
+}

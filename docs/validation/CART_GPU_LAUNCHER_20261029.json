@@ -1,0 +1,15 @@
+{
+  "status": "LOCAL_SELECTION_AND_LAUNCHER_TESTS_PASSED",
+  "testsPassed": 18,
+  "checks": [
+    "automatic one/two/three/four GPU detection",
+    "explicit GPU indices and count agreement",
+    "reject unavailable GPUs",
+    "saved GPU UUID and worker count retained",
+    "simulated two-GPU shell dry run",
+    "explicit CLI count overrides legacy four-GPU environment",
+    "shell syntax and help"
+  ],
+  "remoteHal9kGpuKernelsVerified": false,
+  "scope": "Resource selection only; server environment and GPU numerical gates must pass on hal9k before training"
+}

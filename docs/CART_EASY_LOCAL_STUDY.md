@@ -77,3 +77,28 @@ ownership routes, zero update scales, runtime and score decomposition. Five
 rounds and one seed screen mechanisms; they do not establish long-run superiority
 or robustness. Select the next same-runtime 50-round comparisons after inspecting
 these outcomes. Heavy runs are not automatically queued by this launcher.
+
+## Completed local outcomes
+
+All eight cases completed in 27 minutes 18 seconds with no failures. Each
+completed 500 activations and 2,500 SGD steps. Fresh CPU inference reproduced
+the exported final accuracies for all 800 client models exactly. Results and
+producer snapshots are archived in `docs/results/cart-easy-dirichlet-20261029/`.
+
+| Method | No physical impairments | Joint attack and noise |
+| --- | ---: | ---: |
+| Original CART | 10.593% | 21.889% |
+| Prior-adjusted CART | 11.936% | 26.654% |
+| Prior-adjusted macro only | 12.049% | 26.823% |
+| Prior-adjusted full peer window | 11.936% | 25.858% |
+
+Prior adjustment helps this short joint comparison. The 0.169 percentage-point
+macro advantage is small and one seed does not establish a reliable difference.
+The wider window is 0.796 points below the eight-peer prior-adjusted case here,
+so the checkpoint opportunity audit did not translate into an accuracy gain.
+The poor no-impairment results require further diagnosis of the defended
+training/selection path. These cases keep guards, proximal anchoring and CART
+active and are not the older unprotected clean reference. Comparing them with
+joint conditions does not establish that channel noise itself improves learning.
+The planned impairment-isolation experiments can separate the effects of attack
+and noise under the same defended method before costly confirmation studies.

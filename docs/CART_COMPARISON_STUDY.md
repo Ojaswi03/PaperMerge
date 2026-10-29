@@ -70,8 +70,39 @@ users.
 
 ```bash
 git pull --ff-only
-bash scripts/launch_cart_comparison_hpc.sh screen
+bash scripts/launch_cart_comparison_hpc.sh screen --gpu-count 2
 ```
+
+The launcher accepts `--gpu-count 1`, `2`, `3`, or `4`. Without the option it
+detects the installed GPU indices, up to four. Examples:
+
+```bash
+bash scripts/launch_cart_comparison_hpc.sh isolation --gpu-count 1
+bash scripts/launch_cart_comparison_hpc.sh confirm --gpu-count 2
+bash scripts/launch_cart_comparison_hpc.sh acds --gpu-count 4
+```
+
+To choose particular devices, use `--gpus 1,3`. If both a count and IDs are
+provided, they must agree. CLI selection overrides `CART_COMPARISON_GPUS` and
+`CART_COMPARISON_GPU_COUNT`; those environment settings remain supported when
+no CLI GPU selection is supplied. Two workers per GPU is the default; use
+`--jobs-per-gpu 1` to reduce GPU/host-memory demand. Memory and GPU verification
+checks still run independently for each selected physical device. Automatic
+detection does not mean a device is unused or allocated exclusively.
+
+`--dry-run` prints the resolved mode, GPUs, worker count and output path without
+starting verification or training. `--output PATH` or `CART_COMPARISON_OUTPUT`
+selects a fresh output namespace. A saved plan retains its physical GPU UUIDs
+and worker count. A different server, GPU layout or worker count requires a new
+output; the launcher does not silently migrate an existing checkpoint contract.
+The older `launch_cart_cifar6_hpc.sh` also accepts GPU count, IDs and worker count.
+
+For the two-GPU `hal9k` server, connect with `ssh os675524@hal9k.cs.ohio.edu`,
+clone or pull the repository, and create its own environment using
+`bash scripts/setup_hpc.sh` if `.venv-hpc` is absent. The setup script requires
+Python 3.12. Do not copy a virtual environment from another host. The GPU gate
+must pass on this server before experiments start, regardless of its driver
+version or successful execution on the other server.
 
 The default **screen** is 20 configurations: ten arms, two CIFAR partitions, seed
 2025, ten rounds, attack beginning at zero-based round 3. It is a diagnostic,

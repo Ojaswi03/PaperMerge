@@ -2,16 +2,48 @@
 # Isolated mechanism screens, impairment controls or full CART/ACDS comparison.
 set -euo pipefail
 cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.."
-source .venv-hpc/bin/activate
-MODE="${1:-screen}"
+MODE=screen
+if (($#)) && [[ "$1" != --* && "$1" != -h ]]; then MODE="$1"; shift; fi
+GPU_ARGS=()
+GPU_EXPLICIT=0
+JOBS_EXPLICIT=0
+DRY_RUN=0
+RUN_ARG=""
+while (($#)); do
+  case "$1" in
+    --gpu-count|--gpus) GPU_ARGS+=("$1" "${2:?Missing GPU selection}"); GPU_EXPLICIT=1; shift 2 ;;
+    --jobs-per-gpu) GPU_ARGS+=("$1" "${2:?Missing worker count}"); JOBS_EXPLICIT=1; shift 2 ;;
+    --output) RUN_ARG="${2:?Missing output directory}"; shift 2 ;;
+    --dry-run) DRY_RUN=1; shift ;;
+    --help|-h)
+      echo 'Usage: bash scripts/launch_cart_comparison_hpc.sh [screen|isolation|confirm|acds] [--gpu-count 1|2|3|4] [--gpus 0,1] [--jobs-per-gpu 1..8] [--output PATH] [--dry-run]'
+      echo 'Default: detect up to four GPUs; two workers/GPU. Resume retains saved GPUs and workers.'
+      exit 0 ;;
+    *) echo "Unknown argument: $1" >&2; exit 2 ;;
+  esac
+done
 case "$MODE" in screen|isolation|confirm|acds) ;; *) echo 'Use screen, isolation, acds or confirm.' >&2; exit 2;; esac
+[[ -f .venv-hpc/bin/activate ]] || { echo 'Create the server environment first: bash scripts/setup_hpc.sh' >&2; exit 1; }
+source .venv-hpc/bin/activate
 PRESET="$MODE"
 if [[ "$MODE" == acds ]]; then PRESET=confirm; fi
-RUN="${CART_COMPARISON_OUTPUT:-$PWD/.papermerge/local-tests/cart-comparison-${MODE}-v1}"
+RUN="${RUN_ARG:-${CART_COMPARISON_OUTPUT:-$PWD/.papermerge/local-tests/cart-comparison-${MODE}-v1}}"
+if (( ! GPU_EXPLICIT )); then
+  if [[ -n "${CART_COMPARISON_GPU_COUNT:-}" ]]; then GPU_ARGS+=(--gpu-count "$CART_COMPARISON_GPU_COUNT"); fi
+  if [[ -n "${CART_COMPARISON_GPUS:-}" ]]; then GPU_ARGS+=(--gpus "$CART_COMPARISON_GPUS"); fi
+fi
+if (( ! JOBS_EXPLICIT )) && [[ -n "${CART_COMPARISON_JOBS_PER_GPU:-}" ]]; then
+  GPU_ARGS+=(--jobs-per-gpu "$CART_COMPARISON_JOBS_PER_GPU")
+fi
+if [[ -f "$RUN/plan.json" ]]; then GPU_ARGS+=(--saved-plan "$RUN/plan.json"); fi
+SELECTION="$(python scripts/select_cart_gpus.py "${GPU_ARGS[@]}" --format shell)"
+read -r GPU_IDS JOBS_PER_GPU <<< "$SELECTION"
+echo "Mode: $MODE | Physical GPUs: $GPU_IDS | Workers per GPU: $JOBS_PER_GPU | Output: $RUN"
+if (( DRY_RUN )); then echo 'Dry run: no verification or training started.'; exit 0; fi
 SESSION="cart-comparison-${MODE}"
 export MPLCONFIGDIR="$RUN/matplotlib-cache"
 COMMON=(--preset "$PRESET" --output "$RUN" --profile hpc
-  --gpus "${CART_COMPARISON_GPUS:-0,1,2,3}" --jobs-per-gpu 2
+  --gpus "$GPU_IDS" --jobs-per-gpu "$JOBS_PER_GPU"
   --gpu-memory-mib 8192 --gpu-headroom-mib 8192 --context-overhead-mib 1024
   --ram-mib-per-worker 32768 --ram-headroom-mib 32768
   --datasets cifar10 --partitions iid dirichlet --noise-levels 1 --noise-values 0.01
