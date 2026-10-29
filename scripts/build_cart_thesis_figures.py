@@ -137,6 +137,11 @@ def build(destination):
     # Include inputs of the extra partition plot in the same provenance table.
     with (destination/'figure_provenance.csv').open('w',newline='') as f:
         w=csv.DictWriter(f,fieldnames=['figure','input','sha256','description']);w.writeheader();w.writerows(provenance)
+    # Matplotlib emits trailing spaces inside multi-line SVG paths. Normalize
+    # those textual artifacts before checksumming and publishing them.
+    for name in files:
+        if name.endswith('.svg'):
+            path=destination/name;path.write_text('\n'.join(line.rstrip() for line in path.read_text().splitlines())+'\n')
     manifest=dict(inputMetricAndFigureProvenance=provenance,officialTestUsed=False,independentInferencePerformed=False,
         outputSha256={n:sha(destination/n) for n in files},generatorSha256=sha(Path(__file__)))
     (destination/'manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
