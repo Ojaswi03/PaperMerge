@@ -41,3 +41,12 @@ def test_dashboard_origin_rejects_embedded_credentials_and_non_https():
     from scripts.share_cart_monitor import origin
     for value in ('http://example.test','https://user:secret@example.test','https://example.test/path','https://example.test?token=secret'):
         with pytest.raises(ValueError):origin(value)
+
+
+def test_existing_feed_gets_a_github_share_address_without_changing_credentials():
+    from scripts.share_cart_monitor import view_url,SITE
+    saved=dict(site=SITE,feedId='00000000-0000-4000-8000-000000000001',writeToken='a'*64,
+        viewUrl=SITE+'/?feed=00000000-0000-4000-8000-000000000001')
+    before=dict(saved);url=view_url(saved)
+    assert url=='https://ojaswi03.github.io/PaperMerge/?feed='+saved['feedId']
+    assert 'chatgpt' not in url and saved==before

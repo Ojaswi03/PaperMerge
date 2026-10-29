@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import vm from 'node:vm';
 import worker from '../worker/index.js';
+import {PAGE} from '../worker/page.js';
 
 function bucket(){
   const values=new Map();let version=0;
@@ -36,8 +37,18 @@ test('private path/error fields cannot be uploaded into a public feed',async()=>
 });
 
 test('dashboard has a complete browser script and no remote asset dependencies',async()=>{
-  const response=await worker.fetch(request('/'),{});const html=await response.text();assert.equal(response.status,200);
+  const response=await worker.fetch(request('/'),{});assert.equal(response.status,410);
+  assert.match(await response.text(),/retired/);const html=PAGE;
   assert.match(html,/Live configurations/);assert.match(html,/No training controls/);assert.match(html,/Updates delayed/);
   const source=html.match(/<script>([\s\S]*?)<\/script>/)[1];new vm.Script(source);
   assert.equal(/<script[^>]+src=/.test(html),false);
+});
+
+test('GitHub Pages can read live data without exposing write access',async()=>{
+  const env={BUCKET:bucket()};const config=await (await worker.fetch(request('/api/feeds','POST',sample()),env)).json();
+  const url='https://monitor.example/api/feeds/'+config.feedId;
+  const read=await worker.fetch(new Request(url,{headers:{origin:'https://ojaswi03.github.io'}}),env);
+  assert.equal(read.status,200);assert.equal(read.headers.get('access-control-allow-origin'),'https://ojaswi03.github.io');
+  assert.equal((await worker.fetch(new Request(url,{headers:{origin:'https://other.example'}}),env)).headers.get('access-control-allow-origin'),null);
+  assert.equal((await worker.fetch(request('/api/feeds/'+config.feedId,'PUT',sample()),env)).status,401);
 });

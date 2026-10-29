@@ -17,6 +17,12 @@ from urllib.parse import urlsplit
 from urllib.request import Request,urlopen
 ROOT=Path(__file__).resolve().parents[1];sys.path.insert(0,str(ROOT))
 SITE='https://papermerge-cart-live.foggycoati69.chatgpt.site'
+VIEW_SITE='https://ojaswi03.github.io/PaperMerge/'
+
+
+def view_url(saved):
+    base=VIEW_SITE if saved['site']==SITE else saved['site']+'/'
+    return base+'?feed='+saved['feedId']
 
 
 def origin(value):
@@ -41,12 +47,14 @@ def connection(root,site):
         if path.exists():
             saved=json.loads(path.read_text())
             if saved['site']!=site:raise ValueError('This campaign already has a different dashboard connection.')
+            saved['viewUrl']=view_url(saved)
             os.chmod(path,0o600);return saved
         result=request_json(site+'/api/feeds','POST',public_snapshot(root))
         import re
         if not re.fullmatch(r'[a-f0-9-]{36}',result.get('feedId','')) or not re.fullmatch(r'[a-f0-9]{64}',result.get('writeToken','')):
             raise ValueError('Unexpected dashboard setup response.')
-        result=dict(site=site,feedId=result['feedId'],writeToken=result['writeToken'],viewUrl=site+'/?feed='+result['feedId'])
+        result=dict(site=site,feedId=result['feedId'],writeToken=result['writeToken'])
+        result['viewUrl']=view_url(result)
         descriptor=os.open(path,os.O_WRONLY|os.O_CREAT|os.O_EXCL,0o600)
         with os.fdopen(descriptor,'w') as stream:json.dump(result,stream)
         return result
@@ -85,7 +93,7 @@ def main():
     if a.tmux and subprocess.run(['tmux','has-session','-t',a.tmux],capture_output=True).returncode==0:
         p.error('The browser publisher tmux session already exists; use --print-link to retrieve its URL.')
     if a.print_link:
-        print(json.loads((a.output/'browser_share.json').read_text())['viewUrl']);return
+        print(view_url(json.loads((a.output/'browser_share.json').read_text())));return
     saved=connection(a.output,a.site)
     if a.tmux:
         forwarded=sys.argv[1:];at=forwarded.index('--tmux');forwarded=forwarded[:at]+forwarded[at+2:]

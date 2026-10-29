@@ -1,9 +1,18 @@
 # Share the live CART monitor in Chrome
 
-The [browser dashboard](https://papermerge-cart-live.foggycoati69.chatgpt.site)
+The [browser dashboard](https://ojaswi03.github.io/PaperMerge/)
 is public and read-only. A campaign-specific link is created when the HPC
 publisher first connects. Share that complete `?feed=...` link with your professor;
 the base site alone has no live campaign attached.
+
+The share page uses the repository's `github.io` address. The progress-storage
+API remains on the original hosted service; the browser reads it with an
+explicit read-only cross-origin policy. Existing feed IDs, private write keys
+and running publishers remain valid. The old `chatgpt.site` webpage returns
+HTTP 410 (retired); it no longer displays the monitor. The update API remains
+available independently of that retired webpage. To convert an existing link, keep its
+`?feed=...` portion and put it after the GitHub address, or pull the changes and
+use `--print-link` below. No training or publisher restart is required.
 
 Run on HPC while training continues:
 

@@ -1,6 +1,6 @@
 import { PAGE } from './page.js';
 const headers={'content-type':'application/json; charset=utf-8','cache-control':'no-store','x-content-type-options':'nosniff'};
-const reply=(body,status=200)=>new Response(JSON.stringify(body),{status,headers});
+const reply=(body,status=200,extra={})=>new Response(JSON.stringify(body),{status,headers:{...headers,...extra}});
 const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 const hex=value=>Array.from(value,n=>n.toString(16).padStart(2,'0')).join('');
 const hash=async value=>hex(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(value))));
@@ -34,7 +34,7 @@ async function body(request){
 }
 export default {async fetch(request,env){
   const url=new URL(request.url);
-  if(url.pathname==='/'&&request.method==='GET')return new Response(PAGE,{headers:{'content-type':'text/html; charset=utf-8','cache-control':'no-cache','x-content-type-options':'nosniff','referrer-policy':'no-referrer','x-robots-tag':'noindex, nofollow'}});
+  if(url.pathname==='/'&&request.method==='GET')return new Response('This monitor address has been retired. Open the GitHub Pages monitor link for your campaign.',{status:410,headers:{'content-type':'text/plain; charset=utf-8','cache-control':'no-store','x-robots-tag':'noindex, nofollow'}});
   if(url.pathname==='/robots.txt')return new Response('User-agent: *\nDisallow: /\n');
   if(!url.pathname.startsWith('/api/'))return reply({error:'Not found'},404);
   if(!env.BUCKET)return reply({error:'Progress storage unavailable'},503);
@@ -48,7 +48,11 @@ export default {async fetch(request,env){
     if(!match||!uuid.test(match[1]))return reply({error:'Not found'},404);
     const key='feeds/'+match[1];const object=await env.BUCKET.get(key);if(!object)return reply({error:'Feed not found'},404);
     const record=await object.json();
-    if(request.method==='GET')return reply({receivedAt:record.receivedAt,snapshot:record.snapshot});
+    if(request.method==='GET'){
+      const cors=request.headers.get('origin')==='https://ojaswi03.github.io'
+        ?{'access-control-allow-origin':'https://ojaswi03.github.io','vary':'Origin'}:{};
+      return reply({receivedAt:record.receivedAt,snapshot:record.snapshot},200,cors);
+    }
     if(!['PUT','DELETE'].includes(request.method))return reply({error:'Method not allowed'},405);
     if(!await authorized(request,record.tokenHash))return reply({error:'Update credential required'},401);
     if(request.method==='DELETE'){await env.BUCKET.delete(key);return reply({deleted:true});}

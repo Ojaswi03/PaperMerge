@@ -284,6 +284,7 @@ experiments/results4/campaign4/performance_profile.json
 *[Cc][Hh][Aa][Tt][Gg][Pp][Tt]*[Pp][Rr][Oo][Mm][Pp][Tt]*.md
 *[Cc][Ll][Aa][Uu][Dd][Ee]*[Hh][Aa][Nn][Dd][Oo][Ff][Ff]*.md
 .firecrawl/
+/_site/
 /wandb/
 .env
 .env.*
