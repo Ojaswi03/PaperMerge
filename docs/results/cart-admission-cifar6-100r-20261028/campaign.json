@@ -1,0 +1,17 @@
+{
+  "activeRunIds": [],
+  "activeSlots": [],
+  "completed": 6,
+  "elapsedSeconds": 6544.829935849644,
+  "failed": 0,
+  "failures": [],
+  "host": "themachine",
+  "ownerPid": 469544,
+  "pending": 0,
+  "pendingRunIds": [],
+  "profile": "hpc",
+  "runtimeAdapter": "cart_admission_20261028_prior_neutral_class_dev1",
+  "status": "COMPLETED",
+  "total": 6,
+  "workerFailurePolicy": "continue"
+}
