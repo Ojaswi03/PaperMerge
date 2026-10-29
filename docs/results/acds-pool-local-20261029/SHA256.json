@@ -1,0 +1,18 @@
+{
+  "10r_attack4_checked_metrics.npz": "c0e735e526fed28c88a50ebc25ff973dd8ebb7923d34cedbcae7a3b9d3378201",
+  "10r_attack4_raw_metrics.npz": "5b02204823b9b7add2ef83b5c28ff92368868658ce5b465bc26d73afd16487a1",
+  "10r_attack4_single_metrics.npz": "c52d8590dd2ec9f105ab24b7bf45d8d39c623d4d1486dc83cb07988281a23c0f",
+  "3r_attack21_checked_metrics.npz": "7e30bbb87969504f3c329ca5612ca48ed50fd2facdc7cd496982fdb446a3bfcc",
+  "3r_attack21_raw_metrics.npz": "d18ef291e186f9bb0a97fd78193cf8172d1f0db4aba1fe7a3ee086aabc7b140b",
+  "3r_attack21_single_metrics.npz": "7e30bbb87969504f3c329ca5612ca48ed50fd2facdc7cd496982fdb446a3bfcc",
+  "acds_checked_averaging_10r.pdf": "3defdc3e26e50791b3bb6a07e6d0424400982129f51275f9333cc206f08178f9",
+  "acds_checked_averaging_10r.png": "8535d154f62b5c8e02420036eedb824c596fe718109124727a4053930ad77d5a",
+  "acds_checked_averaging_10r.svg": "8c7e42418e6b0e4d8656392ded23a0e8622f7f1dd7701e5625104ef03a2fa5c4",
+  "caption.txt": "6deb20ab4a25c6fd6d2ba46c0cc80a2d781cbb7ba851d6048a43ece0c25ff7c4",
+  "diagnostic_sources/232692df5c496313486117e9fabce8d99be61ac7f9aada3f4da4c87afcd7bdca-diagnose_acds_pool.py": "232692df5c496313486117e9fabce8d99be61ac7f9aada3f4da4c87afcd7bdca",
+  "diagnostic_sources/aad00a24ff3328c87dab603cd3e95bc694433abb1517a6a6c37f55bb29f377f9-diagnose_acds_pool.py": "aad00a24ff3328c87dab603cd3e95bc694433abb1517a6a6c37f55bb29f377f9",
+  "diagnostic_sources/b853e8995f3391062ae016d3d0ebdb0b0919bcc7fea3adabc87a42ad3fcc2f39-sharp_checked_pool.py": "b853e8995f3391062ae016d3d0ebdb0b0919bcc7fea3adabc87a42ad3fcc2f39",
+  "diagnostic_sources/fe61c4b8f8801f1ec37aff361fbdf5db006a738fd74bf7d8e13266f9e5db795d-sharp_checked_pool.py": "fe61c4b8f8801f1ec37aff361fbdf5db006a738fd74bf7d8e13266f9e5db795d",
+  "round_accuracy.csv": "0fe90fb9bd89a84a7d65301e1f5a4c7501ea0252f8e6802e809478988fb8844e",
+  "summary.json": "711eb41e6c2c90db37e7ba5ce5b96f78c0cc67f1fc8c39c7b36d5022d14994e6"
+}

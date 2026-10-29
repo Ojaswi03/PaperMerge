@@ -1,0 +1,63 @@
+{
+  "status": "LOCAL_CHECKED_POOL_VERIFIED",
+  "selectedPythonTestsPassed": 51,
+  "browserTestsPassed": 8,
+  "clientModelsIndependentlyVerified": 600,
+  "maximumCpuAccuracyDifference": 0.0,
+  "fullHpcProducerUnchanged": true,
+  "producerFingerprintSha256": "79427ddd8949a39e856a6384cd7008e6c0a9767c0bf886ae6d4799caf16443aa",
+  "selectorSha256": "b853e8995f3391062ae016d3d0ebdb0b0919bcc7fea3adabc87a42ad3fcc2f39",
+  "exporterSha256": "978f21d1df92bb5244af2b015b67584e42094e96878ae0868e378df6eb7fc74b",
+  "exportManifestSha256": "a249d1b3d10d5b7605325b69844f58538fe91ceca30a8eadf3e800af61e4f781",
+  "cases": [
+    {
+      "mode": "raw",
+      "rounds": 3,
+      "attackStartZeroBased": 20,
+      "seed": 2025,
+      "finalValidationAccuracy": 0.09999999999999998,
+      "optimizerSteps": 1500
+    },
+    {
+      "mode": "checked",
+      "rounds": 3,
+      "attackStartZeroBased": 20,
+      "seed": 2025,
+      "finalValidationAccuracy": 0.10890000000000001,
+      "optimizerSteps": 1500
+    },
+    {
+      "mode": "single",
+      "rounds": 3,
+      "attackStartZeroBased": 20,
+      "seed": 2025,
+      "finalValidationAccuracy": 0.10890000000000001,
+      "optimizerSteps": 1500
+    },
+    {
+      "mode": "raw",
+      "rounds": 10,
+      "attackStartZeroBased": 3,
+      "seed": 2025,
+      "finalValidationAccuracy": 0.09999999999999998,
+      "optimizerSteps": 5000
+    },
+    {
+      "mode": "checked",
+      "rounds": 10,
+      "attackStartZeroBased": 3,
+      "seed": 2025,
+      "finalValidationAccuracy": 0.22644000000000003,
+      "optimizerSteps": 5000
+    },
+    {
+      "mode": "single",
+      "rounds": 10,
+      "attackStartZeroBased": 3,
+      "seed": 2025,
+      "finalValidationAccuracy": 0.21921,
+      "optimizerSteps": 5000
+    }
+  ],
+  "limitation": "Single-seed local diagnostics; full-length multi-seed efficacy remains unverified."
+}
