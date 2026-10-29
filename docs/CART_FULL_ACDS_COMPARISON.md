@@ -50,15 +50,18 @@ git pull --ff-only
 source .venv-hpc/bin/activate
 
 bash scripts/launch_cart_comparison_hpc.sh full \
-  --gpu-count 4 --jobs-per-gpu 2 \
+  --gpu-count 4 --auto-workers \
   --output "$PWD/.papermerge/local-tests/cart-acds-full-100r-20261029"
 ```
 
 The launcher checks resources, verifies each selected GPU and the prior-adjusted
 objective, freezes a new plan and source snapshots, then starts a detached tmux
-supervisor. At most eight configurations run concurrently with these settings;
-clients within each experiment still activate sequentially around the ring.
-Use a fresh output if changing GPU layout, method source or runtime.
+supervisor. Automatic admission fills the selected GPUs as memory permits;
+24 configurations can reach six workers per GPU on this server. Clients within
+each experiment still activate sequentially around the ring. See
+[automatic worker admission](CART_ADAPTIVE_WORKERS.md) for memory budgets and
+checkpoint-preserving handoff from an existing two-worker layout. Use a fresh
+output if changing GPU hardware, method source or numerical runtime.
 
 ```bash
 python scripts/run_cart_comparison.py --monitor \

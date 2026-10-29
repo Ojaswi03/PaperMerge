@@ -90,3 +90,39 @@ def test_full_launcher_assembles_the_requested_24_case_matrix_without_training(t
         assert values(call,'--seeds')==['2025','2026','2027']
         assert values(call,'--nodes')==['100'] and values(call,'--rounds')==['100']
         assert values(call,'--gpus')==['0,1,2,3']
+
+
+@pytest.mark.parametrize('resume',[False,True])
+def test_auto_launcher_verifies_one_slot_then_fills_or_hands_off_saved_run(tmp_path,resume):
+    import json
+    root=Path(__file__).resolve().parents[1];repo=tmp_path/'repo'
+    (repo/'scripts').mkdir(parents=True);(repo/'basil_core').mkdir();(repo/'.venv-hpc/bin').mkdir(parents=True)
+    for name in ('launch_cart_comparison_hpc.sh','select_cart_gpus.py'):
+        shutil.copyfile(root/'scripts'/name,repo/'scripts'/name)
+    (repo/'basil_core/execution_profile.py').write_text('def gpu_inventory():\n return '+repr(inventory(range(4)))+'\n')
+    (repo/'.venv-hpc/bin/python').symlink_to(sys.executable)
+    (repo/'.venv-hpc/bin/activate').write_text('export PATH="'+str(repo/'.venv-hpc/bin')+':$PATH"\n')
+    (repo/'scripts/hpc.py').write_text('')
+    stub=('import json,sys\nfrom pathlib import Path\n'
+        'with Path("invocations.jsonl").open("a") as f:f.write(json.dumps([Path(__file__).name,*sys.argv[1:]])+"\\n")\n')
+    for name in ('run_cart_comparison.py','run_cart_adaptive.py'):(repo/'scripts'/name).write_text(stub)
+    output=repo/'output'
+    if resume:
+        output.mkdir()
+        (output/'plan.json').write_text(json.dumps(dict(jobsPerGpu=2,
+            profiles=[dict(gpu=i,gpu_uuid=f'GPU-{i}-hardware') for i in range(4)]*2)))
+        (output/'campaign.json').write_text('{}')
+    env={k:v for k,v in os.environ.items() if not k.startswith('CART_COMPARISON_')}
+    env['CART_COMPARISON_JOBS_PER_GPU']='2' # Explicit auto ignores old fixed-count environment overrides.
+    command=['bash',str(repo/'scripts/launch_cart_comparison_hpc.sh'),'full','--gpu-count','4',
+        '--auto-workers','--output',str(output)]
+    result=subprocess.run(command,env=env,capture_output=True,text=True)
+    assert result.returncode==0,result.stderr
+    calls=[json.loads(line) for line in (repo/'invocations.jsonl').read_text().splitlines()]
+    assert calls[-1][0]=='run_cart_adaptive.py' and '--execute' in calls[-1]
+    assert ('--take-over' in calls[-1])==resume
+    assert calls[-1][calls[-1].index('--max-workers-per-gpu')+1]=='8'
+    if resume:assert len(calls)==1
+    else:
+        assert len(calls)==3
+        for call in calls[:2]:assert call[call.index('--jobs-per-gpu')+1]=='1'

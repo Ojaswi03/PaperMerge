@@ -55,6 +55,14 @@ def snapshot(directory,*,timing_roots=()):
     gpus=[p['gpu'] for p in plan.get('profiles',[])] or [None]
     lanes=gpus if len(set(gpus))==len(gpus) else [f'{gpu}/slot{index}' for index,gpu in enumerate(gpus)]
     concurrency=plan.get('jobsPerGpu',max(gpus.count(gpu) for gpu in gpus))
+    scheduler=campaign.get('scheduler',{})
+    if scheduler.get('mode')=='adaptive':
+        # Operational lanes belong to this invocation, not the frozen worker
+        # contracts. Concurrent runs must not be summed into old two-slot ETAs.
+        adaptive=scheduler['lanesByRunId']
+        lanes=[adaptive[c['runId']] for c in configs]
+        counts={g:sum(gpus[i%len(gpus)]==g for i in range(len(configs))) for g in set(gpus)}
+        concurrency=min(scheduler['maximumPerGpu'],max(counts.values()))
     entries=[];rates=defaultdict(list);local_rates=defaultdict(list);history=defaultdict(list)
     for location in timing_roots:
         previous=Path(location)
