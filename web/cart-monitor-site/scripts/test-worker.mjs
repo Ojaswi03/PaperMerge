@@ -52,3 +52,19 @@ test('GitHub Pages can read live data without exposing write access',async()=>{
   assert.equal((await worker.fetch(new Request(url,{headers:{origin:'https://other.example'}}),env)).headers.get('access-control-allow-origin'),null);
   assert.equal((await worker.fetch(request('/api/feeds/'+config.feedId,'PUT',sample()),env)).status,401);
 });
+
+test('temporary feed expires, cannot be revived, and returns readable CORS errors',async()=>{
+  const env={BUCKET:bucket()};const create=request('/api/feeds','POST',sample());create.headers.set('x-monitor-lease-seconds','45');
+  const config=await (await worker.fetch(create,env)).json();const path='/api/feeds/'+config.feedId;
+  let record=await (await env.BUCKET.get('feeds/'+config.feedId)).json();
+  assert.equal(record.leaseSeconds,45);assert.ok(Date.parse(record.expiresAt)>Date.now());
+  assert.equal((await worker.fetch(request(path,'PUT',sample(),config.writeToken),env)).status,200);
+  record=await (await env.BUCKET.get('feeds/'+config.feedId)).json();record.expiresAt='2000-01-01T00:00:00Z';
+  await env.BUCKET.put('feeds/'+config.feedId,JSON.stringify(record));
+  const read=await worker.fetch(new Request('https://monitor.example'+path,{headers:{origin:'https://ojaswi03.github.io'}}),env);
+  assert.equal(read.status,410);assert.equal(read.headers.get('access-control-allow-origin'),'https://ojaswi03.github.io');
+  assert.equal((await worker.fetch(request(path,'PUT',sample(),config.writeToken),env)).status,410);
+  assert.equal((await worker.fetch(request(path,'DELETE',undefined,config.writeToken),env)).status,200);
+  const missing=await worker.fetch(new Request('https://monitor.example'+path,{headers:{origin:'https://ojaswi03.github.io'}}),env);
+  assert.equal(missing.status,404);assert.equal(missing.headers.get('access-control-allow-origin'),'https://ojaswi03.github.io');
+});

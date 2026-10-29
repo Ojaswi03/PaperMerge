@@ -21,9 +21,8 @@ cd ~/Masters_Research/PaperMerge
 source .venv-hpc/bin/activate
 git pull --ff-only
 
-python scripts/share_cart_monitor.py \
+python scripts/share_cart_monitor.py --temporary \
   --output "$PWD/.papermerge/local-tests/cart-admission-cifar6-100r-v1" \
-  --tmux cart-browser-monitor \
   --ntfy-topic papermerge-ojaswi
 ```
 
@@ -31,26 +30,42 @@ The command prints **Share this link** followed by the campaign URL. It also
 sends the link to your ntfy topic after the first successful update. Your
 professor can open it in Chrome without SSH, VPN or a ChatGPT account. Only the
 publisher needs outbound HTTPS access from HPC; no inbound HPC port is opened.
-The publisher stays in its own tmux session after SSH disconnect. Training does
-not need restarting.
+Keep this command running in the foreground while you want to share. **Ctrl+C
+deletes the temporary feed**, and viewers see “Sharing session ended” on their
+next refresh. Training does not stop. Each invocation creates a new link, with
+its write credential held only in memory. If cleanup cannot reach the server,
+the temporary feed expires within 45 seconds of its last successful update.
+Do not use `--tmux` for this temporary mode. Training does not need restarting.
 
 The publisher uploads small allowlisted progress snapshots every ten seconds.
 The page refreshes in place every five seconds, showing GPU, dataset/partition,
 seed, status, completed rounds, activations, mean TRAIN-holdout accuracy, elapsed
 time and ETA. It warns when updates are more than 45 seconds old. Completion
-preserves the final snapshot and stops the publisher. No historical curves are
+preserves the final snapshot while your temporary publisher stays open. No historical curves are
 invented from a late connection; the existing experiment reports remain the
 source for full round-by-round results.
 
 Checkpoint files, model weights, data examples, source files, logs, usernames,
 absolute paths, process IDs and raw error messages are excluded. A private
-per-feed write credential is stored with mode 0600 in the ignored campaign
-output as `browser_share.json`; it is never included in the share link or a
+per-feed write credential stays in memory in temporary mode. In optional
+persistent mode it is stored with mode 0600 in the ignored campaign output as
+`browser_share.json`. It is never included in the share link or a
 public API response. Viewers cannot update the feed or control training. Anyone
 can create a separate feed, but cannot modify another feed without its private
 credential. The link is unlisted rather than an authenticated access boundary.
 
-To retrieve the same link later:
+## Optional persistent sharing
+
+For a link that continues after SSH disconnect instead, use the older persistent
+mode. Ctrl+C on a terminal monitor does not revoke a persistent feed:
+
+```bash
+python scripts/share_cart_monitor.py \
+  --output "$PWD/.papermerge/local-tests/cart-admission-cifar6-100r-v1" \
+  --tmux cart-browser-monitor --ntfy-topic papermerge-ojaswi
+```
+
+To retrieve a persistent link later:
 
 ```bash
 python scripts/share_cart_monitor.py \

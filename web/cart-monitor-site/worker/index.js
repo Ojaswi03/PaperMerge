@@ -34,33 +34,39 @@ async function body(request){
 }
 export default {async fetch(request,env){
   const url=new URL(request.url);
+  const cors=request.method==='GET'&&request.headers.get('origin')==='https://ojaswi03.github.io'
+    ?{'access-control-allow-origin':'https://ojaswi03.github.io','vary':'Origin'}:{};
+  const send=(value,status=200)=>reply(value,status,cors);
   if(url.pathname==='/'&&request.method==='GET')return new Response('This monitor address has been retired. Open the GitHub Pages monitor link for your campaign.',{status:410,headers:{'content-type':'text/plain; charset=utf-8','cache-control':'no-store','x-robots-tag':'noindex, nofollow'}});
   if(url.pathname==='/robots.txt')return new Response('User-agent: *\nDisallow: /\n');
-  if(!url.pathname.startsWith('/api/'))return reply({error:'Not found'},404);
-  if(!env.BUCKET)return reply({error:'Progress storage unavailable'},503);
+  if(!url.pathname.startsWith('/api/'))return send({error:'Not found'},404);
+  if(!env.BUCKET)return send({error:'Progress storage unavailable'},503);
   try{
     if(url.pathname==='/api/feeds'&&request.method==='POST'){
       const snapshot=await body(request);const id=crypto.randomUUID();const token=hex(crypto.getRandomValues(new Uint8Array(32)));
-      await env.BUCKET.put('feeds/'+id,JSON.stringify({tokenHash:await hash(token),receivedAt:new Date().toISOString(),snapshot}));
-      return reply({feedId:id,writeToken:token,viewUrl:url.origin+'/?feed='+id},201);
+      const leaseSeconds=request.headers.get('x-monitor-lease-seconds')==='45'?45:null;
+      const expiresAt=leaseSeconds?new Date(Date.now()+leaseSeconds*1000).toISOString():null;
+      await env.BUCKET.put('feeds/'+id,JSON.stringify({tokenHash:await hash(token),receivedAt:new Date().toISOString(),leaseSeconds,expiresAt,snapshot}));
+      return send({feedId:id,writeToken:token,viewUrl:url.origin+'/?feed='+id},201);
     }
     const match=url.pathname.match(/^\/api\/feeds\/([^/]+)$/);
-    if(!match||!uuid.test(match[1]))return reply({error:'Not found'},404);
-    const key='feeds/'+match[1];const object=await env.BUCKET.get(key);if(!object)return reply({error:'Feed not found'},404);
+    if(!match||!uuid.test(match[1]))return send({error:'Not found'},404);
+    const key='feeds/'+match[1];const object=await env.BUCKET.get(key);if(!object)return send({error:'Feed not found'},404);
     const record=await object.json();
     if(request.method==='GET'){
-      const cors=request.headers.get('origin')==='https://ojaswi03.github.io'
-        ?{'access-control-allow-origin':'https://ojaswi03.github.io','vary':'Origin'}:{};
-      return reply({receivedAt:record.receivedAt,snapshot:record.snapshot},200,cors);
+      if(record.expiresAt&&Date.parse(record.expiresAt)<=Date.now())return send({error:'This temporary monitor session has ended'},410);
+      return send({receivedAt:record.receivedAt,snapshot:record.snapshot});
     }
-    if(!['PUT','DELETE'].includes(request.method))return reply({error:'Method not allowed'},405);
-    if(!await authorized(request,record.tokenHash))return reply({error:'Update credential required'},401);
-    if(request.method==='DELETE'){await env.BUCKET.delete(key);return reply({deleted:true});}
+    if(!['PUT','DELETE'].includes(request.method))return send({error:'Method not allowed'},405);
+    if(!await authorized(request,record.tokenHash))return send({error:'Update credential required'},401);
+    if(request.method==='DELETE'){await env.BUCKET.delete(key);return send({deleted:true});}
+    if(record.expiresAt&&Date.parse(record.expiresAt)<=Date.now())return send({error:'This temporary monitor session has ended'},410);
     const snapshot=await body(request);
-    if(Date.parse(snapshot.generatedAt)<Date.parse(record.snapshot.generatedAt))return reply({error:'Older update rejected'},409);
-    const updated={...record,receivedAt:new Date().toISOString(),snapshot};
+    if(Date.parse(snapshot.generatedAt)<Date.parse(record.snapshot.generatedAt))return send({error:'Older update rejected'},409);
+    const updated={...record,receivedAt:new Date().toISOString(),snapshot,
+      expiresAt:record.leaseSeconds?new Date(Date.now()+record.leaseSeconds*1000).toISOString():null};
     const saved=await env.BUCKET.put(key,JSON.stringify(updated),{onlyIf:{etagMatches:object.etag}});
-    if(saved===null)return reply({error:'Concurrent update; retry'},409);
-    return reply({receivedAt:updated.receivedAt});
-  }catch{return reply({error:'Progress update could not be accepted'},400);}
+    if(saved===null)return send({error:'Concurrent update; retry'},409);
+    return send({receivedAt:updated.receivedAt});
+  }catch{return send({error:'Progress update could not be accepted'},400);}
 }};
