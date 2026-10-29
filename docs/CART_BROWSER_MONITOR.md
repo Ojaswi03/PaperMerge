@@ -38,6 +38,8 @@ the temporary feed expires within 45 seconds of its last successful update.
 Do not use `--tmux` for this temporary mode. Training does not need restarting.
 
 The publisher uploads small allowlisted progress snapshots every ten seconds.
+Successful uploads are silent after the initial link; terminal messages appear
+only for issues or when sharing ends.
 The page refreshes in place every five seconds, showing GPU, dataset/partition,
 seed, status, completed rounds, activations, mean TRAIN-holdout accuracy, elapsed
 time and ETA. It warns when updates are more than 45 seconds old. Completion

@@ -26,7 +26,7 @@ def test_publisher_preserves_one_private_write_key_and_returns_only_public_link(
     with pytest.raises(ValueError,match='different dashboard'):module.connection(tmp_path,'https://other.test')
 
 
-def test_publisher_uploads_final_state_then_exits_without_touching_training(tmp_path,monkeypatch):
+def test_publisher_uploads_final_state_then_exits_without_touching_training(tmp_path,monkeypatch,capsys):
     from scripts import share_cart_monitor as module
     setup(tmp_path,[(2025,'clean','mnist',dict(running(100,40),status='COMPLETED'))])
     before={str(p):p.read_bytes() for p in tmp_path.glob('*.json')};calls=[]
@@ -35,6 +35,7 @@ def test_publisher_uploads_final_state_then_exits_without_touching_training(tmp_
     module.publish_loop(args,dict(site='https://example.test',feedId='fixture',writeToken='a'*64))
     assert len(calls)==1 and calls[0][1]=='PUT' and calls[0][2]['status']=='COMPLETED'
     assert before=={str(p):p.read_bytes() for p in tmp_path.glob('*.json')}
+    assert capsys.readouterr().out==''
 
 
 def test_dashboard_origin_rejects_embedded_credentials_and_non_https():

@@ -78,7 +78,6 @@ def publish_loop(args,saved):
             try:
                 data=public_snapshot(args.output)
                 request_json(saved['site']+'/api/feeds/'+saved['feedId'],'PUT',data,saved['writeToken'])
-                print(f'Browser progress updated: {data["completed"]}/{data["total"]} complete.',flush=True)
                 if args.ntfy_topic and not notified:
                     from basil_core.ntfy_notifications import publish
                     receipt=publish(args.ntfy_topic,'CART browser monitor is live','Share this read-only link with your professor:\n\n'+saved['viewUrl']+'\n\nUpdates automatically. Training is unchanged.')
