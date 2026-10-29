@@ -36,9 +36,49 @@ def sha(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def check_plan_source(plan):
+    if plan.get('revision') == 'cart_contribution_20261029_v1':
+        from basil_core.cart_contribution_study import check_source as verify
+        verify(plan['source'])
+    else:
+        check_source(plan['source'])
+
+
+def ensure_source_snapshots(root, plan):
+    """Create missing snapshots only; never overwrite conflicting saved evidence."""
+    for name, expected in plan['source'].items():
+        relative = Path(name)
+        if relative.is_absolute() or '..' in relative.parts:
+            raise ValueError('Invalid producer path.')
+        origin = ROOT / relative
+        target = root / 'source_snapshots' / relative
+        if sha(origin) != expected:
+            raise ValueError('Current producer differs: ' + name)
+        if target.exists():
+            if target.is_symlink() or sha(target) != expected:
+                raise ValueError('Saved producer differs: ' + name)
+        else:
+            target.parent.mkdir(parents=True, exist_ok=True)
+            with target.open('xb') as handle:
+                handle.write(origin.read_bytes())
+
+
+def worker_script(plan):
+    return 'scripts/cart_contribution_worker.py' if plan.get('revision') == 'cart_contribution_20261029_v1' else 'scripts/cart_comparison_worker.py'
+
+
+def completed_report(root, plan):
+    if plan.get('revision') == 'cart_contribution_20261029_v1':
+        from reporting.cart_contribution import report
+        report(root)
+    else:
+        from reporting.cart_comparison import generate
+        generate(root, Path(plan.get('figureDestination') or root / 'figures'), reference=plan.get('reference'))
+
+
 def validate_plan(root):
     plan = read_json(root / 'plan.json')
-    check_source(plan['source'])
+    check_plan_source(plan)
     hardware, assigned = placement(plan)
     inventory = gpu_inventory()
     for p in hardware.values():
@@ -50,6 +90,8 @@ def validate_plan(root):
                 receipt['runtime']['profile'] != asdict(p) or
                 receipt['runtime']['host'] != socket.gethostname()):
             raise ValueError('GPU verification differs from this host/source/profile.')
+        if plan.get('revision') == 'cart_contribution_20261029_v1' and receipt.get('interventionGate') is not True:
+            raise ValueError('Contribution intervention verification is incomplete.')
     campaign = read_json(root / 'campaign.json') if (root / 'campaign.json').exists() else {}
     if campaign.get('host', socket.gethostname()) != socket.gethostname():
         raise ValueError('Run belongs to a different server; no process will be stopped.')
@@ -171,6 +213,7 @@ def execute(args):
         plan, hardware, assigned = validate_plan(root)
         original_plan = sha(root / 'plan.json')
         with acquire_supervisor(root, args.take_over, args.stop_timeout):
+            ensure_source_snapshots(root, plan)
             leases = scaled.acquire_leases(list(hardware.values()))
             try:
                 return schedule(args, plan, hardware, assigned, original_plan, leases)
@@ -260,7 +303,7 @@ def schedule(args, plan, hardware, assigned, original_plan, leases):
                     completed += 1
             if stopped:
                 raise InterruptedError('Adaptive supervisor stop requested.')
-            retry_io(check_source, plan['source'])
+            retry_io(check_plan_source, plan)
             if sha(root / 'plan.json') != original_plan:
                 raise ValueError('Frozen plan changed during execution.')
             # One launch per GPU per pass, round-robin. Every pass samples live
@@ -283,7 +326,7 @@ def schedule(args, plan, hardware, assigned, original_plan, leases):
                 cfg = plan['configs'][i]
                 log = (root / (cfg['runId'] + '.log')).open('a')
                 fd = leases[gpu].fileno()
-                command = [sys.executable, str(ROOT / 'scripts/cart_comparison_worker.py'),
+                command = [sys.executable, str(ROOT / worker_script(plan)),
                            '--worker', str(i), '--output', str(root), '--lease-fd', str(fd)]
                 try:
                     process = subprocess.Popen(command, cwd=ROOT, env=scaled.core.worker_environment(p),
@@ -300,8 +343,7 @@ def schedule(args, plan, hardware, assigned, original_plan, leases):
         status = 'COMPLETED_WITH_FAILURES' if failures else 'COMPLETED'
         if not failures:
             try:
-                from reporting.cart_comparison import generate
-                generate(root, Path(plan.get('figureDestination') or root / 'figures'), reference=plan.get('reference'))
+                completed_report(root, plan)
             except Exception as error:
                 status = 'COMPLETED_REPORT_FAILED'
                 write_json(root / 'report_status.json', dict(trainingComplete=True, status=status, error=str(error)))
@@ -332,7 +374,7 @@ def main():
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--execute', action='store_true')
     parser.add_argument('--take-over', action='store_true')
-    parser.add_argument('--max-workers-per-gpu', type=int, choices=range(1, 9), default=8)
+    parser.add_argument('--max-workers-per-gpu', type=int, choices=range(1, 25), default=8)
     parser.add_argument('--poll-seconds', type=int, choices=range(1, 31), default=3, metavar='SECONDS')
     parser.add_argument('--stop-timeout', type=int, choices=range(10, 601), default=180, metavar='SECONDS')
     parser.add_argument('--tmux')

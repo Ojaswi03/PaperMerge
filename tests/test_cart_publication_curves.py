@@ -120,3 +120,46 @@ def test_wait_wakes_only_when_all_metrics_are_committed(monkeypatch,tmp_path):
     sleeps=[];monkeypatch.setattr(cli.time,'sleep',sleeps.append)
     cli.wait_for_completion(tmp_path,15)
     assert sleeps==[15,15]
+
+
+def test_contribution_aliases_do_not_merge_distinct_variants(complete,tmp_path):
+    root,plan=complete
+    for view in plan['configs']:
+        arm='acds_checked' if view['comparisonCase']['arm']=='acds' else 'cart_full'
+        view['comparisonCase']['studyVariant']=dict(name=arm,revision='contribution')
+        path=root/view['runId']/'run.json'
+        row=json.loads(path.read_text());row['config']=view;path.write_text(json.dumps(row))
+    (root/'plan.json').write_text(json.dumps(plan))
+    _,rows,_=plots.collect(root)
+    assert {r['arm'] for r in rows}=={'acds_checked','cart_full'}
+    manifest=plots.generate(root,tmp_path/'contribution-figures',arms=['cart_full'])
+    assert manifest['configurations']==12
+    svg=(tmp_path/'contribution-figures/comparison_joint_sigma_0.01_accuracy_curves.svg').read_text()
+    assert 'SHARP + CART' in svg and 'ACDS' not in svg
+
+
+def test_contribution_report_and_export_preserve_inputs_and_require_complete_groups(complete,tmp_path):
+    from reporting.cart_contribution import report
+    from scripts.export_cart_contribution import export
+    root,plan=complete
+    for view in plan['configs']:
+        name='acds_checked' if view['comparisonCase']['arm']=='acds' else 'cart_full'
+        view['comparisonCase']['studyVariant']=dict(name=name,revision='contribution')
+        folder=root/view['runId'];path=folder/'run.json'
+        row=json.loads(path.read_text());row['config']=view;path.write_text(json.dumps(row))
+        with np.load(folder/'metrics.npz',allow_pickle=False) as z:accuracy=z['roundNodeAccuracy']
+        np.savez(folder/'metrics.npz',roundNodeAccuracy=accuracy,roundHonestMeanAccuracy=accuracy.mean(axis=1))
+        (folder/'mechanisms.json').write_text('{}')
+    (root/'plan.json').write_text(json.dumps(plan))
+    (root/'campaign.json').write_text(json.dumps(dict(status='COMPLETED')))
+    (root/'adaptive_execution.json').write_text('{}')
+    before={p:plots.sha(p) for p in root.rglob('*') if p.is_file()}
+    assert report(root)==24
+    assert all(plots.sha(p)==value for p,value in before.items())
+    with (root/'publication_curves/seed_endpoints.csv').open() as handle:
+        rows=list(csv.DictReader(handle))
+    assert len(rows)==24 and all(float(r['finalAccuracy'])>=float(r['lastTenRoundAccuracy']) for r in rows)
+    destination=tmp_path/'export'
+    assert export(root,destination)==24
+    assert len(plots.collect(destination)[1])==24
+    assert not list(destination.rglob('checkpoint.npz'))

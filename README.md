@@ -8,7 +8,16 @@ The [full ACDS/CART comparison](docs/CART_FULL_ACDS_COMPARISON.md) runs 24 match
 `launch_cart_comparison_hpc.sh full --gpu-count 4`; GPU counts one through four
 are supported. See the [isolation findings](docs/CART_ISOLATION_FINDINGS_20261029.md)
 for the tested fallback correction and the [contribution wording](docs/CART_NOVELTY_POSITION_20261029.md)
-for the current limits of the novelty claim. Full comparison results are pending.
+for the current limits of the novelty claim. The author reports all 24 HPC cases
+completed; raw-result export and independent final inference remain to be checked.
+
+The [matched contribution study](docs/CART_CONTRIBUTION_HPC.md) adds checked-pooling
+ACDS/SHARP controls and CART ablations. It supports one to four GPUs and fills
+each device with independent workers under live GPU and host-memory reservations.
+The default 66-case matrix is designed for concurrent execution on the four-GPU
+server; every GPU must pass execution gates before training starts. See the
+[conditional receiver contract](docs/CART_EMPIRICAL_CONTRACT.md) for the limited
+property that can be derived from the two admission checks.
 
 **Current evidence:** the completed 72-run study and six-run CIFAR admission/
 commitment revision are preserved in [result exports](docs/results/).

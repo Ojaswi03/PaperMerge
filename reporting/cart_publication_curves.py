@@ -59,7 +59,7 @@ def collect(root):
             hashes[key] = sha(folder / name)
         case = view['comparisonCase']
         records.append(dict(dataset=view['dataset'], partition=view['partition'], seed=view['seed'],
-            arm=case['arm'], environment=case['environment'], sigma=view['sigma'],
+            arm=case.get('studyVariant', {}).get('name', case['arm']), environment=case['environment'], sigma=view['sigma'],
             rounds=view['rounds'], nodes=view['nodes'], attackStart=view['attackStart'],
             alpha=view['dirichletAlpha'], shareFraction=case['shareFraction'], runId=run_id,
             curve=accuracy.mean(axis=1)))
@@ -89,7 +89,10 @@ def collect(root):
 
 COLORS = {'prior_fallback': '#0072B2', 'cart': '#0072B2', 'acds': '#D55E00',
           'sharp': '#555555', 'macro': '#009E73', 'prior_cart': '#56B4E9'}
-ORDER = ('prior_fallback', 'cart', 'prior_cart', 'acds', 'sharp', 'macro')
+COLORS.update(cart_full='#0072B2', acds_checked='#D55E00', sharp_checked='#555555',
+    cart_macro='#009E73', cart_ingress='#CC79A7', cart_commit='#E69F00',
+    cart_no_prior='#56B4E9', cart_no_calibration='#332288', cart_no_repair='#882255')
+ORDER = ('cart_full', 'acds_checked', 'sharp_checked', 'prior_fallback', 'cart', 'prior_cart', 'acds', 'sharp', 'macro')
 LABELS = {'prior_fallback': 'SHARP + CART', 'cart': 'SHARP + CART',
           'acds': 'SHARP + ACDS', 'sharp': 'SHARP', 'macro': 'CART (macro only)',
           'prior_cart': 'CART (local-prior training)', 'prior_macro': 'CART (local prior, macro only)',
@@ -98,6 +101,11 @@ LABELS = {'prior_fallback': 'SHARP + CART', 'cart': 'SHARP + CART',
           'local_only': 'Local training', 'fresh_peer': 'Fresh peer',
           'no_calibration': 'CART (no calibration)', 'no_repair': 'CART (no head repair)',
           'balanced_commit': 'CART (balanced-loss check)'}
+LABELS.update(cart_full='SHARP + CART', acds_checked='SHARP + ACDS (checked pooling)',
+    sharp_checked='SHARP (checked pooling)', cart_macro='CART (macro only)',
+    cart_ingress='CART (admission only)', cart_commit='CART (update check only)',
+    cart_no_prior='CART (no training prior)', cart_no_calibration='CART (no calibration)',
+    cart_no_repair='CART (no head repair)', acds_single='SHARP + ACDS (single model)')
 DATASETS = {'mnist': 'MNIST', 'cifar10': 'CIFAR-10', 'cifar100': 'CIFAR-100'}
 
 
@@ -150,13 +158,17 @@ def _draw(ax, records, title, upper, styles):
     ax.tick_params(length=3, width=.6, color='#888888')
 
 
-def generate(root, destination):
+def generate(root, destination, *, arms=None):
     import numpy as np
     import matplotlib
     matplotlib.use('Agg')
     import matplotlib.pyplot as plt
     root, dest = Path(root).resolve(), Path(destination).resolve()
     plan, records, hashes = collect(root)
+    if arms is not None:
+        records = [r for r in records if r['arm'] in arms]
+        if not records:
+            raise ValueError('No matching methods for learning curves.')
     protected = [root / 'source_snapshots', root / 'scheduler_snapshots', *[root / c['runId'] for c in plan['configs']]]
     if dest == root or dest in root.parents or any(dest == p or p in dest.parents for p in protected):
         raise ValueError('Figure destination overlaps experiment inputs.')
