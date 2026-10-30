@@ -1,3 +1,0 @@
-dataset,partition,sigma,condition,seed,primary,final,revision
-cifar10,iid,0.01,attack_noise_defense_rla_cart,2026,0.24785200000000002,0.27828,cart_admission_20261028_prior_neutral_class_dev1
-cifar10,dirichlet,0.01,attack_noise_defense_rla_cart,2026,0.13212000000000002,0.14562,cart_admission_20261028_prior_neutral_class_dev1
