@@ -210,24 +210,25 @@
   },
   "plotterSha256": "b4d753a36b17e0aa54da54185906b2e03eafad5d4535fa3ab81eaf092e59f463",
   "outputSha256": {
-    "mnist_joint_sigma_0.01_accuracy_curves.svg": "344d79cd1f7b56360b54260dbae6bb595c5031706f5ab0b1fdc20d11c088a545",
+    "mnist_joint_sigma_0.01_accuracy_curves.svg": "7aee5315f7b6db2377f1b00708b402b6f68914a0339d66fef503ef5b650f6de6",
     "mnist_joint_sigma_0.01_accuracy_curves.pdf": "3e3255a3c8a1d27b2788d701b1eb3ac912c933d9759811f247b60dd7ecafa30b",
     "mnist_joint_sigma_0.01_accuracy_curves.png": "50138f0549872b238e34d6c23c56d2621206aeee88c2af1da24d77a68c673fa1",
-    "mnist_joint_sigma_0.01_seed_curves.svg": "523b1ed345a1e66f94e9bb579d9b8aa9a8323630a5904837b6997b7cef5716e7",
+    "mnist_joint_sigma_0.01_seed_curves.svg": "0b9989b72eaabb25b0c439a0ae7af06400789752a20fecc044352f9a4f03ffe4",
     "mnist_joint_sigma_0.01_seed_curves.pdf": "58af0443082f42c36c2f0f388f0bc57a7ae704a7abc190630ebee645f70f3557",
     "mnist_joint_sigma_0.01_seed_curves.png": "6d07bf8d16b51eca9667afd7867de70653ab55ded82c31b605df7d780aa6b295",
-    "cifar10_joint_sigma_0.01_accuracy_curves.svg": "637334a906a0ab95ff49622a323e4da98642cfafdfee67be18e3790f0425450d",
+    "cifar10_joint_sigma_0.01_accuracy_curves.svg": "8a631c4ad6828ef47268f25213b218c17e3b829250ed1a21ce5f6c26c507d31f",
     "cifar10_joint_sigma_0.01_accuracy_curves.pdf": "cc0cf40b329441fc1b7744efde6394e965ceb0e93636ddd123e5a23e6091047a",
     "cifar10_joint_sigma_0.01_accuracy_curves.png": "43537149f4efa158f2037207a3d7ed31c1f584114295683d9ba803eb002f5293",
-    "cifar10_joint_sigma_0.01_seed_curves.svg": "1ccc22bb34fede2c911ce4c502a7841e2cc1c9685d6b2891dbc812054374b66c",
+    "cifar10_joint_sigma_0.01_seed_curves.svg": "03053f97c29fefb47571dad60e83ac1b7f13305bbca2ede9714bce15e1acba49",
     "cifar10_joint_sigma_0.01_seed_curves.pdf": "7ce7964d4cb81864418ed1e9ef324423eb64ad86c539113df6e3c59a8d9861df",
     "cifar10_joint_sigma_0.01_seed_curves.png": "898d1cc1e3709be77af7846a76a692fea2cbccafb6b126b40792dc25d6ea51c2",
-    "comparison_joint_sigma_0.01_accuracy_curves.svg": "098bf783377732fce68c2a31f78de3f0d9802adc47e6d6444118585ec862f78c",
+    "comparison_joint_sigma_0.01_accuracy_curves.svg": "aa3c4b44ada094afb3f070ae774c10703a7b1edbcd5049772ef8479386c70bf3",
     "comparison_joint_sigma_0.01_accuracy_curves.pdf": "47453715a4f4f0115eb4df1475fbd39619d37a2ff35db0a6f52b301005f292fb",
     "comparison_joint_sigma_0.01_accuracy_curves.png": "5555c9349dae9fe589a6740eee3da0a2cbb5497e704076477a6cf351471b6986",
     "accuracy_by_round_and_seed.csv": "d35428101988ccc4a5c1464b46366707eba89ae0e74cb201c06f28e425233f37",
     "accuracy_mean_and_sd.csv": "cb115974961d528bc624a5802ed0202b8cb4e6ab0bdde3e5e083bc364e2ba174",
     "captions.txt": "7e21baa3f429151ddae4c2f2352e87608ecca98f3f67158c6afefc719b914c95"
   },
-  "destination": "/home/ojaswi/PaperMerge/docs/thesis-figures/cart-review-20261029/component_review"
+  "destination": "/home/ojaswi/PaperMerge/docs/thesis-figures/cart-review-20261029/component_review",
+  "svgWhitespaceNormalized": true
 }
