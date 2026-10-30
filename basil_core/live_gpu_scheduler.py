@@ -38,6 +38,41 @@ def argv_value(argv, flag):
     return next((v.split('=', 1)[1] for v in argv if v.startswith(flag + '=')), None)
 
 
+def script_command(item):
+    """Resolve a Python script using the process's cwd and interpreter options.
+
+    Never mistake `python -u script.py` for a script named `-u`. Reject code
+    strings/modules and unknown interpreter flags rather than guessing a PID's
+    purpose. Return only script arguments for subsequent output/worker checks.
+    """
+    argv = item['argv']; index = 1
+    while index < len(argv):
+        option = argv[index]
+        if option == '--':
+            index += 1
+            break
+        if not option.startswith('-') or option == '-':
+            break
+        if option in ('-c','-m','-'):
+            return None, []
+        if option in ('-W','-X'):
+            if index + 1 >= len(argv): return None, []
+            index += 2
+        elif option.startswith(('-W','-X')) or (len(option)>1 and all(c in 'bBdEhiIOPqRsSuvVx' for c in option[1:])):
+            index += 1
+        else:
+            return None, []
+    if index >= len(argv) or argv[index] == '-': return None, []
+    cwd = Path(item.get('cwd',str(ROOT)))
+    script = (cwd / argv[index]).resolve()
+    return script, argv[index + 1:]
+
+
+def output_matches(arguments, item, root):
+    value = argv_value(arguments,'--output')
+    return value is not None and (Path(item.get('cwd',str(ROOT))) / value).resolve() == root
+
+
 def identity(pid):
     proc = Path('/proc') / str(pid)
     if proc.stat().st_uid != os.getuid():
@@ -48,7 +83,8 @@ def identity(pid):
     # The command name can contain spaces and parentheses.
     stat = proc.joinpath('stat').read_text().rsplit(')', 1)[1].split()
     argv = proc.joinpath('cmdline').read_bytes().decode().rstrip('\0').split('\0')
-    return dict(pid=pid, start=stat[19], ppid=int(stat[1]), argv=argv)
+    return dict(pid=pid, start=stat[19], ppid=int(stat[1]), argv=argv,
+        cwd=str(proc.joinpath('cwd').resolve(strict=True)))
 
 
 def same_process(expected):
@@ -83,13 +119,12 @@ def discover(root, config_count):
         if not proc.name.isdecimal():
             continue
         try:
-            item = identity(int(proc.name)); argv = item['argv']
-            if len(argv) < 2 or Path(argv[1]).resolve() != WORKER:
+            item = identity(int(proc.name)); script, arguments = script_command(item)
+            if script != WORKER:
                 continue
-            output = argv_value(argv, '--output')
-            if output is None or Path(output).resolve() != root:
+            if not output_matches(arguments,item,root):
                 continue
-            index = int(argv_value(argv, '--worker'))
+            index = int(argv_value(arguments, '--worker'))
             if not 0 <= index < config_count or index in workers:
                 raise RuntimeError('Duplicate or invalid worker index; handover refused.')
             raw = proc.joinpath('environ').read_bytes().split(b'\0')
@@ -131,11 +166,9 @@ def controller(root):
         item = identity(pid)
     except FileNotFoundError:
         return None
-    argv = item['argv']
-    script = Path(argv[1]).resolve() if len(argv) > 1 else Path('/')
-    if (script.parent != ROOT / 'scripts' or script.name not in OWNERS or
-            '--execute' not in argv or
-            Path(argv_value(argv, '--output') or '/').resolve() != root):
+    script, arguments = script_command(item)
+    if (script is None or script.parent != ROOT / 'scripts' or script.name not in OWNERS or
+            '--execute' not in arguments or not output_matches(arguments,item,root)):
         raise ValueError('Recorded owner is not this campaign supervisor.')
     if row.get('status') not in ('RUNNING', 'WAITING_FOR_RESOURCES', 'SUPERVISOR_RECOVERY_NEEDED'):
         raise ValueError('Supervisor is not scheduling verified training.')

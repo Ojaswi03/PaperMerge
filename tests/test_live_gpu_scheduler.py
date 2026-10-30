@@ -107,7 +107,9 @@ def test_process_identity_pins_original_start_time():
 def test_shared_server_discovery_skips_foreign_uid_before_reading_command(tmp_path,monkeypatch):
     foreign=Path('/proc/111111');owned=Path('/proc/222222')
     original_stat=Path.stat;original_text=Path.read_text;original_bytes=Path.read_bytes
-    original_iter=Path.iterdir
+    original_iter=Path.iterdir;original_resolve=Path.resolve
+    monkeypatch.setattr(Path,'resolve',lambda path,*a,**kw:live.ROOT
+        if path==owned/'cwd' else original_resolve(path,*a,**kw))
     monkeypatch.setattr(Path,'iterdir',lambda path:iter([foreign,owned])
         if path==Path('/proc') else original_iter(path))
     def stat(path,*args,**kwargs):
@@ -252,6 +254,33 @@ def test_controller_identity_rejects_training_worker_pid(tmp_path,monkeypatch):
         live.controller(tmp_path)
 
 
+@pytest.mark.parametrize('options',[[],['-u'],['-u','-B'],['-uB'],['-W','ignore'],
+    ['-Wignore'],['-X','dev'],['-Xdev'],['--']])
+def test_controller_accepts_python_options_before_verified_script(tmp_path,monkeypatch,options):
+    write_json(tmp_path/'campaign.json',dict(host=socket.gethostname(),ownerPid=123,status='RUNNING'))
+    item=dict(pid=123,cwd=str(live.ROOT),argv=[sys.executable,*options,
+        'scripts/resume_basil_sharp_resilient.py','--resume','--execute','--output',str(tmp_path)])
+    monkeypatch.setattr(live,'identity',lambda _:item)
+    assert live.controller(tmp_path)==item
+
+
+@pytest.mark.parametrize('options',[['-c','print(1)'],['-m','some_module'],['--unknown']])
+def test_interpreter_code_or_module_is_not_a_verified_supervisor(tmp_path,monkeypatch,options):
+    write_json(tmp_path/'campaign.json',dict(host=socket.gethostname(),ownerPid=123,status='RUNNING'))
+    item=dict(pid=123,cwd=str(live.ROOT),argv=[sys.executable,*options,
+        'scripts/resume_basil_sharp_resilient.py','--execute','--output',str(tmp_path)])
+    monkeypatch.setattr(live,'identity',lambda _:item)
+    with pytest.raises(ValueError,match='not this campaign supervisor'):
+        live.controller(tmp_path)
+
+
+def test_relative_supervisor_path_uses_process_cwd_not_observer_cwd(tmp_path):
+    script,arguments=live.script_command(dict(cwd=str(live.ROOT/'scripts'),argv=[sys.executable,
+        '-u','resume_basil_sharp_resilient.py','--output','../output']))
+    assert script==live.ROOT/'scripts/resume_basil_sharp_resilient.py'
+    assert live.output_matches(arguments,dict(cwd=str(live.ROOT/'scripts')),live.ROOT/'output')
+
+
 def test_adoption_failure_resumes_original_dispatch_without_touching_workers(tmp_path,monkeypatch):
     from basil_core import basil_sharp_thesis as study
     hardware={0:profile(tmp_path,0)}
@@ -278,11 +307,17 @@ def test_adoption_failure_resumes_original_dispatch_without_touching_workers(tmp
 
 @pytest.mark.skipif(not hasattr(os,'pidfd_open'),reason='Linux pidfd required')
 def test_full_live_handover_discovers_and_adopts_real_unchanged_worker(tmp_path,monkeypatch):
-    worker_script=tmp_path/'fake_training.py'
+    project=tmp_path/'project';(project/'scripts').mkdir(parents=True)
+    (project/'basil_core').mkdir()
+    original_root=live.ROOT
+    for name in ('basil_core/live_gpu_scheduler.py','scripts/rebalance_basil_sharp_live.py'):
+        (project/name).write_bytes((original_root/name).read_bytes())
+    root=tmp_path/'output';root.mkdir()
+    worker_script=project/'scripts/basil_sharp_thesis_worker.py'
     worker_script.write_text('import time\ntime.sleep(60)\n')
-    p=profile(tmp_path,0)
+    p=profile(root,0)
     plan=dict(configs=[dict(runId='case')],source={})
-    write_json(tmp_path/'plan.json',plan);digest=live.sha(tmp_path/'plan.json')
+    write_json(root/'plan.json',plan);digest=live.sha(root/'plan.json')
     record=tmp_path/'child.pid'
     source='''import os,signal,subprocess,sys,time
 child=subprocess.Popen([sys.executable,sys.argv[1],'--worker','0','--output',sys.argv[2]],env=os.environ.copy())
@@ -290,16 +325,22 @@ signal.signal(signal.SIGTERM,lambda *_:(child.terminate(),sys.exit(1)))
 open(sys.argv[3],'w').write(str(child.pid))
 while True:time.sleep(1)
 '''
-    parent=subprocess.Popen([sys.executable,'-c',source,str(worker_script),str(tmp_path),str(record)],
+    supervisor_script=project/'scripts/resume_basil_sharp_resilient.py'
+    supervisor_script.write_text(source)
+    parent=subprocess.Popen([sys.executable,'-u','scripts/resume_basil_sharp_resilient.py',
+        str(worker_script),str(root),str(record),'--execute','--output',str(root)],cwd=project,
         env={**os.environ,'PAPERMERGE_EXECUTION_PROFILE':json.dumps(asdict(p))})
     child=None
     try:
         deadline=time.monotonic()+5
         while not record.exists() and time.monotonic()<deadline:time.sleep(.01)
         child=int(record.read_text());child_identity=live.identity(child)
+        write_json(root/'campaign.json',dict(host=socket.gethostname(),ownerPid=parent.pid,status='RUNNING'))
+        monkeypatch.setattr(live,'ROOT',project)
         monkeypatch.setattr(live,'WORKER',worker_script)
         monkeypatch.setattr(live,'verified',lambda _: (plan,{0:p},[p],digest))
-        monkeypatch.setattr(live,'controller',lambda _:live.identity(parent.pid))
+        # Use the REAL identity validator, including -u and the parent's cwd.
+        assert live.controller(root)['pid']==parent.pid
         def schedule(args,actual_plan,hardware,assigned,actual_digest,active,leases):
             assert active[0][0].pid==child and active[0][0].poll() is None
             assert live.same_process(child_identity)
@@ -307,9 +348,9 @@ while True:time.sleep(1)
             assert assigned==[p] and actual_digest==digest and leases=={}
             return 0
         monkeypatch.setattr(live,'schedule',schedule)
-        assert live.execute(SimpleNamespace(output=tmp_path))==0
-        assert live.same_process(child_identity) and live.sha(tmp_path/'plan.json')==digest
-        receipt=read_json(next((tmp_path/'operational_adapters').glob('live-handover-*.json')))
+        assert live.execute(SimpleNamespace(output=root))==0
+        assert live.same_process(child_identity) and live.sha(root/'plan.json')==digest
+        receipt=read_json(next((root/'operational_adapters').glob('live-handover-*.json')))
         assert receipt['activeWorkersSignalled'] is False and receipt['adoptedWorkers']['0']['pid']==child
     finally:
         if child:

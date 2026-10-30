@@ -2,7 +2,7 @@
   "status": "READY_FOR_HPC_LIVE_HANDOVER",
   "date": "2026-10-30",
   "tests": {
-    "passed": 101,
+    "passed": 114,
     "kind": "Local CPU process handover and mocked GPU scheduling; not a remote HPC execution"
   },
   "checks": [
@@ -19,14 +19,18 @@
     "Scientific producer fingerprints unchanged",
     "Shared-server process discovery skips other users before reading command/environment",
     "Targeted controller identity refuses foreign processes",
-    "Invalid owned worker contracts are not silently skipped"
+    "Invalid owned worker contracts are not silently skipped",
+    "Supervisor validation parses python -u and interpreter flags before the script",
+    "Relative executable/output paths resolve using the target process cwd",
+    "Full real-process handover exercises actual supervisor identity validation",
+    "Background launch validates the recorded owner in the foreground first"
   ],
   "frozenProducerFiles": 76,
   "source": {
-    "basil_core/live_gpu_scheduler.py": "508e7bc23bd4f1246b48155e72870c793bb2647d9794c39861ff57b16a2108cc",
-    "scripts/rebalance_basil_sharp_live.py": "67cd166e84687fd5f9e6f310a3b7557131d3e9712feabff8a922d43ec1a0e6df",
+    "basil_core/live_gpu_scheduler.py": "b44ebb6d7e93eec8cddf468053f360252999aabd9be10c061b680c43c5fb67ea",
+    "scripts/rebalance_basil_sharp_live.py": "bdc207f114b204378d3b5d9aa3988c9c73dacc6da28b7870604a58f5415691c1",
     "basil_core/sharp_monitor.py": "ca687aacefa81a36f6a521f69cf7164a29323498027223f7a3b5d7b3b2e8ad56",
-    "tests/test_live_gpu_scheduler.py": "ad5e3cf37fb3015c1979fee5be7aa6bdae1f77aa3b605a5289d3d8d35710d48d"
+    "tests/test_live_gpu_scheduler.py": "a4527fae79c339facb6772ada377ca31497b690a244b940ca01a8a90e0ac3687"
   },
-  "fix": "Process ownership refusal uses PermissionError so the shared-server discovery filter can skip inaccessible foreign processes."
+  "fix": "Shared-server UID filtering plus interpreter-option-aware supervisor identity checks, including the actual python -u recovery invocation."
 }

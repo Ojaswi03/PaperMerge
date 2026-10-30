@@ -25,6 +25,8 @@ def main():
         from basil_core.ntfy_notifications import validate_destination
         validate_destination(args.ntfy_topic,'https://ntfy.sh')
     plan,hardware,assigned,digest=live.verified(args.output)
+    # Fail in the foreground before claiming a background handover has started.
+    owner=live.controller(args.output)
     workers=live.discover(args.output,len(assigned))
     print(json.dumps(dict(verifiedGpus=list(hardware),activeWorkers=len(workers),
         activePerGpu=dict(Counter(v['profile']['gpu'] for v in workers.values())),
@@ -32,7 +34,8 @@ def main():
         contextReserveMiB=plan['resourceBudget']['context_overhead_mib'],
         hostRamPerWorkerMiB=assigned[0].ram_mib,
         hostHeadroomMiB=plan['resourceBudget']['ram_headroom_mib'],
-        maximumPerGpu=args.maximum,planPreserved=True),indent=2),flush=True)
+        maximumPerGpu=args.maximum,planPreserved=True,
+        recordedSupervisorVerified=owner is not None),indent=2),flush=True)
     if not args.execute:
         print('Read-only check. Add --execute --background for a live handover.');return 0
     if args.background:
