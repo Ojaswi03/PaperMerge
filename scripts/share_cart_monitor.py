@@ -132,6 +132,7 @@ def main():
     from basil_core import stable_monitor
     p.add_argument('--state-dir',type=Path,default=stable_monitor.STATE_ROOT)
     p.add_argument('--background',action='store_true',help='Keep one permanent publisher running after SSH disconnects.')
+    p.add_argument('--stop-old-monitors',action='store_true',help='Stop old browser/terminal monitors on this host; keep training and the permanent publisher.')
     p.add_argument('--serve-stable',action='store_true',help=argparse.SUPPRESS)
     p.add_argument('--publisher-lock-fd',type=int,help=argparse.SUPPRESS)
     p.add_argument('--temporary',action='store_true',help='Foreground link; Ctrl+C deletes its feed, with a 45-second expiry fallback.')
@@ -141,6 +142,12 @@ def main():
     if a.background and (a.temporary or a.tmux or a.once or a.print_link):p.error('--background is for permanent sharing only.')
     if a.temporary and (a.tmux or a.once or a.print_link):p.error('--temporary runs in the foreground; do not combine it with --tmux, --once or --print-link.')
     if a.temporary and a.interval>15:p.error('Temporary feeds require an interval of 1 to 15 seconds.')
+    if a.stop_old_monitors:
+        result=stable_monitor.stop_old_monitors(ROOT,a.state_dir)
+        for row in result['stopped']:print(f'Sent stop to old {row["kind"]} PID {row["pid"]}.')
+        if not result['stopped']:print('No old monitor processes found on this server.')
+        print(f'Permanent publishers kept: {len(result["permanentPublishersKept"])}. Training was not targeted.')
+        return
     a.site=origin(a.site)
     if a.print_link:
         path=a.state_dir/'connection.json'

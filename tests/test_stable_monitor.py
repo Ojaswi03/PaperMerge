@@ -137,3 +137,31 @@ def test_legacy_retirement_targets_only_this_output_reporter(tmp_path,monkeypatc
     monkeypatch.setattr(stable.signal,'pidfd_send_signal',lambda fd,sig:signals.append(sig))
     stable.retire_legacy_publisher(output,script)
     assert signals==[stable.signal.SIGTERM]
+
+
+def test_stop_old_monitors_keeps_training_and_permanent_publisher(tmp_path,monkeypatch):
+    project=tmp_path/'project';project.mkdir();state=tmp_path/'state';signals=[];entries=[]
+    commands=[['python',str(project/'scripts/share_cart_monitor.py'),'--output','/old'],
+        ['python',str(project/'scripts/share_cart_monitor.py'),'--temporary','--output','/old'],
+        ['python',str(project/'scripts/share_cart_monitor.py'),'--serve-stable','--state-dir',str(state)],
+        ['python',str(project/'scripts/run_cart_comparison.py'),'--monitor','--output','/old'],
+        ['python',str(project/'scripts/run_cart_comparison.py'),'--execute','--output','/training'],
+        ['python',str(project/'scripts/run_basil_sharp_thesis.py'),'--execute','--output','/training'],
+        ['python',str(project/'scripts/basil_sharp_thesis_worker.py'),'--output','/training'],
+        ['python',str(project/'scripts/hpc.py'),'monitor'],
+        ['python',str(project/'scripts/hpc.py'),'run','--queue','monitor']]
+    for index,words in enumerate(commands,22340):
+        folder=tmp_path/'proc'/str(index);folder.mkdir(parents=True)
+        (folder/'cmdline').write_bytes(('\0'.join(words)+'\0').encode())
+        (folder/'cwd').symlink_to(project,target_is_directory=True);entries.append(folder)
+    original=Path.iterdir
+    monkeypatch.setattr(Path,'iterdir',lambda path:iter(entries) if path==Path('/proc') else original(path))
+    descriptors={}
+    def descriptor(pid):
+        value=os.open('/dev/null',os.O_RDONLY);descriptors[value]=pid;return value
+    monkeypatch.setattr(stable.os,'pidfd_open',descriptor)
+    monkeypatch.setattr(stable.signal,'pidfd_send_signal',lambda fd,sig:signals.append((descriptors[fd],sig)))
+    result=stable.stop_old_monitors(project,state)
+    assert [pid for pid,_ in signals]==[22340,22341,22343,22347]
+    assert result['permanentPublishersKept']==[22342]
+    assert signals[2][1]==stable.signal.SIGINT

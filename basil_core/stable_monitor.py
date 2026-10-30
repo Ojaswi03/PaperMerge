@@ -110,6 +110,50 @@ def retire_legacy_publisher(root, script):
                 os.close(descriptor)
 
 
+def stop_old_monitors(project, state):
+    """Stop this user's read-only project monitors; retain the permanent daemon."""
+    project, state = Path(project).resolve(), Path(state).resolve()
+    browser = project / 'scripts/share_cart_monitor.py'
+    terminals = {project / 'scripts/run_cart_comparison.py', project / 'scripts/run_sharp_study.py'}
+    hpc = project / 'scripts/hpc.py'
+    stopped, kept = [], []
+    for entry in Path('/proc').iterdir():
+        if not entry.name.isdigit() or int(entry.name) == os.getpid():
+            continue
+        descriptor = None
+        try:
+            if entry.stat().st_uid != os.getuid():
+                continue
+            descriptor = os.pidfd_open(int(entry.name))
+            words = (entry / 'cmdline').read_bytes().decode().strip('\0').split('\0')
+            cwd = (entry / 'cwd').resolve()
+            positions = {index:(Path(word) if Path(word).is_absolute() else cwd / word).resolve()
+                         for index,word in enumerate(words[1:],1) if word and not word.startswith('-')}
+            paths = set(positions.values())
+            kind, stop_signal = None, signal.SIGTERM
+            if browser in paths:
+                value = next((word.split('=', 1)[1] for word in words if word.startswith('--state-dir=')), None)
+                if '--state-dir' in words:
+                    value = words[words.index('--state-dir') + 1]
+                folder = Path(value) if value else STATE_ROOT
+                if not folder.is_absolute():folder = cwd / folder
+                if '--serve-stable' in words and folder.resolve() == state:
+                    kept.append(int(entry.name));continue
+                kind = 'browser publisher'
+            elif (paths & terminals and '--monitor' in words and '--execute' not in words) or (
+                    any(path==hpc and words[index+1:index+2]==['monitor'] for index,path in positions.items())
+                    and '--execute' not in words):
+                kind, stop_signal = 'terminal monitor', signal.SIGINT
+            if kind:
+                signal.pidfd_send_signal(descriptor, stop_signal)
+                stopped.append(dict(pid=int(entry.name), kind=kind))
+        except (OSError, ValueError, IndexError):
+            continue
+        finally:
+            if descriptor is not None:os.close(descriptor)
+    return dict(stopped=stopped, permanentPublishersKept=kept)
+
+
 def launch_background(args, script):
     """Reuse a local publisher, or start one with the already-owned global lock."""
     lock = (args.state_dir / 'publisher.lock').open('a')

@@ -44,6 +44,18 @@ To print the saved link again:
 python scripts/share_cart_monitor.py --print-link
 ```
 
+To stop old browser publishers and terminal monitor viewers on the current
+server, while retaining the permanent publisher and all training processes:
+
+```bash
+python scripts/share_cart_monitor.py --stop-old-monitors
+```
+
+This targets only the current user's known read-only monitor commands from this
+project. Terminal viewers receive Ctrl+C's signal for clean display teardown.
+It does not stop GPU workers, experiment supervisors, plot generation, or the
+permanent monitor. Run it on each server where old monitor processes remain.
+
 Only an old browser publisher for this exact output is stopped during the
 upgrade. Process ownership, command, and output are checked before signaling
 through a process descriptor; training processes are never targeted. No
