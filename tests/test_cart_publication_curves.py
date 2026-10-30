@@ -93,6 +93,7 @@ def test_publication_export_is_line_only_and_contains_every_seed_and_round(compl
     for label in ('Validation accuracy','Communication round','SHARP + CART','SHARP + ACDS','Attack onset'):
         assert label in overview
     assert 'private-campaign-v2' not in overview and 'Official TEST' not in overview
+    assert 'Dirichlet' not in overview and 'macro' not in overview.lower() and 'commit' not in overview.lower()
     assert '#0072b2' in overview and '#d55e00' in overview
     with (dest/'accuracy_by_round_and_seed.csv').open() as f:rows=list(csv.DictReader(f))
     assert len(rows)==24*4 and {int(r['round']) for r in rows}=={1,2,3,4}

@@ -94,18 +94,18 @@ COLORS.update(cart_full='#0072B2', acds_checked='#D55E00', sharp_checked='#55555
     cart_no_prior='#56B4E9', cart_no_calibration='#332288', cart_no_repair='#882255')
 ORDER = ('cart_full', 'acds_checked', 'sharp_checked', 'prior_fallback', 'cart', 'prior_cart', 'acds', 'sharp', 'macro')
 LABELS = {'prior_fallback': 'SHARP + CART', 'cart': 'SHARP + CART',
-          'acds': 'SHARP + ACDS', 'sharp': 'SHARP', 'macro': 'CART (macro only)',
+          'acds': 'SHARP + ACDS', 'sharp': 'SHARP', 'macro': 'CART: no class protection',
           'prior_cart': 'CART (local-prior training)', 'prior_macro': 'CART (local prior, macro only)',
           'prior_wide': 'CART (full peer window)', 'cart_fallback': 'CART (consistent fallback)',
-          'ingress_only': 'CART (admission only)', 'commit_only': 'CART (update check only)',
+          'ingress_only': 'CART: incoming check only', 'commit_only': 'CART: update check only',
           'local_only': 'Local training', 'fresh_peer': 'Fresh peer',
           'no_calibration': 'CART (no calibration)', 'no_repair': 'CART (no head repair)',
           'balanced_commit': 'CART (balanced-loss check)'}
-LABELS.update(cart_full='SHARP + CART', acds_checked='SHARP + ACDS (checked pooling)',
-    sharp_checked='SHARP (checked pooling)', cart_macro='CART (macro only)',
-    cart_ingress='CART (admission only)', cart_commit='CART (update check only)',
-    cart_no_prior='CART (no training prior)', cart_no_calibration='CART (no calibration)',
-    cart_no_repair='CART (no head repair)', acds_single='SHARP + ACDS (single model)')
+LABELS.update(cart_full='SHARP + CART', acds_checked='SHARP + ACDS',
+    sharp_checked='SHARP', cart_macro='CART: no class protection',
+    cart_ingress='CART: incoming check only', cart_commit='CART: update check only',
+    cart_no_prior='CART: no class balancing', cart_no_calibration='CART: no noise allowance',
+    cart_no_repair='CART: no classifier adjustment', acds_single='SHARP + ACDS: single model')
 DATASETS = {'mnist': 'MNIST', 'cifar10': 'CIFAR-10', 'cifar100': 'CIFAR-100'}
 
 
@@ -158,7 +158,7 @@ def _draw(ax, records, title, upper, styles):
     ax.tick_params(length=3, width=.6, color='#888888')
 
 
-def generate(root, destination, *, arms=None):
+def generate(root, destination, *, arms=None, individual=False):
     import numpy as np
     import matplotlib
     matplotlib.use('Agg')
@@ -201,9 +201,10 @@ def generate(root, destination, *, arms=None):
             lines, labels = ax.get_legend_handles_labels()
             for handle, label in zip(lines, labels):
                 handles.setdefault(label, handle)
+        legend_columns = min(2 if any(len(label)>23 for label in handles) else 3, len(handles))
         fig.legend(handles.values(), handles.keys(), loc='lower center', frameon=False,
-                   ncol=min(3, len(handles)), bbox_to_anchor=(.5, .005), columnspacing=1.6, handlelength=2.7)
-        legend_rows = math.ceil(len(handles) / 3)
+                   ncol=legend_columns, bbox_to_anchor=(.5, .005), columnspacing=1.6, handlelength=2.7)
+        legend_rows = math.ceil(len(handles) / legend_columns)
         height = 2.55 * rows + .55 + .22 * (legend_rows - 1)
         fig.set_size_inches(7.3, height)
         if heading:
@@ -237,7 +238,7 @@ def generate(root, destination, *, arms=None):
                 pair = []
                 for part in parts:
                     group = [r for r in items if r['partition'] == part]
-                    partition = 'IID' if part == 'iid' else f'Dirichlet non-IID ($\\alpha={group[0]["alpha"]:g}$)'
+                    partition = 'IID' if part == 'iid' else 'non-IID'
                     title = DATASETS.get(dataset, dataset) + ', ' + partition
                     pair.append((group, title))
                 panels.extend(pair)
@@ -248,6 +249,10 @@ def generate(root, destination, *, arms=None):
                     'All recorded rounds are shown without smoothing or resampling. '
                     f'Channel standard deviation is {sigma:g}; environment is {env}.')
                 save(pair, min(2, len(pair)), f'{dataset}_{suffix}_accuracy_curves', caption, limits)
+                if individual:
+                    for group, title in pair:
+                        split = 'iid' if group[0]['partition'] == 'iid' else 'non_iid'
+                        save([(group, title)], 1, f'{dataset}_{split}_accuracy', caption, limits)
                 if len(seeds) > 1:
                     seed_panels = []
                     for group, title in pair:
@@ -255,7 +260,7 @@ def generate(root, destination, *, arms=None):
                             selected = [r for r in group if r['seed'] == seed]
                             if not selected:
                                 raise ValueError('Partition is missing an expected seed.')
-                            part = 'IID' if selected[0]['partition'] == 'iid' else f'Non-IID ($\\alpha={selected[0]["alpha"]:g}$)'
+                            part = 'IID' if selected[0]['partition'] == 'iid' else 'non-IID'
                             seed_panels.append((selected, part + f'\nSeed {seed}'))
                     save(seed_panels, len(seeds), f'{dataset}_{suffix}_seed_curves',
                          caption + ' Each panel shows one seed; no uncertainty band is drawn within a seed.',

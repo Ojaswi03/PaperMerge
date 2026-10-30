@@ -9,6 +9,8 @@ ARMS.update(cart_full='SHARP+CART', acds_checked='ACDS checked', sharp_checked='
     cart_macro='CART macro', cart_ingress='CART ingress', cart_commit='CART commit',
     cart_no_prior='CART no prior', cart_no_calibration='CART no calib',
     cart_no_repair='CART no head', acds_single='ACDS single')
+ARMS.update(basil_clean='BASIL',basil_attack_only='BASIL',basil_joint='BASIL',basil_acds='BASIL+ACDS',
+    sharp_clean='SHARP',sharp_attack_only='SHARP',sharp_joint='SHARP',sharp_cart='SHARP+CART')
 
 
 def comparison_label(cfg,*,include_environment=False):

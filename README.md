@@ -3,6 +3,14 @@
 PaperMerge studies Byzantine-resilient decentralized learning under noisy
 communication using Python, TensorFlow and a Tkinter experiment workspace.
 
+The [completed 66-run review](docs/CART_RESULTS_REVIEW_20261029.md) now verifies
+all exported records and summarizes the observed gains and limitations in plain
+language. New review figures use IID/non-IID and readable method labels.
+The [requested BASIL–SHARP thesis comparison](docs/BASIL_SHARP_THESIS_PLOT_SPEC.md)
+prepares 84 matched cases: six IID and eight non-IID curves per dataset, with
+four-GPU memory-aware scheduling. The complete professor-requested figures need
+those additional BASIL and physical-condition runs before thesis SVG replacement.
+
 The [full ACDS/CART comparison](docs/CART_FULL_ACDS_COMPARISON.md) runs 24 matched
 100-round, 100-client configurations on MNIST/CIFAR-10 with three seeds. Use
 `launch_cart_comparison_hpc.sh full --gpu-count 4`; GPU counts one through four
