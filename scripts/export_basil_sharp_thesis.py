@@ -13,7 +13,7 @@ def export(root,destination):
     if root==destination or root in destination.parents or destination in root.parents:raise ValueError('Separate export required.')
     plan,rows,_=collect(root);generate(root,root/'thesis_figures')
     names=['plan.json','campaign.json','adaptive_execution.json']
-    names += [n for n in ('independent_validation.json',) if (root/n).exists()]
+    names += [n for n in ('independent_validation.json','throughput_baseline.json') if (root/n).exists()]
     for c in plan['configs']:names += [c['runId']+'/'+n for n in ('run.json','metrics.npz','mechanisms.json')]
     names += ['source_snapshots/'+n for n in plan['source']]
     names += [str(p.relative_to(root)) for p in (root/'thesis_figures').rglob('*') if p.is_file()]

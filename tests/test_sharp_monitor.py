@@ -22,6 +22,32 @@ def running(cursor,elapsed):return dict(status='RUNNING',completedActivations=cu
     completedRounds=cursor//10,elapsedSeconds=elapsed,meanAccuracy=.8)
 
 
+def test_overall_activation_eta_uses_wall_time_and_counts_all_parallel_workers(tmp_path):
+    setup(tmp_path,[(2025,'clean','mnist',running(20,10)),
+        (2026,'clean','cifar10',running(40,100)),(2027,'clean','mnist',None)])
+    path=tmp_path/'plan.json';plan=json.loads(path.read_text());plan['etaMode']='activation_throughput'
+    path.write_text(json.dumps(plan))
+    (tmp_path/'throughput_baseline.json').write_text(json.dumps(dict(completedActivations=0)))
+    state=snapshot(tmp_path)
+    assert state['activationsPerSecond']==pytest.approx(60/90)
+    assert state['eta']==pytest.approx((300-60)/(60/90))
+    assert state['untimedJobs']==0 and state['entries'][2]['eta'] is None
+    text=render(state,width=160,height=40,table=True)
+    assert 'Overall speed 0.67 activations/s' in text and 'Estimated finish' in text
+
+
+def test_overall_rate_excludes_activations_from_before_resume(tmp_path):
+    setup(tmp_path,[(2025,'clean','mnist',running(70,100))])
+    path=tmp_path/'plan.json';plan=json.loads(path.read_text());plan['etaMode']='activation_throughput'
+    path.write_text(json.dumps(plan))
+    (tmp_path/'throughput_baseline.json').write_text(json.dumps(dict(completedActivations=40)))
+    assert snapshot(tmp_path)['eta']==pytest.approx(90.)
+    (tmp_path/'throughput_baseline.json').write_text(json.dumps(dict(completedActivations=70)))
+    state=snapshot(tmp_path)
+    assert state['eta'] is None and state['activationsPerSecond'] is None
+    assert 'Measuring overall activation speed' in render(state)
+
+
 def test_eta_uses_each_gpu_sequential_queue_and_parallel_completion(tmp_path):
     setup(tmp_path,[(2025,'clean','mnist',running(25,50)),
         (2025,'noise_rla','mnist',running(50,50)),

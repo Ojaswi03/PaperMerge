@@ -14,7 +14,7 @@ import statistics
 import sys
 import textwrap
 import time
-from datetime import datetime,timedelta
+from datetime import datetime
 from zoneinfo import ZoneInfo
 
 
@@ -137,12 +137,30 @@ def snapshot(directory,*,timing_roots=()):
         remaining[row['lane']]+=estimate;lower[row['lane']]+=estimate*(1-spread);upper[row['lane']]+=estimate*(1+spread)
     eta=0. if status in ('COMPLETED','COMPLETED_WITH_FAILURES') else None
     if status in ('RUNNING','PREPARED','STARTING') and (continuing or not stopped):eta=max(remaining.values())
+    mode=plan.get('etaMode');overall_rate=None
+    if mode=='activation_throughput':
+        baseline=read_json(root/'throughput_baseline.json',{}).get('completedActivations',0)
+        elapsed=campaign.get('elapsedSeconds')
+        completed=sum(row['cursor'] for row in entries)
+        pending_activations=sum(row['total']-row['cursor'] for row in entries)
+        measured=completed-baseline
+        eta=0. if status in ('COMPLETED','COMPLETED_WITH_FAILURES') else None
+        if (status=='RUNNING' and not failed and isinstance(elapsed,(int,float)) and
+                math.isfinite(elapsed) and elapsed>0 and measured>0):
+            overall_rate=measured/elapsed
+            eta=pending_activations/overall_rate
+        unknown=[];history_jobs=0
+        for row in entries:
+            if row['status']=='PENDING':row['eta']=None
     return dict(status=status,entries=entries,completed=done,failed=failed,total=len(entries),
         pending=sum(r['status']=='PENDING' for r in entries),
         completedActivations=sum(r['cursor'] for r in entries),totalActivations=sum(r['total'] for r in entries),
         elapsed=campaign.get('elapsedSeconds'),eta=eta,remainingByGpu=remaining,
+        etaMode=mode,activationsPerSecond=overall_rate,
         untimedJobs=len(unknown),untimedDatasets=sorted(set(unknown)),historyJobs=history_jobs,
-        etaLow=max(lower.values()),etaHigh=max(upper.values()),output=str(root),revision=plan.get('revision'),startup=startup)
+        etaLow=eta if mode=='activation_throughput' else max(lower.values()),
+        etaHigh=eta if mode=='activation_throughput' else max(upper.values()),
+        output=str(root),revision=plan.get('revision'),startup=startup)
 
 
 def table_rows(entries,width):
@@ -186,6 +204,8 @@ def render(state,*,width=100,height=30,timezone='America/New_York',table=False):
     preparing=state['status'] in ('PREPARED','STARTING')
     timing=(f'Planning duration {duration(state["eta"])} | training has not started' if preparing else
         f'Elapsed {duration(state["elapsed"] or 0)} | Campaign ETA {duration(state["eta"]) if state["eta"] is not None else "not running"}')
+    if preparing and state.get('etaMode')=='activation_throughput':
+        timing='Training has not started; ETA will use measured activation speed.'
     lines=[f'{title} | {state["status"]} | {state["completed"]}/{state["total"]} complete | '
         f'failed {state["failed"]} | pending {state["pending"]}',
         f'Progress {state["completedActivations"]/state["totalActivations"]:.2%} | '
@@ -196,8 +216,14 @@ def render(state,*,width=100,height=30,timezone='America/New_York',table=False):
         if startup.get('error'):lines.append('Manager error: '+startup['error'])
         elif preparing:lines.append('Waiting for supervisor startup; showing planned GPU assignments below.')
     if state['eta'] is not None and state['status']=='RUNNING':
-        finish=(datetime.now(ZoneInfo(timezone))+timedelta(seconds=state['eta'])).strftime('%a %b %d %H:%M %Z')
-        lines.append(f'Estimated finish {finish} | planning range {duration(state["etaLow"])} to {duration(state["etaHigh"])}')
+        finish=datetime.fromtimestamp(time.time()+state['eta'],ZoneInfo(timezone)).strftime('%a %b %d %H:%M %Z')
+        if state.get('etaMode')=='activation_throughput':
+            lines.append(f'Overall speed {state["activationsPerSecond"]:.2f} activations/s | Estimated finish {finish}')
+            lines.append('ETA = remaining activations / measured overall speed; updates as workload changes.')
+        else:
+            lines.append(f'Estimated finish {finish} | planning range {duration(state["etaLow"])} to {duration(state["etaHigh"])}')
+    elif state.get('etaMode')=='activation_throughput' and state['status']=='RUNNING':
+        lines.append('Measuring overall activation speed before estimating the finish time.')
     if state['untimedJobs'] and state['status'] not in ('COMPLETED','COMPLETED_WITH_FAILURES','FAILED','INTERRUPTED'):
         lines.append(f'ETA uses workload priors for {state["untimedJobs"]} jobs; replaces them with measurements as runs progress.')
     elif state.get('historyJobs',0):lines.append(f'ETA uses matching prior campaign timings for {state["historyJobs"]} jobs.')

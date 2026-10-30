@@ -33,10 +33,12 @@ def prepare(args):
     if not ids or len(set(ids))!=len(ids):raise ValueError('Distinct physical GPU IDs required.')
     hardware=[ExecutionProfile(name='hpc',gpu=g,memory_mib=args.gpu_memory_mib,headroom_mib=8192,
         ram_mib=args.ram_mib_per_worker,output_root=str(root)).bind(inventory) for g in ids]
+    print('Loading original training archives into memory and verifying their fingerprints.',flush=True)
     data,partitions=study.data_contract(configs)
     with patch.object(controller,'study',study):profiles=controller.assignment(configs,hardware)
     plan=dict(revision=study.REVISION,variant='thesis',configs=configs,source=study.source(),data=data,
         partitions=partitions,profiles=profiles,jobsPerGpu=1,host=socket.gethostname(),
+        inputLoading='original_training_archives_in_memory',etaMode='activation_throughput',
         resourceBudget=dict(context_overhead_mib=1024,ram_headroom_mib=args.ram_headroom_mib,
             ram_mib_per_worker=args.ram_mib_per_worker,allow_unattributed_process_memory=False))
     root.mkdir(parents=True,exist_ok=True)
@@ -102,6 +104,10 @@ def execute(args, plan):
                     patch.object(adaptive,'worker_script',lambda p:'scripts/basil_sharp_thesis_worker.py'), \
                     patch.object(adaptive,'completed_report',report):
                 checked,hardware,assigned=adaptive.validate_plan(root)
+                baseline=sum(read_json(root/c['runId']/'run.json').get('completedActivations',0)
+                    for c in plan['configs'] if (root/c['runId']/'run.json').exists())
+                write_json(root/'throughput_baseline.json',dict(completedActivations=baseline,
+                    planSha256=digest))
                 return adaptive.schedule(args,checked,hardware,assigned,digest,leases)
         finally:
             for handle in leases.values():handle.close()

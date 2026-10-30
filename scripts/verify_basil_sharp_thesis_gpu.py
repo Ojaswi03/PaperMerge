@@ -10,6 +10,12 @@ ROOT=Path(__file__).resolve().parents[1];sys.path.insert(0,str(ROOT))
 
 
 def verify(root,gpu,lease_fd):
+    from basil_core.thesis_raw_data import direct_inputs
+    with direct_inputs():
+        return verify_direct(root,gpu,lease_fd)
+
+
+def verify_direct(root,gpu,lease_fd):
     import numpy as np
     from basil_core import basil_sharp_thesis as study
     from basil_core.cart_campaign_io import read_json,write_json

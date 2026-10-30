@@ -1,5 +1,9 @@
 # Requested BASIL–SHARP thesis plots
 
+**Current launch procedure:** [direct input loading and measured ETA](BASIL_SHARP_DIRECT_INPUTS.md).
+This supersedes the cache repair/restart commands below. The damaged shared
+normalized cache is left alone; original training archives are loaded into RAM.
+
 The author requests six curves for IID (three BASIL and three SHARP) and eight
 curves for non-IID (four BASIL and four SHARP). The author explicitly removed
 the duplicated fourth impairment case.

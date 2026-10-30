@@ -112,11 +112,12 @@ test('CART and ACDS remain distinguishable and old feeds preserve their meaning'
   context.endSession();assert.equal(elements.get('runs').children[0].children[0].colSpan,12);
 });
 
-test('no-pending ETA uses concurrent remaining work instead of summing old slots',()=>{
+test('browser respects the delivered overall ETA and shows finish time',()=>{
   const {context,elements}=browser();const snapshot=sample();snapshot.etaSeconds=10000;
   snapshot.runs=[{...snapshot.runs[0],etaSeconds:1000},{...snapshot.runs[0],etaSeconds:2000}];
   context.render({snapshot,receivedAt:new Date().toISOString()});
-  assert.equal(elements.get('eta').textContent,'00:33:20');
+  assert.equal(elements.get('eta').textContent,'02:46:40');
+  assert.match(elements.get('eta-note').textContent,/Estimated finish/);
   snapshot.pending=1;context.render({snapshot,receivedAt:new Date().toISOString()});
   assert.equal(elements.get('eta').textContent,'02:46:40');
   assert.equal(context.duration(90061),'1d 01:01:01');

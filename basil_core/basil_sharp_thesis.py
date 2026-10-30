@@ -18,7 +18,7 @@ def source():
     names = ('basil_core/basil_sharp_thesis.py', 'scripts/run_basil_sharp_thesis.py',
         'scripts/basil_sharp_thesis_worker.py', 'scripts/verify_basil_sharp_thesis_gpu.py',
         'scripts/verify_basil_sharp_thesis_results.py', 'reporting/basil_sharp_thesis.py',
-        'basil_core/cart_display_labels.py')
+        'basil_core/cart_display_labels.py', 'basil_core/thesis_raw_data.py')
     return {**previous_source(), **{n: hashlib.sha256((ROOT/n).read_bytes()).hexdigest() for n in names}}
 
 
@@ -109,7 +109,8 @@ def partitions_for(view, y):
 
 
 def data_contract(configs):
-    from basil_core.sharp_data import training_data, digest
+    from basil_core.sharp_data import digest
+    from basil_core.thesis_raw_data import training_data
     data, audits, cache = {}, {}, {}
     for view in configs:
         dataset = view['dataset']
@@ -179,7 +180,8 @@ def intervention(view, worker):
 @contextmanager
 def installed():
     """Scope the existing worker/inference adapter to this independent family."""
-    with patch.object(comparison,'source',source), patch.object(comparison,'check_source',check_source), \
+    from basil_core.thesis_raw_data import direct_inputs
+    with direct_inputs(), patch.object(comparison,'source',source), patch.object(comparison,'check_source',check_source), \
             patch.object(comparison,'effective_config',effective_config), \
             patch.object(comparison,'partitions_for',partitions_for), patch.object(comparison,'data_contract',data_contract), \
             patch.object(comparison,'configure_worker',configure_worker), patch.object(comparison,'intervention',intervention):
