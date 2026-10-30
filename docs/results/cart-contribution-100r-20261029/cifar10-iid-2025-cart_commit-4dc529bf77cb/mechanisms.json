@@ -1,0 +1,2825 @@
+{
+  "completedActivations": 10000,
+  "rounds": [
+    {
+      "activations": 100,
+      "calibrationDraws": 0,
+      "commitChecks": 0,
+      "commitScales": {},
+      "displayRound": 1,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.30124379491806,
+      "meanQualifiedClassCounts": 0.0,
+      "meanRawSurvivorCounts": 44.333333333333336,
+      "meanRlaCoefficients": 0.0006348133037623259,
+      "meanSelectedCounts": 16.84,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 34,
+      "screenGuardFallback": 33,
+      "zeroCommitFractionAmongChecks": null
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 38,
+      "commitChecks": 6,
+      "commitScales": {
+        "0.5": 1,
+        "1.0": 5
+      },
+      "displayRound": 2,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.301366711616516,
+      "meanQualifiedClassCounts": 0.02,
+      "meanRawSurvivorCounts": 65.38,
+      "meanRlaCoefficients": 5.3034386200716854e-05,
+      "meanSelectedCounts": 32.38,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.0
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 19,
+      "commitChecks": 8,
+      "commitScales": {
+        "1.0": 8
+      },
+      "displayRound": 3,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.3009078769683837,
+      "meanQualifiedClassCounts": 0.01,
+      "meanRawSurvivorCounts": 66.0,
+      "meanRlaCoefficients": 5.353535353535354e-05,
+      "meanSelectedCounts": 33.0,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.0
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 76,
+      "commitChecks": 7,
+      "commitScales": {
+        "1.0": 7
+      },
+      "displayRound": 4,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.3003065824508666,
+      "meanQualifiedClassCounts": 0.04,
+      "meanRawSurvivorCounts": 65.94,
+      "meanRlaCoefficients": 5.515483463668949e-05,
+      "meanSelectedCounts": 32.94,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.0
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 57,
+      "commitChecks": 10,
+      "commitScales": {
+        "0.5": 1,
+        "1.0": 9
+      },
+      "displayRound": 5,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.299896276473999,
+      "meanQualifiedClassCounts": 0.03,
+      "meanRawSurvivorCounts": 65.62,
+      "meanRlaCoefficients": 5.7237373737373746e-05,
+      "meanSelectedCounts": 32.62,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.0
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 38,
+      "commitChecks": 9,
+      "commitScales": {
+        "0.0": 1,
+        "0.5": 1,
+        "1.0": 7
+      },
+      "displayRound": 6,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.2994345393180846,
+      "meanQualifiedClassCounts": 0.02,
+      "meanRawSurvivorCounts": 66.0,
+      "meanRlaCoefficients": 5.8080808080808085e-05,
+      "meanSelectedCounts": 33.0,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.1111111111111111
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 38,
+      "commitChecks": 12,
+      "commitScales": {
+        "0.5": 2,
+        "1.0": 10
+      },
+      "displayRound": 7,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.2990853605270387,
+      "meanQualifiedClassCounts": 0.02,
+      "meanRawSurvivorCounts": 65.32,
+      "meanRlaCoefficients": 6.087198598892147e-05,
+      "meanSelectedCounts": 32.32,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.0
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 95,
+      "commitChecks": 14,
+      "commitScales": {
+        "0.125": 1,
+        "0.25": 1,
+        "1.0": 12
+      },
+      "displayRound": 8,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.29827632188797,
+      "meanQualifiedClassCounts": 0.05,
+      "meanRawSurvivorCounts": 65.99,
+      "meanRlaCoefficients": 6.113020833333334e-05,
+      "meanSelectedCounts": 32.99,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.0
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 38,
+      "commitChecks": 12,
+      "commitScales": {
+        "0.125": 1,
+        "0.25": 1,
+        "1.0": 10
+      },
+      "displayRound": 9,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.2982324419021607,
+      "meanQualifiedClassCounts": 0.03,
+      "meanRawSurvivorCounts": 65.6,
+      "meanRlaCoefficients": 6.341666666666667e-05,
+      "meanSelectedCounts": 32.6,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.0
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 38,
+      "commitChecks": 15,
+      "commitScales": {
+        "0.0": 1,
+        "0.5": 3,
+        "1.0": 11
+      },
+      "displayRound": 10,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.2974627804756165,
+      "meanQualifiedClassCounts": 0.02,
+      "meanRawSurvivorCounts": 65.36,
+      "meanRlaCoefficients": 6.542424242424243e-05,
+      "meanSelectedCounts": 32.36,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.06666666666666667
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 19,
+      "commitChecks": 15,
+      "commitScales": {
+        "0.25": 1,
+        "0.5": 1,
+        "1.0": 13
+      },
+      "displayRound": 11,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.2968609867095946,
+      "meanQualifiedClassCounts": 0.02,
+      "meanRawSurvivorCounts": 65.96,
+      "meanRlaCoefficients": 6.573863636363637e-05,
+      "meanSelectedCounts": 32.96,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.0
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 76,
+      "commitChecks": 15,
+      "commitScales": {
+        "0.125": 2,
+        "0.5": 2,
+        "1.0": 11
+      },
+      "displayRound": 12,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.2958672976493837,
+      "meanQualifiedClassCounts": 0.04,
+      "meanRawSurvivorCounts": 65.4,
+      "meanRlaCoefficients": 6.845299059139785e-05,
+      "meanSelectedCounts": 32.4,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.0
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 76,
+      "commitChecks": 16,
+      "commitScales": {
+        "0.125": 2,
+        "0.25": 1,
+        "0.5": 3,
+        "1.0": 10
+      },
+      "displayRound": 13,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.295560207366943,
+      "meanQualifiedClassCounts": 0.04,
+      "meanRawSurvivorCounts": 64.12,
+      "meanRlaCoefficients": 7.293742261322906e-05,
+      "meanSelectedCounts": 31.12,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.0
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 76,
+      "commitChecks": 14,
+      "commitScales": {
+        "0.0": 1,
+        "0.5": 3,
+        "1.0": 10
+      },
+      "displayRound": 14,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.2942674865722656,
+      "meanQualifiedClassCounts": 0.04,
+      "meanRawSurvivorCounts": 65.34,
+      "meanRlaCoefficients": 7.166564740143369e-05,
+      "meanSelectedCounts": 32.34,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.07142857142857142
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 76,
+      "commitChecks": 15,
+      "commitScales": {
+        "0.25": 1,
+        "0.5": 5,
+        "1.0": 9
+      },
+      "displayRound": 15,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.294157388687134,
+      "meanQualifiedClassCounts": 0.06,
+      "meanRawSurvivorCounts": 64.75,
+      "meanRlaCoefficients": 7.459381109481915e-05,
+      "meanSelectedCounts": 31.75,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.0
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 76,
+      "commitChecks": 12,
+      "commitScales": {
+        "0.0": 1,
+        "0.25": 1,
+        "0.5": 2,
+        "1.0": 8
+      },
+      "displayRound": 16,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.2929824490547177,
+      "meanQualifiedClassCounts": 0.05,
+      "meanRawSurvivorCounts": 64.86,
+      "meanRlaCoefficients": 7.590323598892149e-05,
+      "meanSelectedCounts": 31.86,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.08333333333333333
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 152,
+      "commitChecks": 23,
+      "commitScales": {
+        "0.125": 1,
+        "0.25": 4,
+        "0.5": 2,
+        "1.0": 16
+      },
+      "displayRound": 17,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.2923119587898255,
+      "meanQualifiedClassCounts": 0.09,
+      "meanRawSurvivorCounts": 65.15,
+      "meanRlaCoefficients": 7.676490306288692e-05,
+      "meanSelectedCounts": 32.15,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.0
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 152,
+      "commitChecks": 28,
+      "commitScales": {
+        "0.25": 2,
+        "0.5": 4,
+        "1.0": 22
+      },
+      "displayRound": 18,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.291339563369751,
+      "meanQualifiedClassCounts": 0.08,
+      "meanRawSurvivorCounts": 65.03,
+      "meanRlaCoefficients": 7.861277594493321e-05,
+      "meanSelectedCounts": 32.03,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.0
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 76,
+      "commitChecks": 22,
+      "commitScales": {
+        "0.0": 2,
+        "0.125": 3,
+        "0.25": 1,
+        "0.5": 1,
+        "1.0": 15
+      },
+      "displayRound": 19,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.2903736124038696,
+      "meanQualifiedClassCounts": 0.05,
+      "meanRawSurvivorCounts": 64.49,
+      "meanRlaCoefficients": 8.160349385119269e-05,
+      "meanSelectedCounts": 31.49,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.09090909090909091
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 190,
+      "commitChecks": 23,
+      "commitScales": {
+        "0.0": 1,
+        "0.125": 1,
+        "0.25": 1,
+        "0.5": 4,
+        "1.0": 16
+      },
+      "displayRound": 20,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.289489904880524,
+      "meanQualifiedClassCounts": 0.13,
+      "meanRawSurvivorCounts": 64.81,
+      "meanRlaCoefficients": 8.233070183200188e-05,
+      "meanSelectedCounts": 31.81,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.043478260869565216
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 152,
+      "commitChecks": 27,
+      "commitScales": {
+        "0.125": 2,
+        "0.25": 2,
+        "0.5": 7,
+        "1.0": 16
+      },
+      "displayRound": 21,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.2885943450927737,
+      "meanQualifiedClassCounts": 0.1,
+      "meanRawSurvivorCounts": 66.0,
+      "meanRlaCoefficients": 8.080808080808081e-05,
+      "meanSelectedCounts": 33.0,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.0
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 171,
+      "commitChecks": 31,
+      "commitScales": {
+        "0.0": 1,
+        "0.125": 1,
+        "0.25": 2,
+        "0.5": 2,
+        "1.0": 25
+      },
+      "displayRound": 22,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.2884400100708007,
+      "meanQualifiedClassCounts": 0.1,
+      "meanRawSurvivorCounts": 66.0,
+      "meanRlaCoefficients": 8.232323232323234e-05,
+      "meanSelectedCounts": 33.0,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.03225806451612903
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 133,
+      "commitChecks": 26,
+      "commitScales": {
+        "0.0": 2,
+        "0.125": 3,
+        "0.25": 1,
+        "0.5": 2,
+        "1.0": 18
+      },
+      "displayRound": 23,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.2873223581314086,
+      "meanQualifiedClassCounts": 0.07,
+      "meanRawSurvivorCounts": 66.0,
+      "meanRlaCoefficients": 8.383838383838384e-05,
+      "meanSelectedCounts": 33.0,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.07692307692307693
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 114,
+      "commitChecks": 26,
+      "commitScales": {
+        "0.0": 1,
+        "0.125": 1,
+        "0.5": 5,
+        "1.0": 19
+      },
+      "displayRound": 24,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.286500771522522,
+      "meanQualifiedClassCounts": 0.06,
+      "meanRawSurvivorCounts": 65.99,
+      "meanRlaCoefficients": 8.538020833333333e-05,
+      "meanSelectedCounts": 32.99,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.038461538461538464
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 57,
+      "commitChecks": 28,
+      "commitScales": {
+        "0.0": 1,
+        "0.125": 2,
+        "0.25": 1,
+        "0.5": 6,
+        "1.0": 18
+      },
+      "displayRound": 25,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.28521203327179,
+      "meanQualifiedClassCounts": 0.03,
+      "meanRawSurvivorCounts": 65.7,
+      "meanRlaCoefficients": 8.769008634734442e-05,
+      "meanSelectedCounts": 32.7,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.03571428571428571
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 152,
+      "commitChecks": 34,
+      "commitScales": {
+        "0.0": 1,
+        "0.25": 2,
+        "0.5": 1,
+        "1.0": 30
+      },
+      "displayRound": 26,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.2841447505950927,
+      "meanQualifiedClassCounts": 0.08,
+      "meanRawSurvivorCounts": 65.73,
+      "meanRlaCoefficients": 8.913135895242751e-05,
+      "meanSelectedCounts": 32.73,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.029411764705882353
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 114,
+      "commitChecks": 49,
+      "commitScales": {
+        "0.0": 1,
+        "0.125": 2,
+        "0.25": 3,
+        "0.5": 5,
+        "1.0": 38
+      },
+      "displayRound": 27,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.283265036582947,
+      "meanQualifiedClassCounts": 0.08,
+      "meanRawSurvivorCounts": 65.96,
+      "meanRlaCoefficients": 9.001136363636364e-05,
+      "meanSelectedCounts": 32.96,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.02040816326530612
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 190,
+      "commitChecks": 55,
+      "commitScales": {
+        "0.0": 2,
+        "0.125": 1,
+        "0.25": 2,
+        "0.5": 8,
+        "1.0": 42
+      },
+      "displayRound": 28,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.2820338611602784,
+      "meanQualifiedClassCounts": 0.13,
+      "meanRawSurvivorCounts": 65.97,
+      "meanRlaCoefficients": 9.149984217171718e-05,
+      "meanSelectedCounts": 32.97,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.03636363636363636
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 285,
+      "commitChecks": 54,
+      "commitScales": {
+        "0.0": 2,
+        "0.25": 2,
+        "0.5": 2,
+        "1.0": 48
+      },
+      "displayRound": 29,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.280042483329773,
+      "meanQualifiedClassCounts": 0.15,
+      "meanRawSurvivorCounts": 65.69,
+      "meanRlaCoefficients": 9.383141902899968e-05,
+      "meanSelectedCounts": 32.69,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.037037037037037035
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 247,
+      "commitChecks": 55,
+      "commitScales": {
+        "0.0": 2,
+        "0.125": 4,
+        "0.25": 2,
+        "0.5": 9,
+        "1.0": 38
+      },
+      "displayRound": 30,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.279160593032837,
+      "meanQualifiedClassCounts": 0.16,
+      "meanRawSurvivorCounts": 65.77,
+      "meanRlaCoefficients": 9.512326388888891e-05,
+      "meanSelectedCounts": 32.77,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.03636363636363636
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 266,
+      "commitChecks": 65,
+      "commitScales": {
+        "0.0": 6,
+        "0.25": 5,
+        "0.5": 12,
+        "1.0": 42
+      },
+      "displayRound": 31,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.277409363269806,
+      "meanQualifiedClassCounts": 0.22,
+      "meanRawSurvivorCounts": 65.34,
+      "meanRlaCoefficients": 9.793876262626263e-05,
+      "meanSelectedCounts": 32.34,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.09230769230769231
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 475,
+      "commitChecks": 69,
+      "commitScales": {
+        "0.0": 2,
+        "0.125": 1,
+        "0.25": 6,
+        "0.5": 14,
+        "1.0": 46
+      },
+      "displayRound": 32,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.2758179931640625,
+      "meanQualifiedClassCounts": 0.33,
+      "meanRawSurvivorCounts": 65.34,
+      "meanRlaCoefficients": 9.948516414141415e-05,
+      "meanSelectedCounts": 32.34,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.028985507246376812
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 456,
+      "commitChecks": 79,
+      "commitScales": {
+        "0.0": 1,
+        "0.125": 7,
+        "0.25": 7,
+        "0.5": 11,
+        "1.0": 53
+      },
+      "displayRound": 33,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.2741368298530578,
+      "meanQualifiedClassCounts": 0.31,
+      "meanRawSurvivorCounts": 66.0,
+      "meanRlaCoefficients": 9.8989898989899e-05,
+      "meanSelectedCounts": 33.0,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.012658227848101266
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 551,
+      "commitChecks": 88,
+      "commitScales": {
+        "0.0": 4,
+        "0.125": 4,
+        "0.25": 7,
+        "0.5": 12,
+        "1.0": 61
+      },
+      "displayRound": 34,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.2729674735069274,
+      "meanQualifiedClassCounts": 0.4,
+      "meanRawSurvivorCounts": 65.96,
+      "meanRlaCoefficients": 0.00010063068181818183,
+      "meanSelectedCounts": 32.96,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.045454545454545456
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 532,
+      "commitChecks": 87,
+      "commitScales": {
+        "0.0": 8,
+        "0.125": 4,
+        "0.25": 3,
+        "0.5": 13,
+        "1.0": 59
+      },
+      "displayRound": 35,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.271492607116699,
+      "meanQualifiedClassCounts": 0.44,
+      "meanRawSurvivorCounts": 66.0,
+      "meanRlaCoefficients": 0.00010202020202020203,
+      "meanSelectedCounts": 33.0,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.09195402298850575
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 551,
+      "commitChecks": 90,
+      "commitScales": {
+        "0.0": 4,
+        "0.125": 2,
+        "0.25": 7,
+        "0.5": 18,
+        "1.0": 59
+      },
+      "displayRound": 36,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.269631672859192,
+      "meanQualifiedClassCounts": 0.52,
+      "meanRawSurvivorCounts": 66.0,
+      "meanRlaCoefficients": 0.00010353535353535353,
+      "meanSelectedCounts": 33.0,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.044444444444444446
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 779,
+      "commitChecks": 91,
+      "commitScales": {
+        "0.0": 4,
+        "0.125": 2,
+        "0.25": 5,
+        "0.5": 9,
+        "1.0": 71
+      },
+      "displayRound": 37,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.2672024793624876,
+      "meanQualifiedClassCounts": 0.54,
+      "meanRawSurvivorCounts": 65.75,
+      "meanRlaCoefficients": 0.00010587121212121213,
+      "meanSelectedCounts": 32.75,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.04395604395604396
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 570,
+      "commitChecks": 89,
+      "commitScales": {
+        "0.0": 1,
+        "0.125": 4,
+        "0.25": 6,
+        "0.5": 16,
+        "1.0": 62
+      },
+      "displayRound": 38,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.2652296857833862,
+      "meanQualifiedClassCounts": 0.46,
+      "meanRawSurvivorCounts": 65.6,
+      "meanRlaCoefficients": 0.00010789772727272727,
+      "meanSelectedCounts": 32.6,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.011235955056179775
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 665,
+      "commitChecks": 89,
+      "commitScales": {
+        "0.0": 5,
+        "0.125": 4,
+        "0.25": 7,
+        "0.5": 12,
+        "1.0": 61
+      },
+      "displayRound": 39,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.2633828949928283,
+      "meanQualifiedClassCounts": 0.49,
+      "meanRawSurvivorCounts": 66.0,
+      "meanRlaCoefficients": 0.00010808080808080806,
+      "meanSelectedCounts": 33.0,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.056179775280898875
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 779,
+      "commitChecks": 94,
+      "commitScales": {
+        "0.0": 8,
+        "0.125": 8,
+        "0.25": 6,
+        "0.5": 11,
+        "1.0": 61
+      },
+      "displayRound": 40,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.261120529651642,
+      "meanQualifiedClassCounts": 0.69,
+      "meanRawSurvivorCounts": 66.0,
+      "meanRlaCoefficients": 0.0001095959595959596,
+      "meanSelectedCounts": 33.0,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.0851063829787234
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 836,
+      "commitChecks": 94,
+      "commitScales": {
+        "0.0": 5,
+        "0.125": 3,
+        "0.25": 8,
+        "0.5": 17,
+        "1.0": 61
+      },
+      "displayRound": 41,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.259055025577545,
+      "meanQualifiedClassCounts": 0.7,
+      "meanRawSurvivorCounts": 66.0,
+      "meanRlaCoefficients": 0.00011111111111111114,
+      "meanSelectedCounts": 33.0,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.05319148936170213
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 931,
+      "commitChecks": 96,
+      "commitScales": {
+        "0.0": 7,
+        "0.125": 4,
+        "0.25": 9,
+        "0.5": 16,
+        "1.0": 60
+      },
+      "displayRound": 42,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.2564433789253235,
+      "meanQualifiedClassCounts": 0.89,
+      "meanRawSurvivorCounts": 66.0,
+      "meanRlaCoefficients": 0.00011262626262626264,
+      "meanSelectedCounts": 33.0,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.07291666666666667
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 912,
+      "commitChecks": 97,
+      "commitScales": {
+        "0.0": 6,
+        "0.125": 3,
+        "0.25": 13,
+        "0.5": 18,
+        "1.0": 57
+      },
+      "displayRound": 43,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.254188642501831,
+      "meanQualifiedClassCounts": 0.93,
+      "meanRawSurvivorCounts": 66.0,
+      "meanRlaCoefficients": 0.00011414141414141413,
+      "meanSelectedCounts": 33.0,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.061855670103092786
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 1273,
+      "commitChecks": 100,
+      "commitScales": {
+        "0.0": 5,
+        "0.125": 6,
+        "0.25": 9,
+        "0.5": 16,
+        "1.0": 64
+      },
+      "displayRound": 44,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.252496786594391,
+      "meanQualifiedClassCounts": 1.11,
+      "meanRawSurvivorCounts": 66.0,
+      "meanRlaCoefficients": 0.00011565656565656567,
+      "meanSelectedCounts": 33.0,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.05
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 1045,
+      "commitChecks": 100,
+      "commitScales": {
+        "0.125": 10,
+        "0.25": 7,
+        "0.5": 16,
+        "1.0": 67
+      },
+      "displayRound": 45,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.249127900123596,
+      "meanQualifiedClassCounts": 1.18,
+      "meanRawSurvivorCounts": 66.0,
+      "meanRlaCoefficients": 0.00011717171717171717,
+      "meanSelectedCounts": 33.0,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.0
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 1311,
+      "commitChecks": 98,
+      "commitScales": {
+        "0.0": 9,
+        "0.125": 4,
+        "0.25": 10,
+        "0.5": 7,
+        "1.0": 68
+      },
+      "displayRound": 46,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.247036633491516,
+      "meanQualifiedClassCounts": 1.34,
+      "meanRawSurvivorCounts": 66.0,
+      "meanRlaCoefficients": 0.00011868686868686868,
+      "meanSelectedCounts": 33.0,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.09183673469387756
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 1121,
+      "commitChecks": 99,
+      "commitScales": {
+        "0.0": 4,
+        "0.125": 7,
+        "0.25": 7,
+        "0.5": 17,
+        "1.0": 64
+      },
+      "displayRound": 47,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.243452115058899,
+      "meanQualifiedClassCounts": 1.32,
+      "meanRawSurvivorCounts": 66.0,
+      "meanRlaCoefficients": 0.00012020202020202022,
+      "meanSelectedCounts": 33.0,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.04040404040404041
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 1254,
+      "commitChecks": 100,
+      "commitScales": {
+        "0.0": 8,
+        "0.125": 8,
+        "0.25": 14,
+        "0.5": 12,
+        "1.0": 58
+      },
+      "displayRound": 48,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.2414714937210083,
+      "meanQualifiedClassCounts": 1.42,
+      "meanRawSurvivorCounts": 66.0,
+      "meanRlaCoefficients": 0.00012171717171717173,
+      "meanSelectedCounts": 33.0,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.08
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 1216,
+      "commitChecks": 100,
+      "commitScales": {
+        "0.0": 3,
+        "0.125": 1,
+        "0.25": 6,
+        "0.5": 10,
+        "1.0": 80
+      },
+      "displayRound": 49,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.2376280908584594,
+      "meanQualifiedClassCounts": 1.34,
+      "meanRawSurvivorCounts": 66.0,
+      "meanRlaCoefficients": 0.00012323232323232323,
+      "meanSelectedCounts": 33.0,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.03
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 1159,
+      "commitChecks": 99,
+      "commitScales": {
+        "0.0": 4,
+        "0.125": 3,
+        "0.25": 11,
+        "0.5": 13,
+        "1.0": 68
+      },
+      "displayRound": 50,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.2337803978919983,
+      "meanQualifiedClassCounts": 1.32,
+      "meanRawSurvivorCounts": 66.0,
+      "meanRlaCoefficients": 0.00012474747474747476,
+      "meanSelectedCounts": 33.0,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.04040404040404041
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 1197,
+      "commitChecks": 98,
+      "commitScales": {
+        "0.0": 7,
+        "0.125": 4,
+        "0.25": 12,
+        "0.5": 13,
+        "1.0": 62
+      },
+      "displayRound": 51,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.2303259506225586,
+      "meanQualifiedClassCounts": 1.4,
+      "meanRawSurvivorCounts": 66.0,
+      "meanRlaCoefficients": 0.00012626262626262626,
+      "meanSelectedCounts": 33.0,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.07142857142857142
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 1273,
+      "commitChecks": 99,
+      "commitScales": {
+        "0.0": 5,
+        "0.125": 7,
+        "0.25": 8,
+        "0.5": 16,
+        "1.0": 63
+      },
+      "displayRound": 52,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.228020779132843,
+      "meanQualifiedClassCounts": 1.48,
+      "meanRawSurvivorCounts": 66.0,
+      "meanRlaCoefficients": 0.0001277777777777778,
+      "meanSelectedCounts": 33.0,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.050505050505050504
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 1311,
+      "commitChecks": 100,
+      "commitScales": {
+        "0.0": 7,
+        "0.125": 8,
+        "0.25": 4,
+        "0.5": 14,
+        "1.0": 67
+      },
+      "displayRound": 53,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.2238496499061586,
+      "meanQualifiedClassCounts": 1.44,
+      "meanRawSurvivorCounts": 66.0,
+      "meanRlaCoefficients": 0.0001292929292929293,
+      "meanSelectedCounts": 33.0,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.07
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 1197,
+      "commitChecks": 100,
+      "commitScales": {
+        "0.0": 4,
+        "0.125": 6,
+        "0.25": 9,
+        "0.5": 13,
+        "1.0": 68
+      },
+      "displayRound": 54,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.2215437002182004,
+      "meanQualifiedClassCounts": 1.47,
+      "meanRawSurvivorCounts": 66.0,
+      "meanRlaCoefficients": 0.00013080808080808082,
+      "meanSelectedCounts": 33.0,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.04
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 1349,
+      "commitChecks": 99,
+      "commitScales": {
+        "0.0": 5,
+        "0.125": 9,
+        "0.25": 10,
+        "0.5": 9,
+        "1.0": 66
+      },
+      "displayRound": 55,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.216689695835113,
+      "meanQualifiedClassCounts": 1.59,
+      "meanRawSurvivorCounts": 66.0,
+      "meanRlaCoefficients": 0.00013232323232323235,
+      "meanSelectedCounts": 33.0,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.050505050505050504
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 1216,
+      "commitChecks": 100,
+      "commitScales": {
+        "0.0": 6,
+        "0.125": 7,
+        "0.25": 9,
+        "0.5": 14,
+        "1.0": 64
+      },
+      "displayRound": 56,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.213187198638916,
+      "meanQualifiedClassCounts": 1.53,
+      "meanRawSurvivorCounts": 66.0,
+      "meanRlaCoefficients": 0.00013383838383838385,
+      "meanSelectedCounts": 33.0,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.06
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 1254,
+      "commitChecks": 100,
+      "commitScales": {
+        "0.0": 2,
+        "0.125": 4,
+        "0.25": 14,
+        "0.5": 14,
+        "1.0": 66
+      },
+      "displayRound": 57,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.2092617983818053,
+      "meanQualifiedClassCounts": 1.42,
+      "meanRawSurvivorCounts": 66.0,
+      "meanRlaCoefficients": 0.00013535353535353535,
+      "meanSelectedCounts": 33.0,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.02
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 1102,
+      "commitChecks": 97,
+      "commitScales": {
+        "0.0": 4,
+        "0.125": 3,
+        "0.25": 10,
+        "0.5": 13,
+        "1.0": 67
+      },
+      "displayRound": 58,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.2054524106979367,
+      "meanQualifiedClassCounts": 1.4,
+      "meanRawSurvivorCounts": 66.0,
+      "meanRlaCoefficients": 0.00013686868686868688,
+      "meanSelectedCounts": 33.0,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.041237113402061855
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 1140,
+      "commitChecks": 99,
+      "commitScales": {
+        "0.0": 5,
+        "0.125": 7,
+        "0.25": 6,
+        "0.5": 13,
+        "1.0": 68
+      },
+      "displayRound": 59,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.1998079414367675,
+      "meanQualifiedClassCounts": 1.54,
+      "meanRawSurvivorCounts": 66.0,
+      "meanRlaCoefficients": 0.0001383838383838384,
+      "meanSelectedCounts": 33.0,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.050505050505050504
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 1406,
+      "commitChecks": 100,
+      "commitScales": {
+        "0.0": 4,
+        "0.125": 3,
+        "0.25": 9,
+        "0.5": 13,
+        "1.0": 71
+      },
+      "displayRound": 60,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.196653280258179,
+      "meanQualifiedClassCounts": 1.69,
+      "meanRawSurvivorCounts": 66.0,
+      "meanRlaCoefficients": 0.0001398989898989899,
+      "meanSelectedCounts": 33.0,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.04
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 1178,
+      "commitChecks": 100,
+      "commitScales": {
+        "0.0": 3,
+        "0.125": 4,
+        "0.25": 7,
+        "0.5": 10,
+        "1.0": 76
+      },
+      "displayRound": 61,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.191858718395233,
+      "meanQualifiedClassCounts": 1.54,
+      "meanRawSurvivorCounts": 66.0,
+      "meanRlaCoefficients": 0.0001414141414141414,
+      "meanSelectedCounts": 33.0,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.03
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 1254,
+      "commitChecks": 100,
+      "commitScales": {
+        "0.0": 3,
+        "0.125": 6,
+        "0.25": 3,
+        "0.5": 13,
+        "1.0": 75
+      },
+      "displayRound": 62,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.185778428554535,
+      "meanQualifiedClassCounts": 1.46,
+      "meanRawSurvivorCounts": 66.0,
+      "meanRlaCoefficients": 0.00014292929292929294,
+      "meanSelectedCounts": 33.0,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.03
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 1254,
+      "commitChecks": 100,
+      "commitScales": {
+        "0.0": 3,
+        "0.125": 6,
+        "0.25": 11,
+        "0.5": 15,
+        "1.0": 65
+      },
+      "displayRound": 63,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.1815537257194517,
+      "meanQualifiedClassCounts": 1.53,
+      "meanRawSurvivorCounts": 66.0,
+      "meanRlaCoefficients": 0.00014444444444444446,
+      "meanSelectedCounts": 33.0,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.03
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 1235,
+      "commitChecks": 100,
+      "commitScales": {
+        "0.0": 2,
+        "0.125": 6,
+        "0.25": 5,
+        "0.5": 10,
+        "1.0": 77
+      },
+      "displayRound": 64,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.1764530377388,
+      "meanQualifiedClassCounts": 1.47,
+      "meanRawSurvivorCounts": 66.0,
+      "meanRlaCoefficients": 0.00014595959595959597,
+      "meanSelectedCounts": 33.0,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.02
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 1235,
+      "commitChecks": 100,
+      "commitScales": {
+        "0.0": 2,
+        "0.25": 6,
+        "0.5": 14,
+        "1.0": 78
+      },
+      "displayRound": 65,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.172776644229889,
+      "meanQualifiedClassCounts": 1.56,
+      "meanRawSurvivorCounts": 66.0,
+      "meanRlaCoefficients": 0.0001474747474747475,
+      "meanSelectedCounts": 33.0,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.02
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 1216,
+      "commitChecks": 100,
+      "commitScales": {
+        "0.0": 1,
+        "0.125": 1,
+        "0.25": 5,
+        "0.5": 10,
+        "1.0": 83
+      },
+      "displayRound": 66,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.1687383532524107,
+      "meanQualifiedClassCounts": 1.47,
+      "meanRawSurvivorCounts": 66.0,
+      "meanRlaCoefficients": 0.000148989898989899,
+      "meanSelectedCounts": 33.0,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.01
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 1216,
+      "commitChecks": 100,
+      "commitScales": {
+        "0.0": 4,
+        "0.125": 4,
+        "0.25": 10,
+        "0.5": 13,
+        "1.0": 69
+      },
+      "displayRound": 67,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.1621764793395997,
+      "meanQualifiedClassCounts": 1.52,
+      "meanRawSurvivorCounts": 66.0,
+      "meanRlaCoefficients": 0.00015050505050505052,
+      "meanSelectedCounts": 33.0,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.04
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 1235,
+      "commitChecks": 100,
+      "commitScales": {
+        "0.0": 1,
+        "0.125": 4,
+        "0.25": 8,
+        "0.5": 17,
+        "1.0": 70
+      },
+      "displayRound": 68,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.1593919715881347,
+      "meanQualifiedClassCounts": 1.52,
+      "meanRawSurvivorCounts": 66.0,
+      "meanRlaCoefficients": 0.000152020202020202,
+      "meanSelectedCounts": 33.0,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.01
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 1216,
+      "commitChecks": 99,
+      "commitScales": {
+        "0.0": 3,
+        "0.125": 5,
+        "0.25": 3,
+        "0.5": 7,
+        "1.0": 81
+      },
+      "displayRound": 69,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.155083438873291,
+      "meanQualifiedClassCounts": 1.56,
+      "meanRawSurvivorCounts": 66.0,
+      "meanRlaCoefficients": 0.00015353535353535355,
+      "meanSelectedCounts": 33.0,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.030303030303030304
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 1292,
+      "commitChecks": 100,
+      "commitScales": {
+        "0.0": 3,
+        "0.125": 4,
+        "0.25": 6,
+        "0.5": 16,
+        "1.0": 71
+      },
+      "displayRound": 70,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.1502934584617615,
+      "meanQualifiedClassCounts": 1.54,
+      "meanRawSurvivorCounts": 65.34,
+      "meanRlaCoefficients": 0.0001582484217171717,
+      "meanSelectedCounts": 32.34,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.03
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 1292,
+      "commitChecks": 100,
+      "commitScales": {
+        "0.0": 5,
+        "0.125": 6,
+        "0.25": 4,
+        "0.5": 15,
+        "1.0": 70
+      },
+      "displayRound": 71,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.147617320537567,
+      "meanQualifiedClassCounts": 1.64,
+      "meanRawSurvivorCounts": 65.34,
+      "meanRlaCoefficients": 0.00015979482323232326,
+      "meanSelectedCounts": 32.34,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.05
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 1235,
+      "commitChecks": 100,
+      "commitScales": {
+        "0.0": 3,
+        "0.125": 2,
+        "0.25": 10,
+        "0.5": 20,
+        "1.0": 65
+      },
+      "displayRound": 72,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.1421900758743284,
+      "meanQualifiedClassCounts": 1.67,
+      "meanRawSurvivorCounts": 65.72,
+      "meanRlaCoefficients": 0.00015946401515151514,
+      "meanSelectedCounts": 32.72,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.03
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 1254,
+      "commitChecks": 100,
+      "commitScales": {
+        "0.0": 5,
+        "0.125": 3,
+        "0.25": 9,
+        "0.5": 16,
+        "1.0": 67
+      },
+      "displayRound": 73,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.1389848260879516,
+      "meanQualifiedClassCounts": 1.53,
+      "meanRawSurvivorCounts": 65.87,
+      "meanRlaCoefficients": 0.00016024431818181822,
+      "meanSelectedCounts": 32.87,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.05
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 1178,
+      "commitChecks": 100,
+      "commitScales": {
+        "0.0": 3,
+        "0.125": 3,
+        "0.25": 12,
+        "0.5": 13,
+        "1.0": 69
+      },
+      "displayRound": 74,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.1363207278251646,
+      "meanQualifiedClassCounts": 1.55,
+      "meanRawSurvivorCounts": 66.0,
+      "meanRlaCoefficients": 0.0001611111111111111,
+      "meanSelectedCounts": 33.0,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.03
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 1330,
+      "commitChecks": 100,
+      "commitScales": {
+        "0.0": 8,
+        "0.125": 6,
+        "0.25": 7,
+        "0.5": 15,
+        "1.0": 64
+      },
+      "displayRound": 75,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.1279793062210084,
+      "meanQualifiedClassCounts": 1.68,
+      "meanRawSurvivorCounts": 65.31,
+      "meanRlaCoefficients": 0.00016620830278592374,
+      "meanSelectedCounts": 32.31,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.08
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 1463,
+      "commitChecks": 100,
+      "commitScales": {
+        "0.0": 10,
+        "0.125": 4,
+        "0.25": 8,
+        "0.5": 18,
+        "1.0": 60
+      },
+      "displayRound": 76,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.131412278175354,
+      "meanQualifiedClassCounts": 1.69,
+      "meanRawSurvivorCounts": 65.59,
+      "meanRlaCoefficients": 0.00016624447601010104,
+      "meanSelectedCounts": 32.59,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.1
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 1311,
+      "commitChecks": 100,
+      "commitScales": {
+        "0.0": 11,
+        "0.125": 5,
+        "0.25": 12,
+        "0.5": 15,
+        "1.0": 57
+      },
+      "displayRound": 77,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.1244861555099486,
+      "meanQualifiedClassCounts": 1.72,
+      "meanRawSurvivorCounts": 65.34,
+      "meanRlaCoefficients": 0.00016907323232323235,
+      "meanSelectedCounts": 32.34,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.11
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 1216,
+      "commitChecks": 100,
+      "commitScales": {
+        "0.0": 2,
+        "0.125": 5,
+        "0.25": 6,
+        "0.5": 13,
+        "1.0": 74
+      },
+      "displayRound": 78,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.1221047163009645,
+      "meanQualifiedClassCounts": 1.68,
+      "meanRawSurvivorCounts": 65.34,
+      "meanRlaCoefficients": 0.00017061963383838385,
+      "meanSelectedCounts": 32.34,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.02
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 1368,
+      "commitChecks": 99,
+      "commitScales": {
+        "0.0": 4,
+        "0.125": 1,
+        "0.25": 3,
+        "0.5": 15,
+        "1.0": 76
+      },
+      "displayRound": 79,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.117667960643768,
+      "meanQualifiedClassCounts": 1.67,
+      "meanRawSurvivorCounts": 65.34,
+      "meanRlaCoefficients": 0.00017216603535353536,
+      "meanSelectedCounts": 32.34,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.04040404040404041
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 1197,
+      "commitChecks": 100,
+      "commitScales": {
+        "0.0": 3,
+        "0.125": 4,
+        "0.25": 12,
+        "0.5": 13,
+        "1.0": 68
+      },
+      "displayRound": 80,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.1202555613517764,
+      "meanQualifiedClassCounts": 1.57,
+      "meanRawSurvivorCounts": 66.0,
+      "meanRlaCoefficients": 0.00017020202020202025,
+      "meanSelectedCounts": 33.0,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.03
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 1178,
+      "commitChecks": 100,
+      "commitScales": {
+        "0.0": 2,
+        "0.125": 5,
+        "0.25": 7,
+        "0.5": 17,
+        "1.0": 69
+      },
+      "displayRound": 81,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.113014628171921,
+      "meanQualifiedClassCounts": 1.61,
+      "meanRawSurvivorCounts": 65.34,
+      "meanRlaCoefficients": 0.00017525883838383837,
+      "meanSelectedCounts": 32.34,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.02
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 1349,
+      "commitChecks": 100,
+      "commitScales": {
+        "0.0": 3,
+        "0.125": 4,
+        "0.25": 8,
+        "0.5": 13,
+        "1.0": 72
+      },
+      "displayRound": 82,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.106039605140686,
+      "meanQualifiedClassCounts": 1.8,
+      "meanRawSurvivorCounts": 65.34,
+      "meanRlaCoefficients": 0.0001768052398989899,
+      "meanSelectedCounts": 32.34,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.03
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 1368,
+      "commitChecks": 100,
+      "commitScales": {
+        "0.0": 7,
+        "0.125": 4,
+        "0.25": 8,
+        "0.5": 10,
+        "1.0": 71
+      },
+      "displayRound": 83,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.110282012462616,
+      "meanQualifiedClassCounts": 1.71,
+      "meanRawSurvivorCounts": 65.35,
+      "meanRlaCoefficients": 0.00017829703282828285,
+      "meanSelectedCounts": 32.35,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.07
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 1387,
+      "commitChecks": 100,
+      "commitScales": {
+        "0.0": 5,
+        "0.125": 5,
+        "0.25": 7,
+        "0.5": 12,
+        "1.0": 71
+      },
+      "displayRound": 84,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.1072439453601834,
+      "meanQualifiedClassCounts": 1.78,
+      "meanRawSurvivorCounts": 65.34,
+      "meanRlaCoefficients": 0.00017989804292929294,
+      "meanSelectedCounts": 32.34,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.05
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 1368,
+      "commitChecks": 100,
+      "commitScales": {
+        "0.0": 6,
+        "0.125": 8,
+        "0.25": 11,
+        "0.5": 11,
+        "1.0": 64
+      },
+      "displayRound": 85,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.1038070583343504,
+      "meanQualifiedClassCounts": 1.71,
+      "meanRawSurvivorCounts": 65.68,
+      "meanRlaCoefficients": 0.00017955555555555558,
+      "meanSelectedCounts": 32.68,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.06
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 1311,
+      "commitChecks": 100,
+      "commitScales": {
+        "0.0": 2,
+        "0.125": 4,
+        "0.25": 11,
+        "0.5": 22,
+        "1.0": 61
+      },
+      "displayRound": 86,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.1061381289958954,
+      "meanQualifiedClassCounts": 1.74,
+      "meanRawSurvivorCounts": 65.34,
+      "meanRlaCoefficients": 0.00018299084595959595,
+      "meanSelectedCounts": 32.34,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.02
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 1121,
+      "commitChecks": 100,
+      "commitScales": {
+        "0.0": 7,
+        "0.125": 7,
+        "0.25": 17,
+        "0.5": 18,
+        "1.0": 51
+      },
+      "displayRound": 87,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.101421552419662,
+      "meanQualifiedClassCounts": 1.67,
+      "meanRawSurvivorCounts": 65.53,
+      "meanRlaCoefficients": 0.0001834636994949495,
+      "meanSelectedCounts": 32.53,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.07
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 1273,
+      "commitChecks": 100,
+      "commitScales": {
+        "0.0": 6,
+        "0.125": 4,
+        "0.25": 9,
+        "0.5": 13,
+        "1.0": 68
+      },
+      "displayRound": 88,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.096659830093384,
+      "meanQualifiedClassCounts": 1.59,
+      "meanRawSurvivorCounts": 65.19,
+      "meanRlaCoefficients": 0.00018698975134408602,
+      "meanSelectedCounts": 32.19,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.06
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 1273,
+      "commitChecks": 100,
+      "commitScales": {
+        "0.0": 6,
+        "0.125": 6,
+        "0.25": 11,
+        "0.5": 21,
+        "1.0": 56
+      },
+      "displayRound": 89,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.0968512234687804,
+      "meanQualifiedClassCounts": 1.75,
+      "meanRawSurvivorCounts": 64.83,
+      "meanRlaCoefficients": 0.00019062669028999674,
+      "meanSelectedCounts": 31.83,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.06
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 1425,
+      "commitChecks": 100,
+      "commitScales": {
+        "0.0": 6,
+        "0.125": 10,
+        "0.25": 8,
+        "0.5": 12,
+        "1.0": 64
+      },
+      "displayRound": 90,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.0945961277484897,
+      "meanQualifiedClassCounts": 1.67,
+      "meanRawSurvivorCounts": 66.0,
+      "meanRlaCoefficients": 0.00018535353535353537,
+      "meanSelectedCounts": 33.0,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.06
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 1292,
+      "commitChecks": 100,
+      "commitScales": {
+        "0.0": 6,
+        "0.125": 9,
+        "0.25": 12,
+        "0.5": 15,
+        "1.0": 58
+      },
+      "displayRound": 91,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.0916426870822904,
+      "meanQualifiedClassCounts": 1.83,
+      "meanRawSurvivorCounts": 66.0,
+      "meanRlaCoefficients": 0.00018686868686868685,
+      "meanSelectedCounts": 33.0,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.06
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 1368,
+      "commitChecks": 100,
+      "commitScales": {
+        "0.0": 7,
+        "0.125": 8,
+        "0.25": 9,
+        "0.5": 11,
+        "1.0": 65
+      },
+      "displayRound": 92,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.0911443021297456,
+      "meanQualifiedClassCounts": 1.78,
+      "meanRawSurvivorCounts": 65.99,
+      "meanRlaCoefficients": 0.00018844270833333332,
+      "meanSelectedCounts": 32.99,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.07
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 1292,
+      "commitChecks": 100,
+      "commitScales": {
+        "0.0": 3,
+        "0.125": 8,
+        "0.25": 13,
+        "0.5": 14,
+        "1.0": 62
+      },
+      "displayRound": 93,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.0937630615234375,
+      "meanQualifiedClassCounts": 1.69,
+      "meanRawSurvivorCounts": 65.81,
+      "meanRlaCoefficients": 0.00019102651515151518,
+      "meanSelectedCounts": 32.81,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.03
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 1406,
+      "commitChecks": 100,
+      "commitScales": {
+        "0.0": 7,
+        "0.125": 7,
+        "0.25": 9,
+        "0.5": 15,
+        "1.0": 62
+      },
+      "displayRound": 94,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.089469355583191,
+      "meanQualifiedClassCounts": 1.7,
+      "meanRawSurvivorCounts": 65.48,
+      "meanRlaCoefficients": 0.00019452462121212125,
+      "meanSelectedCounts": 32.48,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.07
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 1444,
+      "commitChecks": 100,
+      "commitScales": {
+        "0.0": 6,
+        "0.125": 2,
+        "0.25": 12,
+        "0.5": 16,
+        "1.0": 64
+      },
+      "displayRound": 95,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.0855106506347654,
+      "meanQualifiedClassCounts": 1.76,
+      "meanRawSurvivorCounts": 64.71,
+      "meanRlaCoefficients": 0.000200893460817856,
+      "meanSelectedCounts": 31.71,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.06
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 1178,
+      "commitChecks": 100,
+      "commitScales": {
+        "0.0": 7,
+        "0.125": 2,
+        "0.25": 12,
+        "0.5": 21,
+        "1.0": 58
+      },
+      "displayRound": 96,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.083227352142334,
+      "meanQualifiedClassCounts": 1.64,
+      "meanRawSurvivorCounts": 64.82,
+      "meanRlaCoefficients": 0.0002018066756272402,
+      "meanSelectedCounts": 31.82,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.07
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 1349,
+      "commitChecks": 100,
+      "commitScales": {
+        "0.0": 7,
+        "0.125": 8,
+        "0.25": 7,
+        "0.5": 15,
+        "1.0": 63
+      },
+      "displayRound": 97,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.085717038869858,
+      "meanQualifiedClassCounts": 1.78,
+      "meanRawSurvivorCounts": 65.03,
+      "meanRlaCoefficients": 0.00020195493238840011,
+      "meanSelectedCounts": 32.03,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.07
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 1444,
+      "commitChecks": 100,
+      "commitScales": {
+        "0.0": 5,
+        "0.125": 5,
+        "0.25": 8,
+        "0.5": 16,
+        "1.0": 66
+      },
+      "displayRound": 98,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.0823410987854003,
+      "meanQualifiedClassCounts": 1.85,
+      "meanRawSurvivorCounts": 64.85,
+      "meanRlaCoefficients": 0.00020476260080645162,
+      "meanSelectedCounts": 31.85,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.05
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 1577,
+      "commitChecks": 100,
+      "commitScales": {
+        "0.0": 4,
+        "0.125": 8,
+        "0.25": 11,
+        "0.5": 10,
+        "1.0": 67
+      },
+      "displayRound": 99,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.082179837226868,
+      "meanQualifiedClassCounts": 1.92,
+      "meanRawSurvivorCounts": 65.83,
+      "meanRlaCoefficients": 0.00020004703282828286,
+      "meanSelectedCounts": 32.83,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.04
+    },
+    {
+      "activations": 100,
+      "calibrationDraws": 1368,
+      "commitChecks": 100,
+      "commitScales": {
+        "0.0": 5,
+        "0.125": 5,
+        "0.25": 12,
+        "0.5": 17,
+        "1.0": 61
+      },
+      "displayRound": 100,
+      "meanCoherentCandidateCounts": 0.0,
+      "meanLocalTrainCE": 2.0758512241840363,
+      "meanQualifiedClassCounts": 1.9,
+      "meanRawSurvivorCounts": 66.0,
+      "meanRlaCoefficients": 0.00020050505050505052,
+      "meanSelectedCounts": 33.0,
+      "ownRouteFraction": 0.0,
+      "peerFallbackApplied": 0,
+      "routes": {
+        "pool": 100
+      },
+      "screenAllFail": 0,
+      "screenApplied": 100,
+      "screenGuardFallback": 0,
+      "zeroCommitFractionAmongChecks": 0.05
+    }
+  ],
+  "runId": "cifar10-iid-2025-cart_commit-4dc529bf77cb",
+  "source": {
+    "basil_core/acds.py": "a67bea10bfb0b57e01978c4d134d741470835e0a9fb06abb0dab296c71db4862",
+    "basil_core/attacks.py": "e1b653952cffd20983d9c4b0835fd11725e7df1cccff11c62e30569b952f119f",
+    "basil_core/cart_admitted_continuity_candidate.py": "bc7efb8b91474aae9b70cdce9d36b6e3ad76114b33cab77047b096ea67e8c697",
+    "basil_core/cart_balanced_commit.py": "3be2fbd3a3cf466de110f4c16f363501740e824475465009a5c8e36839e82763",
+    "basil_core/cart_batched_scoring.py": "77d0ee3ac9fc958e944d282a68d1fb4838ddb4dac6b99c7829444d6e78ef48e3",
+    "basil_core/cart_campaign_io.py": "3655d41d806e5778a28c952037196da840b186db5541d623033da4dcb3a7dcc9",
+    "basil_core/cart_class_skill.py": "7e2d4952f70f7bcda4f5b312a4edeb93541843a6d45f4e725c02e7085ec2b876",
+    "basil_core/cart_comparison_study.py": "f8c6f85570675130d3052fa9971c269c5d5f3d65db744c32e1e2053aca8f7906",
+    "basil_core/cart_continuity_candidate.py": "fb1fdb973f59445f0069d7e37eb3d93820235b1da9c73cb67f7f6ddff9a0a93a",
+    "basil_core/cart_contribution_study.py": "9b87777a5fc3010be40109b1a1651caf4b76dbba8c3b1dbb0fcd0c51438d6674",
+    "basil_core/cart_discriminative_admission_candidate.py": "35ef43ac1f6b47608a773dc1f73171547ce7ef38e6865dbccb3243f301ec03eb",
+    "basil_core/cart_discriminative_continuity_candidate.py": "62d11f505a1bf6014e8de543d0116f900a42082dc4f7ad91fbf28d197dfc1099",
+    "basil_core/cart_local_prior.py": "c1b3f396119d103d1affde23293db41e32e42c0e8b1555887a8b0c163bb77739",
+    "basil_core/cart_mechanism_audit.py": "186ff4605af843a9b478fa24ff8b1545033b6f5252d03259cb5c36a8c3561b8a",
+    "basil_core/cart_noise_selection.py": "d9c7fdb0b42d625f26280c06122202b35db1e3ae1db06a2ac74e74619f206bb1",
+    "basil_core/cart_peer_candidates.py": "3fc3d2a79ee5955bc44754be8f48118bc5024bad5f4b9b16fa952a29b2eb9576",
+    "basil_core/cart_prior_neutral_commit.py": "9727a07bf0ef6fd807fe2ca8ccd131cf774cc2aa7eefee07496e62ea44dd0ebd",
+    "basil_core/cart_prior_neutral_routing.py": "ca705a466d22deea7b194ea251c00467cf7d2a1a0facc5e1d10c081516c5fe12",
+    "basil_core/cart_qualified_continuity_candidate.py": "34245444719db9f7c814013fca5f49c3284cfa32918d788a559a195ef77d5b02",
+    "basil_core/cart_quality_commit_candidate.py": "2eeb85810bcd8656fbbb1f89399cdfac51c0f1ea2d5eb34b8c5dfeea90b5020e",
+    "basil_core/cart_quality_routing_candidate.py": "d47314835462ef38c7c6ebce19f34032c0cb96a9cae66b7e6cae1146b265ab8c",
+    "basil_core/cart_revision_study.py": "d61d64fc0ec2654b1b708c71dab209fd35654d0eb68233cba252ed55f5989669",
+    "basil_core/cart_semantic_admission_candidate.py": "c732e79987b4d393432f18b8ddb3c738500769b070412daf99f92a917bb95929",
+    "basil_core/cart_transactional_quality_candidate.py": "c041a4e188bac1dfb38b1a4e39b7e6f11c28aacae99075c5af7ccecf8d07b047",
+    "basil_core/cart_uncertainty_admission_candidate.py": "644781cf6fe366f6304f6e27bd45bcf4139db304bd9db304bd0f02ede76631b6",
+    "basil_core/cart_worker_admission.py": "4d078647c164f301f59dcd1feebc30b4649cff75b51e90b548f7f5fb4a63c703",
+    "basil_core/data/cifar.py": "9bacb38333fe1b27b74919f7422e74415ebc58bd54e64431845f930a9ebfe180",
+    "basil_core/execution_profile.py": "222e60d95b643a364b30a400b28ed38baf4913db04b5acae5fa6f558ed84cfbe",
+    "basil_core/factorial_model.py": "07baaac3ae5d5a7a698fc4d37b37574f93f95510e43976cb8fbacdeb55f8142f",
+    "basil_core/factorial_study.py": "51ba798ee07f4d80a90a3b7e5c11280073e2cf2fabe1555b50e0505d1022884f",
+    "basil_core/iid_runtime.py": "f0069317dd6fbc583726cb734d89d8c32c50b2e5af564a491df513fee2ed9c58",
+    "basil_core/lazy_imports.py": "5d7039af5f56bcf16099ceef788e0b6515a70af7ff94cb8b9cd6fee8759f15b4",
+    "basil_core/models.py": "49169fb67c9c59d00d86e09d62d88189b164a777820680624d42bab1a47bd0cb",
+    "basil_core/research_protocol.py": "cb4fcaeb4f0b11079598001cd98ecfe8965db7ff6a806973b04b6af3393e7c15",
+    "basil_core/sharp_cart.py": "48ad43fe155f5e61c8122fcbe80e2dd3cb10b9afdf4f0506c244a466c561eeb8",
+    "basil_core/sharp_cart_v2.py": "9d1a06ad3dc75175fa778cfdbd7fd60f1eed39e6c05b17981f06e3cb0fd824f4",
+    "basil_core/sharp_cart_v2_protocol.py": "7772f152295caf21242bd606804c13cdd887dea62b8c24539ad9ca1f49ed3170",
+    "basil_core/sharp_checked_pool.py": "b853e8995f3391062ae016d3d0ebdb0b0919bcc7fea3adabc87a42ad3fcc2f39",
+    "basil_core/sharp_compiled_transfer.py": "bb44a909f2ac062389800264fcafb851fe8024099a7de9390fee88c9c8af82e9",
+    "basil_core/sharp_data.py": "bb636a1b6b4a95b246fa62b6168a790b92e70a11268c399b093d4689cd4eaf18",
+    "basil_core/sharp_guarded_protocol.py": "5b2113512479dfc562e6bf7160ff51cc02728a98a941722485acf9dcdbd4d55c",
+    "basil_core/sharp_math.py": "be9528e3ce10d8e084a44577fdb046fa8e82c61cf5d1824f6aa8494c63fb0831",
+    "basil_core/sharp_protocol.py": "564a836b74682e18e1a7d28b701b38c4b6d4aeaed1b9913cc4dbb959220e610f",
+    "basil_core/sharp_study.py": "2af5e2d52ea92f64f1a098a23fa20c9b4f172b1ee1e622fd0b6988ae16435dad",
+    "basil_core/sharp_worker.py": "42f64e76afb8a1093e23b95e874edab4e6aac12e3ef58de0318259b6c081fce7",
+    "basil_core/trainer.py": "61782cd28a44443618f07d4ed9fd8a5ac4a51ade940e4f0d1b6e9dbc245e3124",
+    "docs/specifications/SHARP_professor_20261027.pdf": "b010c9c79a2282c5835e0b9b4bc5cd95500afbcf7395dd9d04fd6a2a0b9ce700",
+    "reporting/cart_comparison.py": "939d5f253bf299bc08763507f393865c8755266d5f1466d58813b010dcfa09bd",
+    "scripts/cart_comparison_worker.py": "078d84aea1ca18b96019a3488609676358f98169eebe84903c2c91389a17d2eb",
+    "scripts/cart_contribution_worker.py": "3bde3ebe975f7931558ad1b71734ee72a6a37d8fe0347b9a69eb36385fc0759a",
+    "scripts/cart_revision_worker.py": "c4ce11a8d0e5de663cfc968864ce46d4b5f84fc98b4e5df5ddb3ab9754556246",
+    "scripts/cart_v2_slot_worker.py": "2b37a1a47a0d37a89e4181412eb578b45e4596fa682868ca8423b2162200ac2b",
+    "scripts/cart_v2_transfer_worker.py": "a0fc80601338c45a4331af62f9874830aaac903dbe8f3fc975a40f4862fe7f85",
+    "scripts/run_cart_adaptive.py": "bbc50a3980ea734545e7a3753385f033373bfb5e7cbad6ab7dd56cc26f3ec853",
+    "scripts/run_cart_comparison.py": "cdd202457ab4418c9c5374e27a06a39a1b5fd9751b8c3c338425735c307e675c",
+    "scripts/run_cart_contribution.py": "d6965a3e7f3552ab0005f3d72b636fbde585ad04449a32201f548897bd5266ca",
+    "scripts/run_cart_revision_study.py": "0493edd890bde749501a724100a628fb80ff97e11cae187e68dc653f4ba877d0",
+    "scripts/run_cart_v2_resilient.py": "922fbcfefac5ff7020a9a2dc989cd372311f886342c11e8adddd534107fddd38",
+    "scripts/run_cart_v2_scaled.py": "a3ee3af55c745a49328faea641ff5b977dbf8d4bd6bb9596042241637f0b936e",
+    "scripts/run_cart_v2_study.py": "d594dd989ae96c4e2f38a42b8b5c6f2a6d7fa08eb890512ed366f812848ae587",
+    "scripts/run_cart_v2_transfer.py": "34ded0e19586fd8f4c326a65ba32a92ed55b80ce4aeec326be6ba60d70396019",
+    "scripts/run_guarded_sharp_case.py": "9219f4685f71f02d4dc2c9bcdc6697779f705f5b32903fbcba6c6e924b2de980",
+    "scripts/run_sharp_study.py": "2f1909042567548c5a8d7efceda7b831aa60c8782f1f02e45774a4592d741869",
+    "scripts/verify_cart_comparison_gpu.py": "75f7babc69e45d11a29c9847ea71ad80e74e72411e9c8a5a9a893047d059ad82",
+    "scripts/verify_cart_contribution_gpu.py": "3e5146c5d721a37eca0742c94bbfd58aea40515e23711993633b2a5fdf8526f0",
+    "scripts/verify_cart_local_prior_gpu.py": "d86aac4c6d56119535c4ab3139e7c43cc89347d46fe92d8cfc838a14b3660b74",
+    "scripts/verify_cart_revision_gpu.py": "389db37d60a2d4159f6f41f3a3d313448bb6a4ea45b648983ef9d5017a7d94d6",
+    "scripts/verify_cart_v2_transfer.py": "e60bd8714bc55739c808209d001ffe028aac13097adcdca9fdbcd0d12ad167ce"
+  }
+}
