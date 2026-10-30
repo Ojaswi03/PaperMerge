@@ -9,6 +9,15 @@ normalized cache files are created. The new loader is included in the producer
 source fingerprint and is used for preparation, both GPU checks, every worker,
 and independent final inference.
 
+MNIST discovery checks the original archive in `~/.keras/datasets/mnist.npz`,
+then the raw archive at `experiments/cache/mnist/mnist.npz`. If neither exists,
+the original approximately 11 MB compressed archive is downloaded once to
+`/var/tmp/papermerge-<numeric-uid>/raw-data/mnist.npz`, with a lock and atomic
+publication. Normalized arrays are still produced only in memory and verified
+against the same full-data fingerprints. Interrupted downloads are removed.
+The preflight below reports the actual MNIST location and verifies both complete
+datasets without creating any experiment jobs.
+
 The scientific matrix is unchanged: 84 configurations, 100 clients, 100 rounds,
 five local mini-batch updates, and three seeds. Earlier failed plans remain
 untouched; use a fresh output directory. On hal9k, write checkpoints and outputs
@@ -19,15 +28,17 @@ cd ~/Masters_Research/PaperMerge
 git pull --ff-only
 source .venv-hpc/bin/activate
 
-thesis_run=/var/tmp/papermerge-os675524/basil-sharp-thesis-direct-100r-20261030
-mkdir -p "$thesis_run"
-
-nohup python -u scripts/run_basil_sharp_thesis.py \
-  --gpu-count 2 --ram-mib-per-worker 8192 --ram-headroom-mib 16384 \
-  --execute --wait-for-resources --output "$thesis_run" \
-  --ntfy-topic papermerge-ojaswi \
-  > "$thesis_run/adaptive_supervisor.log" 2>&1 < /dev/null &
-echo $! > "$thesis_run/supervisor.pid"
+thesis_run=/var/tmp/papermerge-os675524/basil-sharp-thesis-direct-checked-100r-20261030
+if python scripts/check_basil_sharp_inputs.py
+then
+  mkdir -p "$thesis_run"
+  nohup python -u scripts/run_basil_sharp_thesis.py \
+    --gpu-count 2 --ram-mib-per-worker 8192 --ram-headroom-mib 16384 \
+    --execute --wait-for-resources --output "$thesis_run" \
+    --ntfy-topic papermerge-ojaswi \
+    > "$thesis_run/adaptive_supervisor.log" 2>&1 < /dev/null &
+  echo $! > "$thesis_run/supervisor.pid"
+fi
 ```
 
 Both server GPUs must pass their execution checks before training starts. The
@@ -36,10 +47,10 @@ workers initially given the reported 90 GiB available RAM. Live admission may
 queue more cases. Do not start another cache repair or installation.
 
 ```bash
-tail -f /var/tmp/papermerge-os675524/basil-sharp-thesis-direct-100r-20261030/adaptive_supervisor.log
+tail -f /var/tmp/papermerge-os675524/basil-sharp-thesis-direct-checked-100r-20261030/adaptive_supervisor.log
 
 python scripts/run_cart_comparison.py --monitor \
-  --output /var/tmp/papermerge-os675524/basil-sharp-thesis-direct-100r-20261030
+  --output /var/tmp/papermerge-os675524/basil-sharp-thesis-direct-checked-100r-20261030
 ```
 
 For the overall ETA, the monitor divides activations completed during this
@@ -64,3 +75,8 @@ of both complete datasets matched their archived fingerprints; the loader test
 used about 1.16 GiB peak host RAM and the full GPU checks about 2.50 GiB.
 Server read speed is not inferred from the local timing. The actual two server
 GPUs must still pass their own execution checks before training.
+
+[Archive-discovery follow-up](validation/BASIL_SHARP_DIRECT_PATHS_READY_20261030.json)
+adds tests for an existing repository archive, a missing-archive download,
+download reuse, and cleanup after a connection failure. The preflight must
+report `INPUTS_VERIFIED` on the actual server before background execution begins.

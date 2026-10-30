@@ -1,8 +1,17 @@
 """Load original fitting archives into RAM; never read normalized cache files."""
 from contextlib import contextmanager
+import fcntl
+import os
 from pathlib import Path
 import pickle
+import shutil
+import tempfile
+import urllib.request
 from unittest.mock import patch
+
+ROOT = Path(__file__).resolve().parents[1]
+RAW_ROOT = Path('/var/tmp') / f'papermerge-{os.getuid()}' / 'raw-data'
+MNIST_URL = 'https://storage.googleapis.com/tensorflow/tf-keras-datasets/mnist.npz'
 
 EXPECTED = {
     'mnist': dict(imagesSha256='8b40caca67f0698ef159ea1b4a502534192bc9bea42dfd329b3867fe044f61dc',
@@ -14,12 +23,36 @@ EXPECTED = {
 }
 
 
+def mnist_archive():
+    candidates = (Path.home() / '.keras/datasets/mnist.npz',
+                  ROOT / 'experiments/cache/mnist/mnist.npz', RAW_ROOT / 'mnist.npz')
+    for path in candidates:
+        if path.is_file():
+            return path
+    RAW_ROOT.mkdir(parents=True, exist_ok=True, mode=0o700)
+    destination = RAW_ROOT / 'mnist.npz'
+    with (RAW_ROOT / 'mnist.lock').open('a') as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        if destination.is_file():
+            return destination
+        print('MNIST raw archive is missing; downloading the original archive to local disk.', flush=True)
+        fd, name = tempfile.mkstemp(prefix='mnist-', suffix='.download', dir=RAW_ROOT)
+        temporary = Path(name)
+        try:
+            with os.fdopen(fd, 'wb') as output, urllib.request.urlopen(MNIST_URL, timeout=60) as source:
+                shutil.copyfileobj(source, output)
+            os.replace(temporary, destination)
+        finally:
+            temporary.unlink(missing_ok=True)
+    return destination
+
+
 def training_data(dataset):
     import numpy as np
     from basil_core.sharp_data import digest
     base = Path.home() / '.keras/datasets'
     if dataset == 'mnist':
-        with np.load(base / 'mnist.npz', allow_pickle=False) as archive:
+        with np.load(mnist_archive(), allow_pickle=False) as archive:
             x = archive['x_train'].astype(np.float32)[..., None] / 255.
             y = archive['y_train'].astype(np.int32)
         shape = (28, 28, 1)

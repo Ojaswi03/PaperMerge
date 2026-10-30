@@ -1,4 +1,5 @@
 import json
+import io
 import pickle
 from pathlib import Path
 
@@ -29,6 +30,8 @@ def archives(tmp_path, monkeypatch):
     expected = {ds: dict(imagesSha256=digest(x), labelsSha256=digest(labels), samples=20,
                         officialTestLoaded=False) for ds, x in expected_images.items()}
     monkeypatch.setattr(Path, 'home', classmethod(lambda cls: tmp_path))
+    monkeypatch.setattr(raw, 'ROOT', tmp_path / 'project')
+    monkeypatch.setattr(raw, 'RAW_ROOT', tmp_path / 'local-raw')
     monkeypatch.setattr(raw, 'EXPECTED', expected)
     return tmp_path, expected_images, labels
 
@@ -73,3 +76,50 @@ def test_worker_and_inference_scope_replaces_and_restores_legacy_loader(archives
 def test_input_identities_match_independently_verified_archive():
     archive = Path(__file__).resolve().parents[1] / 'docs/results/cart-contribution-100r-20261029/plan.json'
     assert raw.EXPECTED == json.loads(archive.read_text())['data']
+
+
+def test_mnist_uses_existing_raw_archive_in_repository(archives, monkeypatch):
+    root, expected, _ = archives
+    original = root / '.keras/datasets/mnist.npz'
+    alternate = raw.ROOT / 'experiments/cache/mnist/mnist.npz'
+    alternate.parent.mkdir(parents=True)
+    original.rename(alternate)
+    monkeypatch.setattr(raw.urllib.request, 'urlopen', lambda *args, **kwargs: pytest.fail('Unnecessary download'))
+    x, _ = raw.training_data('mnist')
+    np.testing.assert_array_equal(x, expected['mnist'])
+    assert raw.mnist_archive() == alternate
+
+
+def test_missing_mnist_downloads_original_once_to_local_disk(archives, monkeypatch):
+    root, expected, _ = archives
+    original = root / '.keras/datasets/mnist.npz'
+    payload = original.read_bytes()
+    original.unlink()
+    calls = []
+
+    def download(url, timeout):
+        calls.append((url, timeout))
+        return io.BytesIO(payload)
+
+    monkeypatch.setattr(raw.urllib.request, 'urlopen', download)
+    for _ in range(2):
+        x, _ = raw.training_data('mnist')
+        np.testing.assert_array_equal(x, expected['mnist'])
+    assert len(calls) == 1 and calls[0][0] == raw.MNIST_URL
+    assert (raw.RAW_ROOT / 'mnist.npz').read_bytes() == payload
+    assert not list(raw.RAW_ROOT.glob('*.download'))
+    assert not (raw.ROOT / 'experiments/cache/mnist/x_train_float32.npy').exists()
+
+
+def test_failed_download_leaves_no_published_or_partial_archive(archives, monkeypatch):
+    root, _, _ = archives
+    (root / '.keras/datasets/mnist.npz').unlink()
+
+    def fail(*args, **kwargs):
+        raise OSError('Connection failed')
+
+    monkeypatch.setattr(raw.urllib.request, 'urlopen', fail)
+    with pytest.raises(OSError, match='Connection failed'):
+        raw.training_data('mnist')
+    assert not (raw.RAW_ROOT / 'mnist.npz').exists()
+    assert not list(raw.RAW_ROOT.glob('*.download'))
