@@ -132,3 +132,86 @@ def test_label_damage_is_not_silently_replaced(fixture):
     with pytest.raises(ValueError, match='Label cache also differs'):
         recovery.recover(output, apply=True)
     np.testing.assert_array_equal(np.load(folder / 'y_train_int32.npy'), labels)
+
+
+def archived_rebuild(fixture):
+    output, folder, images, labels, stage = fixture
+    reference = output.parent / 'archive'
+    reference.mkdir()
+    reference_plan = reference / 'plan.json'
+    reference_plan.write_bytes((output / 'plan.json').read_bytes())
+    (reference / 'SHA256.json').write_text(json.dumps({'plan.json': recovery.file_sha(reference_plan)}))
+    # Model the server: even the failed plan recorded a different image identity.
+    wrong = json.loads((output / 'plan.json').read_text())
+    wrong['data']['cifar10']['imagesSha256'] = '0' * 64
+    (output / 'plan.json').write_text(json.dumps(wrong))
+    rebuilt = output / 'cache-recovery-existing'
+    rebuilt.mkdir()
+    stage(rebuilt)
+    (rebuilt / 'recovery.json').write_text(json.dumps(dict(
+        planSha256=recovery.file_sha(output / 'plan.json'), recoveryDirectory=str(rebuilt))))
+    return reference_plan, rebuilt
+
+
+def test_existing_rebuild_uses_archive_and_preserves_wrong_plan(fixture, monkeypatch):
+    output, folder, images, _, _ = fixture
+    reference, rebuilt = archived_rebuild(fixture)
+    bad = corrupt(folder, images)
+    old = (output / 'plan.json').read_bytes()
+    monkeypatch.setattr(recovery.shutil, 'copy2', lambda *args: pytest.fail('No payload copy permitted'))
+    record = recovery.install_rebuild(output, rebuilt, reference)
+    assert record['status'] == 'INSTALLED_ARCHIVE_VERIFIED_REBUILD'
+    assert record['newPlanRequired'] and record['oldPlanUnmodified']
+    assert (output / 'plan.json').read_bytes() == old
+    np.testing.assert_array_equal(np.load(record['backup']), bad)
+    np.testing.assert_array_equal(np.load(folder / 'x_train_float32.npy'), images)
+    assert not (rebuilt / 'experiments/cache/cifar10/x_train_float32.npy').exists()
+    assert recovery.install_rebuild(output, rebuilt, reference)['status'] == 'ALREADY_VERIFIED_AGAINST_ARCHIVE'
+
+
+def test_archive_manifest_mismatch_blocks_installation(fixture):
+    output, folder, images, _, _ = fixture
+    reference, rebuilt = archived_rebuild(fixture)
+    bad = corrupt(folder, images)
+    reference.write_text('{}')
+    with pytest.raises(ValueError, match='checksum manifest'):
+        recovery.install_rebuild(output, rebuilt, reference)
+    np.testing.assert_array_equal(np.load(folder / 'x_train_float32.npy'), bad)
+
+
+def test_wrong_staged_data_is_not_promoted(fixture):
+    output, folder, images, _, _ = fixture
+    reference, rebuilt = archived_rebuild(fixture)
+    bad = corrupt(folder, images)
+    corrupt(rebuilt / 'experiments/cache/cifar10', images)
+    with pytest.raises(ValueError, match='independently verified archive'):
+        recovery.install_rebuild(output, rebuilt, reference)
+    np.testing.assert_array_equal(np.load(folder / 'x_train_float32.npy'), bad)
+
+
+def test_training_evidence_blocks_archive_installation(fixture):
+    output, folder, images, _, _ = fixture
+    reference, rebuilt = archived_rebuild(fixture)
+    corrupt(folder, images)
+    plan = json.loads((output / 'plan.json').read_text())
+    plan['configs'] = [dict(runId='trained')]
+    (output / 'plan.json').write_text(json.dumps(plan))
+    receipt = rebuilt / 'recovery.json'
+    row = json.loads(receipt.read_text())
+    row['planSha256'] = recovery.file_sha(output / 'plan.json')
+    receipt.write_text(json.dumps(row))
+    (output / 'trained').mkdir()
+    (output / 'trained/run.json').write_text(json.dumps(dict(completedActivations=10)))
+    with pytest.raises(ValueError, match='training measurements'):
+        recovery.install_rebuild(output, rebuilt, reference)
+
+
+def test_unrelated_rebuild_is_rejected(fixture):
+    output, _, _, _, _ = fixture
+    reference, rebuilt = archived_rebuild(fixture)
+    receipt = rebuilt / 'recovery.json'
+    row = json.loads(receipt.read_text())
+    row['planSha256'] = 'f' * 64
+    receipt.write_text(json.dumps(row))
+    with pytest.raises(ValueError, match='does not belong'):
+        recovery.install_rebuild(output, rebuilt, reference)

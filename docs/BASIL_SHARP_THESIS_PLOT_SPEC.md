@@ -225,3 +225,53 @@ echo $! > .papermerge/local-tests/basil-sharp-thesis-hal9k-100r-20261030/supervi
 records 16 passing tests and restoration of an isolated, deliberately damaged
 50,000-image cache from raw batches. This is local tool validation, not a claim
 that the shared server cache has already been repaired.
+
+### Follow-up: the failed plan also differs from the verified archive
+
+The server rebuild completed and passed range/label validation. Its image
+identity is `f8d4e2cda7d5b07dab87dc18de073ebd26513ca2a097b6b7b8b97b991cc23462`,
+which matches the independently verified completed study. However, the failed
+hal9k plan recorded `a2561bfa25520b58dd61adfbfc0a09d8dfcad0d4a63f053b249b198e656243a8`.
+The repair correctly refused to install data that differed from that plan.
+Do not change its checksum or resume it with different data.
+
+Instead, preserve the failed plan, reuse the already-written rebuild, and verify
+it against the checksum-protected completed archive:
+
+```bash
+python scripts/install_verified_cifar_cache.py \
+  --output "$PWD/.papermerge/local-tests/basil-sharp-thesis-hal9k-100r-20261030" \
+  --rebuild "$PWD/.papermerge/local-tests/basil-sharp-thesis-hal9k-100r-20261030/cache-recovery-z4gg04hr" \
+  --reference-plan "$PWD/docs/results/cart-contribution-100r-20261029/plan.json"
+```
+
+This operation checks the archive's plan checksum, rejects active supervisors
+and any training evidence in the failed plan, checks the existing rebuild,
+preserves the damaged file with a hard link, then atomically renames the verified
+file into place. It does not rewrite either 600 MB payload. The failed plan and
+receipt remain intact. A fresh plan is mandatory.
+
+The server reports 7.2 TB free on its local `/dev/sda2` filesystem under
+`/var/tmp`, while its shared home showed very slow writes. Put the new outputs
+on that local disk:
+
+```bash
+mkdir -p /var/tmp/papermerge-os675524/basil-sharp-thesis-verified-100r-20261030
+nohup python -u scripts/run_basil_sharp_thesis.py \
+  --gpu-count 2 --ram-mib-per-worker 8192 --ram-headroom-mib 16384 \
+  --execute --wait-for-resources \
+  --output /var/tmp/papermerge-os675524/basil-sharp-thesis-verified-100r-20261030 \
+  --ntfy-topic papermerge-ojaswi \
+  > /var/tmp/papermerge-os675524/basil-sharp-thesis-verified-100r-20261030/adaptive_supervisor.log \
+  2>&1 < /dev/null &
+echo $! > /var/tmp/papermerge-os675524/basil-sharp-thesis-verified-100r-20261030/supervisor.pid
+```
+
+Launch only after the installation command succeeds. Use this new absolute
+output path for monitoring, independent verification, and export. Output files
+are local to hal9k; export the completed results to the shared repository before
+removing them. Input arrays continue to be read from the checked shared cache.
+[Local validation](validation/CIFAR_ARCHIVE_INSTALL_READY_20261030.json)
+records 21 passing tests and reuse of an existing full 50,000-image rebuild,
+with no payload copying, exact archive agreement, and preservation of the failed
+plan. Scientific producer fingerprints remain unchanged.
