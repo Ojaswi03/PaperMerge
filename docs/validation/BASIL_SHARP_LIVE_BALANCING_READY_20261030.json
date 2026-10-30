@@ -1,0 +1,28 @@
+{
+  "status": "READY_FOR_HPC_LIVE_HANDOVER",
+  "date": "2026-10-30",
+  "tests": {
+    "passed": 98,
+    "kind": "Local CPU process handover and mocked GPU scheduling; not a remote HPC execution"
+  },
+  "checks": [
+    "Original supervisor replaced without signalling training children",
+    "Failed validation resumes original supervisor",
+    "pidfd process identities prevent PID reuse",
+    "Shared queue chooses healthy idle GPU",
+    "Host RAM reservations apply across all GPUs",
+    "Startup workers retain full RAM and VRAM budgets",
+    "GPU lease required before launch",
+    "Checkpoint runtime stays on its recorded GPU",
+    "OOM failure set aside; following queued job starts on remaining healthy GPU",
+    "ntfy worker failure and GPU quarantine events",
+    "Scientific producer fingerprints unchanged"
+  ],
+  "frozenProducerFiles": 76,
+  "source": {
+    "basil_core/live_gpu_scheduler.py": "d7c33cf92c3ee3d5f4aa43da9d2e49eb37613c7f1ac2e6753450594015e6f319",
+    "scripts/rebalance_basil_sharp_live.py": "67cd166e84687fd5f9e6f310a3b7557131d3e9712feabff8a922d43ec1a0e6df",
+    "basil_core/sharp_monitor.py": "ca687aacefa81a36f6a521f69cf7164a29323498027223f7a3b5d7b3b2e8ad56",
+    "tests/test_live_gpu_scheduler.py": "45ed52f46e58ee76de621c23516ce12b6713222eae7708757af60b4618ed818a"
+  }
+}

@@ -111,7 +111,7 @@ def snapshot(directory,*,timing_roots=()):
         if row['status']=='RUNNING' and rate is not None:eta=rate*(total-cursor)
         entries.append(dict(config=cfg,status=row['status'],cursor=cursor,total=total,
             rounds=row.get('completedRounds',0),elapsed=elapsed,eta=eta,
-            gpu=row.get('physicalGpuId',gpus[index%len(gpus)]),lane=lanes[index%len(lanes)],
+            gpu=row.get('physicalGpuId',scheduler.get('gpuByRunId',{}).get(cfg['runId'],gpus[index%len(gpus)])),lane=lanes[index%len(lanes)],
             mean=row.get('meanAccuracy'),rate=rate,error=row.get('error'),runtimeAdapter=backend,phase=row.get('phase')))
     done=sum(r['status']=='COMPLETED' for r in entries)
     failed=sum(r['status']=='FAILED' for r in entries)
