@@ -1,6 +1,6 @@
 # CART: literature, attribution and proposed feature-memory extension
 
-**28 October 2026:** [continuity candidate and falsifiable novelty tests](CART_CONTINUITY_CANDIDATE.md), with [four newly downloaded primary papers and their important method sections](../papers/cart_continuity_novelty_20261028/README.md). The 72-run v2 results do not establish the intended non-IID improvement.
+**28 October 2026:** [continuity candidate and falsifiable novelty tests](https://github.com/Ojaswi03/PaperMerge/blob/a731e45b08c4fc66c613fa33342d900a65bb7eda/docs/CART_CONTINUITY_CANDIDATE.md), with [four newly downloaded primary papers and their important method sections](../papers/cart_continuity_novelty_20261028/README.md). The 72-run v2 results do not establish the intended non-IID improvement.
 
 **26 October 2026 follow-up:** the current class-loss barrier also needs direct
 comparison with GEM's remembered-loss constraints (NeurIPS 2017, Equations 5–8).
@@ -13,7 +13,7 @@ Review date: **11 October 2026**. Scope: targeted primary-source review, not an
 exhaustive novelty search. Twelve additional papers were downloaded; existing
 BASIL, noisy-communication and FedProx PDFs were read without modification.
 
-**Subsequent implementation:** [experimental CART feature-memory module](CART_FEATURE_MEMORY_PROTOCOL.md).
+**Subsequent implementation:** [experimental CART feature-memory module](https://github.com/Ojaswi03/PaperMerge/blob/a731e45b08c4fc66c613fa33342d900a65bb7eda/docs/CART_FEATURE_MEMORY_PROTOCOL.md).
 The proposal/status statements below describe the original literature-review
 stage. The new module is isolated and its bounded validation is documented
 separately; no baseline or production queue was replaced.
@@ -64,7 +64,7 @@ listed in the [paper index](../papers/prototype_retention/README.md).
 Additional primary sources are available in the
 [class-aware related-work library](../papers/cart_related_work/README.md):
 Dark Experience Replay is prior work for retaining historical predictions;
-[the local class-memory design](CART_LOCAL_CLASS_MEMORY_DESIGN.md) explicitly
+[the local class-memory design](https://github.com/Ojaswi03/PaperMerge/blob/a731e45b08c4fc66c613fa33342d900a65bb7eda/docs/CART_LOCAL_CLASS_MEMORY_DESIGN.md) explicitly
 credits that mechanism and remains a proposal, not an implemented result.
 C²Prompt studies class-aware prompt communication, FedProTIP applies local
 gradient projection using shared subspaces, and FedCBDR uses globally informed
@@ -138,7 +138,7 @@ is different. The present registry controller is likewise not a BASIL equation.
 Current implementation:
 [`basil_core/strict_cart.py`](../basil_core/strict_cart.py), revision
 `strict_cart_receiver_supported_confidence_gap_v1`.
-Its [measured audit](FORGETTING_MECHANISM_AUDIT.md) found that only the current
+Its [measured audit](https://github.com/Ojaswi03/PaperMerge/blob/a731e45b08c4fc66c613fa33342d900a65bb7eda/docs/FORGETTING_MECHANISM_AUDIT.md) found that only the current
 class had local support. The supported gap stayed zero while previous-class
 predictions were lost. Registry metadata alone did not provide their gradients.
 

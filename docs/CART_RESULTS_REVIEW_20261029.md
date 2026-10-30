@@ -74,13 +74,13 @@ rounds and the attack-onset marker. They are line figures, with no bar graphs,
 smoothing, internal version titles or test-split banners. Their axis reads
 validation accuracy because that is the saved measurement.
 
-The current review figures are readable, but they are **not the professor's
-complete BASIL–SHARP figures**: this export lacks genuine BASIL conditions and
-the full matched clean/attack-only matrix. They are held for review at
-`docs/thesis-figures/cart-review-20261029/`; the seven existing thesis SVGs have
-not been replaced. The requested final figures require six IID and eight
-non-IID curves per dataset, as specified in
-[BASIL_SHARP_THESIS_PLOT_SPEC.md](BASIL_SHARP_THESIS_PLOT_SPEC.md).
+The earlier derived figure folders were removed after the new matched 84-case
+study was verified. This 66-case raw export remains because it supplies the
+full-length component comparisons discussed above. Its old SHARP/ACDS/CART
+curves are not the current professor-requested matrix. The current four
+FedSharp/FedSharp+ figures and endpoints are in the
+[current results review](FEDSHARP_RESULTS_REVIEW_20261030.md).
 
-The machine-readable review and all seed-level values are stored alongside the
-review figures. The original HPC export remains unchanged.
+The original 66-case scientific records remain unchanged. Duplicate plot PDFs were removed, and the packaging change and updated checksums are recorded. Additional summaries can be
+regenerated from its verified arrays; superseded derived figure copies were
+deleted rather than archived.

@@ -151,7 +151,7 @@ attribution study, not a certificate of originality or efficacy.
 
 ## Local release checks
 
-The [saved readiness receipt](validation/CART_CONTRIBUTION_READY_20261029.json)
+The [saved readiness receipt](https://github.com/Ojaswi03/PaperMerge/blob/a731e45b08c4fc66c613fa33342d900a65bb7eda/docs/validation/CART_CONTRIBUTION_READY_20261029.json)
 records 125 passing Python tests and eight browser tests. A local RTX 4070 Ti
 passed 21 objective/transfer/intervention checks under the 4 GiB allocator cap.
 Four separate 100-client, two-round GPU integration cases completed, produced

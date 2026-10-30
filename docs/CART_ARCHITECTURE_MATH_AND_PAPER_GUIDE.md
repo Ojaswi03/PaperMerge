@@ -10,8 +10,8 @@ paper figures. Downloaded papers and executable code are linked below.
 ten-node BASIL and five-epoch examples explain the earlier experimental family.
 The new family uses **100 clients, screened/ranked averaging, five SGD steps and
 hop-aware RLA**, with the same receiver-owned classifier-transport idea added
-after local training. Read [SHARP_IMPLEMENTATION.md](SHARP_IMPLEMENTATION.md)
-for its exact recipe and [SHARP_LOCAL_VALIDATION.md](SHARP_LOCAL_VALIDATION.md)
+after local training. Read [SHARP_IMPLEMENTATION.md](https://github.com/Ojaswi03/PaperMerge/blob/a731e45b08c4fc66c613fa33342d900a65bb7eda/docs/SHARP_IMPLEMENTATION.md)
+for its exact recipe and [SHARP_LOCAL_VALIDATION.md](https://github.com/Ojaswi03/PaperMerge/blob/a731e45b08c4fc66c613fa33342d900a65bb7eda/docs/SHARP_LOCAL_VALIDATION.md)
 for the completed positive and negative checks. Do not transfer old numerical
 results or local-epoch settings to the new family.
 
@@ -285,7 +285,7 @@ and installed in full; the current protocol does not use 50/50 consensus.
 
 ### 3.1 Complete receiver architecture
 
-![Current CART receiver architecture](figures/cart-study-guide/cart_architecture.svg)
+![Current CART receiver architecture](https://github.com/Ojaswi03/PaperMerge/blob/a731e45b08c4fc66c613fa33342d900a65bb7eda/docs/figures/cart-study-guide/cart_architecture.svg)
 
 Plain-text version:
 
@@ -310,7 +310,7 @@ its mean fitting-probe raw CE improves. It remains private to the receiver.
 
 ### 3.2 Why current feature coordinates matter
 
-![Teacher outputs transported into current features](figures/cart-study-guide/head_transport.svg)
+![Teacher outputs transported into current features](https://github.com/Ojaswi03/PaperMerge/blob/a731e45b08c4fc66c613fa33342d900a65bb7eda/docs/figures/cart-study-guide/head_transport.svg)
 
 Old and new hidden features can use different coordinates after CNN training.
 Copying an old feature vector or classifier directly can be inconsistent. CART
@@ -320,7 +320,7 @@ ordinary epochs and unchanged by this final correction.
 
 ### 3.3 Data boundaries
 
-![Training, fitting, selection and evaluation data boundaries](figures/cart-study-guide/data_boundaries.svg)
+![Training, fitting, selection and evaluation data boundaries](https://github.com/Ojaswi03/PaperMerge/blob/a731e45b08c4fc66c613fa33342d900a65bb7eda/docs/figures/cart-study-guide/data_boundaries.svg)
 
 - The 50,000 CIFAR-10 TRAIN images are split into 49,000 fitting images and a
   fixed balanced 1,000-image development holdout.
@@ -974,7 +974,7 @@ local training.
 
 ### 8.5 Complete learning loop
 
-![FedCAD server and client architecture](figures/cart-study-guide/fedcad.svg)
+![FedCAD server and client architecture](https://github.com/Ojaswi03/PaperMerge/blob/a731e45b08c4fc66c613fa33342d900a65bb7eda/docs/figures/cart-study-guide/fedcad.svg)
 
 The server evaluates class trust, broadcasts its model and weights, clients
 run weighted CE/KD SGD, and the server aggregates their models. The next round
@@ -1038,7 +1038,7 @@ classes, freezes its feature mapping, expands features through a fixed random
 mapping, and analytically fits a classifier. Later phases update sufficient
 statistics instead of replaying historical images.
 
-![ACIL analytic incremental learning](figures/cart-study-guide/acil.svg)
+![ACIL analytic incremental learning](https://github.com/Ojaswi03/PaperMerge/blob/a731e45b08c4fc66c613fa33342d900a65bb7eda/docs/figures/cart-study-guide/acil.svg)
 
 ### 9.3 Mathematics
 
@@ -1230,7 +1230,7 @@ some conflicting direction is allowed to support plasticity.
 
 ### 10.4 Complete practical method
 
-![GEC constrained learning loop](figures/cart-study-guide/gec.svg)
+![GEC constrained learning loop](https://github.com/Ojaswi03/PaperMerge/blob/a731e45b08c4fc66c613fa33342d900a65bb7eda/docs/figures/cart-study-guide/gec.svg)
 
 The practical version uses per-task memories and gradients, a multi-constraint
 QP, reference updates, reservoir sampling and a warm-up. The appendix describes

@@ -37,7 +37,7 @@ def test_full_cart_adapter_reproduces_original_revision_exactly():
     import basil_core.sharp_cart_v2 as repair
     from basil_core.cart_prior_neutral_commit import transport
     import basil_core.cart_prior_neutral_commit as commit_module
-    frozen=Path(__file__).resolve().parents[1]/'docs/results/cart-prior-dirichlet-50r-20261029/source_snapshots/basil_core/cart_prior_neutral_routing.py'
+    frozen=Path(__file__).resolve().parent/'fixtures/legacy_eight_peer_routing.py'
     spec=importlib.util.spec_from_file_location('frozen_eight_peer_routing',frozen)
     historical=importlib.util.module_from_spec(spec);spec.loader.exec_module(historical)
     current_route=commit_module.route_selector

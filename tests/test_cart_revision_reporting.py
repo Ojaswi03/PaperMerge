@@ -8,9 +8,37 @@ import pytest
 @pytest.fixture
 def revision(tmp_path,monkeypatch):
     from basil_core.cart_campaign_io import read_json
+    from basil_core.sharp_study import configuration
+    from basil_core.sharp_guarded_protocol import guarded_configuration
+    from basil_core.sharp_cart_v2_protocol import configuration as cart_configuration
     import reporting.cart_revision as module
-    reference=Path(__file__).resolve().parents[1]/'docs/results/cart-v2-72-100r-20261028'
-    original=read_json(reference/'plan.json');root=tmp_path/'revision';root.mkdir()
+    # Reporting regression fixtures are synthetic; they must not require a
+    # complete superseded research archive in a fresh source checkout.
+    reference=tmp_path/'reference';reference.mkdir()
+    original=dict(configs=[],source={'fixture':'synthetic legacy reporting'},data={d:{'fixture':d}
+        for d in ('mnist','cifar10')},partitions={})
+    conditions=('clean','attack_noise','attack_noise_defense','attack_noise_rla',
+        'attack_noise_defense_rla','attack_noise_defense_rla_cart')
+    for dataset in ('mnist','cifar10'):
+        for partition in ('iid','dirichlet'):
+            for seed in (2025,2026,2027):
+                for condition in conditions:
+                    cfg=cart_configuration(guarded_configuration(configuration(dataset,partition,seed,
+                        condition,0. if condition=='clean' else .01)))
+                    original['configs'].append(cfg)
+                    audit={'fixture':f'{dataset}-{partition}-{seed}'}
+                    original['partitions'][cfg['runId']]=audit
+                    folder=reference/cfg['runId'];folder.mkdir()
+                    row=dict(status='COMPLETED',config=cfg,source=original['source'],
+                        data=original['data'][dataset],partition=audit,completedActivations=10000,
+                        initialHash=f'fixture-{dataset}-{seed}',
+                        runtime=dict(tensorflow='fixture',numpy='fixture',device='/GPU:0',tf32=False))
+                    (folder/'run.json').write_text(json.dumps(row))
+                    np.savez(folder/'metrics.npz',roundNodeAccuracy=np.full((100,100),.30))
+    (reference/'plan.json').write_text(json.dumps(original))
+    (reference/'SHA256.json').write_text(json.dumps({'fixture':'not experimental evidence'}))
+    monkeypatch.setattr('basil_core.sharp_cart_v2_protocol.check_source',lambda _:None)
+    root=tmp_path/'revision';root.mkdir()
     configs=[c for c in original['configs'] if c['dataset']=='cifar10' and c['cart']]
     plan=dict(configs=configs,source={'fixture':'unit test only'},baseSource=original['source'],variant='capped',revision='fixture',
         data=original['data'],partitions={c['runId']:original['partitions'][c['runId']] for c in configs})

@@ -1,0 +1,34 @@
+{
+  "reason": "Author requests plot PNG and SVG only; duplicate plot PDFs removed.",
+  "originalExportManifestSha256": "1c35545df4906d4bb59b8ffba67c92e232a157f83c6d7e10ebfa70ad26cf980a",
+  "originalVerifiedFiles": 347,
+  "removedPlotPdfs": {
+    "publication_curves/comparison/cifar10_joint_sigma_0.01_seed_curves.pdf": "539c34b1001803b649fe029820f753fbdd5d5e514c6049e6fb0412438158fbdf",
+    "publication_curves/comparison/cifar10_joint_sigma_0.01_accuracy_curves.pdf": "16cc561c77730c6d4e3e60c54d6533c6869d01a2fad599ec774786c0e88a8859",
+    "publication_curves/comparison/comparison_joint_sigma_0.01_accuracy_curves.pdf": "c9f9512fc8c9dd9e046e9aa3e9e07fe48fc25914eb5a4a222bd4c4f9324b8674",
+    "publication_curves/comparison/mnist_joint_sigma_0.01_seed_curves.pdf": "44f23e14042c3e5ca3e4b60e1096fc0b40fc3f6d9fecad8e6673e0d86dca8a2f",
+    "publication_curves/comparison/mnist_joint_sigma_0.01_accuracy_curves.pdf": "44e28c9ae9feb6a1bc838d944ac8737458b9a2b91920e6b688401d19e333689d",
+    "publication_curves/training_and_repair/cifar10_joint_sigma_0.01_seed_curves.pdf": "61b1ab267f2d14c8559272b2fc3833851f3fac010faa8b91f765a8077eca75ae",
+    "publication_curves/training_and_repair/cifar10_joint_sigma_0.01_accuracy_curves.pdf": "38bf20a3add7f558fc5788457262b581335f017f0bf23cedef57adf526b6a196",
+    "publication_curves/training_and_repair/comparison_joint_sigma_0.01_accuracy_curves.pdf": "0d6b7b90f5f9efdfb580702e522e7bfdf6ede83030aaeadf27df80459cb9b243",
+    "publication_curves/training_and_repair/mnist_joint_sigma_0.01_seed_curves.pdf": "9f18d23d5f54d3cf6d974c605df8e7c592799967f81ad8e9436d6319135f84cc",
+    "publication_curves/training_and_repair/mnist_joint_sigma_0.01_accuracy_curves.pdf": "da29747f53185e58299f48084c678b8db54797dd79098bdb13d3a547951a1bd7",
+    "publication_curves/admission_and_commit/cifar10_joint_sigma_0.01_seed_curves.pdf": "dce8fd4e5e28c3e4a3b36330fbff7ad8fa1bbf82b811a21d74663e6bc24efc7d",
+    "publication_curves/admission_and_commit/cifar10_joint_sigma_0.01_accuracy_curves.pdf": "e9cec3469512678dc9975719f8eee1aad67f90d97363204eda8c9a5c9a2420c5",
+    "publication_curves/admission_and_commit/comparison_joint_sigma_0.01_accuracy_curves.pdf": "c3e69579904262e3cd823f49328294d46887e1493332d47658084e8028e23e16",
+    "publication_curves/admission_and_commit/mnist_joint_sigma_0.01_seed_curves.pdf": "a6cbe8278488a70d0d15ae4e3e25508d596004630bd35ad32464dacacc80f1f5",
+    "publication_curves/admission_and_commit/mnist_joint_sigma_0.01_accuracy_curves.pdf": "73588e051f98e0a4f68c80fe8bb7326f5e7b53b37acedaffa35b1c47eee43627",
+    "publication_curves/all_methods/cifar10_joint_sigma_0.01_seed_curves.pdf": "d17be8ccd53283bacfd6d742f3bb3279d312fc8912ef9d4dec75ffc029416290",
+    "publication_curves/all_methods/cifar10_joint_sigma_0.01_accuracy_curves.pdf": "5844eccddfbd06b2136a9b202f7718974ab2605a9faf0f05b0230f77e791619a",
+    "publication_curves/all_methods/comparison_joint_sigma_0.01_accuracy_curves.pdf": "77592002e71ae6be5c83371a67fd260c50f23d2d2953629d2c3b253e5a86cffc",
+    "publication_curves/all_methods/mnist_joint_sigma_0.01_seed_curves.pdf": "0a6f3e049437b06b8ba527e99ca7d388372b1cc529afc043883d1b379f52bb0a",
+    "publication_curves/all_methods/mnist_joint_sigma_0.01_accuracy_curves.pdf": "379137b4a0f5f1ec777c2f73fffe2979d74570eaa58b6df8deab5c71499c37a9"
+  },
+  "modifiedPlotManifestOriginalSha256": {
+    "publication_curves/comparison/learning_curves_manifest.json": "be7604d5c4f1b13fbb8d19fba2ba531582cc636edecf8366066cc2c26db14611",
+    "publication_curves/training_and_repair/learning_curves_manifest.json": "f7f517806ad9691948ed3cce4ca4ea2cd6ff4024d8c737e6d48e36b213a566cd",
+    "publication_curves/admission_and_commit/learning_curves_manifest.json": "47c68126660e3a12bce0d0cbdb46f5807d2ed22f512a809841d65d677af9fe17",
+    "publication_curves/all_methods/learning_curves_manifest.json": "0717ae771b47346f89dc754377e0425ea8a78680fc024724806209751b845201"
+  },
+  "scientificRecordsAndSourceSnapshotsUnchanged": true
+}

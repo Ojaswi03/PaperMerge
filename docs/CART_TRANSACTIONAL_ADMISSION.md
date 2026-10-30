@@ -91,8 +91,8 @@ penalty over the macro ablation. The earlier raw-F1 commit screen reached
 22.605%/23.919%; MCC is used to remove the constant-class recognition loophole,
 not because these development means prove higher accuracy.
 
-See [compact receipts](validation/CART_TRANSACTIONAL_SCREENS_20261028.json) and
-the [HPC sequence](CART_NEXT_HPC_RUN.md). Short screens cannot establish clean-level
+See [compact receipts](https://github.com/Ojaswi03/PaperMerge/blob/a731e45b08c4fc66c613fa33342d900a65bb7eda/docs/validation/CART_TRANSACTIONAL_SCREENS_20261028.json) and
+the [HPC sequence](https://github.com/Ojaswi03/PaperMerge/blob/a731e45b08c4fc66c613fa33342d900a65bb7eda/docs/CART_NEXT_HPC_RUN.md). Short screens cannot establish clean-level
 performance, a successful 100-round defense, or novelty. Final TRAIN-holdout means,
 last-ten-round endpoints, paired seed variation, worst-node/class behavior,
 wall time and official TEST evaluation must be distinguished.
@@ -100,9 +100,9 @@ wall time and official TEST evaluation must be distinguished.
 The actual source-frozen production runner also completed a second-seed,
 five-round confirmation with 100 clients and attack start 2: **27.828% IID** and
 **14.562% non-IID**, with no worker failures. Independent CPU inference reproduced
-both final models exactly. [Metrics, plots, snapshots and verification receipt](validation/cart-admission-confirmation-5r-20261028/)
+both final models exactly. [Metrics, plots, snapshots and verification receipt](https://github.com/Ojaswi03/PaperMerge/tree/a731e45b08c4fc66c613fa33342d900a65bb7eda/docs/validation/cart-admission-confirmation-5r-20261028)
 are exported without checkpoints. These are confirmation of execution and early
-learning, not matched 100-round performance estimates. The [hardware gate receipt](validation/CART_REVISION_GPU_GATE_20261028.json)
+learning, not matched 100-round performance estimates. The [hardware gate receipt](https://github.com/Ojaswi03/PaperMerge/blob/a731e45b08c4fc66c613fa33342d900a65bb7eda/docs/validation/CART_REVISION_GPU_GATE_20261028.json)
 records the exact scoring and admitted-objective comparisons on the local RTX 4070 Ti;
 the gate must be rerun on HPC’s different GPUs/software.
 

@@ -1,0 +1,15 @@
+{
+  "reason": "Author requests plot PNG and SVG only; duplicate plot PDFs removed.",
+  "originalExportManifestSha256": "175bca3719ab8b902ccea300446917abb05305adfd026f553b6604c1cda1aff6",
+  "originalVerifiedFiles": 356,
+  "removedPlotPdfs": {
+    "thesis_figures/mnist_non_iid_accuracy.pdf": "e57b73c4a6de8e34e200de97874685fe464d998a0e91156824cd492d0dbae632",
+    "thesis_figures/cifar10_iid_accuracy.pdf": "ec2576734d38e0f7b2cff0461d73686bcfb86fcabb3f1414933d5ada6058e530",
+    "thesis_figures/cifar10_non_iid_accuracy.pdf": "170cf454be69a105a0c4551b87290ef54856c5051dec3010bc97fe441dc90f99",
+    "thesis_figures/mnist_iid_accuracy.pdf": "842a97e1d33eccb6f664dc7404ab3ef3b7d9457dd7cbcef0be779ec91a2c254e"
+  },
+  "modifiedPlotManifestOriginalSha256": {
+    "thesis_figures/figures_manifest.json": "1dec5b51a35964ff46aebd461d52b82b50eb2e91c7110490dd7ea499a3d97673"
+  },
+  "scientificRecordsAndSourceSnapshotsUnchanged": true
+}

@@ -74,7 +74,7 @@ def test_worker_and_inference_scope_replaces_and_restores_legacy_loader(archives
 
 
 def test_input_identities_match_independently_verified_archive():
-    archive = Path(__file__).resolve().parents[1] / 'docs/results/cart-contribution-100r-20261029/plan.json'
+    archive = Path(__file__).resolve().parents[1] / 'docs/results/hal9k_basil-sharp-thesis-100r-20261030/plan.json'
     assert raw.EXPECTED == json.loads(archive.read_text())['data']
 
 

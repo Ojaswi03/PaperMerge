@@ -1,6 +1,0 @@
-{
-  "distribution": "IID",
-  "requestedRounds": 100,
-  "metric": "Arithmetic mean of full-test accuracy across all ten trained node models",
-  "complete": true
-}

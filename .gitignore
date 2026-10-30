@@ -306,3 +306,33 @@ experiments/results4/campaign4/performance_profile.json
 /paper_review/*.log
 /paper_review/*.out
 /paper_review/*.synctex.gz
+
+# Publish research source and curated evidence, never local agent/editor state.
+.codex
+.codex/
+.agents/
+.claude/
+.aws/
+.ssh/
+.venv*/
+/gui/queue_state.json
+/gui/worker_state/
+
+# Superseded generated studies. Retain the full-length ablation evidence and
+# the current verified 84-case study; new exports require explicit review.
+/docs/results/*
+!/docs/results/cart-contribution-100r-20261029/
+!/docs/results/hal9k_basil-sharp-thesis-100r-20261030/
+/docs/thesis-figures/*
+!/docs/thesis-figures/fedsharp-hal9k-20261030/
+/docs/thesis-figures/fedsharp-hal9k-20261030/*.pdf
+/docs/thesis-figures/fedsharp-hal9k-20261030/installation.json
+/docs/results/*/thesis_figures/*.pdf
+/docs/results/*/publication_curves/**/*.pdf
+
+# Large recovery files stay on the producing server, outside compact exports.
+checkpoint*.npz
+*.ckpt
+*.ckpt.*
+browser_share.json
+browser_monitor.log

@@ -69,7 +69,7 @@ output path. Copy the compact export into the shared repository before removing
 local results. The local output directory is specific to hal9k; it is not shared
 with themachine or retained in Git automatically.
 
-[Local validation receipt](validation/BASIL_SHARP_DIRECT_INPUTS_READY_20261030.json):
+[Local validation receipt](https://github.com/Ojaswi03/PaperMerge/blob/a731e45b08c4fc66c613fa33342d900a65bb7eda/docs/validation/BASIL_SHARP_DIRECT_INPUTS_READY_20261030.json):
 65 Python tests, eight browser checks, and 28 GPU checks passed. Direct loading
 of both complete datasets matched their archived fingerprints; the loader test
 used about 1.16 GiB peak host RAM and the full GPU checks about 2.50 GiB.

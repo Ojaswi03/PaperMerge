@@ -250,16 +250,12 @@
   "plotterSha256": "261ebbd362362c56666301d14e9ef62e10535e32d3bcfe3fe9184a4e784a4b1a",
   "outputSha256": {
     "cifar10_non_iid_accuracy.svg": "dd3fc440b7fa958deda2691910717e9c1cc7c866c9d27f0eee9effec3fe4007f",
-    "cifar10_non_iid_accuracy.pdf": "170cf454be69a105a0c4551b87290ef54856c5051dec3010bc97fe441dc90f99",
     "cifar10_non_iid_accuracy.png": "fd22b1cbd2ebabb6a1d54bcec9a10c74ab0688d8857e6bd243dc8456d152ea2f",
     "cifar10_iid_accuracy.svg": "f30faa9fb8507be5da2b59f4880023954497c08b7659b57c5a3da133c176ab21",
-    "cifar10_iid_accuracy.pdf": "ec2576734d38e0f7b2cff0461d73686bcfb86fcabb3f1414933d5ada6058e530",
     "cifar10_iid_accuracy.png": "10fc320cb52ff3cbb47fbf3222ffc9d597f1a4a5a7e204341c89efa88fe24a7d",
     "mnist_non_iid_accuracy.svg": "c7a69a90c98e61b8662aac4b9992573e533f1d6aeab2e50cac5a887f9029ecdc",
-    "mnist_non_iid_accuracy.pdf": "e57b73c4a6de8e34e200de97874685fe464d998a0e91156824cd492d0dbae632",
     "mnist_non_iid_accuracy.png": "bb61cf43587a0c963f761ccceb919d533652553cbaff9e5d32c1a8872e159842",
     "mnist_iid_accuracy.svg": "ada08550b22cdf162890e6424c9fae458af87a322ab9225f40716c2a4940c229",
-    "mnist_iid_accuracy.pdf": "842a97e1d33eccb6f664dc7404ab3ef3b7d9457dd7cbcef0be779ec91a2c254e",
     "mnist_iid_accuracy.png": "0485e27c4ddfd68a75c3f4c10648ab8490e687f50b8197d51714da7138d9ab5e",
     "accuracy_by_round.csv": "b378823a9f2b11859f9a168e4ba5845845e82f78fc6d3b3a9be64ba33be7e861",
     "captions.txt": "44dc34d9d4b7d4db13268d1844525a8a6d0cca6bae1d2a80b0c01586a81dde22"
