@@ -6,6 +6,13 @@ import pytest
 from tests.test_sharp_monitor import setup,running
 
 
+@pytest.fixture(autouse=True)
+def isolated_permanent_monitor(tmp_path,monkeypatch):
+    from basil_core import stable_monitor
+    monkeypatch.setattr(stable_monitor,'STATE_ROOT',tmp_path/'private-monitor')
+    monkeypatch.setattr(stable_monitor,'retire_legacy_publisher',lambda *args:None)
+
+
 def test_public_projection_omits_paths_errors_source_and_process_identity(tmp_path):
     from basil_core.cart_public_monitor import public_snapshot
     setup(tmp_path,[(2025,'attack_noise_defense_rla_cart','cifar10',dict(running(20,40),error='/home/private/error'))])
@@ -54,9 +61,10 @@ def test_one_second_publisher_accounts_for_upload_time(tmp_path,monkeypatch):
 
 def test_publisher_accepts_one_second_cli_interval(tmp_path,monkeypatch):
     from scripts import share_cart_monitor as module
+    from basil_core import stable_monitor
     setup(tmp_path,[(2025,'clean','mnist',running(20,40))]);received=[]
     monkeypatch.setattr('sys.argv',['share_cart_monitor.py','--output',str(tmp_path),'--interval','1','--once'])
-    monkeypatch.setattr(module,'connection',lambda *args:dict(viewUrl='https://example.test/view'))
+    monkeypatch.setattr(stable_monitor,'connection',lambda *args:dict(viewUrl='https://example.test/view'))
     monkeypatch.setattr(module,'publish_loop',lambda args,saved:received.append(args.interval))
     module.main()
     assert received==[1]

@@ -70,20 +70,32 @@ def connection(root,site):
 
 def publish_loop(args,saved):
     from basil_core.cart_public_monitor import public_snapshot
+    from basil_core.stable_monitor import publisher_lock,selected_run
     temporary=getattr(args,'temporary',False)
-    with (args.output/('browser_temporary_publisher.lock' if temporary else 'browser_publisher.lock')).open('a') as lock:
-        fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
-        notified=False
+    stable=getattr(args,'stable',False)
+    with publisher_lock(args):
+        notified=False;last_terminal=None;last_selection=None
         while True:
             tick=time.monotonic()
             try:
-                data=public_snapshot(args.output)
+                root=args.output
+                if stable:
+                    selected=selected_run(args.state_dir)
+                    if selected is None:return
+                    root=Path(selected['output'])
+                    if selected['selection']!=last_selection:
+                        notified=False;last_terminal=None;last_selection=selected['selection']
+                data=public_snapshot(root)
+                terminal=data['status'] in ('COMPLETED','COMPLETED_WITH_FAILURES','COMPLETED_REPORT_FAILED','FAILED','INTERRUPTED')
+                if stable and terminal and last_terminal==data['status'] and not args.once:
+                    time.sleep(max(0.,args.interval-(time.monotonic()-tick)));continue
                 request_json(saved['site']+'/api/feeds/'+saved['feedId'],'PUT',data,saved['writeToken'])
                 if args.ntfy_topic and not notified:
                     from basil_core.ntfy_notifications import publish
                     receipt=publish(args.ntfy_topic,'CART browser monitor is live','Share this read-only link with your professor:\n\n'+saved['viewUrl']+'\n\nUpdates automatically. Training is unchanged.')
                     notified=receipt['deliveredToServer']
-                if args.once or (not temporary and data['status'] in ('COMPLETED','COMPLETED_WITH_FAILURES','COMPLETED_REPORT_FAILED','FAILED','INTERRUPTED')):return
+                last_terminal=data['status'] if terminal else None
+                if args.once or (not stable and not temporary and terminal):return
             except (OSError,ValueError) as error:
                 if temporary and getattr(error,'code',None) in (404,410):
                     print('Temporary sharing session has ended; training is unaffected.',flush=True);return
@@ -113,25 +125,43 @@ def temporary_session(args):
 
 
 def main():
-    p=argparse.ArgumentParser(description=__doc__);p.add_argument('--output',type=Path,required=True)
+    p=argparse.ArgumentParser(description=__doc__);p.add_argument('--output',type=Path)
     p.add_argument('--site',default=SITE);p.add_argument('--interval',type=int,default=1)
     p.add_argument('--once',action='store_true');p.add_argument('--print-link',action='store_true')
     p.add_argument('--tmux');p.add_argument('--ntfy-topic')
+    from basil_core import stable_monitor
+    p.add_argument('--state-dir',type=Path,default=stable_monitor.STATE_ROOT)
+    p.add_argument('--background',action='store_true',help='Keep one permanent publisher running after SSH disconnects.')
+    p.add_argument('--serve-stable',action='store_true',help=argparse.SUPPRESS)
+    p.add_argument('--publisher-lock-fd',type=int,help=argparse.SUPPRESS)
     p.add_argument('--temporary',action='store_true',help='Foreground link; Ctrl+C deletes its feed, with a 45-second expiry fallback.')
-    a=p.parse_args();a.output=a.output.resolve()
+    a=p.parse_args();a.output=a.output.resolve() if a.output else None;a.state_dir=a.state_dir.resolve();a.stable=not a.temporary
     if a.interval<1:p.error('--interval must be at least 1 second.')
     if a.once and a.tmux:p.error('Use --once or --tmux, not both.')
+    if a.background and (a.temporary or a.tmux or a.once or a.print_link):p.error('--background is for permanent sharing only.')
     if a.temporary and (a.tmux or a.once or a.print_link):p.error('--temporary runs in the foreground; do not combine it with --tmux, --once or --print-link.')
     if a.temporary and a.interval>15:p.error('Temporary feeds require an interval of 1 to 15 seconds.')
     a.site=origin(a.site)
+    if a.print_link:
+        path=a.state_dir/'connection.json'
+        if not path.exists() and a.output:path=a.output/'browser_share.json'
+        if not path.exists():p.error('Start the permanent publisher once before requesting its link.')
+        print(view_url(json.loads(path.read_text())));return
+    if a.output is None:p.error('--output is required to select a run.')
     if not (a.output/'plan.json').is_file():p.error('Output must contain an existing campaign plan.')
     if a.temporary:return temporary_session(a)
     if a.tmux and subprocess.run(['tmux','has-session','-t',a.tmux],capture_output=True).returncode==0:
         p.error('The browser publisher tmux session already exists; use --print-link to retrieve its URL.')
-    if a.print_link:
-        print(view_url(json.loads((a.output/'browser_share.json').read_text())));return
     print('Connecting the read-only browser monitor.',flush=True)
-    saved=connection(a.output,a.site)
+    saved=stable_monitor.connection(a.output,a.site,a.state_dir,new_connection,view_url)
+    if not a.serve_stable:
+        stable_monitor.retire_legacy_publisher(a.output,Path(__file__))
+        stable_monitor.select_run(a.state_dir,a.output)
+    if a.background:
+        started=stable_monitor.launch_background(a,Path(__file__).resolve())
+        print('Permanent browser publisher started.' if started else 'Permanent monitor now follows this run.',flush=True)
+        print('Share this consistent link:\n'+saved['viewUrl'],flush=True)
+        return
     if a.tmux:
         forwarded=sys.argv[1:];at=forwarded.index('--tmux');forwarded=forwarded[:at]+forwarded[at+2:]
         command=shlex.join([sys.executable,str(Path(__file__).resolve()),*forwarded])

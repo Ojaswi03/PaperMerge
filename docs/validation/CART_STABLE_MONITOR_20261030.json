@@ -1,0 +1,52 @@
+{
+  "status": "STABLE_MONITOR_CHECKS_PASSED",
+  "pythonTests": 45,
+  "browserTests": 13,
+  "defaultTab": "Running",
+  "tabs": [
+    "Running",
+    "Pending",
+    "Completed",
+    "Failed / stopped",
+    "All"
+  ],
+  "linkIdentity": "Shared-home connection outside individual run directories; existing persistent link adopted.",
+  "background": {
+    "detachedSession": true,
+    "stdin": "DEVNULL",
+    "stdout": "private publisher log",
+    "ownedGlobalLockPassedToChild": true
+  },
+  "liveIntegration": {
+    "sameUrlAcrossTwoOutputs": true,
+    "samePublisherProcess": true,
+    "firstActivations": 20,
+    "secondActivations": 30,
+    "syntheticPublisherStopped": true,
+    "syntheticFeedRemoved": true
+  },
+  "visualChecks": {
+    "desktop": {
+      "width": 1600,
+      "running": 9,
+      "pending": 63,
+      "completed": 12,
+      "all": 84,
+      "noHorizontalOverflow": true
+    },
+    "mobile": {
+      "width": 412,
+      "running": 9,
+      "pending": 63,
+      "completed": 12,
+      "all": 84,
+      "noHorizontalOverflow": true
+    }
+  },
+  "trainingFingerprintsUnmodified": true,
+  "trainingRestartRequired": false,
+  "notes": [
+    "The background publisher follows the newly selected output.",
+    "The stable link state must be retained when moving to a different home directory."
+  ]
+}
