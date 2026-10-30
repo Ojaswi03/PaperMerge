@@ -99,6 +99,45 @@ requires at most 94,208 MiB per GPU. Host reservation is 16 GiB per worker plus
 other activity reduces available memory; allocations are never pooled across
 GPUs. Every selected GPU must pass its own bound-profile execution checks.
 
+### Two-GPU server with 93 GiB host RAM
+
+On `hal9k.cs.ohio.edu`, the reported two idle GPUs have ample device memory,
+but available host RAM is approximately 90 GiB. Use a fresh output directory
+and an 8 GiB host reservation per worker with 16 GiB host headroom:
+
+```bash
+cd ~/Masters_Research/PaperMerge
+git pull --ff-only
+source .venv-hpc/bin/activate
+
+python scripts/run_basil_sharp_thesis.py \
+  --gpu-count 2 --ram-mib-per-worker 8192 --ram-headroom-mib 16384 \
+  --execute --wait-for-resources \
+  --output "$PWD/.papermerge/local-tests/basil-sharp-thesis-hal9k-100r-20261030" \
+  --tmux basil-sharp-hal9k --ntfy-topic papermerge-ojaswi
+
+python scripts/run_cart_comparison.py --monitor \
+  --output "$PWD/.papermerge/local-tests/basil-sharp-thesis-hal9k-100r-20261030"
+```
+
+At the reported available RAM, this admits approximately nine concurrent
+workers across the two GPUs, with the remaining cases queued. Live memory
+checks can lower concurrency. Swap is not counted as available host RAM.
+Scientific configurations remain 84 cases, 100 clients, and 100 rounds;
+only the resource reservations change. The 3 GiB TensorFlow cap, 1 GiB CUDA
+context reserve, and 8 GiB device headroom remain unchanged.
+
+Stop the waiting `basil-sharp-thesis` supervisor on `themachine` before launching
+here. Plans are bound to their original host, GPU identities, source, and output
+directory; do not resume the old server's plan on this host. Use the new output
+path in browser-monitor, verification, and export commands as well.
+
+[The two-GPU readiness receipt](validation/BASIL_SHARP_HAL9K_READY_20261030.json)
+records 89 passing local tests, 28 passing GPU checks with the 8 GiB host
+profile, and the measured memory checks. These measurements inform the
+reservation, rather than imposing a hard per-process host-memory limit. Each
+actual server GPU still runs its own checks before training starts.
+
 For a read-only description of the requested matrix, add `--describe` and omit
 `--execute`, `--wait-for-resources`, `--tmux`, and `--ntfy-topic`. For interrupted
 recovery, use `--resume --execute --output ... --tmux ...` with the original

@@ -95,19 +95,49 @@ def test_full_concurrency_budget_on_four_hpc_gpus():
 
 
 def test_fresh_hpc_preparation_freezes_84_cases_across_four_devices(tmp_path,monkeypatch):
-    from scripts import run_cart_contribution as controller
-    from unittest.mock import patch
-    args=options(output=tmp_path/'hpc',resume=False,gpus=None,gpu_count=4,gpu_memory_mib=3072)
+    from scripts import run_basil_sharp_thesis as runner
+    from basil_core import execution_profile
+    args=options(output=tmp_path/'hpc',resume=False,gpus=None,gpu_count=4,gpu_memory_mib=3072,
+        ram_mib_per_worker=16384,ram_headroom_mib=32768)
     inventory=[dict(index=g,uuid=f'GPU-{g:08x}',**{'memory.free':97887}) for g in range(4)]
-    monkeypatch.setattr(controller,'gpu_inventory',lambda:inventory)
-    monkeypatch.setattr(controller.adaptive.scaled,'available_ram_mib',lambda:1500000)
+    monkeypatch.setattr(execution_profile,'gpu_inventory',lambda:inventory)
+    monkeypatch.setattr(runner.adaptive.scaled,'available_ram_mib',lambda:1500000)
     monkeypatch.setattr(study,'data_contract',lambda views:({}, {v['runId']:{} for v in views}))
-    with study.installed(),patch.object(controller,'study',study):plan=controller.prepare(args)
+    plan=runner.prepare(args)
     assert Counter(p['gpu'] for p in plan['profiles'])=={g:21 for g in range(4)}
     assert len(plan['configs'])==84 and plan['revision']==study.REVISION
-    readiness=controller.readiness(args.output,plan)
-    assert readiness['capacityNow']=={g:21 for g in range(4)}
+    readiness=runner.readiness(args.output,plan)
+    assert readiness['gpuCapacityNow']=={g:21 for g in range(4)}
     assert readiness['hostRequiredForAllMiB']==1409024
+
+
+def test_two_gpu_small_host_queues_cases_and_preserves_scientific_configs(tmp_path,monkeypatch):
+    from scripts import run_basil_sharp_thesis as runner
+    from basil_core import execution_profile
+    from basil_core.cart_worker_admission import admission,Resident,placement
+    inventory=[dict(index=g,uuid=f'GPU-{g:08x}',**{'memory.free':97887}) for g in range(2)]
+    monkeypatch.setattr(execution_profile,'gpu_inventory',lambda:inventory)
+    monkeypatch.setattr(runner.controller,'gpu_inventory',lambda:inventory)
+    monkeypatch.setattr(runner.adaptive.scaled,'available_ram_mib',lambda:90*1024)
+    monkeypatch.setattr(study,'data_contract',lambda views:({}, {v['runId']:{} for v in views}))
+    args=options(output=tmp_path/'small',resume=False,gpus=None,gpu_count=2,gpu_memory_mib=3072,
+        ram_mib_per_worker=8192,ram_headroom_mib=16384)
+    plan=runner.prepare(args);report=runner.readiness(args.output,plan)
+    assert report['maximumConcurrentNow']==report['hostWorkerCapacityNow']==9
+    assert report['casesPerGpu']=={0:42,1:42}
+    hardware,assigned=placement(plan);residents=[]
+    for p in assigned:
+        decision=admission(p,residents,inventory,[],90*1024,context_mib=1024,
+            ram_headroom_mib=16384,maximum=24)
+        if decision['admit']:residents.append(Resident(len(residents)+100,p.gpu,0))
+    assert len(residents)==9
+    # Recovery uses the saved RAM budget even though CLI defaults may differ.
+    args.resume=True
+    assert runner.prepare(args)==plan
+    args.resume=False;args.output=tmp_path/'large';args.ram_mib_per_worker=16384;args.ram_headroom_mib=32768
+    larger=runner.prepare(args)
+    assert larger['configs']==plan['configs']
+    assert runner.readiness(args.output,larger)['maximumConcurrentNow']==3
 
 
 def test_complete_figure_matrix_uses_plain_names_and_preserves_archive(tmp_path):

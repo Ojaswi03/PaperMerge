@@ -2,20 +2,60 @@
 """The requested six IID and eight non-IID curves, with safe parallel workers."""
 import argparse
 from collections import Counter
+from dataclasses import asdict
 import fcntl
 import json
 from pathlib import Path
 import shlex
+import socket
+import os
 import subprocess
 import sys
 from unittest.mock import patch
 
 ROOT=Path(__file__).resolve().parents[1];sys.path.insert(0,str(ROOT))
 from basil_core import basil_sharp_thesis as study
-from basil_core.cart_campaign_io import read_json
+from basil_core.cart_campaign_io import read_json,write_json
 from basil_core.cart_worker_admission import placement
 from scripts import run_cart_contribution as controller
 from scripts import run_cart_adaptive as adaptive
+
+
+def prepare(args):
+    from basil_core.execution_profile import ExecutionProfile,gpu_inventory
+    if args.resume:
+        with study.installed(),patch.object(controller,'study',study):
+            return controller.prepare(args)
+    root=args.output
+    if (root/'plan.json').exists():raise FileExistsError('Use --resume or a fresh output directory.')
+    configs=study.selected(args);inventory=gpu_inventory()
+    ids=[int(v) for v in args.gpus.split(',')] if args.gpus else list(range(args.gpu_count))
+    if not ids or len(set(ids))!=len(ids):raise ValueError('Distinct physical GPU IDs required.')
+    hardware=[ExecutionProfile(name='hpc',gpu=g,memory_mib=args.gpu_memory_mib,headroom_mib=8192,
+        ram_mib=args.ram_mib_per_worker,output_root=str(root)).bind(inventory) for g in ids]
+    data,partitions=study.data_contract(configs)
+    with patch.object(controller,'study',study):profiles=controller.assignment(configs,hardware)
+    plan=dict(revision=study.REVISION,variant='thesis',configs=configs,source=study.source(),data=data,
+        partitions=partitions,profiles=profiles,jobsPerGpu=1,host=socket.gethostname(),
+        resourceBudget=dict(context_overhead_mib=1024,ram_headroom_mib=args.ram_headroom_mib,
+            ram_mib_per_worker=args.ram_mib_per_worker,allow_unattributed_process_memory=False))
+    root.mkdir(parents=True,exist_ok=True)
+    write_json(root/'plan.json',plan);return plan
+
+
+def readiness(root,plan,maximum=24):
+    from basil_core.execution_profile import gpu_inventory
+    hardware,assigned=placement(plan);counts=Counter(p.gpu for p in assigned);inventory=gpu_inventory()
+    budget=plan['resourceBudget'];available=adaptive.scaled.available_ram_mib()
+    capacity={g:min(counts[g],maximum,max(0,(next(r['memory.free'] for r in inventory if r['index']==g)
+        -p.headroom_mib)//(p.memory_mib+budget['context_overhead_mib']))) for g,p in hardware.items()}
+    host_capacity=max(0,(available-budget['ram_headroom_mib'])//assigned[0].ram_mib)
+    return dict(configurations=len(assigned),physicalGpus=list(hardware),casesPerGpu=dict(counts),
+        gpuCapacityNow=capacity,hostAvailableMiB=available,hostWorkerReservationMiB=assigned[0].ram_mib,
+        hostHeadroomMiB=budget['ram_headroom_mib'],hostWorkerCapacityNow=host_capacity,
+        maximumConcurrentNow=min(len(assigned),sum(capacity.values()),host_capacity),
+        hostRequiredForAllMiB=budget['ram_headroom_mib']+len(assigned)*assigned[0].ram_mib,
+        output=str(root),trainingStarted=False)
 
 
 def execute(args, plan):
@@ -25,16 +65,23 @@ def execute(args, plan):
     root=args.output;hardware,_=placement(plan)
     with adaptive.acquire_supervisor(root,False,180):
         adaptive.ensure_source_snapshots(root,plan)
+        completed=sum((root/c['runId']/'run.json').exists() and
+            read_json(root/c['runId']/'run.json').get('status')=='COMPLETED' for c in plan['configs'])
+        def startup(status,reason):
+            write_json(root/'campaign.json',dict(status=status,total=len(plan['configs']),completed=completed,
+                failed=0,pending=len(plan['configs'])-completed,host=socket.gethostname(),ownerPid=os.getpid(),reason=reason))
         while True:
             try:
                 for g,p in hardware.items():
                     p.bind(gpu_inventory())
                     free=next(r['memory.free'] for r in gpu_inventory() if r['index']==g)
                     if free<p.memory_mib+p.headroom_mib+1024:raise RuntimeError(f'GPU {g}: waiting for memory.')
-                if adaptive.scaled.available_ram_mib()<32768+16384:raise RuntimeError('Waiting for host RAM.')
+                if adaptive.scaled.available_ram_mib()<plan['resourceBudget']['ram_headroom_mib']+next(iter(hardware.values())).ram_mib:
+                    raise RuntimeError('Waiting for host RAM.')
                 leases=adaptive.scaled.acquire_leases(list(hardware.values()));break
             except RuntimeError as error:
                 if not args.wait_for_resources:raise
+                startup('WAITING_FOR_RESOURCES',str(error))
                 print(str(error),flush=True);time.sleep(5)
         try:
             digest=adaptive.sha(root/'plan.json')
@@ -43,6 +90,7 @@ def execute(args, plan):
                 saved=read_json(receipt) if receipt.exists() else {}
                 if saved.get('status')!='PASSED' or saved.get('planSha256')!=digest:
                     fd=leases[g].fileno()
+                    startup('VERIFYING_GPUS',f'Checking physical GPU {g}.')
                     print(f'Verifying BASIL/SHARP on GPU {g}.',flush=True)
                     subprocess.run([sys.executable,str(ROOT/'scripts/verify_basil_sharp_thesis_gpu.py'),
                         '--output',str(root),'--gpu',str(g),'--lease-fd',str(fd)],cwd=ROOT,
@@ -64,6 +112,8 @@ def main():
     p.add_argument('--output',type=Path,required=True)
     p.add_argument('--gpu-count',type=int,choices=(1,2,3,4),default=4);p.add_argument('--gpus')
     p.add_argument('--gpu-memory-mib',type=int,choices=(3072,4096,6144,8192),default=3072)
+    p.add_argument('--ram-mib-per-worker',type=int,choices=(8192,12288,16384,32768),default=16384)
+    p.add_argument('--ram-headroom-mib',type=int,choices=(8192,16384,32768),default=32768)
     p.add_argument('--datasets',nargs='+',choices=('mnist','cifar10'),default=['mnist','cifar10'])
     p.add_argument('--partitions',nargs='+',choices=('iid','dirichlet'),default=['iid','dirichlet'])
     p.add_argument('--seeds',nargs='+',type=int,choices=(2025,2026,2027),default=[2025,2026,2027])
@@ -97,9 +147,8 @@ def main():
     args.output.mkdir(parents=True,exist_ok=True)
     with (args.output/'preparation.lock').open('a') as lock:
         fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
-        with study.installed(),patch.object(controller,'study',study):
-            plan=controller.prepare(args)
-    print(json.dumps(controller.readiness(args.output,plan),indent=2),flush=True)
+        plan=prepare(args)
+    print(json.dumps(readiness(args.output,plan,args.max_workers_per_gpu),indent=2),flush=True)
     return execute(args,plan) if args.execute else 0
 
 
