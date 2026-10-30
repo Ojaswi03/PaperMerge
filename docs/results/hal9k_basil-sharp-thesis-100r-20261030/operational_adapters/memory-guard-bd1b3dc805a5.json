@@ -1,0 +1,15 @@
+{
+  "behavior": "Missing process memory retains its full reservation until the scheduler reaps the worker.",
+  "kind": "process_memory_telemetry_guard",
+  "planSha256": "2109a7b735ba113ffd466876a769c1046ef8f60f272a82edf21dfb7dc150c656",
+  "resourceBudgetsUnmodified": true,
+  "scientificProducerUnmodified": true,
+  "snapshots": {
+    "operational_adapters/87f506e94a81/scripts/resume_basil_sharp_resilient.py": "87f506e94a81234b19074d8f719b07fdeb7aa2f0b0d9609de292f7bdbef968a0",
+    "operational_adapters/bd1b3dc805a5/basil_core/supervisor_memory_guard.py": "bd1b3dc805a5bac75a743bb08fb660c98c159029c50368dfce5318abfd3ad71b"
+  },
+  "source": {
+    "basil_core/supervisor_memory_guard.py": "bd1b3dc805a5bac75a743bb08fb660c98c159029c50368dfce5318abfd3ad71b",
+    "scripts/resume_basil_sharp_resilient.py": "87f506e94a81234b19074d8f719b07fdeb7aa2f0b0d9609de292f7bdbef968a0"
+  }
+}

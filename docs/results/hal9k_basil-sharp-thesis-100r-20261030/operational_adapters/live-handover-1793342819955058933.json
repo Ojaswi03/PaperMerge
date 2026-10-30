@@ -1,0 +1,274 @@
+{
+  "activeWorkersSignalled": false,
+  "adoptedWorkers": {
+    "32": {
+      "argv": [
+        "/home/os675524/Masters_Research/PaperMerge/.venv-hpc/bin/python",
+        "/home/os675524/Masters_Research/PaperMerge/scripts/basil_sharp_thesis_worker.py",
+        "--worker",
+        "32",
+        "--output",
+        "/var/tmp/papermerge-os675524/basil-sharp-thesis-direct-checked-100r-20261030",
+        "--lease-fd",
+        "4"
+      ],
+      "cwd": "/home/os675524/Masters_Research/PaperMerge",
+      "pid": 745883,
+      "ppid": 736849,
+      "profile": {
+        "data_workers": 0,
+        "gpu": 0,
+        "gpu_uuid": "GPU-34e241f3-58c7-388c-b072-1dc03852d48b",
+        "headroom_mib": 8192,
+        "memory_mib": 3072,
+        "name": "hpc",
+        "output_root": "/var/tmp/papermerge-os675524/basil-sharp-thesis-direct-checked-100r-20261030",
+        "ram_mib": 8192,
+        "threads": 1
+      },
+      "start": "75211802"
+    },
+    "33": {
+      "argv": [
+        "/home/os675524/Masters_Research/PaperMerge/.venv-hpc/bin/python",
+        "/home/os675524/Masters_Research/PaperMerge/scripts/basil_sharp_thesis_worker.py",
+        "--worker",
+        "33",
+        "--output",
+        "/var/tmp/papermerge-os675524/basil-sharp-thesis-direct-checked-100r-20261030",
+        "--lease-fd",
+        "4"
+      ],
+      "cwd": "/home/os675524/Masters_Research/PaperMerge",
+      "pid": 747480,
+      "ppid": 736849,
+      "profile": {
+        "data_workers": 0,
+        "gpu": 0,
+        "gpu_uuid": "GPU-34e241f3-58c7-388c-b072-1dc03852d48b",
+        "headroom_mib": 8192,
+        "memory_mib": 3072,
+        "name": "hpc",
+        "output_root": "/var/tmp/papermerge-os675524/basil-sharp-thesis-direct-checked-100r-20261030",
+        "ram_mib": 8192,
+        "threads": 1
+      },
+      "start": "75253854"
+    },
+    "39": {
+      "argv": [
+        "/home/os675524/Masters_Research/PaperMerge/.venv-hpc/bin/python",
+        "/home/os675524/Masters_Research/PaperMerge/scripts/basil_sharp_thesis_worker.py",
+        "--worker",
+        "39",
+        "--output",
+        "/var/tmp/papermerge-os675524/basil-sharp-thesis-direct-checked-100r-20261030",
+        "--lease-fd",
+        "4"
+      ],
+      "cwd": "/home/os675524/Masters_Research/PaperMerge",
+      "pid": 749429,
+      "ppid": 736849,
+      "profile": {
+        "data_workers": 0,
+        "gpu": 0,
+        "gpu_uuid": "GPU-34e241f3-58c7-388c-b072-1dc03852d48b",
+        "headroom_mib": 8192,
+        "memory_mib": 3072,
+        "name": "hpc",
+        "output_root": "/var/tmp/papermerge-os675524/basil-sharp-thesis-direct-checked-100r-20261030",
+        "ram_mib": 8192,
+        "threads": 1
+      },
+      "start": "75305997"
+    },
+    "41": {
+      "argv": [
+        "/home/os675524/Masters_Research/PaperMerge/.venv-hpc/bin/python",
+        "/home/os675524/Masters_Research/PaperMerge/scripts/basil_sharp_thesis_worker.py",
+        "--worker",
+        "41",
+        "--output",
+        "/var/tmp/papermerge-os675524/basil-sharp-thesis-direct-checked-100r-20261030",
+        "--lease-fd",
+        "4"
+      ],
+      "cwd": "/home/os675524/Masters_Research/PaperMerge",
+      "pid": 749790,
+      "ppid": 736849,
+      "profile": {
+        "data_workers": 0,
+        "gpu": 0,
+        "gpu_uuid": "GPU-34e241f3-58c7-388c-b072-1dc03852d48b",
+        "headroom_mib": 8192,
+        "memory_mib": 3072,
+        "name": "hpc",
+        "output_root": "/var/tmp/papermerge-os675524/basil-sharp-thesis-direct-checked-100r-20261030",
+        "ram_mib": 8192,
+        "threads": 1
+      },
+      "start": "75312919"
+    },
+    "42": {
+      "argv": [
+        "/home/os675524/Masters_Research/PaperMerge/.venv-hpc/bin/python",
+        "/home/os675524/Masters_Research/PaperMerge/scripts/basil_sharp_thesis_worker.py",
+        "--worker",
+        "42",
+        "--output",
+        "/var/tmp/papermerge-os675524/basil-sharp-thesis-direct-checked-100r-20261030",
+        "--lease-fd",
+        "4"
+      ],
+      "cwd": "/home/os675524/Masters_Research/PaperMerge",
+      "pid": 750367,
+      "ppid": 736849,
+      "profile": {
+        "data_workers": 0,
+        "gpu": 0,
+        "gpu_uuid": "GPU-34e241f3-58c7-388c-b072-1dc03852d48b",
+        "headroom_mib": 8192,
+        "memory_mib": 3072,
+        "name": "hpc",
+        "output_root": "/var/tmp/papermerge-os675524/basil-sharp-thesis-direct-checked-100r-20261030",
+        "ram_mib": 8192,
+        "threads": 1
+      },
+      "start": "75327026"
+    },
+    "44": {
+      "argv": [
+        "/home/os675524/Masters_Research/PaperMerge/.venv-hpc/bin/python",
+        "/home/os675524/Masters_Research/PaperMerge/scripts/basil_sharp_thesis_worker.py",
+        "--worker",
+        "44",
+        "--output",
+        "/var/tmp/papermerge-os675524/basil-sharp-thesis-direct-checked-100r-20261030",
+        "--lease-fd",
+        "4"
+      ],
+      "cwd": "/home/os675524/Masters_Research/PaperMerge",
+      "pid": 752296,
+      "ppid": 736849,
+      "profile": {
+        "data_workers": 0,
+        "gpu": 0,
+        "gpu_uuid": "GPU-34e241f3-58c7-388c-b072-1dc03852d48b",
+        "headroom_mib": 8192,
+        "memory_mib": 3072,
+        "name": "hpc",
+        "output_root": "/var/tmp/papermerge-os675524/basil-sharp-thesis-direct-checked-100r-20261030",
+        "ram_mib": 8192,
+        "threads": 1
+      },
+      "start": "75378967"
+    },
+    "46": {
+      "argv": [
+        "/home/os675524/Masters_Research/PaperMerge/.venv-hpc/bin/python",
+        "/home/os675524/Masters_Research/PaperMerge/scripts/basil_sharp_thesis_worker.py",
+        "--worker",
+        "46",
+        "--output",
+        "/var/tmp/papermerge-os675524/basil-sharp-thesis-direct-checked-100r-20261030",
+        "--lease-fd",
+        "4"
+      ],
+      "cwd": "/home/os675524/Masters_Research/PaperMerge",
+      "pid": 752472,
+      "ppid": 736849,
+      "profile": {
+        "data_workers": 0,
+        "gpu": 0,
+        "gpu_uuid": "GPU-34e241f3-58c7-388c-b072-1dc03852d48b",
+        "headroom_mib": 8192,
+        "memory_mib": 3072,
+        "name": "hpc",
+        "output_root": "/var/tmp/papermerge-os675524/basil-sharp-thesis-direct-checked-100r-20261030",
+        "ram_mib": 8192,
+        "threads": 1
+      },
+      "start": "75380592"
+    },
+    "49": {
+      "argv": [
+        "/home/os675524/Masters_Research/PaperMerge/.venv-hpc/bin/python",
+        "/home/os675524/Masters_Research/PaperMerge/scripts/basil_sharp_thesis_worker.py",
+        "--worker",
+        "49",
+        "--output",
+        "/var/tmp/papermerge-os675524/basil-sharp-thesis-direct-checked-100r-20261030",
+        "--lease-fd",
+        "4"
+      ],
+      "cwd": "/home/os675524/Masters_Research/PaperMerge",
+      "pid": 754550,
+      "ppid": 736849,
+      "profile": {
+        "data_workers": 0,
+        "gpu": 0,
+        "gpu_uuid": "GPU-34e241f3-58c7-388c-b072-1dc03852d48b",
+        "headroom_mib": 8192,
+        "memory_mib": 3072,
+        "name": "hpc",
+        "output_root": "/var/tmp/papermerge-os675524/basil-sharp-thesis-direct-checked-100r-20261030",
+        "ram_mib": 8192,
+        "threads": 1
+      },
+      "start": "75441179"
+    },
+    "51": {
+      "argv": [
+        "/home/os675524/Masters_Research/PaperMerge/.venv-hpc/bin/python",
+        "/home/os675524/Masters_Research/PaperMerge/scripts/basil_sharp_thesis_worker.py",
+        "--worker",
+        "51",
+        "--output",
+        "/var/tmp/papermerge-os675524/basil-sharp-thesis-direct-checked-100r-20261030",
+        "--lease-fd",
+        "4"
+      ],
+      "cwd": "/home/os675524/Masters_Research/PaperMerge",
+      "pid": 755447,
+      "ppid": 736849,
+      "profile": {
+        "data_workers": 0,
+        "gpu": 0,
+        "gpu_uuid": "GPU-34e241f3-58c7-388c-b072-1dc03852d48b",
+        "headroom_mib": 8192,
+        "memory_mib": 3072,
+        "name": "hpc",
+        "output_root": "/var/tmp/papermerge-os675524/basil-sharp-thesis-direct-checked-100r-20261030",
+        "ram_mib": 8192,
+        "threads": 1
+      },
+      "start": "75463749"
+    }
+  },
+  "kind": "live_gpu_work_stealing",
+  "planSha256": "2109a7b735ba113ffd466876a769c1046ef8f60f272a82edf21dfb7dc150c656",
+  "previousOwner": {
+    "argv": [
+      "python",
+      "-u",
+      "scripts/resume_basil_sharp_resilient.py",
+      "--resume",
+      "--execute",
+      "--wait-for-resources",
+      "--output",
+      "/var/tmp/papermerge-os675524/basil-sharp-thesis-direct-checked-100r-20261030",
+      "--ntfy-topic",
+      "papermerge-ojaswi"
+    ],
+    "cwd": "/home/os675524/Masters_Research/PaperMerge",
+    "pid": 736849,
+    "ppid": 1,
+    "start": "75013828"
+  },
+  "resourceBudgetsUnmodified": true,
+  "scientificProducerUnmodified": true,
+  "source": {
+    "basil_core/live_gpu_scheduler.py": "b44ebb6d7e93eec8cddf468053f360252999aabd9be10c061b680c43c5fb67ea",
+    "scripts/rebalance_basil_sharp_live.py": "bdc207f114b204378d3b5d9aa3988c9c73dacc6da28b7870604a58f5415691c1"
+  }
+}

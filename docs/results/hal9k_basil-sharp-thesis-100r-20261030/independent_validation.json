@@ -1,0 +1,506 @@
+{
+  "interpretation": "Fresh CPU inference, not replay of every training update.",
+  "officialTestUsed": false,
+  "source": {
+    "basil_core/acds.py": "a67bea10bfb0b57e01978c4d134d741470835e0a9fb06abb0dab296c71db4862",
+    "basil_core/attacks.py": "e1b653952cffd20983d9c4b0835fd11725e7df1cccff11c62e30569b952f119f",
+    "basil_core/basil_sharp_thesis.py": "fdc04dee0cb562ccb2059eea356526d541a2a0d65051dfb1c328395389fd451e",
+    "basil_core/cart_admitted_continuity_candidate.py": "bc7efb8b91474aae9b70cdce9d36b6e3ad76114b33cab77047b096ea67e8c697",
+    "basil_core/cart_balanced_commit.py": "3be2fbd3a3cf466de110f4c16f363501740e824475465009a5c8e36839e82763",
+    "basil_core/cart_batched_scoring.py": "77d0ee3ac9fc958e944d282a68d1fb4838ddb4dac6b99c7829444d6e78ef48e3",
+    "basil_core/cart_campaign_io.py": "3655d41d806e5778a28c952037196da840b186db5541d623033da4dcb3a7dcc9",
+    "basil_core/cart_class_skill.py": "7e2d4952f70f7bcda4f5b312a4edeb93541843a6d45f4e725c02e7085ec2b876",
+    "basil_core/cart_comparison_study.py": "f8c6f85570675130d3052fa9971c269c5d5f3d65db744c32e1e2053aca8f7906",
+    "basil_core/cart_continuity_candidate.py": "fb1fdb973f59445f0069d7e37eb3d93820235b1da9c73cb67f7f6ddff9a0a93a",
+    "basil_core/cart_contribution_study.py": "9b87777a5fc3010be40109b1a1651caf4b76dbba8c3b1dbb0fcd0c51438d6674",
+    "basil_core/cart_discriminative_admission_candidate.py": "35ef43ac1f6b47608a773dc1f73171547ce7ef38e6865dbccb3243f301ec03eb",
+    "basil_core/cart_discriminative_continuity_candidate.py": "62d11f505a1bf6014e8de543d0116f900a42082dc4f7ad91fbf28d197dfc1099",
+    "basil_core/cart_display_labels.py": "a641d13c79eafa89b09b165b54be5dc926cf408e5083f4de3fad0ac9e1ee03a0",
+    "basil_core/cart_local_prior.py": "c1b3f396119d103d1affde23293db41e32e42c0e8b1555887a8b0c163bb77739",
+    "basil_core/cart_mechanism_audit.py": "186ff4605af843a9b478fa24ff8b1545033b6f5252d03259cb5c36a8c3561b8a",
+    "basil_core/cart_noise_selection.py": "d9c7fdb0b42d625f26280c06122202b35db1e3ae1db06a2ac74e74619f206bb1",
+    "basil_core/cart_peer_candidates.py": "3fc3d2a79ee5955bc44754be8f48118bc5024bad5f4b9b16fa952a29b2eb9576",
+    "basil_core/cart_prior_neutral_commit.py": "9727a07bf0ef6fd807fe2ca8ccd131cf774cc2aa7eefee07496e62ea44dd0ebd",
+    "basil_core/cart_prior_neutral_routing.py": "ca705a466d22deea7b194ea251c00467cf7d2a1a0facc5e1d10c081516c5fe12",
+    "basil_core/cart_qualified_continuity_candidate.py": "34245444719db9f7c814013fca5f49c3284cfa32918d788a559a195ef77d5b02",
+    "basil_core/cart_quality_commit_candidate.py": "2eeb85810bcd8656fbbb1f89399cdfac51c0f1ea2d5eb34b8c5dfeea90b5020e",
+    "basil_core/cart_quality_routing_candidate.py": "d47314835462ef38c7c6ebce19f34032c0cb96a9cae66b7e6cae1146b265ab8c",
+    "basil_core/cart_revision_study.py": "d61d64fc0ec2654b1b708c71dab209fd35654d0eb68233cba252ed55f5989669",
+    "basil_core/cart_semantic_admission_candidate.py": "c732e79987b4d393432f18b8ddb3c738500769b070412daf99f92a917bb95929",
+    "basil_core/cart_transactional_quality_candidate.py": "c041a4e188bac1dfb38b1a4e39b7e6f11c28aacae99075c5af7ccecf8d07b047",
+    "basil_core/cart_uncertainty_admission_candidate.py": "644781cf6fe366f6304f6e27bd45bcf4139db304bd9db304bd0f02ede76631b6",
+    "basil_core/cart_worker_admission.py": "4d078647c164f301f59dcd1feebc30b4649cff75b51e90b548f7f5fb4a63c703",
+    "basil_core/data/cifar.py": "9bacb38333fe1b27b74919f7422e74415ebc58bd54e64431845f930a9ebfe180",
+    "basil_core/execution_profile.py": "222e60d95b643a364b30a400b28ed38baf4913db04b5acae5fa6f558ed84cfbe",
+    "basil_core/factorial_model.py": "07baaac3ae5d5a7a698fc4d37b37574f93f95510e43976cb8fbacdeb55f8142f",
+    "basil_core/factorial_study.py": "51ba798ee07f4d80a90a3b7e5c11280073e2cf2fabe1555b50e0505d1022884f",
+    "basil_core/iid_runtime.py": "f0069317dd6fbc583726cb734d89d8c32c50b2e5af564a491df513fee2ed9c58",
+    "basil_core/lazy_imports.py": "5d7039af5f56bcf16099ceef788e0b6515a70af7ff94cb8b9cd6fee8759f15b4",
+    "basil_core/models.py": "49169fb67c9c59d00d86e09d62d88189b164a777820680624d42bab1a47bd0cb",
+    "basil_core/research_protocol.py": "cb4fcaeb4f0b11079598001cd98ecfe8965db7ff6a806973b04b6af3393e7c15",
+    "basil_core/sharp_cart.py": "48ad43fe155f5e61c8122fcbe80e2dd3cb10b9afdf4f0506c244a466c561eeb8",
+    "basil_core/sharp_cart_v2.py": "9d1a06ad3dc75175fa778cfdbd7fd60f1eed39e6c05b17981f06e3cb0fd824f4",
+    "basil_core/sharp_cart_v2_protocol.py": "7772f152295caf21242bd606804c13cdd887dea62b8c24539ad9ca1f49ed3170",
+    "basil_core/sharp_checked_pool.py": "b853e8995f3391062ae016d3d0ebdb0b0919bcc7fea3adabc87a42ad3fcc2f39",
+    "basil_core/sharp_compiled_transfer.py": "bb44a909f2ac062389800264fcafb851fe8024099a7de9390fee88c9c8af82e9",
+    "basil_core/sharp_data.py": "bb636a1b6b4a95b246fa62b6168a790b92e70a11268c399b093d4689cd4eaf18",
+    "basil_core/sharp_guarded_protocol.py": "5b2113512479dfc562e6bf7160ff51cc02728a98a941722485acf9dcdbd4d55c",
+    "basil_core/sharp_math.py": "be9528e3ce10d8e084a44577fdb046fa8e82c61cf5d1824f6aa8494c63fb0831",
+    "basil_core/sharp_protocol.py": "564a836b74682e18e1a7d28b701b38c4b6d4aeaed1b9913cc4dbb959220e610f",
+    "basil_core/sharp_study.py": "2af5e2d52ea92f64f1a098a23fa20c9b4f172b1ee1e622fd0b6988ae16435dad",
+    "basil_core/sharp_worker.py": "42f64e76afb8a1093e23b95e874edab4e6aac12e3ef58de0318259b6c081fce7",
+    "basil_core/thesis_raw_data.py": "4e44ac1221db7b24939f9d99294bfa2246075fe377e5f88f9b42c92ebbe72fdd",
+    "basil_core/trainer.py": "61782cd28a44443618f07d4ed9fd8a5ac4a51ade940e4f0d1b6e9dbc245e3124",
+    "docs/specifications/SHARP_professor_20261027.pdf": "b010c9c79a2282c5835e0b9b4bc5cd95500afbcf7395dd9d04fd6a2a0b9ce700",
+    "reporting/basil_sharp_thesis.py": "261ebbd362362c56666301d14e9ef62e10535e32d3bcfe3fe9184a4e784a4b1a",
+    "reporting/cart_comparison.py": "939d5f253bf299bc08763507f393865c8755266d5f1466d58813b010dcfa09bd",
+    "scripts/basil_sharp_thesis_worker.py": "0e0d65ef9017ce98c619f800fd9f691593c4dcf166c25ddfaf7b0a6aadc1dae4",
+    "scripts/cart_comparison_worker.py": "078d84aea1ca18b96019a3488609676358f98169eebe84903c2c91389a17d2eb",
+    "scripts/cart_contribution_worker.py": "3bde3ebe975f7931558ad1b71734ee72a6a37d8fe0347b9a69eb36385fc0759a",
+    "scripts/cart_revision_worker.py": "c4ce11a8d0e5de663cfc968864ce46d4b5f84fc98b4e5df5ddb3ab9754556246",
+    "scripts/cart_v2_slot_worker.py": "2b37a1a47a0d37a89e4181412eb578b45e4596fa682868ca8423b2162200ac2b",
+    "scripts/cart_v2_transfer_worker.py": "a0fc80601338c45a4331af62f9874830aaac903dbe8f3fc975a40f4862fe7f85",
+    "scripts/run_basil_sharp_thesis.py": "ee905186f32c0d5ab5a3a2439877e3b2d241de51d49f24b8d749391af7b72cda",
+    "scripts/run_cart_adaptive.py": "bbc50a3980ea734545e7a3753385f033373bfb5e7cbad6ab7dd56cc26f3ec853",
+    "scripts/run_cart_comparison.py": "cdd202457ab4418c9c5374e27a06a39a1b5fd9751b8c3c338425735c307e675c",
+    "scripts/run_cart_contribution.py": "d6965a3e7f3552ab0005f3d72b636fbde585ad04449a32201f548897bd5266ca",
+    "scripts/run_cart_revision_study.py": "0493edd890bde749501a724100a628fb80ff97e11cae187e68dc653f4ba877d0",
+    "scripts/run_cart_v2_resilient.py": "922fbcfefac5ff7020a9a2dc989cd372311f886342c11e8adddd534107fddd38",
+    "scripts/run_cart_v2_scaled.py": "a3ee3af55c745a49328faea641ff5b977dbf8d4bd6bb9596042241637f0b936e",
+    "scripts/run_cart_v2_study.py": "d594dd989ae96c4e2f38a42b8b5c6f2a6d7fa08eb890512ed366f812848ae587",
+    "scripts/run_cart_v2_transfer.py": "34ded0e19586fd8f4c326a65ba32a92ed55b80ce4aeec326be6ba60d70396019",
+    "scripts/run_guarded_sharp_case.py": "9219f4685f71f02d4dc2c9bcdc6697779f705f5b32903fbcba6c6e924b2de980",
+    "scripts/run_sharp_study.py": "2f1909042567548c5a8d7efceda7b831aa60c8782f1f02e45774a4592d741869",
+    "scripts/verify_basil_sharp_thesis_gpu.py": "1d30141da3b78ebacb2509cef7d6866e9217e9746c8519011c277b9e83c4941c",
+    "scripts/verify_basil_sharp_thesis_results.py": "c9d540643fd41e22d8a81c70b58c4ad1eae054841319e563f675ae4c10307def",
+    "scripts/verify_cart_comparison_gpu.py": "75f7babc69e45d11a29c9847ea71ad80e74e72411e9c8a5a9a893047d059ad82",
+    "scripts/verify_cart_contribution_gpu.py": "3e5146c5d721a37eca0742c94bbfd58aea40515e23711993633b2a5fdf8526f0",
+    "scripts/verify_cart_local_prior_gpu.py": "d86aac4c6d56119535c4ab3139e7c43cc89347d46fe92d8cfc838a14b3660b74",
+    "scripts/verify_cart_revision_gpu.py": "389db37d60a2d4159f6f41f3a3d313448bb6a4ea45b648983ef9d5017a7d94d6",
+    "scripts/verify_cart_v2_transfer.py": "e60bd8714bc55739c808209d001ffe028aac13097adcdca9fdbcd0d12ad167ce"
+  },
+  "status": "ALL_COMPARISON_MODELS_VERIFIED",
+  "verified": [
+    {
+      "finalValidationAccuracy": 0.9227900000000001,
+      "maximumValidationAccuracyDifference": 0.0,
+      "runId": "mnist-iid-2025-basil_clean-7d3ef7dfe997"
+    },
+    {
+      "finalValidationAccuracy": 0.9240600000000001,
+      "maximumValidationAccuracyDifference": 0.0,
+      "runId": "mnist-iid-2025-basil_attack_only-6321dd42b9b7"
+    },
+    {
+      "finalValidationAccuracy": 0.8156899999999999,
+      "maximumValidationAccuracyDifference": 0.0,
+      "runId": "mnist-iid-2025-basil_joint-29d1e5a6fcd4"
+    },
+    {
+      "finalValidationAccuracy": 0.91089,
+      "maximumValidationAccuracyDifference": 0.0,
+      "runId": "mnist-iid-2025-sharp_clean-6e6551e6f373"
+    },
+    {
+      "finalValidationAccuracy": 0.9098700000000001,
+      "maximumValidationAccuracyDifference": 0.0,
+      "runId": "mnist-iid-2025-sharp_attack_only-f1745c740082"
+    },
+    {
+      "finalValidationAccuracy": 0.8817700000000002,
+      "maximumValidationAccuracyDifference": 0.0,
+      "runId": "mnist-iid-2025-sharp_joint-3570b9d946b5"
+    },
+    {
+      "finalValidationAccuracy": 0.9237000000000002,
+      "maximumValidationAccuracyDifference": 0.0,
+      "runId": "mnist-iid-2026-basil_clean-30ac0ad3a4fe"
+    },
+    {
+      "finalValidationAccuracy": 0.91954,
+      "maximumValidationAccuracyDifference": 0.0,
+      "runId": "mnist-iid-2026-basil_attack_only-50218942c1df"
+    },
+    {
+      "finalValidationAccuracy": 0.8155799999999997,
+      "maximumValidationAccuracyDifference": 0.0,
+      "runId": "mnist-iid-2026-basil_joint-e63c50e7b95a"
+    },
+    {
+      "finalValidationAccuracy": 0.90932,
+      "maximumValidationAccuracyDifference": 0.0,
+      "runId": "mnist-iid-2026-sharp_clean-060976a21938"
+    },
+    {
+      "finalValidationAccuracy": 0.91021,
+      "maximumValidationAccuracyDifference": 0.0,
+      "runId": "mnist-iid-2026-sharp_attack_only-cb3605001748"
+    },
+    {
+      "finalValidationAccuracy": 0.89196,
+      "maximumValidationAccuracyDifference": 0.0,
+      "runId": "mnist-iid-2026-sharp_joint-2ff893537470"
+    },
+    {
+      "finalValidationAccuracy": 0.9250900000000002,
+      "maximumValidationAccuracyDifference": 0.0,
+      "runId": "mnist-iid-2027-basil_clean-14b11e2ce3d3"
+    },
+    {
+      "finalValidationAccuracy": 0.9252400000000002,
+      "maximumValidationAccuracyDifference": 0.0,
+      "runId": "mnist-iid-2027-basil_attack_only-685f16f3a136"
+    },
+    {
+      "finalValidationAccuracy": 0.8350899999999997,
+      "maximumValidationAccuracyDifference": 0.0,
+      "runId": "mnist-iid-2027-basil_joint-829be306f36e"
+    },
+    {
+      "finalValidationAccuracy": 0.9116800000000002,
+      "maximumValidationAccuracyDifference": 0.0,
+      "runId": "mnist-iid-2027-sharp_clean-b73134a19759"
+    },
+    {
+      "finalValidationAccuracy": 0.9129999999999999,
+      "maximumValidationAccuracyDifference": 0.0,
+      "runId": "mnist-iid-2027-sharp_attack_only-caeed9475e64"
+    },
+    {
+      "finalValidationAccuracy": 0.88244,
+      "maximumValidationAccuracyDifference": 0.0,
+      "runId": "mnist-iid-2027-sharp_joint-cfcaddb772c2"
+    },
+    {
+      "finalValidationAccuracy": 0.8987400000000001,
+      "maximumValidationAccuracyDifference": 0.0,
+      "runId": "mnist-dirichlet-2025-basil_clean-1c9acf839e5b"
+    },
+    {
+      "finalValidationAccuracy": 0.9002800000000002,
+      "maximumValidationAccuracyDifference": 0.0,
+      "runId": "mnist-dirichlet-2025-basil_attack_only-7f0143cf81c0"
+    },
+    {
+      "finalValidationAccuracy": 0.7862300000000001,
+      "maximumValidationAccuracyDifference": 0.0,
+      "runId": "mnist-dirichlet-2025-basil_joint-26f2b93273cb"
+    },
+    {
+      "finalValidationAccuracy": 0.81587,
+      "maximumValidationAccuracyDifference": 0.0,
+      "runId": "mnist-dirichlet-2025-basil_acds-6dc7decfa5b6"
+    },
+    {
+      "finalValidationAccuracy": 0.8657299999999999,
+      "maximumValidationAccuracyDifference": 0.0,
+      "runId": "mnist-dirichlet-2025-sharp_clean-e581fe8e421f"
+    },
+    {
+      "finalValidationAccuracy": 0.8716600000000001,
+      "maximumValidationAccuracyDifference": 0.0,
+      "runId": "mnist-dirichlet-2025-sharp_attack_only-5584339e79eb"
+    },
+    {
+      "finalValidationAccuracy": 0.8312799999999999,
+      "maximumValidationAccuracyDifference": 0.0,
+      "runId": "mnist-dirichlet-2025-sharp_joint-a37dcafe037e"
+    },
+    {
+      "finalValidationAccuracy": 0.84344,
+      "maximumValidationAccuracyDifference": 0.0,
+      "runId": "mnist-dirichlet-2025-sharp_cart-bd39bbb9abb6"
+    },
+    {
+      "finalValidationAccuracy": 0.89434,
+      "maximumValidationAccuracyDifference": 0.0,
+      "runId": "mnist-dirichlet-2026-basil_clean-ea599c5eabce"
+    },
+    {
+      "finalValidationAccuracy": 0.9022000000000001,
+      "maximumValidationAccuracyDifference": 0.0,
+      "runId": "mnist-dirichlet-2026-basil_attack_only-af63c579c306"
+    },
+    {
+      "finalValidationAccuracy": 0.7800800000000001,
+      "maximumValidationAccuracyDifference": 0.0,
+      "runId": "mnist-dirichlet-2026-basil_joint-1c5549993a1a"
+    },
+    {
+      "finalValidationAccuracy": 0.8255499999999999,
+      "maximumValidationAccuracyDifference": 0.0,
+      "runId": "mnist-dirichlet-2026-basil_acds-05feff907724"
+    },
+    {
+      "finalValidationAccuracy": 0.8749300000000001,
+      "maximumValidationAccuracyDifference": 0.0,
+      "runId": "mnist-dirichlet-2026-sharp_clean-1ce25c894c87"
+    },
+    {
+      "finalValidationAccuracy": 0.86816,
+      "maximumValidationAccuracyDifference": 0.0,
+      "runId": "mnist-dirichlet-2026-sharp_attack_only-3c02198a13c9"
+    },
+    {
+      "finalValidationAccuracy": 0.8405199999999999,
+      "maximumValidationAccuracyDifference": 0.0,
+      "runId": "mnist-dirichlet-2026-sharp_joint-61b648d99870"
+    },
+    {
+      "finalValidationAccuracy": 0.84399,
+      "maximumValidationAccuracyDifference": 0.0,
+      "runId": "mnist-dirichlet-2026-sharp_cart-6131526f791e"
+    },
+    {
+      "finalValidationAccuracy": 0.8971300000000002,
+      "maximumValidationAccuracyDifference": 0.0,
+      "runId": "mnist-dirichlet-2027-basil_clean-05e9e22c712d"
+    },
+    {
+      "finalValidationAccuracy": 0.9012299999999999,
+      "maximumValidationAccuracyDifference": 0.0,
+      "runId": "mnist-dirichlet-2027-basil_attack_only-1b72b31bf25c"
+    },
+    {
+      "finalValidationAccuracy": 0.8030600000000001,
+      "maximumValidationAccuracyDifference": 0.0,
+      "runId": "mnist-dirichlet-2027-basil_joint-4476db62ad1e"
+    },
+    {
+      "finalValidationAccuracy": 0.8211099999999999,
+      "maximumValidationAccuracyDifference": 0.0,
+      "runId": "mnist-dirichlet-2027-basil_acds-be981c6e50bd"
+    },
+    {
+      "finalValidationAccuracy": 0.87104,
+      "maximumValidationAccuracyDifference": 0.0,
+      "runId": "mnist-dirichlet-2027-sharp_clean-2119b704e982"
+    },
+    {
+      "finalValidationAccuracy": 0.87559,
+      "maximumValidationAccuracyDifference": 0.0,
+      "runId": "mnist-dirichlet-2027-sharp_attack_only-a4d09acdb763"
+    },
+    {
+      "finalValidationAccuracy": 0.8484899999999997,
+      "maximumValidationAccuracyDifference": 0.0,
+      "runId": "mnist-dirichlet-2027-sharp_joint-fd3ba6e48d4d"
+    },
+    {
+      "finalValidationAccuracy": 0.85183,
+      "maximumValidationAccuracyDifference": 0.0,
+      "runId": "mnist-dirichlet-2027-sharp_cart-00f47e185f5e"
+    },
+    {
+      "finalValidationAccuracy": 0.3287,
+      "maximumValidationAccuracyDifference": 0.0,
+      "runId": "cifar10-iid-2025-basil_clean-b7b2b9add489"
+    },
+    {
+      "finalValidationAccuracy": 0.32778000000000007,
+      "maximumValidationAccuracyDifference": 0.0,
+      "runId": "cifar10-iid-2025-basil_attack_only-4fb4ef6d0147"
+    },
+    {
+      "finalValidationAccuracy": 0.296,
+      "maximumValidationAccuracyDifference": 0.0,
+      "runId": "cifar10-iid-2025-basil_joint-d3acf78597c4"
+    },
+    {
+      "finalValidationAccuracy": 0.30468999999999996,
+      "maximumValidationAccuracyDifference": 0.0,
+      "runId": "cifar10-iid-2025-sharp_clean-42a3124dcd3b"
+    },
+    {
+      "finalValidationAccuracy": 0.30251,
+      "maximumValidationAccuracyDifference": 0.0,
+      "runId": "cifar10-iid-2025-sharp_attack_only-efe71921e9b7"
+    },
+    {
+      "finalValidationAccuracy": 0.35816,
+      "maximumValidationAccuracyDifference": 0.0,
+      "runId": "cifar10-iid-2025-sharp_joint-92e7687b7f98"
+    },
+    {
+      "finalValidationAccuracy": 0.31950999999999996,
+      "maximumValidationAccuracyDifference": 0.0010000000000000009,
+      "runId": "cifar10-iid-2026-basil_clean-b53786c0ee02"
+    },
+    {
+      "finalValidationAccuracy": 0.31976,
+      "maximumValidationAccuracyDifference": 0.0,
+      "runId": "cifar10-iid-2026-basil_attack_only-6159e9d75d86"
+    },
+    {
+      "finalValidationAccuracy": 0.30765,
+      "maximumValidationAccuracyDifference": 0.0,
+      "runId": "cifar10-iid-2026-basil_joint-4a8ec24e978d"
+    },
+    {
+      "finalValidationAccuracy": 0.30293,
+      "maximumValidationAccuracyDifference": 0.0,
+      "runId": "cifar10-iid-2026-sharp_clean-95361168b4ba"
+    },
+    {
+      "finalValidationAccuracy": 0.30321000000000004,
+      "maximumValidationAccuracyDifference": 0.0,
+      "runId": "cifar10-iid-2026-sharp_attack_only-8ac10a382c7c"
+    },
+    {
+      "finalValidationAccuracy": 0.36640999999999996,
+      "maximumValidationAccuracyDifference": 0.0,
+      "runId": "cifar10-iid-2026-sharp_joint-c2a5d4852cc2"
+    },
+    {
+      "finalValidationAccuracy": 0.33635999999999994,
+      "maximumValidationAccuracyDifference": 0.0,
+      "runId": "cifar10-iid-2027-basil_clean-d9b540a02004"
+    },
+    {
+      "finalValidationAccuracy": 0.33011,
+      "maximumValidationAccuracyDifference": 0.0,
+      "runId": "cifar10-iid-2027-basil_attack_only-51d1edc11eac"
+    },
+    {
+      "finalValidationAccuracy": 0.29096,
+      "maximumValidationAccuracyDifference": 0.0,
+      "runId": "cifar10-iid-2027-basil_joint-6a722dde61eb"
+    },
+    {
+      "finalValidationAccuracy": 0.29256,
+      "maximumValidationAccuracyDifference": 0.0,
+      "runId": "cifar10-iid-2027-sharp_clean-06cdbce7ddd8"
+    },
+    {
+      "finalValidationAccuracy": 0.28644000000000003,
+      "maximumValidationAccuracyDifference": 0.0,
+      "runId": "cifar10-iid-2027-sharp_attack_only-8faa73d7b8ca"
+    },
+    {
+      "finalValidationAccuracy": 0.36966,
+      "maximumValidationAccuracyDifference": 0.0,
+      "runId": "cifar10-iid-2027-sharp_joint-8338afc68563"
+    },
+    {
+      "finalValidationAccuracy": 0.16919,
+      "maximumValidationAccuracyDifference": 0.0,
+      "runId": "cifar10-dirichlet-2025-basil_clean-a38180c26b00"
+    },
+    {
+      "finalValidationAccuracy": 0.16043000000000002,
+      "maximumValidationAccuracyDifference": 0.0,
+      "runId": "cifar10-dirichlet-2025-basil_attack_only-3833dec2e008"
+    },
+    {
+      "finalValidationAccuracy": 0.19959,
+      "maximumValidationAccuracyDifference": 0.0,
+      "runId": "cifar10-dirichlet-2025-basil_joint-186c8b6ba264"
+    },
+    {
+      "finalValidationAccuracy": 0.29117,
+      "maximumValidationAccuracyDifference": 0.0,
+      "runId": "cifar10-dirichlet-2025-basil_acds-e313aaaa751b"
+    },
+    {
+      "finalValidationAccuracy": 0.14309000000000002,
+      "maximumValidationAccuracyDifference": 0.0,
+      "runId": "cifar10-dirichlet-2025-sharp_clean-6d38259b2e74"
+    },
+    {
+      "finalValidationAccuracy": 0.14368000000000003,
+      "maximumValidationAccuracyDifference": 0.0,
+      "runId": "cifar10-dirichlet-2025-sharp_attack_only-a7f7cf8f2f20"
+    },
+    {
+      "finalValidationAccuracy": 0.18448000000000003,
+      "maximumValidationAccuracyDifference": 0.0,
+      "runId": "cifar10-dirichlet-2025-sharp_joint-8530d3a4f7e4"
+    },
+    {
+      "finalValidationAccuracy": 0.27673000000000003,
+      "maximumValidationAccuracyDifference": 0.0,
+      "runId": "cifar10-dirichlet-2025-sharp_cart-9b0dc763c288"
+    },
+    {
+      "finalValidationAccuracy": 0.16863000000000003,
+      "maximumValidationAccuracyDifference": 0.0,
+      "runId": "cifar10-dirichlet-2026-basil_clean-cdf934b24a27"
+    },
+    {
+      "finalValidationAccuracy": 0.1728,
+      "maximumValidationAccuracyDifference": 0.0,
+      "runId": "cifar10-dirichlet-2026-basil_attack_only-ebdf6c767a6b"
+    },
+    {
+      "finalValidationAccuracy": 0.21067,
+      "maximumValidationAccuracyDifference": 0.0,
+      "runId": "cifar10-dirichlet-2026-basil_joint-e42afbf3d16e"
+    },
+    {
+      "finalValidationAccuracy": 0.30518,
+      "maximumValidationAccuracyDifference": 0.0,
+      "runId": "cifar10-dirichlet-2026-basil_acds-ac886871194b"
+    },
+    {
+      "finalValidationAccuracy": 0.11811999999999999,
+      "maximumValidationAccuracyDifference": 0.0,
+      "runId": "cifar10-dirichlet-2026-sharp_clean-03530b3f7fae"
+    },
+    {
+      "finalValidationAccuracy": 0.11620000000000001,
+      "maximumValidationAccuracyDifference": 0.0,
+      "runId": "cifar10-dirichlet-2026-sharp_attack_only-e29115455276"
+    },
+    {
+      "finalValidationAccuracy": 0.19549000000000002,
+      "maximumValidationAccuracyDifference": 0.0,
+      "runId": "cifar10-dirichlet-2026-sharp_joint-8aa27f121c07"
+    },
+    {
+      "finalValidationAccuracy": 0.27275000000000005,
+      "maximumValidationAccuracyDifference": 0.0010000000000000009,
+      "runId": "cifar10-dirichlet-2026-sharp_cart-68cd84a3c48e"
+    },
+    {
+      "finalValidationAccuracy": 0.17174999999999993,
+      "maximumValidationAccuracyDifference": 0.0,
+      "runId": "cifar10-dirichlet-2027-basil_clean-e7d6837204b7"
+    },
+    {
+      "finalValidationAccuracy": 0.17370999999999998,
+      "maximumValidationAccuracyDifference": 0.0,
+      "runId": "cifar10-dirichlet-2027-basil_attack_only-0633093c3bf7"
+    },
+    {
+      "finalValidationAccuracy": 0.20462000000000002,
+      "maximumValidationAccuracyDifference": 0.0,
+      "runId": "cifar10-dirichlet-2027-basil_joint-aa17d4be1a69"
+    },
+    {
+      "finalValidationAccuracy": 0.28957,
+      "maximumValidationAccuracyDifference": 0.0,
+      "runId": "cifar10-dirichlet-2027-basil_acds-57f98cc2b490"
+    },
+    {
+      "finalValidationAccuracy": 0.11892,
+      "maximumValidationAccuracyDifference": 0.0,
+      "runId": "cifar10-dirichlet-2027-sharp_clean-33ad3f376110"
+    },
+    {
+      "finalValidationAccuracy": 0.12124999999999998,
+      "maximumValidationAccuracyDifference": 0.0,
+      "runId": "cifar10-dirichlet-2027-sharp_attack_only-62f146101b2d"
+    },
+    {
+      "finalValidationAccuracy": 0.19959999999999994,
+      "maximumValidationAccuracyDifference": 0.0,
+      "runId": "cifar10-dirichlet-2027-sharp_joint-a25121e2964c"
+    },
+    {
+      "finalValidationAccuracy": 0.28497999999999996,
+      "maximumValidationAccuracyDifference": 0.0,
+      "runId": "cifar10-dirichlet-2027-sharp_cart-878e2b123376"
+    }
+  ],
+  "verifierSha256": "14e2e95ae609ecac3c2bfd45934a8ece0e906595e7836e6cdd846173a25ef4a5"
+}
