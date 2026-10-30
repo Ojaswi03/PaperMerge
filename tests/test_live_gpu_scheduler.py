@@ -104,6 +104,49 @@ def test_process_identity_pins_original_start_time():
     assert not live.same_process(dict(item,start='another process'))
 
 
+def test_shared_server_discovery_skips_foreign_uid_before_reading_command(tmp_path,monkeypatch):
+    foreign=Path('/proc/111111');owned=Path('/proc/222222')
+    original_stat=Path.stat;original_text=Path.read_text;original_bytes=Path.read_bytes
+    original_iter=Path.iterdir
+    monkeypatch.setattr(Path,'iterdir',lambda path:iter([foreign,owned])
+        if path==Path('/proc') else original_iter(path))
+    def stat(path,*args,**kwargs):
+        if path in (foreign,owned):
+            return SimpleNamespace(st_uid=os.getuid()+(1 if path==foreign else 0))
+        return original_stat(path,*args,**kwargs)
+    monkeypatch.setattr(Path,'stat',stat)
+    monkeypatch.setattr(Path,'read_text',lambda path,*a,**kw:
+        '222222 (python) '+' '.join(['S','1']+['0']*17+['123'])
+        if path==owned/'stat' else original_text(path,*a,**kw))
+    def read_bytes(path,*args,**kwargs):
+        assert path.parent!=foreign,'Foreign process metadata must not be read'
+        if path==owned/'cmdline':
+            return ('\0'.join([sys.executable,str(live.WORKER),'--worker','0',
+                '--output',str(tmp_path)])+'\0').encode()
+        if path==owned/'environ':
+            return b'PAPERMERGE_EXECUTION_PROFILE='+json.dumps(asdict(profile(tmp_path,0))).encode()+b'\0'
+        return original_bytes(path,*args,**kwargs)
+    monkeypatch.setattr(Path,'read_bytes',read_bytes)
+    found=live.discover(tmp_path,1)
+    assert list(found)==[0] and found[0]['pid']==222222
+
+
+def test_targeted_identity_still_refuses_a_foreign_process(monkeypatch):
+    monkeypatch.setattr(Path,'stat',lambda *a,**kw:SimpleNamespace(st_uid=os.getuid()+1))
+    with pytest.raises(PermissionError,match='different user'):
+        live.identity(111111)
+
+
+def test_discovery_does_not_suppress_invalid_owned_worker_contract(tmp_path,monkeypatch):
+    original=Path.iterdir
+    monkeypatch.setattr(Path,'iterdir',lambda path:iter([Path('/proc/222222')])
+        if path==Path('/proc') else original(path))
+    monkeypatch.setattr(live,'identity',lambda _:dict(pid=222222,argv=[sys.executable,str(live.WORKER),
+        '--worker','invalid','--output',str(tmp_path)]))
+    with pytest.raises(ValueError,match='invalid literal'):
+        live.discover(tmp_path,1)
+
+
 def test_refused_handover_does_not_signal_any_process(monkeypatch,tmp_path):
     worker=live.identity(os.getpid())
     monkeypatch.setattr(signal,'pidfd_send_signal',lambda *a:pytest.fail('Unexpected signal'))

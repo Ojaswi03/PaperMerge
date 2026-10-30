@@ -41,7 +41,10 @@ def argv_value(argv, flag):
 def identity(pid):
     proc = Path('/proc') / str(pid)
     if proc.stat().st_uid != os.getuid():
-        raise ValueError('Process belongs to a different user.')
+        # Discovery scans a shared server's /proc. A foreign process is an
+        # inaccessible candidate to skip, not an invalid training contract.
+        # Targeted controller validation still refuses this exception.
+        raise PermissionError('Process belongs to a different user.')
     # The command name can contain spaces and parentheses.
     stat = proc.joinpath('stat').read_text().rsplit(')', 1)[1].split()
     argv = proc.joinpath('cmdline').read_bytes().decode().rstrip('\0').split('\0')

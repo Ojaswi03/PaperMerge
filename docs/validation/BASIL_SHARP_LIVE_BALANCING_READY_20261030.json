@@ -2,7 +2,7 @@
   "status": "READY_FOR_HPC_LIVE_HANDOVER",
   "date": "2026-10-30",
   "tests": {
-    "passed": 98,
+    "passed": 101,
     "kind": "Local CPU process handover and mocked GPU scheduling; not a remote HPC execution"
   },
   "checks": [
@@ -16,13 +16,17 @@
     "Checkpoint runtime stays on its recorded GPU",
     "OOM failure set aside; following queued job starts on remaining healthy GPU",
     "ntfy worker failure and GPU quarantine events",
-    "Scientific producer fingerprints unchanged"
+    "Scientific producer fingerprints unchanged",
+    "Shared-server process discovery skips other users before reading command/environment",
+    "Targeted controller identity refuses foreign processes",
+    "Invalid owned worker contracts are not silently skipped"
   ],
   "frozenProducerFiles": 76,
   "source": {
-    "basil_core/live_gpu_scheduler.py": "d7c33cf92c3ee3d5f4aa43da9d2e49eb37613c7f1ac2e6753450594015e6f319",
+    "basil_core/live_gpu_scheduler.py": "508e7bc23bd4f1246b48155e72870c793bb2647d9794c39861ff57b16a2108cc",
     "scripts/rebalance_basil_sharp_live.py": "67cd166e84687fd5f9e6f310a3b7557131d3e9712feabff8a922d43ec1a0e6df",
     "basil_core/sharp_monitor.py": "ca687aacefa81a36f6a521f69cf7164a29323498027223f7a3b5d7b3b2e8ad56",
-    "tests/test_live_gpu_scheduler.py": "45ed52f46e58ee76de621c23516ce12b6713222eae7708757af60b4618ed818a"
-  }
+    "tests/test_live_gpu_scheduler.py": "ad5e3cf37fb3015c1979fee5be7aa6bdae1f77aa3b605a5289d3d8d35710d48d"
+  },
+  "fix": "Process ownership refusal uses PermissionError so the shared-server discovery filter can skip inaccessible foreign processes."
 }
