@@ -75,6 +75,7 @@ def publish_loop(args,saved):
         fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
         notified=False
         while True:
+            tick=time.monotonic()
             try:
                 data=public_snapshot(args.output)
                 request_json(saved['site']+'/api/feeds/'+saved['feedId'],'PUT',data,saved['writeToken'])
@@ -88,7 +89,7 @@ def publish_loop(args,saved):
                     print('Temporary sharing session has ended; training is unaffected.',flush=True);return
                 print('Browser update delayed ('+type(error).__name__+'); training is unaffected.',file=sys.stderr,flush=True)
                 if args.once:raise
-            time.sleep(args.interval)
+            time.sleep(max(0.,args.interval-(time.monotonic()-tick)))
 
 
 def temporary_session(args):
@@ -113,15 +114,15 @@ def temporary_session(args):
 
 def main():
     p=argparse.ArgumentParser(description=__doc__);p.add_argument('--output',type=Path,required=True)
-    p.add_argument('--site',default=SITE);p.add_argument('--interval',type=int,default=10)
+    p.add_argument('--site',default=SITE);p.add_argument('--interval',type=int,default=1)
     p.add_argument('--once',action='store_true');p.add_argument('--print-link',action='store_true')
     p.add_argument('--tmux');p.add_argument('--ntfy-topic')
     p.add_argument('--temporary',action='store_true',help='Foreground link; Ctrl+C deletes its feed, with a 45-second expiry fallback.')
     a=p.parse_args();a.output=a.output.resolve()
-    if a.interval<5:p.error('--interval must be at least 5 seconds.')
+    if a.interval<1:p.error('--interval must be at least 1 second.')
     if a.once and a.tmux:p.error('Use --once or --tmux, not both.')
     if a.temporary and (a.tmux or a.once or a.print_link):p.error('--temporary runs in the foreground; do not combine it with --tmux, --once or --print-link.')
-    if a.temporary and a.interval>15:p.error('Temporary feeds require an interval of 5 to 15 seconds.')
+    if a.temporary and a.interval>15:p.error('Temporary feeds require an interval of 1 to 15 seconds.')
     a.site=origin(a.site)
     if not (a.output/'plan.json').is_file():p.error('Output must contain an existing campaign plan.')
     if a.temporary:return temporary_session(a)
@@ -129,6 +130,7 @@ def main():
         p.error('The browser publisher tmux session already exists; use --print-link to retrieve its URL.')
     if a.print_link:
         print(view_url(json.loads((a.output/'browser_share.json').read_text())));return
+    print('Connecting the read-only browser monitor.',flush=True)
     saved=connection(a.output,a.site)
     if a.tmux:
         forwarded=sys.argv[1:];at=forwarded.index('--tmux');forwarded=forwarded[:at]+forwarded[at+2:]

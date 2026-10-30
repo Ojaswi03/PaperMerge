@@ -13,7 +13,7 @@ async function authorized(request,expected){
 }
 export function validateSnapshot(value){
   if(!value||value.schema!==1||!Array.isArray(value.runs)||value.runs.length>500||!Number.isFinite(Date.parse(value.generatedAt)))throw Error('Invalid snapshot');
-  const allowed=new Set(['schema','generatedAt','status','total','completed','failed','pending','completedActivations','totalActivations','elapsedSeconds','etaSeconds','etaLowSeconds','etaHighSeconds','untimedJobs','runs']);
+  const allowed=new Set(['schema','generatedAt','status','total','completed','failed','pending','completedActivations','totalActivations','elapsedSeconds','etaSeconds','etaLowSeconds','etaHighSeconds','untimedJobs','activationsPerSecond','etaMode','runs']);
   const fields=new Set(['gpu','status','dataset','partition','seed','sigma','condition','nodes','rounds','localSteps','attackStart','completedRounds','completedActivations','totalActivations','accuracy','elapsedSeconds','etaSeconds','etaSource','phase']);
   function fieldsValid(row,keys){
     if(!row||Object.keys(row).some(k=>!keys.has(k)))throw Error('Unexpected field');

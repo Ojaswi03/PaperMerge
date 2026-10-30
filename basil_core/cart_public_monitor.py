@@ -15,6 +15,7 @@ def public_snapshot(directory):
         total=state['total'],completed=state['completed'],failed=state['failed'],pending=state['pending'],
         completedActivations=state['completedActivations'],totalActivations=state['totalActivations'],
         elapsedSeconds=finite(state['elapsed']),etaSeconds=finite(state['eta']),
+        activationsPerSecond=finite(state.get('activationsPerSecond')),etaMode=state.get('etaMode'),
         etaLowSeconds=finite(state['etaLow']),etaHighSeconds=finite(state['etaHigh']),
         untimedJobs=state['untimedJobs'],runs=[])
     for row in state['entries']:

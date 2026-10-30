@@ -90,6 +90,8 @@ def snapshot(directory,*,timing_roots=()):
             row=dict(row,status='RUNNING')
         elif continuing and cfg['runId'] in active_ids and row['status']=='PENDING':
             row=dict(row,status='STARTING',phase='WORKER_INITIALIZATION')
+        if campaign['status'] in ('FAILED','INTERRUPTED') and row['status'] in ('RUNNING','STARTING'):
+            row=dict(row,status='INTERRUPTED')
         total=cfg['nodes']*cfg['rounds'];cursor=row.get('completedActivations',0)
         if type(cursor) is not int or not 0<=cursor<=total:
             raise ValueError(f'Invalid activation counter in {cfg["runId"]}.')

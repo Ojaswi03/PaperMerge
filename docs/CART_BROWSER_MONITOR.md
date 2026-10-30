@@ -37,12 +37,16 @@ its write credential held only in memory. If cleanup cannot reach the server,
 the temporary feed expires within 45 seconds of its last successful update.
 Do not use `--tmux` for this temporary mode. Training does not need restarting.
 
-The publisher uploads small allowlisted progress snapshots every ten seconds.
+The publisher uploads small allowlisted progress snapshots every second by default.
 Successful uploads are silent after the initial link; terminal messages appear
 only for issues or when sharing ends.
-The page refreshes in place every five seconds, showing GPU, dataset/partition,
-seed, status, completed rounds, activations, mean TRAIN-holdout accuracy, elapsed
-time and ETA. It warns when updates are more than 45 seconds old. Completion
+The dark page refreshes in place every second, showing the same column order
+and formatted values as the terminal: GPU, STATUS, DATA/SPLIT, SEED, SIGMA, ENV,
+CONDITION, ROUND, ACTIVATIONS, ACC, ELAPSED, ETA. Header cards show overall wall
+time, measured activations per second, remaining time, expected finish in Eastern
+Time, active workers per GPU, pending/failed counts, clients, and rounds.
+All configuration rows are available in a scrollable table with sticky headings.
+It warns when updates are more than 45 seconds old. Completion
 preserves the final snapshot while your temporary publisher stays open. No historical curves are
 invented from a late connection; the existing experiment reports remain the
 source for full round-by-round results.
@@ -86,3 +90,33 @@ After retrying an interrupted training campaign, restart the publisher command
 with the same output to retain the same link. Do not start a second publisher
 while its tmux session still exists. Network errors are retried and do not stop
 training. The browser view can lag the terminal by its upload/poll interval.
+Upload time is subtracted from the requested interval; slow requests never
+overlap. Workers retain their existing reporting cadence, so one-second polling
+does not invent additional accuracy or activation measurements.
+
+## Current hal9k run without tmux
+
+These monitor changes are outside the frozen training fingerprint. Pulling them
+does not require retraining or changing the original plan. If the supervisor
+stopped with the `VmRSS` error, use
+[the checkpoint recovery command](BASIL_SHARP_SUPERVISOR_RECOVERY.md) first.
+
+```bash
+cd ~/Masters_Research/PaperMerge
+git pull --ff-only
+source .venv-hpc/bin/activate
+thesis_run=/var/tmp/papermerge-os675524/basil-sharp-thesis-direct-checked-100r-20261030
+
+nohup python -u scripts/share_cart_monitor.py \
+  --output "$thesis_run" --interval 1 --ntfy-topic papermerge-ojaswi \
+  > "$thesis_run/browser_monitor.log" 2>&1 < /dev/null &
+echo $! > "$thesis_run/browser_publisher.pid"
+
+tail -f "$thesis_run/browser_monitor.log"
+```
+
+The log prints the campaign-specific GitHub Pages link. Ctrl+C stops only this
+log viewer. The publisher and training continue in the background. The publisher
+also sends the link through ntfy after its first successful update. Start only
+one publisher for this output; its lock prevents simultaneous uploads by another
+persistent publisher. After a GitHub Pages update, reload the same feed URL.

@@ -15,6 +15,53 @@ def test_public_projection_omits_paths_errors_source_and_process_identity(tmp_pa
     assert not {'error','source','runtime','ownerPid','output'}.intersection(result)
 
 
+def test_overall_rate_and_elapsed_match_terminal_snapshot(tmp_path):
+    from basil_core.sharp_monitor import snapshot
+    from basil_core.cart_public_monitor import public_snapshot
+    setup(tmp_path,[(2025,'clean','mnist',running(20,40)),(2026,'clean','mnist',running(40,80))])
+    path=tmp_path/'plan.json';plan=json.loads(path.read_text());plan['etaMode']='activation_throughput'
+    path.write_text(json.dumps(plan))
+    terminal=snapshot(tmp_path);public=public_snapshot(tmp_path)
+    assert public['activationsPerSecond']==terminal['activationsPerSecond']==pytest.approx(60/90)
+    assert public['elapsedSeconds']==terminal['elapsed']
+    assert public['etaSeconds']==terminal['eta']
+    assert public['etaMode']=='activation_throughput'
+
+
+@pytest.mark.parametrize('status',['FAILED','INTERRUPTED'])
+def test_stopped_supervisor_does_not_leave_stale_running_rows(tmp_path,status):
+    from basil_core.cart_public_monitor import public_snapshot
+    setup(tmp_path,[(2025,'clean','mnist',running(20,40))],status=status)
+    result=public_snapshot(tmp_path)
+    assert result['status']==status and result['runs'][0]['status']=='INTERRUPTED'
+
+
+def test_one_second_publisher_accounts_for_upload_time(tmp_path,monkeypatch):
+    from scripts import share_cart_monitor as module
+    setup(tmp_path,[(2025,'clean','mnist',running(20,40))])
+    calls=[];sleeps=[]
+    def upload(*args,**kwargs):
+        calls.append(args)
+        (tmp_path/'job-0/run.json').write_text(json.dumps(dict(running(100,40),status='COMPLETED')))
+    clock=iter([0.,.25,1.])
+    monkeypatch.setattr(module,'request_json',upload)
+    monkeypatch.setattr(module.time,'monotonic',lambda:next(clock))
+    monkeypatch.setattr(module.time,'sleep',sleeps.append)
+    args=SimpleNamespace(output=tmp_path,interval=1,once=False,ntfy_topic=None)
+    module.publish_loop(args,dict(site='https://example.test',feedId='fixture',writeToken='a'*64))
+    assert len(calls)==2 and sleeps==[.75]
+
+
+def test_publisher_accepts_one_second_cli_interval(tmp_path,monkeypatch):
+    from scripts import share_cart_monitor as module
+    setup(tmp_path,[(2025,'clean','mnist',running(20,40))]);received=[]
+    monkeypatch.setattr('sys.argv',['share_cart_monitor.py','--output',str(tmp_path),'--interval','1','--once'])
+    monkeypatch.setattr(module,'connection',lambda *args:dict(viewUrl='https://example.test/view'))
+    monkeypatch.setattr(module,'publish_loop',lambda args,saved:received.append(args.interval))
+    module.main()
+    assert received==[1]
+
+
 def test_publisher_preserves_one_private_write_key_and_returns_only_public_link(tmp_path,monkeypatch):
     from scripts import share_cart_monitor as module
     setup(tmp_path,[(2025,'clean','mnist',running(20,40))]);calls=[]
