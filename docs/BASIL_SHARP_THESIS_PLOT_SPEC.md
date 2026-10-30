@@ -181,3 +181,47 @@ BASIL is evaluated under the common training budget in this simulator; the
 plots are not presented as reproduction of a published BASIL accuracy table.
 The ACDS simulation implements fitting-example sharing and does not establish
 a cryptographic anonymity guarantee.
+
+## Recovering the changed CIFAR-10 cache on hal9k
+
+The first hal9k verification attempt exited before training. A read-only audit
+found CIFAR-10 image values as high as 1.6549019813537598 and a different image
+checksum from the already saved plan. MNIST and both label caches still matched.
+Earlier checks had loaded the images successfully. This establishes a cache
+change; it does not identify which process or storage condition caused it.
+
+After the supervisor has exited, rebuild from the existing raw training batches:
+
+```bash
+python scripts/repair_basil_sharp_cache.py \
+  --output "$PWD/.papermerge/local-tests/basil-sharp-thesis-hal9k-100r-20261030" \
+  --apply
+```
+
+The tool stages a separate rebuild and requires exact agreement with the saved
+image and label checksums. It preserves the damaged image file and a JSON
+receipt in a `cache-recovery-*` directory under the output folder, then replaces
+only the image file atomically and makes it read-only. It refuses to proceed if
+the plan is in use, labels differ, the raw rebuild differs, or the cache changes
+again during recovery. Omitting `--apply` checks the rebuild without replacing
+the shared cache. No clipping, rescaling of damaged data, plan editing, or
+scientific source changes are involved. Checksums are rechecked after install.
+
+Only after `REPAIRED_AND_VERIFIED` or `ALREADY_VERIFIED`, resume the existing plan
+without new hardware/scientific flags. Since hal9k has no tmux installation:
+
+```bash
+nohup python -u scripts/run_basil_sharp_thesis.py \
+  --resume --execute --wait-for-resources \
+  --output "$PWD/.papermerge/local-tests/basil-sharp-thesis-hal9k-100r-20261030" \
+  --ntfy-topic papermerge-ojaswi \
+  >> .papermerge/local-tests/basil-sharp-thesis-hal9k-100r-20261030/adaptive_supervisor.log \
+  2>&1 < /dev/null &
+
+echo $! > .papermerge/local-tests/basil-sharp-thesis-hal9k-100r-20261030/supervisor.pid
+```
+
+[Local recovery validation](validation/CIFAR_CACHE_RECOVERY_READY_20261030.json)
+records 16 passing tests and restoration of an isolated, deliberately damaged
+50,000-image cache from raw batches. This is local tool validation, not a claim
+that the shared server cache has already been repaired.
