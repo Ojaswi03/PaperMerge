@@ -3,3 +3,5 @@
 # CSV writers use RFC-style CRLF. Preserve evidence bytes and recognize the
 # carriage return as part of the line ending, not trailing field whitespace.
 *.csv whitespace=cr-at-eol
+# Matplotlib emits insignificant trailing spaces inside SVG path attributes.
+docs/thesis-figures/**/*.svg -whitespace

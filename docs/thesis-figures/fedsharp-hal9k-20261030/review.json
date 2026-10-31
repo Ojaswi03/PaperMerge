@@ -785,11 +785,11 @@
       "worstMeanClassRecallSD": 1.989396893533295
     }
   ],
-  "reviewerSha256": "9d5fd994a85dab75787a4009282c197598714f5709460fda319f7e933d24543e",
+  "reviewerSha256": "f24d0a283282774b1c72a876a818a48b7c252cf379f3775434877a0d2d955015",
   "curves": {
     "mnist_iid_accuracy": [
       {
-        "label": "BASIL \u2014 clean",
+        "label": "BASIL: clean",
         "seeds": [
           2025,
           2026,
@@ -1003,10 +1003,21 @@
           0.15284741847128316,
           0.11031470134724922,
           0.11583177456984918
+        ],
+        "color": "#0072B2",
+        "lineStyle": "dotted",
+        "marker": "o",
+        "markerEvery": [
+          0,
+          12
+        ],
+        "zoomRounds": [
+          60,
+          100
         ]
       },
       {
-        "label": "BASIL \u2014 attack only",
+        "label": "BASIL: attack only",
         "seeds": [
           2025,
           2026,
@@ -1220,10 +1231,21 @@
           0.20490973622549344,
           0.21615118166075284,
           0.3008676342402666
+        ],
+        "color": "#D55E00",
+        "lineStyle": "dotted",
+        "marker": "s",
+        "markerEvery": [
+          3,
+          12
+        ],
+        "zoomRounds": [
+          60,
+          100
         ]
       },
       {
-        "label": "BASIL \u2014 attack + noise",
+        "label": "BASIL: attack + noise",
         "seeds": [
           2025,
           2026,
@@ -1437,10 +1459,21 @@
           1.5291909625681162,
           1.127410454685132,
           1.1232484141987404
+        ],
+        "color": "#7B3294",
+        "lineStyle": "dotted",
+        "marker": "^",
+        "markerEvery": [
+          6,
+          12
+        ],
+        "zoomRounds": [
+          60,
+          100
         ]
       },
       {
-        "label": "FedSharp \u2014 clean",
+        "label": "FedSharp: clean",
         "seeds": [
           2025,
           2026,
@@ -1654,10 +1687,21 @@
           0.24127646659658825,
           0.12711543310445003,
           0.1201290972246185
+        ],
+        "color": "#0072B2",
+        "lineStyle": "solid",
+        "marker": "o",
+        "markerEvery": [
+          1,
+          12
+        ],
+        "zoomRounds": [
+          60,
+          100
         ]
       },
       {
-        "label": "FedSharp \u2014 attack only",
+        "label": "FedSharp: attack only",
         "seeds": [
           2025,
           2026,
@@ -1871,10 +1915,21 @@
           0.1441284149638829,
           0.1252610607225298,
           0.1717391432764577
+        ],
+        "color": "#D55E00",
+        "lineStyle": "solid",
+        "marker": "s",
+        "markerEvery": [
+          4,
+          12
+        ],
+        "zoomRounds": [
+          60,
+          100
         ]
       },
       {
-        "label": "FedSharp \u2014 attack + noise",
+        "label": "FedSharp: attack + noise",
         "seeds": [
           2025,
           2026,
@@ -2088,12 +2143,23 @@
           0.4450093631973682,
           0.3962991294464331,
           0.5699640339530128
+        ],
+        "color": "#7B3294",
+        "lineStyle": "solid",
+        "marker": "^",
+        "markerEvery": [
+          7,
+          12
+        ],
+        "zoomRounds": [
+          60,
+          100
         ]
       }
     ],
     "mnist_non_iid_accuracy": [
       {
-        "label": "BASIL \u2014 clean",
+        "label": "BASIL: clean",
         "seeds": [
           2025,
           2026,
@@ -2307,10 +2373,21 @@
           0.10038094108611746,
           0.2947456530638075,
           0.22262150240562276
+        ],
+        "color": "#0072B2",
+        "lineStyle": "dotted",
+        "marker": "o",
+        "markerEvery": [
+          0,
+          12
+        ],
+        "zoomRounds": [
+          60,
+          100
         ]
       },
       {
-        "label": "BASIL \u2014 attack only",
+        "label": "BASIL: attack only",
         "seeds": [
           2025,
           2026,
@@ -2524,10 +2601,21 @@
           0.27375353878991454,
           0.3167417454857093,
           0.09600173609540967
+        ],
+        "color": "#D55E00",
+        "lineStyle": "dotted",
+        "marker": "s",
+        "markerEvery": [
+          3,
+          12
+        ],
+        "zoomRounds": [
+          60,
+          100
         ]
       },
       {
-        "label": "BASIL \u2014 attack + noise",
+        "label": "BASIL: attack + noise",
         "seeds": [
           2025,
           2026,
@@ -2741,10 +2829,21 @@
           0.8602989790377074,
           1.3628508111063784,
           1.1896440644159094
+        ],
+        "color": "#7B3294",
+        "lineStyle": "dotted",
+        "marker": "^",
+        "markerEvery": [
+          6,
+          12
+        ],
+        "zoomRounds": [
+          60,
+          100
         ]
       },
       {
-        "label": "BASIL + ACDS \u2014 attack + noise",
+        "label": "BASIL + ACDS: attack + noise",
         "seeds": [
           2025,
           2026,
@@ -2958,10 +3057,21 @@
           0.8283061028387887,
           0.5996932549228841,
           0.4845506509471718
+        ],
+        "color": "#00866A",
+        "lineStyle": "dotted",
+        "marker": "D",
+        "markerEvery": [
+          9,
+          12
+        ],
+        "zoomRounds": [
+          60,
+          100
         ]
       },
       {
-        "label": "FedSharp \u2014 clean",
+        "label": "FedSharp: clean",
         "seeds": [
           2025,
           2026,
@@ -3175,10 +3285,21 @@
           0.32534648197472876,
           0.3662471842895126,
           0.46182283760479037
+        ],
+        "color": "#0072B2",
+        "lineStyle": "solid",
+        "marker": "o",
+        "markerEvery": [
+          1,
+          12
+        ],
+        "zoomRounds": [
+          60,
+          100
         ]
       },
       {
-        "label": "FedSharp \u2014 attack only",
+        "label": "FedSharp: attack only",
         "seeds": [
           2025,
           2026,
@@ -3392,10 +3513,21 @@
           0.2312451801299568,
           0.35332279858509874,
           0.37170732214113206
+        ],
+        "color": "#D55E00",
+        "lineStyle": "solid",
+        "marker": "s",
+        "markerEvery": [
+          4,
+          12
+        ],
+        "zoomRounds": [
+          60,
+          100
         ]
       },
       {
-        "label": "FedSharp \u2014 attack + noise",
+        "label": "FedSharp: attack + noise",
         "seeds": [
           2025,
           2026,
@@ -3609,10 +3741,21 @@
           1.1958956197483621,
           1.0847697144248356,
           0.8612806356428344
+        ],
+        "color": "#7B3294",
+        "lineStyle": "solid",
+        "marker": "^",
+        "markerEvery": [
+          7,
+          12
+        ],
+        "zoomRounds": [
+          60,
+          100
         ]
       },
       {
-        "label": "FedSharp+ \u2014 attack + noise",
+        "label": "FedSharp+: attack + noise",
         "seeds": [
           2025,
           2026,
@@ -3826,12 +3969,23 @@
           0.49857028926054286,
           0.46430701050058504,
           0.4693261126338461
+        ],
+        "color": "#00866A",
+        "lineStyle": "solid",
+        "marker": "D",
+        "markerEvery": [
+          10,
+          12
+        ],
+        "zoomRounds": [
+          60,
+          100
         ]
       }
     ],
     "cifar10_iid_accuracy": [
       {
-        "label": "BASIL \u2014 clean",
+        "label": "BASIL: clean",
         "seeds": [
           2025,
           2026,
@@ -4045,10 +4199,21 @@
           0.7495005003333846,
           0.8264419721513052,
           0.8441713886014678
+        ],
+        "color": "#0072B2",
+        "lineStyle": "dotted",
+        "marker": "o",
+        "markerEvery": [
+          0,
+          12
+        ],
+        "zoomRounds": [
+          60,
+          100
         ]
       },
       {
-        "label": "BASIL \u2014 attack only",
+        "label": "BASIL: attack only",
         "seeds": [
           2025,
           2026,
@@ -4262,10 +4427,21 @@
           0.4272973203754041,
           0.5180215568230118,
           0.5429422928206423
+        ],
+        "color": "#D55E00",
+        "lineStyle": "dotted",
+        "marker": "s",
+        "markerEvery": [
+          3,
+          12
+        ],
+        "zoomRounds": [
+          60,
+          100
         ]
       },
       {
-        "label": "BASIL \u2014 attack + noise",
+        "label": "BASIL: attack + noise",
         "seeds": [
           2025,
           2026,
@@ -4479,10 +4655,21 @@
           0.740065087227693,
           0.45309638415389,
           0.8560375770568316
+        ],
+        "color": "#7B3294",
+        "lineStyle": "dotted",
+        "marker": "^",
+        "markerEvery": [
+          6,
+          12
+        ],
+        "zoomRounds": [
+          60,
+          100
         ]
       },
       {
-        "label": "FedSharp \u2014 clean",
+        "label": "FedSharp: clean",
         "seeds": [
           2025,
           2026,
@@ -4696,10 +4883,21 @@
           0.5664706523730938,
           0.5002722592082558,
           0.6554532782738969
+        ],
+        "color": "#0072B2",
+        "lineStyle": "solid",
+        "marker": "o",
+        "markerEvery": [
+          1,
+          12
+        ],
+        "zoomRounds": [
+          60,
+          100
         ]
       },
       {
-        "label": "FedSharp \u2014 attack only",
+        "label": "FedSharp: attack only",
         "seeds": [
           2025,
           2026,
@@ -4913,10 +5111,21 @@
           0.8872171849853505,
           0.7912700761012829,
           0.9486550128119995
+        ],
+        "color": "#D55E00",
+        "lineStyle": "solid",
+        "marker": "s",
+        "markerEvery": [
+          4,
+          12
+        ],
+        "zoomRounds": [
+          60,
+          100
         ]
       },
       {
-        "label": "FedSharp \u2014 attack + noise",
+        "label": "FedSharp: attack + noise",
         "seeds": [
           2025,
           2026,
@@ -5130,12 +5339,23 @@
           0.40302646728637975,
           0.4260801958943081,
           0.5928392137277498
+        ],
+        "color": "#7B3294",
+        "lineStyle": "solid",
+        "marker": "^",
+        "markerEvery": [
+          7,
+          12
+        ],
+        "zoomRounds": [
+          60,
+          100
         ]
       }
     ],
     "cifar10_non_iid_accuracy": [
       {
-        "label": "BASIL \u2014 clean",
+        "label": "BASIL: clean",
         "seeds": [
           2025,
           2026,
@@ -5349,10 +5569,21 @@
           0.06251666444503785,
           0.16716857758961298,
           0.1663410151866692
+        ],
+        "color": "#0072B2",
+        "lineStyle": "dotted",
+        "marker": "o",
+        "markerEvery": [
+          0,
+          12
+        ],
+        "zoomRounds": [
+          60,
+          100
         ]
       },
       {
-        "label": "BASIL \u2014 attack only",
+        "label": "BASIL: attack only",
         "seeds": [
           2025,
           2026,
@@ -5566,10 +5797,21 @@
           0.6381044846522673,
           0.47579442339453115,
           0.7418483672557333
+        ],
+        "color": "#D55E00",
+        "lineStyle": "dotted",
+        "marker": "s",
+        "markerEvery": [
+          3,
+          12
+        ],
+        "zoomRounds": [
+          60,
+          100
         ]
       },
       {
-        "label": "BASIL \u2014 attack + noise",
+        "label": "BASIL: attack + noise",
         "seeds": [
           2025,
           2026,
@@ -5783,10 +6025,21 @@
           0.6170729292393221,
           0.3923123755376576,
           0.5547819391436605
+        ],
+        "color": "#7B3294",
+        "lineStyle": "dotted",
+        "marker": "^",
+        "markerEvery": [
+          6,
+          12
+        ],
+        "zoomRounds": [
+          60,
+          100
         ]
       },
       {
-        "label": "BASIL + ACDS \u2014 attack + noise",
+        "label": "BASIL + ACDS: attack + noise",
         "seeds": [
           2025,
           2026,
@@ -6000,10 +6253,21 @@
           0.40562585387685857,
           0.38850010725009293,
           0.8587900403086511
+        ],
+        "color": "#00866A",
+        "lineStyle": "dotted",
+        "marker": "D",
+        "markerEvery": [
+          9,
+          12
+        ],
+        "zoomRounds": [
+          60,
+          100
         ]
       },
       {
-        "label": "FedSharp \u2014 clean",
+        "label": "FedSharp: clean",
         "seeds": [
           2025,
           2026,
@@ -6217,10 +6481,21 @@
           1.4331693317027576,
           1.3766554882516304,
           1.4191134556475764
+        ],
+        "color": "#0072B2",
+        "lineStyle": "solid",
+        "marker": "o",
+        "markerEvery": [
+          1,
+          12
+        ],
+        "zoomRounds": [
+          60,
+          100
         ]
       },
       {
-        "label": "FedSharp \u2014 attack only",
+        "label": "FedSharp: attack only",
         "seeds": [
           2025,
           2026,
@@ -6434,10 +6709,21 @@
           1.4022632895905585,
           1.3409030539155318,
           1.46273590689958
+        ],
+        "color": "#D55E00",
+        "lineStyle": "solid",
+        "marker": "s",
+        "markerEvery": [
+          4,
+          12
+        ],
+        "zoomRounds": [
+          60,
+          100
         ]
       },
       {
-        "label": "FedSharp \u2014 attack + noise",
+        "label": "FedSharp: attack + noise",
         "seeds": [
           2025,
           2026,
@@ -6651,10 +6937,21 @@
           0.6310676139157625,
           0.5083394535150692,
           0.781799846508039
+        ],
+        "color": "#7B3294",
+        "lineStyle": "solid",
+        "marker": "^",
+        "markerEvery": [
+          7,
+          12
+        ],
+        "zoomRounds": [
+          60,
+          100
         ]
       },
       {
-        "label": "FedSharp+ \u2014 attack + noise",
+        "label": "FedSharp+: attack + noise",
         "seeds": [
           2025,
           2026,
@@ -6868,6 +7165,17 @@
           0.6596643085691342,
           0.64092927326916,
           0.6233669331407699
+        ],
+        "color": "#00866A",
+        "lineStyle": "solid",
+        "marker": "D",
+        "markerEvery": [
+          10,
+          12
+        ],
+        "zoomRounds": [
+          60,
+          100
         ]
       }
     ]
@@ -6878,19 +7186,25 @@
     "cifar10_iid_accuracy.svg",
     "cifar10_non_iid_accuracy.svg"
   ],
+  "pngFiles": [
+    "mnist_iid_accuracy.png",
+    "mnist_non_iid_accuracy.png",
+    "cifar10_iid_accuracy.png",
+    "cifar10_non_iid_accuracy.png"
+  ],
   "outputSha256": {
-    "mnist_iid_accuracy.svg": "0f4bb74c5682e360a2b9fb6def63cd59a6c8804e4b09a70e0d9fdee4cd82c006",
-    "mnist_iid_accuracy.png": "0e444bec74bbbe300db396c8ad56a01d7d260e19868966c486f8a54bb59efda1",
-    "mnist_non_iid_accuracy.svg": "035f6148124f944aa4c47a3f05c5edb044ee0cfcf8ef31b41986befa3b0abdbc",
-    "mnist_non_iid_accuracy.png": "571f5a86aa944969ffc4cc8360ef373f7f5361bf876f2d8a6d602f3143999426",
-    "cifar10_iid_accuracy.svg": "6717cdc5caf7a824189e741841136d4e731e99035fdbc1a571e5091d77c102d4",
-    "cifar10_iid_accuracy.png": "1ada1a944c45b2a61c7f0fc73f76544c7f8e2821eb79ad0a1f5f1dc38241a685",
-    "cifar10_non_iid_accuracy.svg": "0cf6eb87c4ee18a618dd6b5ba852cf7ae8bbdf63fa968ae78a82b7ee2bd484af",
-    "cifar10_non_iid_accuracy.png": "f94514a74149c5af99f9ed3c5e2f0f6e3cffbcbb2e1ad8396f415c381e945e78",
+    "mnist_iid_accuracy.svg": "21fb59e0f3d2d779254ce317f91425051dfe91c0b7c3ed9ece0b562c6e46389a",
+    "mnist_iid_accuracy.png": "f30ac5583a1770af0b06602a747315a0e5fe43ec15891aa6831d89bb5f3d292f",
+    "mnist_non_iid_accuracy.svg": "295b7239b48c40eccbefec6dc6d4dbece32443d87539d428396f15e55e6fe7c4",
+    "mnist_non_iid_accuracy.png": "5a79898ebddd8ea4c5613afa9fc6fad81034cee930ff8180ca0f3178a4363f11",
+    "cifar10_iid_accuracy.svg": "bdbf600f466e1ab5e72594a42fe48e09007c60e9df9a15aea6156f58e35007e2",
+    "cifar10_iid_accuracy.png": "28e5093e27b80a2c00f3b297841681c50a5cbaa7b9cba12ed20f364714b10580",
+    "cifar10_non_iid_accuracy.svg": "85a87205d62647bcb3a2ebfb4b7c98bbddc1c95c451a5b9a0c01e6423221c3e1",
+    "cifar10_non_iid_accuracy.png": "d2c2aede0b2502ecd63907818d8c42c27bdb63f759a634b362b69c24510f3ce1",
     "seed_endpoints.csv": "f41b0d60be0f4613f528932a5b4e4a0037939c6a8016abb090932f8a0c1eccc7",
     "summary_endpoints.csv": "bcd8df4215d1f616a99815a6702a2a4d2c080e47d365d23796b492ae034b3d69",
     "accuracy_by_round.csv": "17912a89e10e890bc69bc14db03b36eac9f58b0303cc5f03784b709811d9e8c6",
-    "captions.txt": "05a15cd7ccb3560945f356c6812d00238063edd0c25399dd11a6b6e608b2bc78"
+    "captions.txt": "41e9b23d2bc8a6631f28f3b5be80950aba5b44eed8c4d577acc38fc7ef063a7f"
   },
   "thesisImagesReplaced": true
 }

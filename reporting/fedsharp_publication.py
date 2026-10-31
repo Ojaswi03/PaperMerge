@@ -11,6 +11,16 @@ ROOT=Path(__file__).resolve().parents[1]
 ENVIRONMENTS=(('clean',None),('attack_only',None),('joint',None))
 COLORS={'clean':'#0072B2','attack_only':'#D55E00','joint':'#7B3294','extra':'#00866A'}
 CONDITIONS={'clean':'clean','attack_only':'attack only','joint':'attack + noise'}
+MARKERS={'clean':'o','attack_only':'s','joint':'^','extra':'D'}
+ZOOM_ROUNDS=(60,100)
+
+
+def curve_style(family,environment,addon):
+    """Encode the algorithm by line and the experimental condition by shape."""
+    key='extra' if addon else environment
+    return dict(color=COLORS[key],linestyle=(0,(1.1,2.1)) if family=='basil' else '-',
+        marker=MARKERS[key],linewidth=1.65 if not addon else 1.95,
+        markerfacecolor='white',markeredgewidth=.85)
 
 
 def sha(path):
@@ -102,12 +112,15 @@ def audit(root):
     return rows,seed_rows,result
 
 
-def render(destination,rows):
+def render(destination,rows,formats=('svg','png')):
     import numpy as np
     import matplotlib
     matplotlib.use('Agg')
     import matplotlib.pyplot as plt
     from matplotlib.ticker import MultipleLocator
+    formats=tuple(formats)
+    if not formats or len(set(formats))!=len(formats) or set(formats)-{'svg','png'}:
+        raise ValueError('Choose PNG and/or SVG publication output formats.')
     destination=Path(destination);outputs=[];curve_manifest={}
     style={'font.family':'serif','font.serif':['DejaVu Serif'],'font.size':10,
         'axes.labelsize':10.5,'axes.titlesize':12,'legend.fontsize':9,
@@ -118,9 +131,12 @@ def render(destination,rows):
         for dataset in ('mnist','cifar10'):
             for partition in ('iid','dirichlet'):
                 items=[r for r in rows if (r['dataset'],r['partition'])==(dataset,partition)]
-                fig,ax=plt.subplots(figsize=(7.6,5.2))
+                fig,ax=plt.subplots(figsize=(8.4,6.4))
                 fig.subplots_adjust(left=.115,right=.985,top=.915,bottom=.285 if partition=='dirichlet' else .245)
-                inset=ax.inset_axes([.41,.13,.56,.43]) if dataset=='mnist' else None
+                # Put the inset in an empty part of each dataset's main panel.
+                # Both CIFAR-10 figures share the same full-panel scale and inset
+                # placement; their detail panels magnify the late-round curves.
+                inset=ax.inset_axes([.39,.14,.58,.42] if dataset=='mnist' else [.39,.66,.58,.30])
                 curves=[];detail_values=[]
                 for family in ('basil','sharp'):
                     specs=list(ENVIRONMENTS)+([('joint','acds' if family=='basil' else 'cart')] if partition=='dirichlet' else [])
@@ -129,45 +145,45 @@ def render(destination,rows):
                         if len(selected)!=3:raise ValueError('Incomplete curve.')
                         values=np.asarray([r['curve'] for r in selected])*100
                         mean=values.mean(axis=0);sd=values.std(axis=0,ddof=1);x=np.arange(1,101)
-                        title=label(family,addon)+' — '+CONDITIONS[env]
+                        title=label(family,addon)+': '+CONDITIONS[env]
                         color=COLORS['extra' if addon else env]
-                        line=(0,(4.5,2.3)) if family=='basil' else '-'
-                        marker=('D' if family=='basil' else '^') if addon else ('s' if family=='basil' else 'o')
-                        kwargs=dict(color=color,linestyle=line,linewidth=1.65 if not addon else 1.95)
-                        ax.fill_between(x,np.maximum(0,mean-sd),np.minimum(100,mean+sd),color=color,alpha=.105,linewidth=0,zorder=1)
+                        kwargs=curve_style(family,env,addon)
                         # Clean and attack-only trajectories can nearly coincide.
                         # Stagger markers so both remain identifiable without
                         # shifting or smoothing their measured values.
-                        offset=(2*('clean','attack_only','joint').index(env)+(0 if family=='basil' else 1))*2
-                        ax.plot(x,mean,label=title,marker=marker,markersize=3.4,markerfacecolor='white',
-                            markeredgewidth=.85,markevery=(offset,12),zorder=3,**kwargs)
-                        ax.plot(x,mean,linestyle='none',marker=marker,markersize=3.4,
-                            markerfacecolor='white',markeredgecolor=color,markeredgewidth=.85,
-                            markevery=(offset,12),zorder=5)
-                        if inset:
-                            inset.fill_between(x,np.maximum(0,mean-sd),np.minimum(100,mean+sd),color=color,alpha=.10,linewidth=0)
-                            inset.plot(x,mean,**dict(kwargs,linewidth=1.15))
-                            detail_values.extend([mean[20:]-sd[20:],mean[20:]+sd[20:]])
+                        condition_index=3 if addon else ('clean','attack_only','joint').index(env)
+                        offset=3*condition_index+(0 if family=='basil' else 1)
+                        for panel,size,width in ((ax,4.1,kwargs['linewidth']),(inset,3.1,1.2)):
+                            panel.fill_between(x,np.maximum(0,mean-sd),np.minimum(100,mean+sd),
+                                color=color,alpha=.105,linewidth=0,zorder=1)
+                            panel.plot(x,mean,label=title,markersize=size,
+                                markevery=(offset,12),zorder=3,**dict(kwargs,linewidth=width))
+                            panel.plot(x,mean,linestyle='none',marker=kwargs['marker'],markersize=size,
+                                markerfacecolor='white',markeredgecolor=color,markeredgewidth=.85,
+                                markevery=(offset,12),zorder=5)
+                        detail_values.extend([mean[ZOOM_ROUNDS[0]-1:]-sd[ZOOM_ROUNDS[0]-1:],
+                            mean[ZOOM_ROUNDS[0]-1:]+sd[ZOOM_ROUNDS[0]-1:]])
                         curves.append(dict(label=title,seeds=[r['seed'] for r in selected],
-                            runIds=[r['runId'] for r in selected],meanPercent=mean.tolist(),sampleSDPercent=sd.tolist()))
+                            runIds=[r['runId'] for r in selected],meanPercent=mean.tolist(),sampleSDPercent=sd.tolist(),
+                            color=color,lineStyle='dotted' if family=='basil' else 'solid',
+                            marker=kwargs['marker'],markerEvery=[offset,12],zoomRounds=list(ZOOM_ROUNDS)))
                 ax.axvline(21,color='#666666',linestyle=(0,(1.5,2.5)),linewidth=.8,zorder=0)
-                ax.set(title=('MNIST' if dataset=='mnist' else 'CIFAR-10')+' — '+('IID' if partition=='iid' else 'non-IID'),
+                ax.set(title=('MNIST' if dataset=='mnist' else 'CIFAR-10')+' ('+('IID' if partition=='iid' else 'non-IID')+')',
                     xlabel='Communication round',ylabel='Mean client validation accuracy (%)',xlim=(1,100),
-                    ylim=(0,100 if dataset=='mnist' else 50))
+                    ylim=(0,100 if dataset=='mnist' else 60))
                 ax.set_xticks([1,20,40,60,80,100]);ax.yaxis.set_major_locator(MultipleLocator(20 if dataset=='mnist' else 10))
                 ax.spines[['top','right']].set_visible(False)
                 ax.grid(axis='y',color='#DFE3E8',linewidth=.55,zorder=0)
                 ax.tick_params(direction='out',length=3.5,width=.7)
-                if inset:
-                    lo=5*math.floor(float(np.min(detail_values))/5)
-                    hi=min(100,5*math.ceil(float(np.max(detail_values))/5))
-                    inset.set(xlim=(21,100),ylim=(lo,hi))
-                    inset.set_xticks([21,60,100]);inset.set_yticks(np.arange(lo,hi+1,5))
-                    inset.tick_params(labelsize=7,length=2,width=.6,pad=2)
-                    inset.set_title('Detail: rounds 21–100',fontsize=8,pad=4,
-                        bbox=dict(facecolor='white',edgecolor='none',pad=1))
-                    inset.grid(axis='y',color='#E6E8EC',linewidth=.4)
-                    for spine in inset.spines.values():spine.set_color('#999999');spine.set_linewidth(.55)
+                lo=max(0,5*math.floor((float(np.min(detail_values))-.4)/5))
+                hi=min(100,5*math.ceil((float(np.max(detail_values))+.4)/5))
+                inset.set(xlim=ZOOM_ROUNDS,ylim=(lo,hi))
+                inset.set_xticks([60,80,100]);inset.set_yticks(np.arange(lo,hi+1,5))
+                inset.tick_params(labelsize=7.5,length=2,width=.6,pad=2)
+                inset.set_title('Zoom: rounds 60 to 100',fontsize=8.5,pad=4,
+                    bbox=dict(facecolor='white',edgecolor='none',pad=1))
+                inset.grid(axis='y',color='#E6E8EC',linewidth=.4)
+                for spine in inset.spines.values():spine.set_color('#888888');spine.set_linewidth(.65)
                 handles,names=ax.get_legend_handles_labels()
                 legend=fig.legend(handles,names,loc='lower center',bbox_to_anchor=(.52,.025),ncol=2,
                     frameon=False,columnspacing=1.8,handlelength=2.7,handletextpad=.65,labelspacing=.75)
@@ -176,7 +192,7 @@ def render(destination,rows):
                 renderer=fig.canvas.get_renderer();box=legend.get_window_extent(renderer)
                 if box.x0<0 or box.x1>fig.bbox.x1:raise ValueError('Legend exceeds figure width.')
                 if box.y1>ax.get_window_extent(renderer).y0-22:raise ValueError('Legend overlaps axis labels.')
-                for suffix in ('svg','png'):
+                for suffix in formats:
                     name=stem+'.'+suffix
                     fig.savefig(destination/name,dpi=600,metadata={'Creator':'PaperMerge verified FedSharp thesis figures'})
                     outputs.append(name)
@@ -185,14 +201,14 @@ def render(destination,rows):
     return outputs,curve_manifest
 
 
-def review(root,destination):
+def review(root,destination,formats=('svg','png')):
     root=Path(root).resolve();destination=Path(destination).resolve()
     if destination==root or destination.is_relative_to(root) or root.is_relative_to(destination):
         raise ValueError('Review destination must be separate from the immutable archive.')
     rows,seeds,evidence=audit(root)
     if destination.exists() and any(destination.iterdir()):raise FileExistsError('Use an empty review destination.')
     destination.mkdir(parents=True,exist_ok=True)
-    outputs,curves=render(destination,rows)
+    outputs,curves=render(destination,rows,formats=formats)
     # Publication deliverables are vector SVGs, PNGs and compact evidence tables.
     for name,records in (('seed_endpoints.csv',seeds),('summary_endpoints.csv',evidence['summary'])):
         with (destination/name).open('w',newline='') as stream:
@@ -209,16 +225,20 @@ def review(root,destination):
         'plotted over 100 complete ring rounds. Lines show the mean across seeds 2025, 2026 and 2027; '
         'shading shows sample standard deviation across the three seed means. '
         'Every recorded round is plotted without smoothing. The dotted vertical line marks attack onset at displayed round 21. '
-        'BASIL curves are dashed with square markers, FedSharp curves are solid with circular markers; '
-        'the non-IID extensions use diamond/triangle markers. MNIST includes a labelled detail inset for rounds 21–100. '
-        'CIFAR-10 axes span 0–50%; MNIST axes span 0–100%. '
+        'BASIL curves are dotted; FedSharp and FedSharp+ curves are solid. '
+        'Clean conditions use circles, attack-only conditions use squares, and attack plus noise uses triangles. '
+        'The additional non-IID methods BASIL + ACDS and FedSharp+ both use diamonds. '
+        'Identical colors, line patterns and marker shapes appear in the main panel, inset and legend. '
+        'Every figure includes a labelled zoomed inset for rounds 60–100. '
+        'CIFAR-10 main axes span 0–60%; MNIST main axes span 0–100%. '
         'The non-IID partition uses Dirichlet concentration 0.5. '
         'Noisy cases use absolute Gaussian coordinate standard deviation 0.01. '
         'BASIL + ACDS shares 5% of fitting examples; FedSharp+ uses the complete declared class-aware extension. '
         'FedSharp denotes legacy SHARP; FedSharp+ denotes its full legacy CART extension.\n')
     outputs.append('captions.txt')
     evidence.update(reviewerSha256=sha(Path(__file__)),curves=curves,
-        svgFiles=[n for n in outputs if n.endswith('.svg')],outputSha256={n:sha(destination/n) for n in outputs},
+        svgFiles=[n for n in outputs if n.endswith('.svg')],pngFiles=[n for n in outputs if n.endswith('.png')],
+        outputSha256={n:sha(destination/n) for n in outputs},
         thesisImagesReplaced=False)
     (destination/'review.json').write_text(json.dumps(evidence,indent=2)+'\n')
     return evidence
