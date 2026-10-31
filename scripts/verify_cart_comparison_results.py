@@ -36,7 +36,8 @@ def verify(root,official_test=False):
     tf.config.threading.set_inter_op_parallelism_threads(1);tf.config.experimental.enable_op_determinism()
     from basil_core.cart_comparison_study import effective_config,partitions_for
     from basil_core.sharp_worker import SharpWorker
-    from basil_core.sharp_protocol import load_state,evaluate,vector_hash
+    from basil_core.sharp_protocol import load_state,evaluate,vector_hash,attacked_outbound
+    from basil_core.research_protocol import resolve_attackers
     from basil_core.sharp_data import training_data,digest
     from basil_core.cart_campaign_io import read_json,write_json
     root=Path(root);plan=read_json(root/'plan.json');verified=[];cache={};tests={}
@@ -61,6 +62,12 @@ def verify(root,official_test=False):
         if contract!=row['contract']:raise ValueError('Checkpoint contract differs.')
         state=load_state(folder/'checkpoint.npz',contract,worker.dimension)
         if state['cursor']!=cfg['rounds']*cfg['nodes'] or len(state['roundMetrics'])!=cfg['rounds']:raise ValueError('Incomplete checkpoint.')
+        attackers=resolve_attackers(cfg['seed'],cfg['actualAttackers'],cfg['nodes'])
+        for sender,params in enumerate(state['nodeParams']):
+            expected=(attacked_outbound(cfg,worker,params,cfg['rounds']-1,sender)
+                if sender in attackers and cfg['rounds']-1>=cfg['attackStart'] else params)
+            np.testing.assert_array_equal(state['outbound'][sender],expected,
+                err_msg='Final outbound does not match the declared seeded attack.')
         if any(r['training']['optimizerSteps']!=cfg['localSteps'] for r in state['telemetry']):raise ValueError('Changed SGD budget.')
         with np.load(folder/'metrics.npz',allow_pickle=False) as z:a=z['roundNodeAccuracy'];pc=z['roundNodePerClassAccuracy']
         if not np.array_equal(a,np.asarray([m['nodeAccuracy'] for m in state['roundMetrics']])):raise ValueError('Checkpoint/metrics differ.')
@@ -70,7 +77,8 @@ def verify(root,official_test=False):
         if error>1/len(held)+1e-9:raise ValueError('CPU validation accuracy differs by more than one image/client.')
         counts=np.bincount(y[held],minlength=cfg['classes'])
         if np.any(abs(classes-pc[-1])>1/counts[None,:]+1e-9):raise ValueError('CPU per-class recall differs beyond one image.')
-        result=dict(runId=view['runId'],maximumValidationAccuracyDifference=error,finalValidationAccuracy=float(values.mean()))
+        result=dict(runId=view['runId'],maximumValidationAccuracyDifference=error,finalValidationAccuracy=float(values.mean()),
+            attackType=cfg['attackType'],seededOutboundAttackVerified=True)
         if official_test:
             if cfg['dataset'] not in tests:tests[cfg['dataset']]=test_data(cfg['dataset'])
             tx,ty,identity=tests[cfg['dataset']]

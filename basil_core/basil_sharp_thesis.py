@@ -11,6 +11,7 @@ from basil_core.cart_contribution_study import source as previous_source
 ROOT = comparison.ROOT
 REVISION = 'basil_sharp_thesis_20261029_v1'
 ENVIRONMENTS = ('clean', 'attack_only', 'joint')
+ATTACK_TYPES = ('hidden', 'gaussian')
 _cart_validate = None
 
 
@@ -35,6 +36,12 @@ def selected(args):
     from basil_core.sharp_study import configuration
     from basil_core.sharp_guarded_protocol import guarded_configuration
     from basil_core.sharp_cart_v2_protocol import configuration as cart_configuration
+    environments=tuple(getattr(args,'environments',ENVIRONMENTS))
+    attack_type=getattr(args,'attack_type','hidden')
+    if not environments or len(set(environments))!=len(environments) or set(environments)-set(ENVIRONMENTS):
+        raise ValueError('Choose distinct clean, attack_only and/or joint environments.')
+    if attack_type not in ATTACK_TYPES:
+        raise ValueError('Choose Hidden or Gaussian Byzantine attack.')
     views = []
     for dataset in args.datasets:
         for partition in args.partitions:
@@ -44,6 +51,7 @@ def selected(args):
                     if partition == 'dirichlet':
                         cases.append(('joint', 'acds' if family == 'basil' else 'cart'))
                     for environment, addon in cases:
+                        if environment not in environments:continue
                         noisy = environment == 'joint'
                         condition = ('attack_noise_defense_rla_cart' if addon == 'cart'
                                      else 'attack_noise_defense_rla' if family == 'sharp'
@@ -52,7 +60,8 @@ def selected(args):
                         # declared physical overrides for clean/attack-only runs.
                         inner = configuration(dataset, partition, seed, condition, args.sigma,
                             method=family, nodes=args.nodes, rounds=args.rounds,
-                            local_steps=args.local_steps, alpha=args.alpha, attack_start=args.attack_start)
+                            local_steps=args.local_steps, alpha=args.alpha, attack_start=args.attack_start,
+                            attack_type=attack_type,gaussian_std=getattr(args,'gaussian_std',1.))
                         if family == 'sharp':
                             inner = cart_configuration(guarded_configuration(inner))
                         arm = f'{family}_{addon or environment}'

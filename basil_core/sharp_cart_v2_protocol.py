@@ -6,7 +6,7 @@ import time
 from pathlib import Path
 from basil_core.lazy_imports import lazy_module
 np=lazy_module('numpy')
-from basil_core.sharp_protocol import initial_state,evaluate,vector_hash
+from basil_core.sharp_protocol import initial_state,evaluate,vector_hash,attacked_outbound
 from basil_core.sharp_guarded_protocol import select_input
 from basil_core.sharp_math import hop_coefficient
 REVISION='sharp_cart_correctness_20261027_v2'
@@ -44,7 +44,6 @@ def check_source(expected):
 def run(cfg,worker,x,y,partitions,vx,vy,*,state=None,on_activation=None,on_round=None,
         checkpoint=None,should_stop=None,max_activations=None):
     from basil_core.research_protocol import keyed_rng,resolve_attackers
-    from basil_core.attacks import applyAttack
     from basil_core.sharp_cart_v2_protocol import validate_config
     validate_config(cfg);n=cfg['nodes'];initial=worker.export()
     current=initial_state(cfg,initial) if state is None else state
@@ -84,12 +83,7 @@ def run(cfg,worker,x,y,partitions,vx,vy,*,state=None,on_activation=None,on_round
             attack_active=node in attackers and r>=cfg['attackStart']
             outgoing=trained.copy()
             if attack_active:
-                if cfg['attackType']=='hidden':
-                    attacked=applyAttack(worker.tensors(trained),'hidden',rng=keyed_rng(cfg['seed'],'sharp_attack',r,node))
-                    outgoing=np.concatenate([v.ravel() for v in attacked]).astype(np.float32)
-                else:
-                    coordinate=int(keyed_rng(cfg['seed'],'sharp_spike',r,node).integers(len(outgoing)))
-                    outgoing[coordinate]+=np.float32(20*max(float(np.sqrt(np.mean(trained.astype(np.float64)**2))),.01)*np.sqrt(len(outgoing)))
+                outgoing=attacked_outbound(cfg,worker,trained,r,node)
             record=dict(round=r,node=node,activation=cursor+1,selection=selection,training=training,
                 inputHash=vector_hash(incoming),trainedHash=vector_hash(trained),outboundHash=vector_hash(outgoing),
                 configuredByzantine=node in attackers,attackActive=attack_active,

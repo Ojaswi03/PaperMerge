@@ -7,13 +7,28 @@ defaults do not establish an expected accuracy or a robustness guarantee.
 import random
 
 
-def gaussianAttack(weights, mean=0.0, std=0.8, blend=0.55):
+def gaussianAttack(weights, mean=0.0, std=1.0, rng=None):
+    """Pure Gaussian model replacement, as defined in BASIL Section VI-A.
+
+    Every outgoing parameter is an independent Gaussian draw. The trained
+    values determine tensor shapes only; they do not affect attack mean/scale.
+    """
+    import numpy as np
+    if not np.isfinite(mean) or not np.isfinite(std) or std<=0:
+        raise ValueError('Gaussian replacement needs finite mean and positive standard deviation.')
+    normal=rng.normal if rng is not None else np.random.normal
+    return [normal(mean,std,size=w.shape).astype(np.float32) for w in weights]
+
+
+def blendedGaussianAttack(weights, mean=0.0, std=0.8, blend=0.55, rng=None):
+    """Legacy blended corruption, distinct from pure Gaussian replacement."""
     # blend original weights with scaled Gaussian noise per layer
     import numpy as np
+    normal = rng.normal if rng is not None else np.random.normal
     out = []
     for w in weights:
         weight_std = max(np.std(w), 0.01)
-        noise = np.random.normal(mean, std * weight_std, size=w.shape)
+        noise = normal(mean, std * weight_std, size=w.shape)
         attacked = ((1.0 - blend) * w + blend * noise).astype(np.float32)
         out.append(attacked)
     return out
@@ -127,12 +142,15 @@ def noiseAmplificationAttack(weights, amplification=5.0):
     return out
 
 
-def applyAttack(weights, attackType, maliciousWeights=None, blendRatio=0.5, rng=None):
+def applyAttack(weights, attackType, maliciousWeights=None, blendRatio=0.5, rng=None, gaussianStd=1.0):
     # normalize attack type string then dispatch to the right function
     atk = (attackType or "none").lower().replace("-", "_")
 
     if atk == "gaussian":
-        return gaussianAttack(weights, std=0.8, blend=0.55)
+        return gaussianAttack(weights, mean=0., std=gaussianStd, rng=rng)
+
+    if atk == 'gaussian_blended':
+        return blendedGaussianAttack(weights, std=0.8, blend=0.55, rng=rng)
 
     if atk in ("sign_flip", "signflip"):
         return signFlipAttack(weights, flipProb=0.38)

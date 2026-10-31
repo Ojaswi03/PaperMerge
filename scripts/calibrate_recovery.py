@@ -17,7 +17,9 @@ def main():
     from basil_core.data.mnist import loadMnist, makeLoaders
     from basil_core.models import MNISTModel
     from basil_core.trainer import lossFn, getParams, setParams, evaluateBatchLoss, localUpdate
-    from basil_core.attacks import gaussianAttack
+    # Preserve this historical blended-corruption diagnostic; research Gaussian
+    # replacement runs use gaussianAttack instead.
+    from basil_core.attacks import blendedGaussianAttack as gaussianAttack
     from scripts.common import setupGpu
 
     setupGpu()

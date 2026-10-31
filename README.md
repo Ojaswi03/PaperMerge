@@ -30,7 +30,7 @@ ACDS shares 5% of fitting examples and changes client data access. FedSharp+ inc
 
 ## Thesis figures
 
-The four main **vector SVGs** contain 28 condition curves across all 84 runs. Lines are unsmoothed three-seed means, bands are sample SD, and the dotted line marks attack onset at displayed round 21. MNIST includes a labelled late-round inset. Fonts are outlined for portable SVG rendering. PNG versions use 600 DPI. No plot PDFs are published.
+The four main **vector SVGs** contain 28 condition curves across all 84 runs. Lines are unsmoothed three-seed means, bands are sample SD, and the vertical dotted line marks attack onset at displayed round 21. All four plots include a labelled inset for rounds 60 to 100. BASIL uses dotted lines; FedSharp and FedSharp+ use solid lines. Clean cases use circles, attack-only cases use squares, attack plus noise uses triangles, and the two additional non-IID methods use diamonds. Colors, line patterns and markers match in the main plots, insets and legends. Titles and legends contain no em dashes. Fonts are outlined for portable SVG rendering. PNG versions use 600 DPI. No plot PDFs are published.
 
 | Dataset | IID | non-IID |
 | --- | --- | --- |
@@ -55,6 +55,33 @@ python scripts/check_basil_sharp_inputs.py
 For a fresh environment, use `bash scripts/setup_hpc.sh`; dependency pins live under `environment/requirements*.txt`. Original MNIST and CIFAR-10 archives are required. MNIST discovery/download and both datasets’ fingerprints are checked by the input preflight. CIFAR-10 uses the five original training batches under the Keras dataset directory. Normalized shared-cache files are not used by this study.
 
 ## Prepare and run a new campaign
+
+For the additional **60 Gaussian-attack comparisons on hal9k's two GPUs**, use the
+[research run instructions](docs/GAUSSIAN_ATTACK_COMPARISON.md). The presets are
+[Gaussian](configs/research/hal9k_gaussian_100r.json) and
+[Hidden](configs/research/hal9k_hidden_100r.json). Set `--attack-type gaussian` or
+`--attack-type hidden` in the terminal; channel noise is separately controlled by
+`--sigma`. Both presets contain attack-only and attack-plus-noise cases and omit
+the 24 clean controls already available in the completed study. The Gaussian
+attack is **pure model replacement with independent N(0, 1) parameter draws**,
+matching the Gaussian-attack definition in BASIL Section VI-A. Its standard
+deviation is controlled by `--gaussian-std` (default 1.0), independently of
+channel `--sigma` (0.01 in noisy cases). Draws are keyed by seed, round and sender
+for reproducible checkpoints; trained parameters are not blended into them.
+
+```bash
+python scripts/run_basil_sharp_thesis.py \
+  --config configs/research/hal9k_gaussian_100r.json \
+  --output /tmp/fedsharp-gaussian-description --describe
+```
+
+This prints the full selection count without accessing GPUs or datasets or
+starting training. The preset starts balanced dispatch directly after both GPU
+execution gates pass, with global host RAM and separate per-GPU VRAM checks.
+It uses 8 GiB host RAM per worker and 16 GiB host headroom, normally allowing
+about nine workers **in total** on hal9k. Failed workers are set aside; new queued
+work can use either healthy verified GPU. A CUDA memory/device failure
+quarantines the affected GPU and sends an ntfy notification.
 
 Use a fresh output directory on the producing server’s local disk. This prepares the same 84-case scientific matrix without starting training:
 

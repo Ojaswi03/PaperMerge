@@ -323,6 +323,7 @@ experiments/results4/campaign4/performance_profile.json
 /docs/results/*
 !/docs/results/cart-contribution-100r-20261029/
 !/docs/results/hal9k_basil-sharp-thesis-100r-20261030/
+!/docs/results/hal9k_gaussian-attack-100r-20261031/
 /docs/thesis-figures/*
 !/docs/thesis-figures/fedsharp-hal9k-20261030/
 /docs/thesis-figures/fedsharp-hal9k-20261030/*.pdf

@@ -6,6 +6,7 @@ from dataclasses import asdict
 import fcntl
 import json
 from pathlib import Path
+from types import SimpleNamespace
 import shlex
 import socket
 import os
@@ -41,6 +42,10 @@ def prepare(args):
         inputLoading='original_training_archives_in_memory',etaMode='activation_throughput',
         resourceBudget=dict(context_overhead_mib=1024,ram_headroom_mib=args.ram_headroom_mib,
             ram_mib_per_worker=args.ram_mib_per_worker,allow_unattributed_process_memory=False))
+    plan.update(attackType=getattr(args,'attack_type','hidden'),
+        environments=list(getattr(args,'environments',study.ENVIRONMENTS)),
+        scheduler=getattr(args,'scheduler','adaptive'),
+        maximumWorkersPerGpu=getattr(args,'max_workers_per_gpu',24))
     root.mkdir(parents=True,exist_ok=True)
     write_json(root/'plan.json',plan);return plan
 
@@ -108,43 +113,101 @@ def execute(args, plan):
                     for c in plan['configs'] if (root/c['runId']/'run.json').exists())
                 write_json(root/'throughput_baseline.json',dict(completedActivations=baseline,
                     planSha256=digest))
-                return adaptive.schedule(args,checked,hardware,assigned,digest,leases)
+                if plan.get('scheduler')!='shared':
+                    return adaptive.schedule(args,checked,hardware,assigned,digest,leases)
         finally:
             for handle in leases.values():handle.close()
+    # Release verification leases and the old supervisor lock before the shared
+    # scheduler acquires them. This starts balanced dispatch directly, without a
+    # second shell or a live handover racing the first worker launches.
+    from basil_core import live_gpu_scheduler
+    return live_gpu_scheduler.execute(SimpleNamespace(output=root,
+        maximum=plan.get('maximumWorkersPerGpu',24),poll_seconds=args.poll_seconds,
+        ntfy_topic=args.ntfy_topic))
 
 
-def main():
+def partition_name(value):
+    names={'iid':'iid','noniid':'dirichlet','non-iid':'dirichlet','dirichlet':'dirichlet'}
+    try:return names[value.lower()]
+    except KeyError:raise argparse.ArgumentTypeError('Choose IID or nonIID.')
+
+
+def parse_options(argv=None):
+    argv=list(sys.argv[1:] if argv is None else argv)
     p=argparse.ArgumentParser(description=__doc__)
+    p.add_argument('--config',type=Path,help='JSON settings preset; explicit terminal flags override it.')
     p.add_argument('--output',type=Path,required=True)
     p.add_argument('--gpu-count',type=int,choices=(1,2,3,4),default=4);p.add_argument('--gpus')
     p.add_argument('--gpu-memory-mib',type=int,choices=(3072,4096,6144,8192),default=3072)
     p.add_argument('--ram-mib-per-worker',type=int,choices=(8192,12288,16384,32768),default=16384)
     p.add_argument('--ram-headroom-mib',type=int,choices=(8192,16384,32768),default=32768)
     p.add_argument('--datasets',nargs='+',choices=('mnist','cifar10'),default=['mnist','cifar10'])
-    p.add_argument('--partitions',nargs='+',choices=('iid','dirichlet'),default=['iid','dirichlet'])
+    p.add_argument('--partitions',nargs='+',type=partition_name,choices=('iid','dirichlet'),default=['iid','dirichlet'],metavar='IID/nonIID')
     p.add_argument('--seeds',nargs='+',type=int,choices=(2025,2026,2027),default=[2025,2026,2027])
     p.add_argument('--rounds',type=int,default=100);p.add_argument('--nodes',type=int,default=100)
     p.add_argument('--local-steps',type=int,default=5);p.add_argument('--attack-start',type=int,default=20)
     p.add_argument('--sigma',type=float,default=.01);p.add_argument('--alpha',type=float,default=.5)
+    p.add_argument('--attack-type',choices=study.ATTACK_TYPES,default='hidden',
+        help='Byzantine outgoing-model attack; separate from Gaussian channel noise (--sigma).')
+    p.add_argument('--gaussian-std',type=float,default=1.,
+        help='Pure Gaussian replacement attack standard deviation (BASIL default: 1.0); not channel sigma.')
+    p.add_argument('--environments',nargs='+',choices=study.ENVIRONMENTS,default=list(study.ENVIRONMENTS),
+        help='Use attack_only joint for 60 attacked cases, reusing existing clean controls.')
+    p.add_argument('--scheduler',choices=('shared','adaptive'),default='shared',
+        help='Shared queue balances new workers across healthy GPUs under live RAM/VRAM checks.')
     p.add_argument('--execute',action='store_true');p.add_argument('--resume',action='store_true')
     p.add_argument('--describe',action='store_true');p.add_argument('--wait-for-resources',action='store_true')
     p.add_argument('--tmux');p.add_argument('--max-workers-per-gpu',type=int,choices=range(1,25),default=24)
     p.add_argument('--poll-seconds',type=int,choices=range(1,31),default=3);p.add_argument('--ntfy-topic')
-    args=p.parse_args();args.output=args.output.resolve();args.variants=None;args.preset='thesis'
+    pre=argparse.ArgumentParser(add_help=False);pre.add_argument('--config',type=Path)
+    config=pre.parse_known_args(argv)[0].config;defaults=[]
+    if config:
+        try:
+            document=json.loads(config.read_text())
+            if set(document)-{'schema','description','settings'} or document.get('schema')!=1:
+                raise ValueError('Expected schema 1 with a settings object.')
+            settings=document['settings']
+            if not isinstance(settings,dict):raise ValueError('Settings must be an object.')
+            actions={a.dest:a for a in p._actions}
+            prohibited={'help','config','output','execute','resume','describe','tmux','wait_for_resources'}
+            for key,value in settings.items():
+                if key not in actions or key in prohibited:raise ValueError('Unsupported preset setting: '+key)
+                values=value if isinstance(value,list) else [value]
+                if not values or any(type(v) not in (str,int,float) for v in values):
+                    raise ValueError('Preset settings require nonempty scalar values/lists: '+key)
+                defaults.extend([actions[key].option_strings[0],*[str(v) for v in values]])
+        except (OSError,ValueError,KeyError,TypeError) as error:p.error('Invalid config: '+str(error))
+    args=p.parse_args(defaults+argv)
+    args.output=args.output.resolve();args.variants=None;args.preset='thesis'
+    args.supplied_options={a.split('=')[0] for a in argv if a.startswith('--')}
+    args.forwarded_arguments=argv
+    return args
+
+
+def main(argv=None):
+    args=parse_options(argv)
     if args.ntfy_topic:
         from basil_core.ntfy_notifications import validate_destination
         validate_destination(args.ntfy_topic,'https://ntfy.sh')
     if args.resume:
-        supplied={a.split('=')[0] for a in sys.argv[1:] if a.startswith('--')}
+        supplied=args.supplied_options
         if supplied-{'--output','--execute','--resume','--tmux','--wait-for-resources','--ntfy-topic'}:
-            p.error('Resume uses the frozen plan and resource profile.')
+            raise SystemExit('Resume uses the frozen plan and resource profile; omit config/attack/resource overrides.')
     if args.describe:
         views=study.selected(args)
-        print(json.dumps(dict(configurations=len(views),curvesPerDataset=dict(IID=6,nonIID=8),
-            nodes=args.nodes,rounds=args.rounds,trainingStarted=False),indent=2));return 0
+        counts={('IID' if split=='iid' else 'nonIID'):len({study.variant(v) for v in views if v['partition']==split})
+            for split in args.partitions}
+        print(json.dumps(dict(configurations=len(views),attackType=args.attack_type,
+            environments=args.environments,curvesPerDataset=counts,
+            datasets=args.datasets,seeds=args.seeds,nodes=args.nodes,rounds=args.rounds,
+            localSteps=args.local_steps,channelSigma=args.sigma,attackStartsAtDisplayedRound=args.attack_start+1,
+            gaussianAttackStd=args.gaussian_std if args.attack_type=='gaussian' else None,
+            gaussianAttackMode='pure_model_replacement' if args.attack_type=='gaussian' else None,
+            requestedGpuCount=args.gpu_count,scheduler=args.scheduler,
+            activations=len(views)*args.nodes*args.rounds,trainingStarted=False),indent=2));return 0
     if args.tmux:
-        if not args.execute:p.error('--tmux requires --execute.')
-        forwarded=sys.argv[1:];pos=forwarded.index('--tmux');forwarded=forwarded[:pos]+forwarded[pos+2:]
+        if not args.execute:raise SystemExit('--tmux requires --execute.')
+        forwarded=args.forwarded_arguments;pos=forwarded.index('--tmux');forwarded=forwarded[:pos]+forwarded[pos+2:]
         args.output.mkdir(parents=True,exist_ok=True)
         command=shlex.join([sys.executable,str(Path(__file__).resolve()),*forwarded])
         command+=' >> '+shlex.quote(str(args.output/'adaptive_supervisor.log'))+' 2>&1'

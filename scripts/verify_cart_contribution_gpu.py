@@ -8,7 +8,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 
-def warm(view, device='GPU'):
+def warm(view, device='GPU', gaussian_peers=False):
     """Synthetic binary recognition fixture, never exported as benchmark evidence."""
     import numpy as np
     from basil_core import cart_contribution_study as study
@@ -38,6 +38,10 @@ def warm(view, device='GPU'):
     # Give every peer a poor head so the allowance branch sees a real deficit.
     bias.assign(np.array([0., 0., 100., *([0.] * (cfg['classes'] - 3))], np.float32))
     bad = worker.export()
+    if gaussian_peers:
+        from basil_core.sharp_protocol import attacked_outbound
+        if cfg['attackType']!='gaussian':raise ValueError('Gaussian peer gate requires Gaussian attack.')
+        bad=attacked_outbound(cfg,worker,own,max(cfg['attackStart'],1),0)
     state = initial_state(cfg, own)
     state['senderRounds'][:] = 0
     state['outbound'][:] = bad
@@ -83,6 +87,7 @@ def warm(view, device='GPU'):
             raise AssertionError('Composed receiver-probe utility bound failed.')
         composed = True
     return dict(variant=name, dataset=cfg['dataset'], syntheticFixture=True,
+        gaussianReplacementPeersVerified=gaussian_peers,
         optimizerSteps=training['optimizerSteps'], recognitionContext=context is not None,
         calibrationDraws=row.get('continuity', {}).get('calibrationDraws'),
         commitScale=evidence.get('qualityCommit', {}).get('scale'),

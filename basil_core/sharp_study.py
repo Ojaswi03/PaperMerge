@@ -22,7 +22,8 @@ def configuration(dataset, partition, seed, condition, sigma, *, nodes=100, roun
                   method='sharp', alpha=.5, local_steps=5, model='paper',
                   train_per_class=None, validation_per_class=None, attack_start=20,
                   denominator='actual_selected', curvature=1., proximal_mu=1.,
-                  initial_rate=.03, attack_type='hidden', budget=None, basil_window=None):
+                  initial_rate=.03, attack_type='hidden', budget=None, basil_window=None,
+                  gaussian_std=1.):
     if dataset not in DATASETS or partition not in ('iid', 'dirichlet') or method not in ('sharp', 'basil'):
         raise ValueError('Unknown dataset, partition or selection method.')
     if type(seed) is not int or seed not in SEEDS or condition not in CONDITION_NAMES:
@@ -37,9 +38,11 @@ def configuration(dataset, partition, seed, condition, sigma, *, nodes=100, roun
     if (not all(math.isfinite(v) for v in (sigma, alpha, curvature, proximal_mu, initial_rate))
             or alpha <= 0 or curvature <= 0 or proximal_mu < 0 or initial_rate <= 0
             or type(local_steps) is not int or local_steps < 1 or model not in ('paper', 'resnet20')
-            or denominator not in ('actual_selected', 'budget') or attack_type not in ('hidden', 'spike')
+            or denominator not in ('actual_selected', 'budget') or attack_type not in ('hidden', 'gaussian', 'spike')
             or type(attack_start) is not int or attack_start < 0):
         raise ValueError('Invalid explicit SHARP settings.')
+    if attack_type=='gaussian' and (not math.isfinite(gaussian_std) or gaussian_std<=0):
+        raise ValueError('Gaussian attack standard deviation must be finite and positive.')
     for limit in (train_per_class, validation_per_class):
         if limit is not None and (type(limit) is not int or limit < 1):
             raise ValueError('Optional per-class limits must be positive integers.')
@@ -66,6 +69,8 @@ def configuration(dataset, partition, seed, condition, sigma, *, nodes=100, roun
         officialTestUsed=False, evaluationOrigin='stratified_heldout_TRAIN',
         evaluationSamples=1000, primaryEndpoint='mean_node_validation_accuracy_last_10_rounds',
         researchValid=False, performanceClaim='not_established')
+    if attack_type=='gaussian':
+        cfg.update(gaussianAttackStd=float(gaussian_std),gaussianAttackMode='pure_model_replacement')
     digest = hashlib.sha256(json.dumps(cfg, sort_keys=True).encode()).hexdigest()[:12]
     cfg['runId'] = f'{dataset}-{partition}-{seed}-{condition}-s{sigma:g}-{method}-{digest}'
     return cfg
@@ -77,7 +82,8 @@ def validate_config(cfg):
         train_per_class=cfg['trainPerClass'], validation_per_class=cfg['validationPerClass'],
         attack_start=cfg['attackStart'], denominator=cfg['hopDenominator'],
         curvature=cfg['curvature'], proximal_mu=cfg['proximalMu'] if cfg['proximalMu'] else 1.,
-        initial_rate=cfg['learningRate'], attack_type=cfg['attackType'], budget=cfg['byzantineBudget'],basil_window=cfg['basilWindow'])
+        initial_rate=cfg['learningRate'], attack_type=cfg['attackType'], budget=cfg['byzantineBudget'],basil_window=cfg['basilWindow'],
+        gaussian_std=cfg.get('gaussianAttackStd',1.))
     # Zero is an explicit proximal ablation; preserve it when reconstructing.
     if cfg['method']=='sharp' and (cfg['switches']['byzantine_mitigation'] or cfg['switches']['noise_mitigation']):
         fields['proximal_mu']=cfg['proximalMu']

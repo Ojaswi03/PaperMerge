@@ -9,6 +9,27 @@ from unittest.mock import patch
 ROOT=Path(__file__).resolve().parents[1];sys.path.insert(0,str(ROOT))
 
 
+def verify_attack_transform(cfg,worker):
+    """Check the configured attack against its explicit tensor formula."""
+    import numpy as np
+    from basil_core.research_protocol import keyed_rng
+    from basil_core.sharp_protocol import attacked_outbound
+    params=worker.export();r=cfg['attackStart'];node=0
+    rng=keyed_rng(cfg['seed'],'sharp_attack',r,node);expected=[]
+    for w in worker.tensors(params):
+        scale=max(np.std(w),.01)
+        if cfg['attackType']=='gaussian':
+            expected.append(rng.normal(0.,cfg['gaussianAttackStd'],size=w.shape).astype(np.float32).ravel())
+            continue
+        elif cfg['attackType']=='hidden':
+            perturbation=-1.4*w+rng.normal(0.,.05*scale,size=w.shape)
+        else:raise ValueError('Unsupported thesis attack.')
+        expected.append(((1.-.55)*w+.55*perturbation).astype(np.float32).ravel())
+    actual=attacked_outbound(cfg,worker,params,r,node)
+    np.testing.assert_array_equal(actual,np.concatenate(expected))
+    return dict(attackType=cfg['attackType'],seededOutboundAttackVerified=True)
+
+
 def verify(root,gpu,lease_fd):
     from basil_core.thesis_raw_data import direct_inputs
     with direct_inputs():
@@ -59,9 +80,10 @@ def verify_direct(root,gpu,lease_fd):
             proposal,training=worker.train(incoming,x,y,1,0,coefficient,batch)
             if cfg['cart']:proposal,_,_=repair.transport(worker,proposal,None,x,y,0,cfg['nodes'])
         assert training['optimizerSteps']==cfg['localSteps'] and np.isfinite(proposal).all()
+        attack_check=verify_attack_transform(cfg,worker)
         checks.append(dict(dataset=cfg['dataset'],family=case['family'],environment=case['environment'],
             addon=case['addon'],window=cfg['window'],optimizerSteps=training['optimizerSteps'],
-            basilSingleSelectionVerified=case['family']=='basil'))
+            basilSingleSelectionVerified=case['family']=='basil',**attack_check))
     # Force informative class recognition and exercise full CART's quality gate.
     import basil_core.cart_contribution_study as old_study
     from scripts.verify_cart_contribution_gpu import warm
@@ -70,7 +92,7 @@ def verify_direct(root,gpu,lease_fd):
         if candidates:
             with study.installed(),patch.object(old_study,'variant',lambda v:'cart_full'), \
                     patch.object(old_study,'configure_worker',study.configure_worker),patch.object(old_study,'intervention',study.intervention):
-                checks.append(warm(candidates[0]))
+                checks.append(warm(candidates[0],gaussian_peers=candidates[0]['attackType']=='gaussian'))
     import tensorflow as tf
     import resource
     receipt.update(status='PASSED',source=plan['source'],checks=checks,planSha256=sha(root/'plan.json'),

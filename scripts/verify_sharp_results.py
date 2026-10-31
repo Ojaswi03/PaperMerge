@@ -80,18 +80,12 @@ def verify(root,*,require_complete=False):
         scales=[];active_gates=0;all_fail=0
         attackers=resolve_attackers(cfg['seed'],cfg['actualAttackers'],cfg['nodes'])
         if cfg['method']=='sharp_cart_v2':
-            from basil_core.research_protocol import keyed_rng
-            from basil_core.attacks import applyAttack
+            from basil_core.sharp_protocol import attacked_outbound
             from basil_core.sharp_protocol import link_vector
             for sender,params in enumerate(state['nodeParams']):
                 expected_outbound=params.copy();r=cfg['rounds']-1
                 if sender in attackers and r>=cfg['attackStart']:
-                    if cfg['attackType']=='hidden':
-                        pieces=applyAttack(worker.tensors(params),'hidden',rng=keyed_rng(cfg['seed'],'sharp_attack',r,sender))
-                        expected_outbound=np.concatenate([p.ravel() for p in pieces]).astype(np.float32)
-                    else:
-                        coordinate=int(keyed_rng(cfg['seed'],'sharp_spike',r,sender).integers(len(params)))
-                        expected_outbound[coordinate]+=np.float32(20*max(float(np.sqrt(np.mean(params.astype(np.float64)**2))),.01)*np.sqrt(len(params)))
+                    expected_outbound=attacked_outbound(cfg,worker,params,r,sender)
                 np.testing.assert_array_equal(state['outbound'][sender],expected_outbound,
                     err_msg='Final outbound attack differs from the declared seeded transformation.')
             if cfg['sigma']:

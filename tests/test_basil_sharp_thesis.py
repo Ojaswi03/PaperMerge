@@ -161,7 +161,7 @@ def test_complete_figure_matrix_uses_plain_names_and_preserves_archive(tmp_path)
     assert sorted(result['svgFiles'])==['mnist_iid_accuracy.svg','mnist_non_iid_accuracy.svg']
     for name in result['svgFiles']:
         svg=(tmp_path/'figures'/name).read_text()
-        assert 'BASIL' in svg and 'SHARP' in svg and 'Validation accuracy' in svg
+        assert 'BASIL' in svg and 'FedSharp' in svg and 'Validation accuracy' in svg
         assert 'Dirichlet' not in svg and 'macro' not in svg.lower() and 'commit' not in svg.lower()
         assert 'Official TEST' not in svg
     assert 'ACDS' in (tmp_path/'figures/mnist_non_iid_accuracy.svg').read_text()

@@ -1,0 +1,24 @@
+{
+  "schema": 1,
+  "description": "60 Hidden-attack cases with the same hal9k settings as the Gaussian comparison. These cases already have completed reference results; rerun only when intended.",
+  "settings": {
+    "attack_type": "hidden",
+    "environments": ["attack_only", "joint"],
+    "datasets": ["mnist", "cifar10"],
+    "partitions": ["IID", "nonIID"],
+    "seeds": [2025, 2026, 2027],
+    "nodes": 100,
+    "rounds": 100,
+    "local_steps": 5,
+    "attack_start": 20,
+    "sigma": 0.01,
+    "alpha": 0.5,
+    "gpu_count": 2,
+    "gpu_memory_mib": 3072,
+    "ram_mib_per_worker": 8192,
+    "ram_headroom_mib": 16384,
+    "max_workers_per_gpu": 24,
+    "scheduler": "shared",
+    "poll_seconds": 3
+  }
+}
