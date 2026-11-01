@@ -1,0 +1,13 @@
+{
+  "activeWorkersSignalled": false,
+  "adoptedWorkers": {},
+  "kind": "live_gpu_work_stealing",
+  "planSha256": "ecba553ae56cb87cfb0db6c002109c1a8800b2b639fb790a1de12f575f92ff90",
+  "previousOwner": null,
+  "resourceBudgetsUnmodified": true,
+  "scientificProducerUnmodified": true,
+  "source": {
+    "basil_core/live_gpu_scheduler.py": "b44ebb6d7e93eec8cddf468053f360252999aabd9be10c061b680c43c5fb67ea",
+    "scripts/rebalance_basil_sharp_live.py": "bdc207f114b204378d3b5d9aa3988c9c73dacc6da28b7870604a58f5415691c1"
+  }
+}

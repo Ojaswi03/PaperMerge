@@ -1,0 +1,2 @@
+{"at": 1793476934.9791894, "title": "PaperMerge live balancing enabled", "message": "Adopted 0 active workers without restarting training. New configurations use a shared queue with GPU and host RAM reservations.", "delivery": {"deliveredToServer": true, "messageId": "uXKwk31ADdTt", "attempts": 1}}
+{"at": 1793500353.7947185, "title": "PaperMerge campaign finished", "message": "60/60 completed; 0 failed. Status: COMPLETED.", "delivery": {"deliveredToServer": true, "messageId": "ch3NrLHffTx6", "attempts": 1}}
