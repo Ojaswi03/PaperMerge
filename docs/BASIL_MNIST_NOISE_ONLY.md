@@ -54,6 +54,38 @@ The subsequent launch verifies input fingerprints and both GPUs before starting
 training, then uses the existing shared queue and RAM/VRAM admission checks.
 Ctrl+C closes the log viewer; detached training continues.
 
+## Connect the permanent browser monitor
+
+The launcher's `--ntfy-topic` sends scheduler status notifications. To publish
+the dashboard and send its link through ntfy, close the log viewer with Ctrl+C
+and run the following on hal9k. It selects the newest directory created by the
+noise-only launcher above and requires its frozen plan to exist. It starts or
+retargets only the read-only publisher; training continues unchanged.
+
+```bash
+(
+set -e
+cd ~/Masters_Research/PaperMerge
+source .venv-hpc/bin/activate
+paper_run="$(python - <<'PY'
+from pathlib import Path
+import os
+root = Path('/var/tmp') / f'papermerge-{os.getuid()}'
+runs = sorted(root.glob('hal9k_mnist-basil-noise-only-100r-*'))
+if not runs:
+    raise SystemExit('No MNIST BASIL noise-only run directory found.')
+if not (runs[-1] / 'plan.json').is_file():
+    raise SystemExit('The newest run has no plan yet; check its preparation log.')
+print(runs[-1])
+PY
+)"
+python scripts/share_cart_monitor.py \
+  --output "$paper_run" --background --interval 1 \
+  --ntfy-topic papermerge-ojaswi
+python scripts/share_cart_monitor.py --print-link
+)
+```
+
 For monitoring, set `paper_run` to the exact directory printed by the launcher
 in each new shell, then use
 `python scripts/run_cart_comparison.py --monitor --output "$paper_run"`.
