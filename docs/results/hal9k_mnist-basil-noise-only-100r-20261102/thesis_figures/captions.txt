@@ -1,0 +1,1 @@
+Mean client-model validation accuracy over communication rounds. Lines average independent seeds after averaging clients within each run; shading is sample SD across seeds. No Byzantine attack is active; downward triangles denote noise only. Only conditions declared in this campaign are plotted. Channel noise is absolute independent Gaussian parameter noise on each link.
