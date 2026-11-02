@@ -36,7 +36,7 @@ python scripts/run_basil_sharp_thesis.py \
   --config configs/research/hal9k_mnist_basil_noise_only_100r.json \
   --output "$paper_run" --describe
 mkdir -p "$paper_run"
-nohup python -u scripts/run_basil_sharp_thesis.py \
+nohup setsid python -u scripts/run_basil_sharp_thesis.py \
   --config configs/research/hal9k_mnist_basil_noise_only_100r.json \
   --output "$paper_run" --execute --wait-for-resources \
   --ntfy-topic papermerge-ojaswi \
@@ -52,7 +52,11 @@ The description must report six configurations, `families: ["basil"]`,
 `attacksEnabled: false`, channel sigma 0.01 and `trainingStarted: false`.
 The subsequent launch verifies input fingerprints and both GPUs before starting
 training, then uses the existing shared queue and RAM/VRAM admission checks.
-Ctrl+C closes the log viewer; detached training continues.
+`setsid` gives the supervisor and its workers a separate terminal session.
+This matters because the supervisor installs its own interrupt handler:
+`nohup` alone inside the subshell above does not isolate it from Ctrl+C sent
+to the foreground log viewer. With the separate session, Ctrl+C closes the
+log viewer while training continues.
 
 ## Connect the permanent browser monitor
 
@@ -92,6 +96,23 @@ in each new shell, then use
 Never launch a second supervisor against that directory. Resume on hal9k uses
 `python scripts/run_basil_sharp_thesis.py --output "$paper_run" --resume --execute --wait-for-resources --ntfy-topic papermerge-ojaswi`,
 without a preset or changed settings.
+
+If the campaign reports `SUPERVISOR_RECOVERY_NEEDED`, use the operational
+handover rather than launching another original supervisor:
+
+```bash
+python scripts/rebalance_basil_sharp_live.py --output "$paper_run"
+python scripts/rebalance_basil_sharp_live.py \
+  --output "$paper_run" --execute --background --ntfy-topic papermerge-ojaswi
+```
+
+The first command reports the actual discoverable worker count and verifies
+the saved plan/GPU contracts. The second starts a detached supervisor with
+`start_new_session=True`, adopts surviving workers and loads original
+checkpoints for unfinished configurations whose processes have exited.
+Saved RUNNING rows alone do not prove that their worker processes still exist.
+Inspect `adaptive_supervisor.log` and `live_scheduler.log` to distinguish an
+interrupt from an operational exception. Preserve the frozen plan and sources.
 
 After all six finish, independently verify the retained checkpoints with
 `python scripts/verify_basil_sharp_thesis_results.py --output "$paper_run"`.
