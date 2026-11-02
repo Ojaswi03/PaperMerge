@@ -11,11 +11,16 @@ def export(root,destination):
     from scripts.export_cart_campaign import copy_matching,write_matching
     root,destination=Path(root).resolve(),Path(destination).resolve()
     if root==destination or root in destination.parents or destination in root.parents:raise ValueError('Separate export required.')
+    import json
+    if json.loads((root/'plan.json').read_text()).get('continuations'):
+        from reporting.round_continuation import collect,generate
     plan,rows,_=collect(root);generate(root,root/'thesis_figures')
     names=['plan.json','campaign.json']
     names += [n for n in ('adaptive_execution.json','independent_validation.json','throughput_baseline.json') if (root/n).exists()]
     names += [str(p.relative_to(root)) for p in (root/'operational_adapters').rglob('*') if p.is_file()]
     for c in plan['configs']:names += [c['runId']+'/'+n for n in ('run.json','metrics.npz','mechanisms.json')]
+    if plan.get('continuations'):
+        names += [c['runId']+'/continuation.json' for c in plan['configs']]
     names += ['source_snapshots/'+n for n in plan['source']]
     names += [str(p.relative_to(root)) for p in (root/'thesis_figures').rglob('*') if p.is_file()]
     if destination.exists() and any(str(p.relative_to(destination)) not in set(names)|{'SHA256.json'}

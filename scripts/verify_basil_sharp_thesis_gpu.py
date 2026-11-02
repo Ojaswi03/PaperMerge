@@ -58,7 +58,7 @@ def verify_direct(root,gpu,lease_fd):
     from basil_core.sharp_protocol import initial_state,select_input as original_select
     seen=set()
     for view in plan['configs']:
-        case=view['comparisonCase'];key=(view['dataset'],case['family'],case['environment'],case['addon'])
+        case=view['comparisonCase'];key=(view['dataset'],view['attackType'],case['family'],case['environment'],case['addon'])
         if key in seen:continue
         seen.add(key);cfg=study.effective_config(view);worker=study.configure_worker(view,'GPU')
         shape=(28,28,1) if cfg['dataset']=='mnist' else (32,32,3)

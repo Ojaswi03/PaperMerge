@@ -25,7 +25,7 @@ from basil_core.supervisor_memory_guard import residents_of
 ROOT = Path(__file__).resolve().parents[1]
 WORKER = ROOT / 'scripts/basil_sharp_thesis_worker.py'
 OWNERS = {'run_basil_sharp_thesis.py', 'resume_basil_sharp_resilient.py',
-          'rebalance_basil_sharp_live.py'}
+          'rebalance_basil_sharp_live.py', 'run_fedsharp_500r.py'}
 
 
 def sha(path):
@@ -485,7 +485,10 @@ def schedule(args, plan, hardware, assigned, digest, active, leases):
         status='COMPLETED_WITH_FAILURES' if failures else 'COMPLETED'
         if not failures:
             try:
-                from reporting.basil_sharp_thesis import generate
+                if plan.get('continuations'):
+                    from reporting.round_continuation import generate
+                else:
+                    from reporting.basil_sharp_thesis import generate
                 generate(root, root/'thesis_figures')
             except Exception as error:
                 status='COMPLETED_REPORT_FAILED'

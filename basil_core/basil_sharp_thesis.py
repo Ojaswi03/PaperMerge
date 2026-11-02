@@ -21,7 +21,9 @@ def source():
     names = ('basil_core/basil_sharp_thesis.py', 'scripts/run_basil_sharp_thesis.py',
         'scripts/basil_sharp_thesis_worker.py', 'scripts/verify_basil_sharp_thesis_gpu.py',
         'scripts/verify_basil_sharp_thesis_results.py', 'reporting/basil_sharp_thesis.py',
-        'basil_core/cart_display_labels.py', 'basil_core/thesis_raw_data.py')
+        'basil_core/cart_display_labels.py', 'basil_core/thesis_raw_data.py',
+        'basil_core/round_continuation.py','basil_core/continuation_campaign.py',
+        'scripts/run_fedsharp_500r.py','reporting/round_continuation.py')
     return {**previous_source(), **{n: hashlib.sha256((ROOT/n).read_bytes()).hexdigest() for n in names}}
 
 

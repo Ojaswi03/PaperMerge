@@ -44,11 +44,15 @@ def run(output,index,lease_fd=None,cpu=False):
     if cpu:numerical_runtime['device']='/CPU:0'
     contract=dict(config=cfg,comparisonCase=view['comparisonCase'],methodRevision=plan['revision'],source=plan['source'],
         runtime=numerical_runtime,initialHash=vector_hash(worker.export()),data=data,partition=audit)
-    state=load_state(checkpoint,contract,worker.dimension) if checkpoint.exists() else None
+    state=None
     row=dict(status='RUNNING',config=view,methodRevision=plan['revision'],source=plan['source'],contract=contract,
         runtime=contract['runtime'],initialHash=contract['initialHash'],data=data,partition=audit,
         physicalGpuId=None if cpu else current_profile().gpu,totalActivations=cfg['nodes']*cfg['rounds'],
         runtimeAdapter=dict(name=plan['revision']))
+    if plan.get('continuations'):
+        parent=plan['continuations'][view['runId']]
+        row.update(completedActivations=parent['sourceCursor'],completedRounds=parent['sourceRounds'],
+            elapsedSeconds=parent['sourceElapsedSeconds'],meanAccuracy=parent['initialAccuracy'])
     stopped=False
     def stop(*_):
         nonlocal stopped
@@ -67,6 +71,20 @@ def run(output,index,lease_fd=None,cpu=False):
         compact_record(record)
         if current['cursor']%10==0:progress(current)
     try:
+        if checkpoint.exists():state=load_state(checkpoint,contract,worker.dimension)
+        if plan.get('continuations'):
+            from basil_core.round_continuation import bootstrap
+            if state is None:
+                state,continuation=bootstrap(plan,view,folder,worker,contract,x[held],y[held])
+            else:
+                continuation=read_json(folder/'continuation.json')
+                item=plan['continuations'][view['runId']]
+                if (continuation['targetRunId']!=view['runId'] or
+                        continuation['sourceCheckpointSha256']!=item['seedSha256'] or
+                        continuation['targetRuntime']!=contract['runtime']):
+                    raise ValueError('Continuation provenance differs from this checkpoint/runtime.')
+            row['runtimeAdapter'].update(startedCursor=continuation['sourceCursor'],
+                startedElapsedSeconds=continuation['sourceElapsedSeconds'])
         if state:progress(state)
         else:write_json(folder/'run.json',row)
         with intervention(view,worker) as effective:

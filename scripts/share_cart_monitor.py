@@ -155,7 +155,8 @@ def main():
         if not path.exists():p.error('Start the permanent publisher once before requesting its link.')
         print(view_url(json.loads(path.read_text())));return
     if a.output is None:p.error('--output is required to select a run.')
-    if not (a.output/'plan.json').is_file():p.error('Output must contain an existing campaign plan.')
+    if not any((a.output/name).is_file() for name in ('plan.json','continuation_plan.json')):
+        p.error('Output must contain an existing campaign plan.')
     if a.temporary:return temporary_session(a)
     if a.tmux and subprocess.run(['tmux','has-session','-t',a.tmux],capture_output=True).returncode==0:
         p.error('The browser publisher tmux session already exists; use --print-link to retrieve its URL.')

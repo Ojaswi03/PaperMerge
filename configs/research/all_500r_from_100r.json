@@ -1,0 +1,38 @@
+{
+  "schema": 1,
+  "description": "Continue all 150 verified runs from round 100 through round 500, including FedSharp+. Shared atomic claims across hal9k and themachine; original checkpoints remain unchanged.",
+  "source_rounds": 100,
+  "target_rounds": 500,
+  "expected_configurations": 150,
+  "archives": [
+    {
+      "path": "docs/results/hal9k_basil-sharp-thesis-100r-20261030",
+      "configurations": 84,
+      "manifest_sha256": "5a2b5fff43a2ee088a6b59190a0355f2ec1769420805623e9ba2621684cf069f"
+    },
+    {
+      "path": "docs/results/hal9k_gaussian-attack-100r-20261031",
+      "configurations": 60,
+      "manifest_sha256": "122474b6ae4c147599147a0263ce57729c260495f46790eecd213dafe5a37f8f"
+    },
+    {
+      "path": "docs/results/hal9k_mnist-basil-noise-only-100r-20261102",
+      "configurations": 6,
+      "manifest_sha256": "f6ecc043257e93930d56593d5f8ed66b343d4dd2c8f493ab8d60967f6e8c3942"
+    }
+  ],
+  "hosts": {
+    "hal9k": {"gpus": [0, 1]},
+    "themachine": {"gpus": [0, 1, 2, 3]}
+  },
+  "resources": {
+    "gpu_memory_mib": 3072,
+    "context_overhead_mib": 1024,
+    "gpu_headroom_mib": 8192,
+    "ram_mib_per_worker": 8192,
+    "ram_headroom_mib": 16384,
+    "maximum_workers_per_gpu": 24,
+    "threads": 1,
+    "poll_seconds": 3
+  }
+}
