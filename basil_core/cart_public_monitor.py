@@ -10,7 +10,7 @@ def finite(value):
 def public_snapshot(directory):
     from pathlib import Path
     if (Path(directory)/'continuation_plan.json').is_file():
-        from basil_core.continuation_campaign import public_snapshot as shared_snapshot
+        from basil_core.continuation_monitor import snapshot as shared_snapshot
         return shared_snapshot(directory)
     from basil_core.sharp_monitor import snapshot
     state=snapshot(directory)

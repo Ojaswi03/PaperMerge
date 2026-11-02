@@ -158,10 +158,16 @@ Read-only terminal monitor, on either server:
 cd ~/Masters_Research/PaperMerge
 source .venv-hpc/bin/activate
 shared_run="$HOME/Masters_Research/PaperMerge/.papermerge/continuations-500r-20261102"
-python scripts/run_fedsharp_500r.py --queue "$shared_run" --monitor
+python scripts/monitor_fedsharp_500r.py --queue "$shared_run"
 ```
 
-`--status` prints one snapshot. The shared folder also contains
+The operational monitor shows elapsed time, overall newly executed activations
+per second, estimated remaining time, estimated finish in Eastern Time and
+active worker counts by server/GPU. `--once` prints one snapshot. Failed or
+stopped configurations are explicitly excluded from the remaining-time forecast
+until requeued; they no longer hide the speed of healthy workers. The original
+launcher's `--monitor` remains available with its frozen older display.
+The shared folder also contains
 `configuration_status.csv`. Ctrl+C closes only the monitor. A stale server
 report is shown as recovery needed, not permission for another server to
 duplicate its work. On the affected server, rerun the same
@@ -185,6 +191,32 @@ and cursor, then verifies two CPU reads of each affected dataset. It does not
 train, modify checkpoints, change validation rules or requeue failures. A
 matching checkpoint hash alone does not establish that its metadata is valid.
 The original checkpoint path is inspected only on its producing host.
+
+Before changing concurrency, run this read-only capacity check on each server:
+
+```bash
+python scripts/check_fedsharp_capacity.py --queue "$shared_run"
+```
+
+It reports available system RAM, worker current/peak RSS and swap, GPU memory,
+the exact next-worker admission decision and additional worker slots under the
+unchanged budgets. Free VRAM alone does not establish worker capacity.
+
+After input validation passes, verify a one-time boundary retry on the affected
+server. This checks datasets twice and validates all available checkpoint copies:
+
+```bash
+python scripts/retry_fedsharp_500r.py --queue "$shared_run"
+```
+
+Add `--execute --background` to apply that recovery. It accepts only failed runs
+still at the inherited round-100 cursor, with no forked target checkpoint or
+continuation receipt. It preserves each original failed row, cooperatively stops
+only the verified shared dispatcher, adopts all surviving workers and requeues
+the verified failures under the existing memory admission rules and GPU/runtime
+contracts. Each configuration gets one such retry; a repeat failure stays failed.
+Frozen plans, numerical producer bytes, source checkpoints and histories are
+unchanged. A successful diagnostic does not establish why an earlier read failed.
 
 After completion, run `scripts/verify_basil_sharp_thesis_results.py --output`
 against each printed server-local output. The compact exporter

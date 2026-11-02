@@ -25,7 +25,7 @@ from basil_core.supervisor_memory_guard import residents_of
 ROOT = Path(__file__).resolve().parents[1]
 WORKER = ROOT / 'scripts/basil_sharp_thesis_worker.py'
 OWNERS = {'run_basil_sharp_thesis.py', 'resume_basil_sharp_resilient.py',
-          'rebalance_basil_sharp_live.py', 'run_fedsharp_500r.py'}
+          'rebalance_basil_sharp_live.py', 'run_fedsharp_500r.py', 'retry_fedsharp_500r.py'}
 
 
 def sha(path):
@@ -83,7 +83,7 @@ def identity(pid):
     # The command name can contain spaces and parentheses.
     stat = proc.joinpath('stat').read_text().rsplit(')', 1)[1].split()
     argv = proc.joinpath('cmdline').read_bytes().decode().rstrip('\0').split('\0')
-    return dict(pid=pid, start=stat[19], ppid=int(stat[1]), argv=argv,
+    return dict(pid=pid, start=stat[19], ppid=int(stat[1]), state=stat[0], argv=argv,
         cwd=str(proc.joinpath('cwd').resolve(strict=True)))
 
 
@@ -166,6 +166,7 @@ def controller(root):
         item = identity(pid)
     except FileNotFoundError:
         return None
+    if item.get('state')=='Z':return None
     script, arguments = script_command(item)
     if (script is None or script.parent != ROOT / 'scripts' or script.name not in OWNERS or
             '--execute' not in arguments or not output_matches(arguments,item,root)):
@@ -322,6 +323,12 @@ def execute(args):
                 row = read_json(path) if path.exists() else {}
                 if i not in active and row.get('status') not in ('COMPLETED','FAILED'):
                     eligible_profile(root,cfg,hardware)
+            retry_request=getattr(args,'retry_request',None)
+            if retry_request:
+                from basil_core.continuation_recovery import validate
+                request=validate(root,plan,digest,retry_request,active)
+                by_run={cfg['runId']:cfg for cfg in plan['configs']}
+                for item in request['runs']:eligible_profile(root,by_run[item['runId']],hardware)
             receipt = dict(kind='live_gpu_work_stealing', planSha256=digest,
                 previousOwner=owner, adoptedWorkers=found, scientificProducerUnmodified=True,
                 resourceBudgetsUnmodified=True, activeWorkersSignalled=False)
@@ -338,6 +345,10 @@ def execute(args):
             if owner_fd is not None: os.close(owner_fd); owner_fd = None
             with (root / 'supervisor.lock').open('a') as supervisor_lock:
                 fcntl.flock(supervisor_lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                if retry_request:
+                    from basil_core.continuation_recovery import requeue
+                    retried=requeue(root,plan,digest,retry_request,active)
+                    print(f'Requeued {len(retried)} verified boundary imports; original failure records preserved.',flush=True)
                 print(f'Adopted {len(active)} training workers without stopping them.', flush=True)
                 return schedule(args, plan, hardware, assigned, digest, active, leases)
         finally:

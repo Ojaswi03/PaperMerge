@@ -128,6 +128,17 @@ test('browser respects the delivered overall ETA and shows finish time',()=>{
   assert.equal(context.duration(90061),'1d 01:01:01');
 });
 
+test('blocked configurations do not hide speed and runnable-work ETA',()=>{
+  const {context,elements}=browser();const snapshot=sample();
+  snapshot.activationsPerSecond=42.5;snapshot.etaSeconds=7200;snapshot.failed=3;
+  snapshot.untimedJobs=3;snapshot.etaMode='activation_throughput_excludes_blocked';
+  context.render({snapshot,receivedAt:snapshot.generatedAt});
+  assert.equal(elements.get('speed').textContent,'42.50');
+  assert.equal(elements.get('eta').textContent,'02:00:00');
+  assert.match(elements.get('eta-note').textContent,/3 failed\/stopped configurations excluded/);
+  assert.match(elements.get('finish').textContent,/EDT|EST/);
+});
+
 test('continuation table shows server ownership and waiting/taken state without changing the public API',async()=>{
   const {context,elements}=browser();const snapshot=sample();
   snapshot.runs=[{...snapshot.runs[0],phase:'shared:hal9k:TAKEN:TRAINING:hidden'},
