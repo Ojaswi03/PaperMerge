@@ -1,5 +1,11 @@
 # Continue all 150 runs from round 100 to round 500
 
+For an already-running campaign, [enable the cross-server queue](FEDSHARP_CROSS_SERVER_QUEUE.md)
+to let idle capacity claim untouched work from either server without restarting
+active training. It adds operational ownership over the original fixed server
+assignments. The initialization instructions below remain the round-100 seed
+preparation workflow; after joining the fleet, use the fleet launcher for recovery.
+
 The preset `configs/research/all_500r_from_100r.json` references the three
 immutable, independently verified exports: 84 Hidden/clean runs, 60 Gaussian
 runs and six MNIST BASIL noise-only runs. It includes all 12 FedSharp+ runs.

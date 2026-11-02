@@ -190,6 +190,30 @@ def test_worker_bootstrap_resumption_and_export_prefix_are_end_to_end(tmp_path,m
     assert (tmp_path/'export'/fixture.new['runId']/'continuation.json').is_file()
 
 
+def test_receiver_namespace_runs_unchanged_configuration_and_preserves_source_prefix(tmp_path,monkeypatch):
+    fixture=parent_fixture(tmp_path,monkeypatch,'sharp_cart','gaussian')
+    from basil_core import thesis_raw_data
+    from scripts import cart_comparison_worker
+    monkeypatch.setattr(thesis_raw_data,'training_data',lambda dataset:(fixture.x,fixture.y))
+    monkeypatch.setattr(study,'partitions_for',lambda view,y:(fixture.chunks,fixture.held,fixture.audit))
+    monkeypatch.setattr(study,'ROOT',tmp_path)
+    monkeypatch.setattr(study,'source',lambda:fixture.source)
+    receiver=tmp_path/'receiver_namespace';receiver.mkdir()
+    plan=copy.deepcopy(fixture.plan)
+    plan.update(host='receiving-host',profiles=[dict(output_root=str(receiver))])
+    (receiver/'plan.json').write_text(json.dumps(plan))
+    before=continuation.sha(fixture.old_path)
+    with study.installed():cart_comparison_worker.run(receiver,0,cpu=True)
+    folder=receiver/fixture.new['runId'];record=json.loads((folder/'run.json').read_text())
+    assert record['status']=='COMPLETED' and record['config']==fixture.new
+    assert record['completedActivations']==16 and record['optimizerSteps']==16
+    receipt=json.loads((folder/'continuation.json').read_text())
+    assert receipt['prefixMetricsExactlyPreserved'] and receipt['sourceCheckpointSha256']==before
+    with np.load(folder/'metrics.npz') as actual,np.load(fixture.old_path.parent/'metrics.npz') as source:
+        for key in source.files:np.testing.assert_array_equal(actual[key][:2],source[key])
+    assert continuation.sha(fixture.old_path)==before and not fixture.output.exists()
+
+
 def test_shared_status_waiting_taken_server_columns_and_inherited_work_eta(tmp_path,monkeypatch):
     spec,items=continuation.catalog();items=copy.deepcopy(items[:2])
     for item,host in zip(items,('hal9k','themachine')):

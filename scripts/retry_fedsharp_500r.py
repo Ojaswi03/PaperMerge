@@ -19,10 +19,14 @@ from basil_core.round_continuation import sha
 from scripts.diagnose_fedsharp_500r import diagnose
 
 
-def prepare(queue,output):
+def prepare(queue,output,run_ids=None):
     plan,hardware,assigned,digest=live.verified(output)
     if Path(plan['sharedQueue']).resolve()!=queue:raise ValueError('Host plan belongs to a different shared queue.')
     report=diagnose(queue,check_inputs=True)
+    if run_ids is not None:
+        report['failures']=[row for row in report['failures'] if row['runId'] in set(run_ids)]
+        if {row['runId'] for row in report['failures']}!=set(run_ids):
+            raise ValueError('Requested failures changed during verification.')
     if not report['producerUnchanged'] or not report['failures']:raise ValueError('No verified failed boundary imports to retry.')
     for dataset in report['datasets'].values():
         if not all(read['verified'] for read in dataset['reads']):raise ValueError('Dataset fingerprints still fail; no retry queued.')

@@ -9,10 +9,13 @@ from basil_core.cart_campaign_io import read_json
 
 def snapshot(queue):
     from basil_core.continuation_campaign import public_snapshot
-    queue=Path(queue);state=public_snapshot(queue);master=read_json(queue/'continuation_plan.json')
+    from basil_core import fleet_queue
+    queue=Path(queue);is_fleet=fleet_queue.enabled(queue)
+    state=fleet_queue.public_snapshot(queue) if is_fleet else public_snapshot(queue)
+    master=read_json(queue/'continuation_plan.json')
     inherited=sum(item['sourceCursor'] for item in master['items'])
     elapsed=state['elapsedSeconds']
-    if state['status'] in ('COMPLETED','COMPLETED_WITH_FAILURES','COMPLETED_REPORT_FAILED'):
+    if not is_fleet and state['status'] in ('COMPLETED','COMPLETED_WITH_FAILURES','COMPLETED_REPORT_FAILED'):
         reports=[read_json(p) for p in (queue/'hosts').glob('*.json')]
         if reports:elapsed=max(0,max(r['updatedAt'] for r in reports)-min(r['startedAt'] for r in reports))
         state['elapsedSeconds']=elapsed

@@ -133,3 +133,21 @@ while not stopped:time.sleep(.01)
             except ProcessLookupError:pass
         if parent.poll() is None:parent.kill()
         parent.wait(timeout=5)
+
+
+def test_selected_import_retry_does_not_include_other_failed_runs(tmp_path,monkeypatch):
+    from scripts import retry_fedsharp_500r as retry
+    root=tmp_path/'output';root.mkdir()
+    for run in ('boundary','later'):
+        (root/run).mkdir()
+        write_json(root/run/'run.json',dict(status='FAILED',error='original failure'))
+    before=(root/'later/run.json').read_bytes()
+    monkeypatch.setattr(retry.live,'verified',lambda _:(dict(sharedQueue=str(tmp_path)),{},[], 'plan-sha'))
+    check=dict(path=str(tmp_path/'seed'),matchesFrozenSeed=True,metadataReadable=True,
+        originalContractMatches=True,boundaryMatches=True,stableChecksum=True)
+    monkeypatch.setattr(retry,'diagnose',lambda *a,**kw:dict(producerUnchanged=True,
+        failures=[dict(runId=run,checkpoints={'shared':check}) for run in ('boundary','later')],
+        datasets={'mnist':dict(reads=[dict(verified=True),dict(verified=True)])}))
+    plan,request=retry.prepare(tmp_path,root,run_ids=['boundary'])
+    assert [item['runId'] for item in request['runs']]==['boundary']
+    assert (root/'later/run.json').read_bytes()==before

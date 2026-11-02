@@ -31,10 +31,23 @@ def probe(queue):
     for line in Path('/proc/meminfo').read_text().splitlines():
         key,_,value=line.partition(':')
         if key in ('MemTotal','MemAvailable','SwapTotal','SwapFree'):memory[key+'MiB']=int(value.split()[0])//1024
-    found=live.discover(output,len(plan['configs']));workers=[];residents=[]
-    for index,item in found.items():
+    from basil_core import fleet_queue
+    fleet_state=fleet_queue.state(queue) if fleet_queue.enabled(queue) else None
+    if fleet_state and host in fleet_state['hosts']:
+        from basil_core.fleet_runner import discover,discover_gates
+        fleet_output=Path(fleet_state['hosts'][host]['fleet']);fleet_plan=read_json(fleet_output/'plan.json')
+        found=discover(output,fleet_output,plan,fleet_plan)
+        specs=list(found.items())
+        from dataclasses import replace
+        gate_profiles={gpu:replace(p,output_root=str(fleet_output)) for gpu,p in hardware.items()}
+        for gpu,item in discover_gates(fleet_output,gate_profiles).items():
+            specs.append((f'GPU {gpu} verification',dict(item,profile=dict(gpu=gpu))))
+    else:
+        specs=[(plan['configs'][index]['runId'],item) for index,item in live.discover(output,len(plan['configs'])).items()]
+    workers=[];residents=[]
+    for run,item in specs:
         usage=worker_memory(item['pid']);gpu=item['profile']['gpu']
-        workers.append(dict(pid=item['pid'],gpu=gpu,runId=plan['configs'][index]['runId'],**usage))
+        workers.append(dict(pid=item['pid'],gpu=gpu,runId=run,**usage))
         residents.append(Resident(item['pid'],gpu,usage['rssMiB']+usage['swapMiB']))
     budget=plan['resourceBudget'];maximum=plan['maximumWorkersPerGpu']
     def decisions(current):
@@ -56,6 +69,11 @@ def probe(queue):
         counts=Counter(r.gpu for r in simulated);gpu=min(fits,key=lambda g:(counts[g],g))
         simulated.append(Resident(-step-1,gpu,0));extra[gpu]+=1
     campaign=read_json(output/'campaign.json')
+    if fleet_state and host in fleet_state['hosts']:
+        report=read_json(queue/'fleet/reports'/f'{host}.json')
+        campaign=dict(pending=sum(e['state']=='WAITING' and host in e['eligibleHosts'] for e in fleet_state['runs'].values()),
+            failed=sum(e['state']=='FAILED' and e['owner']==host for e in fleet_state['runs'].values()),
+            scheduler=dict(blocked=report['blocked']))
     return dict(host=host,trainingModified=False,hostMemory=memory,workers=workers,
         workersPerGpu=dict(Counter(r.gpu for r in residents)),
         gpuInventory=[{k:row[k] for k in ('index','memory.total','memory.free','utilization.gpu')} for row in inventory],

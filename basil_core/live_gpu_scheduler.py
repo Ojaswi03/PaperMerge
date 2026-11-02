@@ -272,6 +272,8 @@ def lease_available(profile, leases):
 
 def execute(args):
     root = args.output.resolve()
+    if (root/'fleet_owner.json').exists():
+        raise ValueError('This campaign joined the cross-server fleet. Resume with scripts/run_fedsharp_fleet.py; fixed-server dispatch is fenced.')
     plan, hardware, assigned, digest = verified(root)
     folder = root / 'operational_adapters'; folder.mkdir(exist_ok=True)
     with (root / 'live_scheduler.lock').open('a') as operation:
