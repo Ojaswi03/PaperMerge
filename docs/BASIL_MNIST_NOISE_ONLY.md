@@ -120,3 +120,53 @@ Keep the original checkpoints on hal9k. Compact export uses
 `scripts/export_basil_sharp_thesis.py` with a new destination after verification;
 the six measurements can then be added to conference comparisons using the
 existing clean and attacked controls.
+
+## Publish the verified compact results
+
+After independent verification finishes, run the following on hal9k. It checks
+the existing six-run verification receipt without rerunning inference, exports
+only the compact evidence and PNG/SVG figures, and stages the explicitly
+allowlisted result directory. The original checkpoints stay on hal9k.
+
+```bash
+(
+set -e
+cd ~/Masters_Research/PaperMerge
+git pull --ff-only
+source .venv-hpc/bin/activate
+paper_run="$(python - <<'PY'
+from pathlib import Path
+import json, os
+root = Path('/var/tmp') / f'papermerge-{os.getuid()}'
+runs = sorted(root.glob('hal9k_mnist-basil-noise-only-100r-*'))
+if not runs:
+    raise SystemExit('No matching run found.')
+run = runs[-1]
+plan = json.loads((run / 'plan.json').read_text())
+receipt = json.loads((run / 'independent_validation.json').read_text())
+assert len(plan['configs']) == 6
+assert receipt['status'] == 'ALL_COMPARISON_MODELS_VERIFIED'
+assert receipt['source'] == plan['source']
+assert len(receipt['verified']) == 6
+assert {v['runId'] for v in receipt['verified']} == {c['runId'] for c in plan['configs']}
+assert all(c['dataset'] == 'mnist' and c['comparisonCase']['arm'] == 'basil_noise_only'
+           and c['comparisonCase']['effectiveAttackers'] == 0
+           and c['comparisonCase']['effectiveSigma'] == 0.01 for c in plan['configs'])
+print(run)
+PY
+)"
+result_dir="docs/results/hal9k_mnist-basil-noise-only-100r-20261102"
+python scripts/export_basil_sharp_thesis.py \
+  --output "$paper_run" --destination "$PWD/$result_dir"
+git add -- "$result_dir"
+git diff --cached --check
+python scripts/check_publication_policy.py
+git diff --cached --stat
+git commit --only -m "Add verified MNIST BASIL noise-only results" -- "$result_dir"
+git push origin main
+)
+```
+
+The exporter validates complete run budgets, saved accuracy arrays and source
+snapshots, then writes the SHA256 manifest. It refuses conflicting existing
+exports. Do not force-add ignored paths or upload the original run directory.
