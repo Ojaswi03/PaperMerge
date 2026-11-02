@@ -217,6 +217,11 @@ the verified failures under the existing memory admission rules and GPU/runtime
 contracts. Each configuration gets one such retry; a repeat failure stays failed.
 Frozen plans, numerical producer bytes, source checkpoints and histories are
 unchanged. A successful diagnostic does not establish why an earlier read failed.
+Adopted workers retain their original physical-GPU leases. A retry can therefore
+remain queued until the existing workers holding a GPU's lease finish, even
+when a memory-only capacity check says another worker would fit. The scheduler
+reports `waiting for existing GPU lease`; it does not bypass the lock or restart
+healthy workers to reclaim it.
 
 After completion, run `scripts/verify_basil_sharp_thesis_results.py --output`
 against each printed server-local output. The compact exporter

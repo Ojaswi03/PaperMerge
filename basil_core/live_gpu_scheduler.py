@@ -450,6 +450,7 @@ def schedule(args, plan, hardware, assigned, digest, active, leases):
             if sha(root/'plan.json') != digest: raise ValueError('Frozen plan changed.')
             try:
                 latest_inventory = gpu_inventory()
+                lease_blocked = {}
                 present = {row['index'] for row in latest_inventory}
                 for gpu in hardware:
                     if gpu not in present: quarantine(gpu, 'GPU missing from NVIDIA inventory')
@@ -460,7 +461,8 @@ def schedule(args, plan, hardware, assigned, digest, active, leases):
                         except RuntimeError:
                             quarantine(gpu, 'Physical GPU identity changed')
                             continue
-                        lease_available(p, leases)
+                        if not lease_available(p, leases):
+                            lease_blocked[gpu]=dict(admit=False,reason='waiting for existing GPU lease')
                 # Sample and reserve anew after EVERY launch, including startup
                 # workers which have not allocated RAM or a CUDA context yet.
                 for _ in hardware:
@@ -468,6 +470,7 @@ def schedule(args, plan, hardware, assigned, digest, active, leases):
                     choice, blocked = choose(pending, configs, allowed, hardware, resident,
                         gpu_inventory(), gpu_processes(), available_ram_mib(), budget,
                         args.maximum, quarantined, leases)
+                    blocked.update(lease_blocked)
                     if choice is None: break
                     i,p = choice
                     fd = leases[p.gpu].fileno(); cfg = configs[i]

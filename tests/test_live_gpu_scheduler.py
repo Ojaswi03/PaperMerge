@@ -72,6 +72,31 @@ def test_must_own_exclusive_lease_before_launching(tmp_path):
     assert choose(tmp_path,leases=())[0] is None
 
 
+def test_inherited_worker_lease_survives_controller_close_and_is_reclaimed_after_exit(tmp_path):
+    import fcntl
+    import uuid
+    from dataclasses import replace
+    p=replace(profile(tmp_path,0),gpu_uuid='GPU-'+str(uuid.uuid4()))
+    path=Path('/tmp')/f'papermerge-{os.getuid()}-{p.gpu_uuid}.lock'
+    lease=path.open('a');leases={};child=None
+    try:
+        fcntl.flock(lease,fcntl.LOCK_EX|fcntl.LOCK_NB)
+        child=subprocess.Popen([sys.executable,'-c',
+            'import time; print("ready",flush=True); time.sleep(60)'],
+            pass_fds=(lease.fileno(),),stdout=subprocess.PIPE,text=True)
+        assert child.stdout.readline().strip()=='ready'
+        lease.close()
+        assert not live.lease_available(p,leases) and not leases
+        child.terminate();child.wait(timeout=5)
+        assert live.lease_available(p,leases) and p.gpu in leases
+    finally:
+        if child and child.poll() is None:child.terminate();child.wait(timeout=5)
+        if child and child.stdout:child.stdout.close()
+        lease.close()
+        for handle in leases.values():handle.close()
+        path.unlink(missing_ok=True)
+
+
 def test_checkpointed_work_cannot_move_to_another_gpu(tmp_path):
     hardware={g:profile(tmp_path,g) for g in (0,1)}
     folder=tmp_path/'case';folder.mkdir()
