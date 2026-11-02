@@ -159,7 +159,8 @@ result_dir="docs/results/hal9k_mnist-basil-noise-only-100r-20261102"
 python scripts/export_basil_sharp_thesis.py \
   --output "$paper_run" --destination "$PWD/$result_dir"
 git add -- "$result_dir"
-git diff --cached --check
+git -c core.whitespace=-blank-at-eol,-blank-at-eof \
+  diff --cached --check -- "$result_dir"
 python scripts/check_publication_policy.py
 git diff --cached --stat
 git commit --only -m "Add verified MNIST BASIL noise-only results" -- "$result_dir"
@@ -170,3 +171,7 @@ git push origin main
 The exporter validates complete run budgets, saved accuracy arrays and source
 snapshots, then writes the SHA256 manifest. It refuses conflicting existing
 exports. Do not force-add ignored paths or upload the original run directory.
+The command-scoped whitespace setting tolerates trailing spaces in generated
+SVG paths and blank final lines in frozen source snapshots. These files must
+retain their original bytes and manifest hashes; do not run a whitespace fixer
+on the verified export. The setting does not change repository configuration.
