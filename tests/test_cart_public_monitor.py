@@ -106,7 +106,7 @@ def test_publisher_uploads_final_state_then_exits_without_touching_training(tmp_
     module.publish_loop(args,dict(site='https://example.test',feedId='fixture',writeToken='a'*64))
     assert len(calls)==1 and calls[0][1]=='PUT' and calls[0][2]['status']=='COMPLETED'
     assert before=={str(p):p.read_bytes() for p in tmp_path.glob('*.json')}
-    assert capsys.readouterr().out==''
+    assert capsys.readouterr().out=='Dashboard updated: 1 configurations; COMPLETED.\n'
 
 
 def test_dashboard_origin_rejects_embedded_credentials_and_non_https():

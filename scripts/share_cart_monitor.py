@@ -74,7 +74,7 @@ def publish_loop(args,saved):
     temporary=getattr(args,'temporary',False)
     stable=getattr(args,'stable',False)
     with publisher_lock(args):
-        notified=False;last_terminal=None;last_selection=None
+        notified=False;published=False;last_terminal=None;last_selection=None
         while True:
             tick=time.monotonic()
             try:
@@ -84,12 +84,15 @@ def publish_loop(args,saved):
                     if selected is None:return
                     root=Path(selected['output'])
                     if selected['selection']!=last_selection:
-                        notified=False;last_terminal=None;last_selection=selected['selection']
+                        notified=False;published=False;last_terminal=None;last_selection=selected['selection']
                 data=public_snapshot(root)
                 terminal=data['status'] in ('COMPLETED','COMPLETED_WITH_FAILURES','COMPLETED_REPORT_FAILED','FAILED','INTERRUPTED')
                 if stable and terminal and last_terminal==data['status'] and not args.once:
                     time.sleep(max(0.,args.interval-(time.monotonic()-tick)));continue
                 request_json(saved['site']+'/api/feeds/'+saved['feedId'],'PUT',data,saved['writeToken'])
+                if not published:
+                    print(f"Dashboard updated: {data['total']} configurations; {data['status']}.",flush=True)
+                    published=True
                 if args.ntfy_topic and not notified:
                     from basil_core.ntfy_notifications import publish
                     receipt=publish(args.ntfy_topic,'CART browser monitor is live','Share this read-only link with your professor:\n\n'+saved['viewUrl']+'\n\nUpdates automatically. Training is unchanged.')
@@ -132,6 +135,7 @@ def main():
     from basil_core import stable_monitor
     p.add_argument('--state-dir',type=Path,default=stable_monitor.STATE_ROOT)
     p.add_argument('--background',action='store_true',help='Keep one permanent publisher running after SSH disconnects.')
+    p.add_argument('--restart-publisher',action='store_true',help='With --background, refresh only the verified permanent publisher after a code update.')
     p.add_argument('--stop-old-monitors',action='store_true',help='Stop old browser/terminal monitors on this host; keep training and the permanent publisher.')
     p.add_argument('--serve-stable',action='store_true',help=argparse.SUPPRESS)
     p.add_argument('--publisher-lock-fd',type=int,help=argparse.SUPPRESS)
@@ -140,6 +144,7 @@ def main():
     if a.interval<1:p.error('--interval must be at least 1 second.')
     if a.once and a.tmux:p.error('Use --once or --tmux, not both.')
     if a.background and (a.temporary or a.tmux or a.once or a.print_link):p.error('--background is for permanent sharing only.')
+    if a.restart_publisher and not a.background:p.error('--restart-publisher requires --background.')
     if a.temporary and (a.tmux or a.once or a.print_link):p.error('--temporary runs in the foreground; do not combine it with --tmux, --once or --print-link.')
     if a.temporary and a.interval>15:p.error('Temporary feeds require an interval of 1 to 15 seconds.')
     if a.stop_old_monitors:

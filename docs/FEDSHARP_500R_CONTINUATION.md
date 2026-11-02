@@ -125,6 +125,25 @@ SERVER, CLAIM, ATTACK, GPU, STATUS and the usual progress/ETA columns. No API
 credentials or private paths are uploaded. Existing public schema and permanent
 feed URL are retained.
 
+If the dashboard still shows an older completed campaign, refresh its publisher
+on **hal9k** after pulling the latest code. An already-running publisher keeps
+its imported reader code until refreshed. This command preserves the permanent
+URL and all training processes, checkpoints and frozen plans:
+
+```bash
+cd ~/Masters_Research/PaperMerge
+git pull --ff-only
+source .venv-hpc/bin/activate
+shared_run="$HOME/Masters_Research/PaperMerge/.papermerge/continuations-500r-20261102"
+python scripts/share_cart_monitor.py --output "$shared_run" \
+  --background --restart-publisher --interval 1 --ntfy-topic papermerge-ojaswi
+```
+
+The private publisher log at `~/.config/papermerge/live-monitor/publisher.log`
+prints `Dashboard updated: 150 configurations; ...` after its first successful
+upload. A new ntfy link notification also follows that upload. Do not restart
+the training supervisors to repair browser publishing.
+
 The first 100 rounds already account for 20% of each 500-round history. ETA
 uses only newly executed activations; the inherited work is not counted as
 instantaneous throughput. Source copies and shared status stay in the ignored

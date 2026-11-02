@@ -111,6 +111,71 @@ def test_background_passes_owned_lock_to_child(tmp_path,monkeypatch):
     assert json.loads((tmp_path/'publisher.json').read_text())['pid']==12345
 
 
+@pytest.mark.parametrize('kind', ['reader','training','different-state','other-host'])
+def test_refresh_checks_process_identity_before_signalling(tmp_path,monkeypatch,kind):
+    script=tmp_path/'scripts/share_cart_monitor.py';state=tmp_path/'private';state.mkdir()
+    entry=tmp_path/'proc/22340';entry.mkdir(parents=True)
+    words=['python','-u',str(script),'--serve-stable','--state-dir',str(state)]
+    if kind=='training':words[2]=str(tmp_path/'scripts/run_fedsharp_500r.py')
+    if kind=='different-state':words[-1]=str(tmp_path/'another-state')
+    (entry/'cmdline').write_bytes(('\0'.join(words)+'\0').encode())
+    (entry/'cwd').symlink_to(tmp_path,target_is_directory=True)
+    stable.write_private(state/'publisher.json',dict(pid=22340,
+        host='another-host' if kind=='other-host' else socket.gethostname()))
+    original=stable.Path
+    monkeypatch.setattr(stable,'Path',lambda value:tmp_path/'proc' if str(value)=='/proc' else original(value))
+    monkeypatch.setattr(stable.os,'pidfd_open',lambda pid:os.open('/dev/null',os.O_RDONLY))
+    signals=[]
+    monkeypatch.setattr(stable.signal,'pidfd_send_signal',lambda fd,sig:signals.append(sig))
+    if kind in ('training','different-state'):
+        with pytest.raises(RuntimeError,match='safely refresh'):stable.retire_stable_publisher(state,script)
+    else:
+        assert stable.retire_stable_publisher(state,script)==(kind=='reader')
+    assert signals==([stable.signal.SIGTERM] if kind=='reader' else [])
+
+
+def test_refresh_waits_for_old_reader_lock_and_starts_new_code(tmp_path,monkeypatch):
+    import subprocess
+    import sys
+    import time
+    script=tmp_path/'share_cart_monitor.py'
+    script.write_text('import fcntl, pathlib, sys, time\n'
+        'state=pathlib.Path(sys.argv[sys.argv.index("--state-dir")+1])\n'
+        'with (state/"publisher.lock").open("a") as lock:\n'
+        ' fcntl.flock(lock,fcntl.LOCK_EX)\n'
+        ' (state/"ready").touch()\n'
+        ' time.sleep(30)\n')
+    old=subprocess.Popen([sys.executable,str(script),'--serve-stable','--state-dir',str(tmp_path)])
+    try:
+        deadline=time.monotonic()+5
+        while not (tmp_path/'ready').exists():
+            assert old.poll() is None and time.monotonic()<deadline
+            time.sleep(.01)
+        stable.write_private(tmp_path/'publisher.json',dict(pid=old.pid,host=socket.gethostname()))
+        captures=[]
+        def spawn(command,**kwargs):
+            with (tmp_path/'publisher.lock').open('a') as another:
+                with pytest.raises(BlockingIOError):fcntl.flock(another,fcntl.LOCK_EX|fcntl.LOCK_NB)
+            captures.append((command,kwargs));return SimpleNamespace(pid=12345)
+        monkeypatch.setattr(stable.subprocess,'Popen',spawn)
+        args=SimpleNamespace(state_dir=tmp_path,output=tmp_path/'run',site='https://example.test',
+            interval=1,ntfy_topic=None,restart_publisher=True)
+        assert stable.launch_background(args,script)
+        assert old.wait(timeout=5)==-stable.signal.SIGTERM
+        assert len(captures)==1 and captures[0][1]['start_new_session']
+    finally:
+        if old.poll() is None:old.terminate()
+        old.wait(timeout=5)
+
+
+def test_refresh_option_requires_background(tmp_path,monkeypatch):
+    import sys
+    from scripts import share_cart_monitor as module
+    monkeypatch.setattr(sys,'argv',['share_cart_monitor.py','--restart-publisher'])
+    with pytest.raises(SystemExit) as error:module.main()
+    assert error.value.code==2
+
+
 def test_permanent_link_can_be_printed_without_an_output_folder(tmp_path,monkeypatch,capsys):
     import sys
     from scripts import share_cart_monitor as module

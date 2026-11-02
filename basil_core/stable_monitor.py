@@ -154,8 +154,52 @@ def stop_old_monitors(project, state):
     return dict(stopped=stopped, permanentPublishersKept=kept)
 
 
+def retire_stable_publisher(state, script):
+    """Refresh only a verified local permanent reader, including older versions."""
+    state, script = Path(state).resolve(), Path(script).resolve()
+    owner_path = state / 'publisher.json'
+    if not owner_path.exists():
+        return False
+    owner = json.loads(owner_path.read_text())
+    if owner.get('host') != socket.gethostname():
+        return False
+    pid = int(owner['pid'])
+    entry = Path('/proc') / str(pid)
+    descriptor = None
+    try:
+        descriptor = os.pidfd_open(pid)
+        if pid == os.getpid() or entry.stat().st_uid != os.getuid():
+            raise ValueError('Publisher process ownership differs.')
+        words = (entry / 'cmdline').read_bytes().decode().strip('\0').split('\0')
+        cwd = (entry / 'cwd').resolve()
+        position = 1
+        while position < len(words) and words[position] in ('-u', '-B'):
+            position += 1
+        path = Path(words[position])
+        path = path if path.is_absolute() else cwd / path
+        value = next((word.split('=', 1)[1] for word in words if word.startswith('--state-dir=')), None)
+        if '--state-dir' in words:
+            value = words[words.index('--state-dir') + 1]
+        folder = Path(value) if value else STATE_ROOT
+        folder = folder if folder.is_absolute() else cwd / folder
+        if path.resolve() != script or '--serve-stable' not in words or folder.resolve() != state:
+            raise ValueError('Saved publisher PID does not identify this permanent reader.')
+        signal.pidfd_send_signal(descriptor, signal.SIGTERM)
+        return True
+    except (FileNotFoundError, ProcessLookupError):
+        return False
+    except (OSError, ValueError, IndexError) as error:
+        raise RuntimeError('Cannot safely refresh the publisher; training was not targeted.') from error
+    finally:
+        if descriptor is not None:
+            os.close(descriptor)
+
+
 def launch_background(args, script):
     """Reuse a local publisher, or start one with the already-owned global lock."""
+    refreshing = getattr(args, 'restart_publisher', False)
+    if refreshing:
+        retire_stable_publisher(args.state_dir, script)
     lock = (args.state_dir / 'publisher.lock').open('a')
     deadline = time.monotonic() + 20
     while True:
@@ -165,7 +209,7 @@ def launch_background(args, script):
         except BlockingIOError:
             owner_path = args.state_dir / 'publisher.json'
             owner = json.loads(owner_path.read_text()) if owner_path.exists() else {}
-            if owner.get('host') == socket.gethostname():
+            if owner.get('host') == socket.gethostname() and not refreshing:
                 lock.close()
                 return False
             if time.monotonic() >= deadline:
