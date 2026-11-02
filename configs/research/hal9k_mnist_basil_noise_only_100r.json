@@ -1,0 +1,24 @@
+{
+  "schema": 1,
+  "description": "Six MNIST BASIL noise-only controls: IID/nonIID, three seeds, absolute channel SD 0.01, no Byzantine attackers. No FedSharp, FedSharp+ or ACDS runs.",
+  "settings": {
+    "families": ["basil"],
+    "environments": ["noise_only"],
+    "datasets": ["mnist"],
+    "partitions": ["IID", "nonIID"],
+    "seeds": [2025, 2026, 2027],
+    "nodes": 100,
+    "rounds": 100,
+    "local_steps": 5,
+    "attack_start": 20,
+    "sigma": 0.01,
+    "alpha": 0.5,
+    "gpu_count": 2,
+    "gpu_memory_mib": 3072,
+    "ram_mib_per_worker": 8192,
+    "ram_headroom_mib": 16384,
+    "max_workers_per_gpu": 24,
+    "scheduler": "shared",
+    "poll_seconds": 3
+  }
+}

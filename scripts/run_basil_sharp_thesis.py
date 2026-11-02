@@ -44,6 +44,7 @@ def prepare(args):
             ram_mib_per_worker=args.ram_mib_per_worker,allow_unattributed_process_memory=False))
     plan.update(attackType=getattr(args,'attack_type','hidden'),
         environments=list(getattr(args,'environments',study.ENVIRONMENTS)),
+        families=list(getattr(args,'families',study.FAMILIES)),
         scheduler=getattr(args,'scheduler','adaptive'),
         maximumWorkersPerGpu=getattr(args,'max_workers_per_gpu',24))
     root.mkdir(parents=True,exist_ok=True)
@@ -151,8 +152,10 @@ def parse_options(argv=None):
         help='Byzantine outgoing-model attack; separate from Gaussian channel noise (--sigma).')
     p.add_argument('--gaussian-std',type=float,default=1.,
         help='Pure Gaussian replacement attack standard deviation (BASIL default: 1.0); not channel sigma.')
-    p.add_argument('--environments',nargs='+',choices=study.ENVIRONMENTS,default=list(study.ENVIRONMENTS),
-        help='Use attack_only joint for 60 attacked cases, reusing existing clean controls.')
+    p.add_argument('--environments',nargs='+',choices=study.AVAILABLE_ENVIRONMENTS,default=list(study.ENVIRONMENTS),
+        help='Use noise_only for channel noise without attackers; default preserves the original matrix.')
+    p.add_argument('--families',nargs='+',choices=study.FAMILIES,default=list(study.FAMILIES),
+        help='Restrict method families; basil alone excludes FedSharp and FedSharp+.')
     p.add_argument('--scheduler',choices=('shared','adaptive'),default='shared',
         help='Shared queue balances new workers across healthy GPUs under live RAM/VRAM checks.')
     p.add_argument('--execute',action='store_true');p.add_argument('--resume',action='store_true')
@@ -195,14 +198,19 @@ def main(argv=None):
             raise SystemExit('Resume uses the frozen plan and resource profile; omit config/attack/resource overrides.')
     if args.describe:
         views=study.selected(args)
+        effective=[study.effective_config(v) for v in views]
+        attacked=any(c['switches']['attack'] for c in effective)
         counts={('IID' if split=='iid' else 'nonIID'):len({study.variant(v) for v in views if v['partition']==split})
             for split in args.partitions}
-        print(json.dumps(dict(configurations=len(views),attackType=args.attack_type,
+        print(json.dumps(dict(configurations=len(views),attackType=args.attack_type if attacked else None,
             environments=args.environments,curvesPerDataset=counts,
+            families=args.families,attacksEnabled=attacked,
+            effectiveAttackers=sorted({c['actualAttackers'] for c in effective}),
             datasets=args.datasets,seeds=args.seeds,nodes=args.nodes,rounds=args.rounds,
-            localSteps=args.local_steps,channelSigma=args.sigma,attackStartsAtDisplayedRound=args.attack_start+1,
-            gaussianAttackStd=args.gaussian_std if args.attack_type=='gaussian' else None,
-            gaussianAttackMode='pure_model_replacement' if args.attack_type=='gaussian' else None,
+            localSteps=args.local_steps,channelSigma=args.sigma,
+            attackStartsAtDisplayedRound=args.attack_start+1 if attacked else None,
+            gaussianAttackStd=args.gaussian_std if attacked and args.attack_type=='gaussian' else None,
+            gaussianAttackMode='pure_model_replacement' if attacked and args.attack_type=='gaussian' else None,
             requestedGpuCount=args.gpu_count,scheduler=args.scheduler,
             activations=len(views)*args.nodes*args.rounds,trainingStarted=False),indent=2));return 0
     if args.tmux:

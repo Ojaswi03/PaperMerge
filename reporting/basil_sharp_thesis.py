@@ -31,7 +31,8 @@ def collect(root):
             sigma=case['protocolConfig']['sigma'],nodes=cfg['nodes'],rounds=cfg['rounds'],
             local_steps=cfg['localSteps'],alpha=cfg['dirichletAlpha'],attack_start=cfg['attackStart'],
             attack_type=cfg['attackType'],gaussian_std=cfg.get('gaussianAttackStd',1.),
-            environments=plan.get('environments',study.ENVIRONMENTS))
+            environments=plan.get('environments',study.ENVIRONMENTS),
+            families=plan.get('families',study.FAMILIES))
         expected=next(v for v in study.selected(options) if study.variant(v)==study.variant(view))
         if expected!=view:raise ValueError('Run differs from the declared figure matrix.')
         folder=root/run;record=json.loads((folder/'run.json').read_text())
@@ -57,8 +58,10 @@ def collect(root):
     environments=tuple(plan.get('environments',study.ENVIRONMENTS))
     for (dataset,split),items in grouped.items():
         kinds={r['variant'] for r in items}
-        wanted={f'{family}_{env}' for family in ('basil','sharp') for env in environments}
-        if split=='dirichlet' and 'joint' in environments:wanted.update(('basil_acds','sharp_cart'))
+        families=plan.get('families',study.FAMILIES)
+        wanted={f'{family}_{env}' for family in families for env in environments}
+        if split=='dirichlet' and 'joint' in environments:
+            wanted.update('basil_acds' if family=='basil' else 'sharp_cart' for family in families)
         if kinds!=wanted:raise ValueError('Missing requested accuracy curves.')
         if len({(r['rounds'],r['nodes'],r['attackStart']) for r in items})!=1:raise ValueError('Unmatched protocols.')
         for kind in kinds:
@@ -86,8 +89,9 @@ def generate(root,destination):
         return saved
     if destination.exists() and any(destination.iterdir()):raise FileExistsError('Choose an empty figure directory.')
     destination.mkdir(parents=True,exist_ok=True);outputs=[]
-    colors=dict(clean='#0072B2',attack_only='#D55E00',joint='#7B3294',extra='#00866A')
-    labels=dict(clean='clean',attack_only='attack only',joint='attack + noise')
+    colors=dict(clean='#0072B2',attack_only='#D55E00',joint='#7B3294',noise_only='#009E73',extra='#00866A')
+    labels=dict(clean='clean',attack_only='attack only',joint='attack + noise',noise_only='noise only')
+    attacked=any(r['environment'] in ('attack_only','joint') for r in rows)
     style={'font.family':'serif','font.serif':['DejaVu Serif'],'font.size':9,'axes.titlesize':11,
         'legend.fontsize':8,'svg.fonttype':'none','pdf.fonttype':42,'svg.hashsalt':'basil-sharp-thesis',
         'figure.facecolor':'white','savefig.facecolor':'white'}
@@ -96,7 +100,7 @@ def generate(root,destination):
             items=[r for r in rows if (r['dataset'],r['partition'])==(dataset,split)]
             fig,ax=plt.subplots(figsize=(7.3,4.8));legend=[]
             for family in ('basil','sharp'):
-                for addon,env in [(None,'clean'),(None,'attack_only'),(None,'joint'),('acds' if family=='basil' else 'cart','joint')]:
+                for addon,env in [(None,'clean'),(None,'attack_only'),(None,'joint'),(None,'noise_only'),('acds' if family=='basil' else 'cart','joint')]:
                     selected=[r for r in items if (r['family'],r['environment'],r['addon'])==(family,env,addon)]
                     if not selected:continue
                     values=np.asarray([r['curve'] for r in selected])*100;x=np.arange(1,values.shape[1]+1)
@@ -104,18 +108,18 @@ def generate(root,destination):
                     name=method+': '+labels[env]
                     color=colors['extra' if addon else env]
                     pattern=dict(color=color,linestyle=(0,(1.1,2.1)) if family=='basil' else '-',
-                        marker='D' if addon else dict(clean='o',attack_only='s',joint='^')[env],
+                        marker='D' if addon else dict(clean='o',attack_only='s',joint='^',noise_only='v')[env],
                         linewidth=1.65 if not addon else 1.95,markerfacecolor='white',markeredgewidth=.85)
-                    offset=3*(3 if addon else ('clean','attack_only','joint').index(env))+(family=='sharp')
+                    offset=3*(3 if addon else ('clean','attack_only','joint','noise_only').index(env))+(family=='sharp')
                     ax.plot(x,values.mean(axis=0),label=name,markersize=3.4,markevery=(offset,12),
                         **pattern)
                     if len(values)>1:
                         sd=values.std(axis=0,ddof=1);mean=values.mean(axis=0)
                         ax.fill_between(x,np.clip(mean-sd,0,100),np.clip(mean+sd,0,100),color=color,alpha=.09,linewidth=0)
             count=items[0]['rounds'];onset=items[0]['attackStart']+1
-            if onset<=count:ax.axvline(onset,color='#999999',linestyle=':',linewidth=.8)
+            if attacked and onset<=count:ax.axvline(onset,color='#999999',linestyle=':',linewidth=.8)
             ax.set(title=('MNIST' if dataset=='mnist' else 'CIFAR-10')+' ('+('IID' if split=='iid' else 'non-IID')+')'
-                    +' / '+items[0]['attackType'].capitalize()+' attack',
+                    +(' / '+items[0]['attackType'].capitalize()+' attack' if attacked else ' / No attack'),
                 xlabel='Communication round',ylabel='Validation accuracy (%)',xlim=(1,max(2,count)),ylim=(0,100))
             ax.spines[['top','right']].set_visible(False);ax.grid(axis='y',color='#DDDDDD',linewidth=.5)
             handles,names=ax.get_legend_handles_labels()
@@ -133,11 +137,13 @@ def generate(root,destination):
     outputs.append('accuracy_by_round.csv')
     (destination/'captions.txt').write_text('Mean client-model validation accuracy over communication rounds. '
         'Lines average independent seeds after averaging clients within each run; shading is sample SD across seeds. '
-        'BASIL uses dotted lines; FedSharp and FedSharp+ use solid lines. '
-        'Circles denote clean, squares attack only, triangles attack plus noise, and diamonds the non-IID extensions. '
-        'The vertical dotted line marks attack onset in attacked conditions. '
-        'Attack type: '+rows[0]['attackType']+'. Only conditions declared in this campaign are plotted. '
-        'ACDS shares 5% of fitting examples. FedSharp uses checked pooling consistently, including FedSharp+.\n')
+        +('BASIL uses dotted lines; FedSharp and FedSharp+ use solid lines. '
+          'Circles denote clean, squares attack only, triangles attack plus noise, and diamonds the non-IID extensions. '
+          'The vertical dotted line marks attack onset in attacked conditions. Attack type: '+rows[0]['attackType']+'. '
+          if attacked else 'No Byzantine attack is active; downward triangles denote noise only. ')+
+        'Only conditions declared in this campaign are plotted. '
+        +('ACDS shares 5% of fitting examples. FedSharp uses checked pooling consistently, including FedSharp+.\n'
+          if attacked else 'Channel noise is absolute independent Gaussian parameter noise on each link.\n'))
     outputs.append('captions.txt')
     result=dict(configurations=len(rows),inputSha256=inputs,plotterSha256=sha(Path(__file__)),
         outputSha256={n:sha(destination/n) for n in outputs},svgFiles=[n for n in outputs if n.endswith('.svg')])

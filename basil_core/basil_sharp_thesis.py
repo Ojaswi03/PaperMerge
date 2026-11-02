@@ -11,6 +11,8 @@ from basil_core.cart_contribution_study import source as previous_source
 ROOT = comparison.ROOT
 REVISION = 'basil_sharp_thesis_20261029_v1'
 ENVIRONMENTS = ('clean', 'attack_only', 'joint')
+AVAILABLE_ENVIRONMENTS = (*ENVIRONMENTS, 'noise_only')
+FAMILIES = ('basil', 'sharp')
 ATTACK_TYPES = ('hidden', 'gaussian')
 _cart_validate = None
 
@@ -37,22 +39,25 @@ def selected(args):
     from basil_core.sharp_guarded_protocol import guarded_configuration
     from basil_core.sharp_cart_v2_protocol import configuration as cart_configuration
     environments=tuple(getattr(args,'environments',ENVIRONMENTS))
+    families=tuple(getattr(args,'families',FAMILIES))
     attack_type=getattr(args,'attack_type','hidden')
-    if not environments or len(set(environments))!=len(environments) or set(environments)-set(ENVIRONMENTS):
-        raise ValueError('Choose distinct clean, attack_only and/or joint environments.')
+    if not environments or len(set(environments))!=len(environments) or set(environments)-set(AVAILABLE_ENVIRONMENTS):
+        raise ValueError('Choose distinct clean, attack_only, joint and/or noise_only environments.')
+    if not families or len(set(families))!=len(families) or set(families)-set(FAMILIES):
+        raise ValueError('Choose distinct basil and/or sharp families.')
     if attack_type not in ATTACK_TYPES:
         raise ValueError('Choose Hidden or Gaussian Byzantine attack.')
     views = []
     for dataset in args.datasets:
         for partition in args.partitions:
             for seed in args.seeds:
-                for family in ('basil', 'sharp'):
-                    cases = [(env, None) for env in ENVIRONMENTS]
+                for family in families:
+                    cases = [(env, None) for env in AVAILABLE_ENVIRONMENTS]
                     if partition == 'dirichlet':
                         cases.append(('joint', 'acds' if family == 'basil' else 'cart'))
                     for environment, addon in cases:
                         if environment not in environments:continue
-                        noisy = environment == 'joint'
+                        noisy = environment in ('joint','noise_only')
                         condition = ('attack_noise_defense_rla_cart' if addon == 'cart'
                                      else 'attack_noise_defense_rla' if family == 'sharp'
                                      else 'attack_noise_defense')
@@ -68,7 +73,7 @@ def selected(args):
                         case = dict(arm=arm, family=family, environment=environment,
                             addon=addon, protocolConfig=inner, caseRevision=REVISION,
                             effectiveSigma=args.sigma if noisy else 0.,
-                            effectiveAttackers=0 if environment=='clean' else inner['byzantineBudget'],
+                            effectiveAttackers=inner['byzantineBudget'] if environment in ('attack_only','joint') else 0,
                             shareFraction=.05 if addon=='acds' else 0., acdsBatches=5,
                             selection='performance_single' if family=='basil' else 'checked_guarded_pool')
                         key = hashlib.sha256(json.dumps(case, sort_keys=True).encode()).hexdigest()[:12]
@@ -84,7 +89,7 @@ def effective_config(view):
     from basil_core.sharp_cart_v2_protocol import validate_config as validate_cart
     case = view['comparisonCase']
     inner, family, addon, env = (case[k] for k in ('protocolConfig', 'family', 'addon', 'environment'))
-    if case['caseRevision'] != REVISION or family not in ('basil','sharp') or env not in ENVIRONMENTS:
+    if case['caseRevision'] != REVISION or family not in FAMILIES or env not in AVAILABLE_ENVIRONMENTS:
         raise ValueError('Unknown thesis case.')
     if family=='basil':
         validate_basil(inner)
@@ -94,14 +99,14 @@ def effective_config(view):
             addon != ('acds' if family=='basil' else 'cart')):
         raise ValueError('Extra mechanisms are restricted to their declared non-IID cases.')
     if case['arm'] != f'{family}_{addon or env}' or case['effectiveAttackers'] != (
-            0 if env=='clean' else inner['byzantineBudget']):
+            inner['byzantineBudget'] if env in ('attack_only','joint') else 0):
         raise ValueError('Thesis case identity or attacker count differs.')
-    if (case['effectiveSigma']>0) != (env=='joint') or case['shareFraction'] != (.05 if addon=='acds' else 0.):
+    if (case['effectiveSigma']>0) != (env in ('joint','noise_only')) or case['shareFraction'] != (.05 if addon=='acds' else 0.):
         raise ValueError('Thesis noise/sharing switch differs.')
     if case['selection'] != ('performance_single' if family=='basil' else 'checked_guarded_pool'):
         raise ValueError('Thesis selection revision differs.')
     cfg = dict(inner, sigma=case['effectiveSigma'], actualAttackers=case['effectiveAttackers'])
-    cfg['switches'] = dict(inner['switches'], attack=env!='clean', noise=env=='joint',
+    cfg['switches'] = dict(inner['switches'], attack=env in ('attack_only','joint'), noise=env in ('joint','noise_only'),
         byzantine_mitigation=True, noise_mitigation=family=='sharp', cart=addon=='cart')
     return cfg
 

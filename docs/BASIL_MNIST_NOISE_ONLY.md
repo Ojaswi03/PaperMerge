@@ -1,0 +1,69 @@
+# MNIST BASIL noise-only controls
+
+`configs/research/hal9k_mnist_basil_noise_only_100r.json` expands to six new
+configurations: IID and nonIID, each with seeds 2025, 2026 and 2027.
+All use MNIST, BASIL single-model selection with a 34-predecessor window,
+100 clients, 100 complete ring rounds, five mini-batch SGD steps per activation,
+and independent absolute Gaussian link noise with standard deviation 0.01.
+Noise is active from the first available transmission through round 100.
+
+The effective attacker count is zero and the attack switch is disabled for the
+entire run. The inherited attack-type/onset fields are inactive metadata.
+There are no ACDS, FedSharp or FedSharp+ configurations in this preset.
+The original matrix defaults and completed study identities are preserved.
+This adds 60,000 client activations and 300,000 SGD steps without rerunning the
+completed clean or attacked studies.
+
+The data, initialization, receiver-local selection, learning-rate schedule,
+partitions and validation holdout follow the existing matched BASIL setup.
+Evaluation is validation accuracy, not official benchmark TEST accuracy.
+The resulting standalone plots have no attack-onset line or attack title.
+
+## Launch on hal9k
+
+Connect with `ssh os675524@hal9k.cs.ohio.edu`, then run:
+
+```bash
+(
+set -e
+cd ~/Masters_Research/PaperMerge
+git pull --ff-only
+source .venv-hpc/bin/activate
+nvidia-smi
+free -h
+paper_run="/var/tmp/papermerge-$(id -u)/hal9k_mnist-basil-noise-only-100r-$(date +%Y%m%d-%H%M%S)"
+python scripts/run_basil_sharp_thesis.py \
+  --config configs/research/hal9k_mnist_basil_noise_only_100r.json \
+  --output "$paper_run" --describe
+mkdir -p "$paper_run"
+nohup python -u scripts/run_basil_sharp_thesis.py \
+  --config configs/research/hal9k_mnist_basil_noise_only_100r.json \
+  --output "$paper_run" --execute --wait-for-resources \
+  --ntfy-topic papermerge-ojaswi \
+  > "$paper_run/adaptive_supervisor.log" 2>&1 < /dev/null &
+echo $! > "$paper_run/supervisor.pid"
+printf 'Run directory: %s\n' "$paper_run"
+tail -f "$paper_run/adaptive_supervisor.log"
+)
+```
+
+The description must report six configurations, `families: ["basil"]`,
+`environments: ["noise_only"]`, `effectiveAttackers: [0]`,
+`attacksEnabled: false`, channel sigma 0.01 and `trainingStarted: false`.
+The subsequent launch verifies input fingerprints and both GPUs before starting
+training, then uses the existing shared queue and RAM/VRAM admission checks.
+Ctrl+C closes the log viewer; detached training continues.
+
+For monitoring, set `paper_run` to the exact directory printed by the launcher
+in each new shell, then use
+`python scripts/run_cart_comparison.py --monitor --output "$paper_run"`.
+Never launch a second supervisor against that directory. Resume on hal9k uses
+`python scripts/run_basil_sharp_thesis.py --output "$paper_run" --resume --execute --wait-for-resources --ntfy-topic papermerge-ojaswi`,
+without a preset or changed settings.
+
+After all six finish, independently verify the retained checkpoints with
+`python scripts/verify_basil_sharp_thesis_results.py --output "$paper_run"`.
+Keep the original checkpoints on hal9k. Compact export uses
+`scripts/export_basil_sharp_thesis.py` with a new destination after verification;
+the six measurements can then be added to conference comparisons using the
+existing clean and attacked controls.
