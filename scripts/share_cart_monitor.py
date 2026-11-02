@@ -102,7 +102,9 @@ def publish_loop(args,saved):
             except (OSError,ValueError) as error:
                 if temporary and getattr(error,'code',None) in (404,410):
                     print('Temporary sharing session has ended; training is unaffected.',flush=True);return
-                print('Browser update delayed ('+type(error).__name__+'); training is unaffected.',file=sys.stderr,flush=True)
+                detail=type(error).__name__
+                if getattr(error,'code',None) is not None:detail+=' HTTP '+str(error.code)
+                print('Browser update delayed ('+detail+'); training is unaffected.',file=sys.stderr,flush=True)
                 if args.once:raise
             time.sleep(max(0.,args.interval-(time.monotonic()-tick)))
 

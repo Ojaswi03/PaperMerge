@@ -169,6 +169,23 @@ duplicate its work. On the affected server, rerun the same
 workers and resumes checkpointed interrupted work under its original profile.
 Do not pull producer changes or edit a frozen plan during execution.
 
+If workers fail before advancing past the imported boundary, leave healthy
+workers running and inspect the failed imports on their assigned server:
+
+```bash
+cd ~/Masters_Research/PaperMerge
+source .venv-hpc/bin/activate
+shared_run="$HOME/Masters_Research/PaperMerge/.papermerge/continuations-500r-20261102"
+python scripts/diagnose_fedsharp_500r.py --queue "$shared_run" --check-inputs
+```
+
+This reads the failed rows, checks original/shared/local seed hashes against
+the frozen expected hash, parses metadata and compares its original contract
+and cursor, then verifies two CPU reads of each affected dataset. It does not
+train, modify checkpoints, change validation rules or requeue failures. A
+matching checkpoint hash alone does not establish that its metadata is valid.
+The original checkpoint path is inspected only on its producing host.
+
 After completion, run `scripts/verify_basil_sharp_thesis_results.py --output`
 against each printed server-local output. The compact exporter
 `scripts/export_basil_sharp_thesis.py` supports the continuation histories and
