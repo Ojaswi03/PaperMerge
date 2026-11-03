@@ -31,5 +31,6 @@ def public_snapshot(directory):
             accuracy=finite(row['mean']),elapsedSeconds=finite(row['elapsed']),etaSeconds=finite(row['eta']),
             etaSource=row.get('etaSource'),phase=row.get('phase')))
         label=comparison_label(cfg,include_environment=True)
+        if cfg.get('cleanControl') and cfg.get('comparisonCase',{}).get('arm')=='sharp_clean':label='FedSharp / clean'
         if label:public['runs'][-1]['condition']=label
     return public

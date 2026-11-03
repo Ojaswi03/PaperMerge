@@ -117,6 +117,16 @@ test('CART and ACDS remain distinguishable and old feeds preserve their meaning'
   context.endSession();assert.equal(elements.get('runs').children[0].children[0].colSpan,12);
 });
 
+test('clean FedSharp control feed uses its method name without changing legacy feeds',()=>{
+  const {context,elements}=browser();const snapshot=sample();
+  snapshot.runs=snapshot.runs.map(row=>({...row,condition:'FedSharp / clean',sigma:0}));
+  context.render({snapshot,receivedAt:new Date().toISOString()});
+  assert.equal(elements.get('experiment-title').textContent,'FedSharp clean controls');
+  snapshot.runs[0].condition='SHARP+CART / attack+noise';
+  context.render({snapshot,receivedAt:new Date().toISOString()});
+  assert.equal(elements.get('experiment-title').textContent,'CART mechanism comparison');
+});
+
 test('browser respects the delivered overall ETA and shows finish time',()=>{
   const {context,elements}=browser();const snapshot=sample();snapshot.etaSeconds=10000;
   snapshot.runs=[{...snapshot.runs[0],etaSeconds:1000},{...snapshot.runs[0],etaSeconds:2000}];

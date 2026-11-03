@@ -22,6 +22,16 @@ def test_public_projection_omits_paths_errors_source_and_process_identity(tmp_pa
     assert not {'error','source','runtime','ownerPid','output'}.intersection(result)
 
 
+def test_clean_control_method_label_does_not_expose_internal_cart_protocol_name(tmp_path):
+    from basil_core.cart_public_monitor import public_snapshot
+    setup(tmp_path,[(2025,'clean','mnist',running(20,40))])
+    path=tmp_path/'plan.json';plan=json.loads(path.read_text())
+    plan['configs'][0]['cleanControl']=dict(proximalMu=0)
+    plan['configs'][0]['comparisonCase']=dict(arm='sharp_clean',environment='clean')
+    path.write_text(json.dumps(plan))
+    assert public_snapshot(tmp_path)['runs'][0]['condition']=='FedSharp / clean'
+
+
 def test_overall_rate_and_elapsed_match_terminal_snapshot(tmp_path):
     from basil_core.sharp_monitor import snapshot
     from basil_core.cart_public_monitor import public_snapshot
