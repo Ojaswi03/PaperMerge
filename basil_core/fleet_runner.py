@@ -141,11 +141,15 @@ def publish(queue,host,original,active,blocked):
     refresh_csv(queue,snapshot(queue))
 
 
-def run(queue,retry_request=None,ntfy_topic='papermerge-ojaswi'):
+def run(queue,retry_request=None,ntfy_topic='papermerge-ojaswi',inherited_leases=(),handover_id=None):
     from scripts.run_cart_v2_study import worker_environment
     from scripts.run_cart_v2_scaled import available_ram_mib
     queue=Path(queue).resolve();original,output,legacy,plan,master=prepare(queue);host=host_name()
     active={};assigned={};leases={};stopped=False;blocked={}
+    if inherited_leases:
+        from basil_core.fleet_lease_transfer import inherited_handles
+        leases=inherited_handles(inherited_leases,{p['gpu']:ExecutionProfile(**p) for p in plan['profiles']})
+        for spec in inherited_leases:os.close(int(spec.split(':')[1]))
     def stop(*_):
         nonlocal stopped
         stopped=True
@@ -180,7 +184,8 @@ def run(queue,retry_request=None,ntfy_topic='papermerge-ojaswi'):
             receipt=dict(host=host,activatedAt=time.time(),originalPlanSha256=sha(original/'plan.json'),
                 fleetPlanSha256=sha(output/'plan.json'),masterSha256=sha(queue/'continuation_plan.json'),
                 workersBefore=before,workersAfter=found,workerSignalsSent=False,operationalSource={})
-            for name in ('basil_core/fleet_runner.py','basil_core/fleet_queue.py','scripts/run_fedsharp_fleet.py'):
+            for name in ('basil_core/fleet_runner.py','basil_core/fleet_queue.py','scripts/run_fedsharp_fleet.py',
+                    'basil_core/fleet_lease_transfer.py','scripts/refill_fedsharp_gpus.py'):
                 source=ROOT/name;digest=sha(source);target=output/'operational_snapshots'/digest[:12]/name
                 target.parent.mkdir(parents=True,exist_ok=True)
                 if target.exists() and sha(target)!=digest:raise ValueError('Operational snapshot differs.')
@@ -213,6 +218,9 @@ def run(queue,retry_request=None,ntfy_topic='papermerge-ojaswi'):
                     item=master['items'][entry['index']]
                     fleet.resume_waiting(queue,run,host,entry['claim'],fleet.public_row(item,row))
             print(f'{host}: adopted {len(active)} existing workers; original plans/checkpoints preserved.',flush=True)
+            if handover_id:
+                atomic(output/'lease_handover_ready.json',dict(handoverId=handover_id,
+                    agent=live.identity(os.getpid()),gpus=sorted(leases),workerSignalsSent=False))
             (output/'operational_adapters').mkdir(exist_ok=True)
             live.notify(output,ntfy_topic,'PaperMerge cross-server queue active',
                 f'{host}: adopted {len(active)} existing processes without restarting training. Waiting jobs can move after both servers join.')

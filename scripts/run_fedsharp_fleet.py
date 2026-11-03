@@ -21,11 +21,15 @@ def main():
     parser.add_argument('--ntfy-topic',default='papermerge-ojaswi')
     parser.add_argument('--serve',action='store_true',help=argparse.SUPPRESS)
     parser.add_argument('--retry-request',type=Path,help=argparse.SUPPRESS)
+    parser.add_argument('--inherited-gpu-lease',action='append',default=[],help=argparse.SUPPRESS)
+    parser.add_argument('--handover-id',help=argparse.SUPPRESS)
     args=parser.parse_args();queue=args.queue.resolve()
     if args.background and not args.execute:parser.error('--background requires --execute.')
     if args.serve:
         if not args.execute or args.background:parser.error('Invalid fleet child invocation.')
-        return runner.run(queue,args.retry_request,args.ntfy_topic)
+        if bool(args.inherited_gpu_lease)!=bool(args.handover_id):parser.error('Incomplete lease handoff invocation.')
+        return runner.run(queue,args.retry_request,args.ntfy_topic,args.inherited_gpu_lease,args.handover_id)
+    if args.inherited_gpu_lease or args.handover_id:parser.error('Lease handoff is for the verified child invocation only.')
     if not args.execute:
         from basil_core.continuation_campaign import host_name
         from basil_core.live_gpu_scheduler import verified,discover

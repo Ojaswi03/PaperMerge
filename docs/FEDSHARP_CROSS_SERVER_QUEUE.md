@@ -170,3 +170,41 @@ finish. These remain forecasts: startup and changing contention can move the
 estimates. A monitor-only update needs a new terminal monitor process or a
 browser-publisher refresh as described above; fleet agents and training workers
 keep running unchanged.
+# Refilling GPUs while adopted workers continue
+
+An inherited exclusive GPU lock can prevent a replacement fleet dispatcher
+from filling available capacity until the last old worker on that GPU exits.
+`scripts/refill_fedsharp_gpus.py` can recover the existing lock's open-file
+description with Linux `pidfd_getfd`. This preserves the original lock inode
+and the workers' descriptors. It does not delete, replace, unlock, or bypass
+the physical-GPU lock, and does not alter the frozen scientific sources.
+
+Run on each affected server from its activated HPC environment:
+
+```bash
+cd ~/Masters_Research/PaperMerge
+git pull --ff-only
+source .venv-hpc/bin/activate
+shared_run="$HOME/Masters_Research/PaperMerge/.papermerge/continuations-500r-20261102"
+python scripts/refill_fedsharp_gpus.py --queue "$shared_run" --execute
+python scripts/diagnose_fedsharp_activity.py --queue "$shared_run" --seconds 10
+```
+
+Omit `--execute` to test eligibility without replacing the dispatcher. All GPU
+handles must be captured before any signal is sent. Only the verified fleet
+dispatcher receives SIGTERM; its handler leaves workers running. The new
+dispatcher receives those same locked handles, adopts the live workers, and
+acknowledges readiness. Normal memory reservations, headroom, GPU validation
+gates and atomic per-run claims still control admission. This can improve
+aggregate throughput by filling spare capacity, not by accelerating the
+calculations inside an existing worker. Hal9k can still be limited by its
+host-RAM reservations even after its GPU lease becomes accessible.
+
+Kernel security settings often deny `pidfd_getfd` between these processes. In
+that case the command fails before stopping the dispatcher, leaves all runs
+alone, and makes no attempt to weaken host policy. Do not remove lock files or
+restart workers to get around the denial. If the dispatcher was replaced but
+readiness fails, inspect the explicitly reported agent PID and `fleet_agent.log`
+before attempting another launch; workers are never signalled by this tool.
+Handoff receipts live under the host fleet output's `lease_transfers/` folder
+and remain private runtime evidence.
