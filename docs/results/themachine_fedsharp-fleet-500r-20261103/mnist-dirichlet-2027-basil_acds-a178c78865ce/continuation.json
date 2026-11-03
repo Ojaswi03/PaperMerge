@@ -1,0 +1,51 @@
+{
+  "maximumBoundaryInferenceDifference": 0.0,
+  "prefixMetricsExactlyPreserved": true,
+  "retainedModelsOutgoingVersionsReferencesAndTelemetryPreserved": true,
+  "sourceArchive": "docs/results/hal9k_gaussian-attack-100r-20261031",
+  "sourceCheckpointSha256": "bdcec6b1f6dc9e270a1411ac96cb4e6316494db744ac3df9aebd527f7bb2f367",
+  "sourceCheckpointUnmodified": true,
+  "sourceContractSha256": "ea077b1b3751eb0c1e4d1d4f7aa67b7c4bd1164be2676d9057489d5bbfc193f7",
+  "sourceCursor": 10000,
+  "sourceElapsedSeconds": 1066.081187406904,
+  "sourceRounds": 100,
+  "sourceRunId": "mnist-dirichlet-2027-basil_acds-44bdb582ad81",
+  "sourceRuntime": {
+    "device": "/GPU:0",
+    "host": "hal9k",
+    "numpy": "1.26.4",
+    "profile": {
+      "data_workers": 0,
+      "gpu": 1,
+      "gpu_uuid": "GPU-c69f1afe-c750-4477-c324-5278b3b2417e",
+      "headroom_mib": 8192,
+      "memory_mib": 3072,
+      "name": "hpc",
+      "output_root": "/var/tmp/papermerge-1718278706/hal9k_gaussian-100r-20261031-160041",
+      "ram_mib": 8192,
+      "threads": 1
+    },
+    "tensorflow": "2.21.0",
+    "tf32": false
+  },
+  "targetRounds": 500,
+  "targetRunId": "mnist-dirichlet-2027-basil_acds-a178c78865ce",
+  "targetRuntime": {
+    "device": "/GPU:0",
+    "host": "themachine",
+    "numpy": "1.26.4",
+    "profile": {
+      "data_workers": 0,
+      "gpu": 2,
+      "gpu_uuid": "GPU-ebd2f913-08dd-030e-006d-3bce4792a839",
+      "headroom_mib": 8192,
+      "memory_mib": 3072,
+      "name": "hpc",
+      "output_root": "/var/tmp/papermerge-1718278706/themachine_fedsharp-all-500r-724feac03d03",
+      "ram_mib": 8192,
+      "threads": 1
+    },
+    "tensorflow": "2.21.0",
+    "tf32": false
+  }
+}

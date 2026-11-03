@@ -1,0 +1,1473 @@
+{
+  "fleetExporterSha256": "67c08520732311dfc560401e3ab568a836e2d28d46e19e5280363b1f1b8a2fce",
+  "fleetFragment": true,
+  "host": "themachine",
+  "interpretation": "Fresh CPU inference of every final client model in this host fragment; original TRAIN holdout, no official TEST data.",
+  "officialTestUsed": false,
+  "source": {
+    "basil_core/acds.py": "a67bea10bfb0b57e01978c4d134d741470835e0a9fb06abb0dab296c71db4862",
+    "basil_core/attacks.py": "5c7e859079a2907216c5fa0d6757024c9216cbf46a72ac126984994faee7ccdb",
+    "basil_core/basil_sharp_thesis.py": "000505b94ea15513c81582bd8aa006995b7b211305d67b5cc6017ce31d11081e",
+    "basil_core/cart_admitted_continuity_candidate.py": "bc7efb8b91474aae9b70cdce9d36b6e3ad76114b33cab77047b096ea67e8c697",
+    "basil_core/cart_balanced_commit.py": "3be2fbd3a3cf466de110f4c16f363501740e824475465009a5c8e36839e82763",
+    "basil_core/cart_batched_scoring.py": "77d0ee3ac9fc958e944d282a68d1fb4838ddb4dac6b99c7829444d6e78ef48e3",
+    "basil_core/cart_campaign_io.py": "3655d41d806e5778a28c952037196da840b186db5541d623033da4dcb3a7dcc9",
+    "basil_core/cart_class_skill.py": "7e2d4952f70f7bcda4f5b312a4edeb93541843a6d45f4e725c02e7085ec2b876",
+    "basil_core/cart_comparison_study.py": "f8c6f85570675130d3052fa9971c269c5d5f3d65db744c32e1e2053aca8f7906",
+    "basil_core/cart_continuity_candidate.py": "fb1fdb973f59445f0069d7e37eb3d93820235b1da9c73cb67f7f6ddff9a0a93a",
+    "basil_core/cart_contribution_study.py": "9b87777a5fc3010be40109b1a1651caf4b76dbba8c3b1dbb0fcd0c51438d6674",
+    "basil_core/cart_discriminative_admission_candidate.py": "35ef43ac1f6b47608a773dc1f73171547ce7ef38e6865dbccb3243f301ec03eb",
+    "basil_core/cart_discriminative_continuity_candidate.py": "62d11f505a1bf6014e8de543d0116f900a42082dc4f7ad91fbf28d197dfc1099",
+    "basil_core/cart_display_labels.py": "ce7a3c78a39fc0270f9a2cdcc4f288a39b383fff5b8207242007936fff6eb6c0",
+    "basil_core/cart_local_prior.py": "c1b3f396119d103d1affde23293db41e32e42c0e8b1555887a8b0c163bb77739",
+    "basil_core/cart_mechanism_audit.py": "186ff4605af843a9b478fa24ff8b1545033b6f5252d03259cb5c36a8c3561b8a",
+    "basil_core/cart_noise_selection.py": "d9c7fdb0b42d625f26280c06122202b35db1e3ae1db06a2ac74e74619f206bb1",
+    "basil_core/cart_peer_candidates.py": "3fc3d2a79ee5955bc44754be8f48118bc5024bad5f4b9b16fa952a29b2eb9576",
+    "basil_core/cart_prior_neutral_commit.py": "9727a07bf0ef6fd807fe2ca8ccd131cf774cc2aa7eefee07496e62ea44dd0ebd",
+    "basil_core/cart_prior_neutral_routing.py": "ca705a466d22deea7b194ea251c00467cf7d2a1a0facc5e1d10c081516c5fe12",
+    "basil_core/cart_qualified_continuity_candidate.py": "34245444719db9f7c814013fca5f49c3284cfa32918d788a559a195ef77d5b02",
+    "basil_core/cart_quality_commit_candidate.py": "2eeb85810bcd8656fbbb1f89399cdfac51c0f1ea2d5eb34b8c5dfeea90b5020e",
+    "basil_core/cart_quality_routing_candidate.py": "d47314835462ef38c7c6ebce19f34032c0cb96a9cae66b7e6cae1146b265ab8c",
+    "basil_core/cart_revision_study.py": "d61d64fc0ec2654b1b708c71dab209fd35654d0eb68233cba252ed55f5989669",
+    "basil_core/cart_semantic_admission_candidate.py": "c732e79987b4d393432f18b8ddb3c738500769b070412daf99f92a917bb95929",
+    "basil_core/cart_transactional_quality_candidate.py": "c041a4e188bac1dfb38b1a4e39b7e6f11c28aacae99075c5af7ccecf8d07b047",
+    "basil_core/cart_uncertainty_admission_candidate.py": "644781cf6fe366f6304f6e27bd45bcf4139db304bd9db304bd0f02ede76631b6",
+    "basil_core/cart_worker_admission.py": "4d078647c164f301f59dcd1feebc30b4649cff75b51e90b548f7f5fb4a63c703",
+    "basil_core/continuation_campaign.py": "80ecb2a91d7ad2f4f4a50ccf3c7444791e73303fe92b0155dad4a1cdec77fa9d",
+    "basil_core/data/cifar.py": "9bacb38333fe1b27b74919f7422e74415ebc58bd54e64431845f930a9ebfe180",
+    "basil_core/execution_profile.py": "222e60d95b643a364b30a400b28ed38baf4913db04b5acae5fa6f558ed84cfbe",
+    "basil_core/factorial_model.py": "07baaac3ae5d5a7a698fc4d37b37574f93f95510e43976cb8fbacdeb55f8142f",
+    "basil_core/factorial_study.py": "51ba798ee07f4d80a90a3b7e5c11280073e2cf2fabe1555b50e0505d1022884f",
+    "basil_core/iid_runtime.py": "f0069317dd6fbc583726cb734d89d8c32c50b2e5af564a491df513fee2ed9c58",
+    "basil_core/lazy_imports.py": "5d7039af5f56bcf16099ceef788e0b6515a70af7ff94cb8b9cd6fee8759f15b4",
+    "basil_core/models.py": "49169fb67c9c59d00d86e09d62d88189b164a777820680624d42bab1a47bd0cb",
+    "basil_core/research_protocol.py": "cb4fcaeb4f0b11079598001cd98ecfe8965db7ff6a806973b04b6af3393e7c15",
+    "basil_core/round_continuation.py": "ed45874256f15d64588d758eeb6a425df411071041ae7421e5eb8dfc667cca6a",
+    "basil_core/sharp_cart.py": "48ad43fe155f5e61c8122fcbe80e2dd3cb10b9afdf4f0506c244a466c561eeb8",
+    "basil_core/sharp_cart_v2.py": "9d1a06ad3dc75175fa778cfdbd7fd60f1eed39e6c05b17981f06e3cb0fd824f4",
+    "basil_core/sharp_cart_v2_protocol.py": "e78470f7c1532d46fac1e5cfb31bb85e532dbb957b4a688c1f98fc017c661b99",
+    "basil_core/sharp_checked_pool.py": "b853e8995f3391062ae016d3d0ebdb0b0919bcc7fea3adabc87a42ad3fcc2f39",
+    "basil_core/sharp_compiled_transfer.py": "bb44a909f2ac062389800264fcafb851fe8024099a7de9390fee88c9c8af82e9",
+    "basil_core/sharp_data.py": "bb636a1b6b4a95b246fa62b6168a790b92e70a11268c399b093d4689cd4eaf18",
+    "basil_core/sharp_guarded_protocol.py": "1a867fca0e4f78718158ae4308aea302b43c473a8d8faa0ddb127e9f7765c6e6",
+    "basil_core/sharp_math.py": "be9528e3ce10d8e084a44577fdb046fa8e82c61cf5d1824f6aa8494c63fb0831",
+    "basil_core/sharp_protocol.py": "f3c4d69f5d179e3af1f580086c98605a23ed0f07942bcdd74015acd7f9994563",
+    "basil_core/sharp_study.py": "22f06ad8724922757efa711e9aa81101438522e1ea244f273803e5f2d81912f2",
+    "basil_core/sharp_worker.py": "42f64e76afb8a1093e23b95e874edab4e6aac12e3ef58de0318259b6c081fce7",
+    "basil_core/thesis_raw_data.py": "4e44ac1221db7b24939f9d99294bfa2246075fe377e5f88f9b42c92ebbe72fdd",
+    "basil_core/trainer.py": "61782cd28a44443618f07d4ed9fd8a5ac4a51ade940e4f0d1b6e9dbc245e3124",
+    "docs/specifications/SHARP_professor_20261027.pdf": "b010c9c79a2282c5835e0b9b4bc5cd95500afbcf7395dd9d04fd6a2a0b9ce700",
+    "reporting/basil_sharp_thesis.py": "04ba2eb046afd948cc6316e196bdd33174129ed0d331e77df115154555937feb",
+    "reporting/cart_comparison.py": "939d5f253bf299bc08763507f393865c8755266d5f1466d58813b010dcfa09bd",
+    "reporting/round_continuation.py": "aff8b09e232a93846899a9d9df7571ff4ab9e4904aa08d771cd020a5d85066ee",
+    "scripts/basil_sharp_thesis_worker.py": "0e0d65ef9017ce98c619f800fd9f691593c4dcf166c25ddfaf7b0a6aadc1dae4",
+    "scripts/cart_comparison_worker.py": "92beee41e5c0d19e3a6f0dccc6393aa34c3e0d0d8ed2733fd01e3eda9dee1b40",
+    "scripts/cart_contribution_worker.py": "3bde3ebe975f7931558ad1b71734ee72a6a37d8fe0347b9a69eb36385fc0759a",
+    "scripts/cart_revision_worker.py": "c4ce11a8d0e5de663cfc968864ce46d4b5f84fc98b4e5df5ddb3ab9754556246",
+    "scripts/cart_v2_slot_worker.py": "2b37a1a47a0d37a89e4181412eb578b45e4596fa682868ca8423b2162200ac2b",
+    "scripts/cart_v2_transfer_worker.py": "a0fc80601338c45a4331af62f9874830aaac903dbe8f3fc975a40f4862fe7f85",
+    "scripts/run_basil_sharp_thesis.py": "dce041e4dc267b1201903948f35819f17460f992cf83ef5663c801be2f86bb31",
+    "scripts/run_cart_adaptive.py": "bbc50a3980ea734545e7a3753385f033373bfb5e7cbad6ab7dd56cc26f3ec853",
+    "scripts/run_cart_comparison.py": "cdd202457ab4418c9c5374e27a06a39a1b5fd9751b8c3c338425735c307e675c",
+    "scripts/run_cart_contribution.py": "d6965a3e7f3552ab0005f3d72b636fbde585ad04449a32201f548897bd5266ca",
+    "scripts/run_cart_revision_study.py": "0493edd890bde749501a724100a628fb80ff97e11cae187e68dc653f4ba877d0",
+    "scripts/run_cart_v2_resilient.py": "922fbcfefac5ff7020a9a2dc989cd372311f886342c11e8adddd534107fddd38",
+    "scripts/run_cart_v2_scaled.py": "a3ee3af55c745a49328faea641ff5b977dbf8d4bd6bb9596042241637f0b936e",
+    "scripts/run_cart_v2_study.py": "d594dd989ae96c4e2f38a42b8b5c6f2a6d7fa08eb890512ed366f812848ae587",
+    "scripts/run_cart_v2_transfer.py": "34ded0e19586fd8f4c326a65ba32a92ed55b80ce4aeec326be6ba60d70396019",
+    "scripts/run_fedsharp_500r.py": "3f4819b62fc2f14f5f6c29c48d6f39f27a90cc8070d02a1dad128339a08925a5",
+    "scripts/run_guarded_sharp_case.py": "9219f4685f71f02d4dc2c9bcdc6697779f705f5b32903fbcba6c6e924b2de980",
+    "scripts/run_sharp_study.py": "2f1909042567548c5a8d7efceda7b831aa60c8782f1f02e45774a4592d741869",
+    "scripts/verify_basil_sharp_thesis_gpu.py": "ae488947446d826b9050f574d6e5157108be5792891ecf47976f795b06d08b2c",
+    "scripts/verify_basil_sharp_thesis_results.py": "c9d540643fd41e22d8a81c70b58c4ad1eae054841319e563f675ae4c10307def",
+    "scripts/verify_cart_comparison_gpu.py": "75f7babc69e45d11a29c9847ea71ad80e74e72411e9c8a5a9a893047d059ad82",
+    "scripts/verify_cart_contribution_gpu.py": "195ec0064248c9579836725f77c9f55d5b476c212f6a659c4ebe552bea847dd2",
+    "scripts/verify_cart_local_prior_gpu.py": "d86aac4c6d56119535c4ab3139e7c43cc89347d46fe92d8cfc838a14b3660b74",
+    "scripts/verify_cart_revision_gpu.py": "389db37d60a2d4159f6f41f3a3d313448bb6a4ea45b648983ef9d5017a7d94d6",
+    "scripts/verify_cart_v2_transfer.py": "e60bd8714bc55739c808209d001ffe028aac13097adcdca9fdbcd0d12ad167ce"
+  },
+  "status": "ALL_COMPARISON_MODELS_VERIFIED",
+  "verified": [
+    {
+      "attackType": "gaussian",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.19829000000000005,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "ce96b73e4ccef7df96f5fe332d0f4c5516133bc4c086307970c804b9bf814163",
+        "run.json": "eec02a7bcc67e41e84ebcafaa23bbd1b9866ce592e33078d9d8d349ee99efd6b"
+      },
+      "runId": "cifar10-dirichlet-2025-basil_acds-c201b2e8ec9b",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "gaussian",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.75461,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "d7a3e577ef1c48cea2d03494a59204f4dbb28c93f0f013d4f0a66ca60ba321ff",
+        "run.json": "ba52dd50c9506137a840a2f29abe3066faf01d4d0843b75a91cf4cadd8a4d4a0"
+      },
+      "runId": "mnist-dirichlet-2025-basil_acds-0e30e6423b50",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "hidden",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.7395299999999999,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "2e70025a22fbbda6c7aa6bc8fa8d168cb6a2a56f18eccf2a2a05f67ab973c90a",
+        "run.json": "eece4775dc1a1f691f02e55bd6a2e6ccc4b0ecc2a972941641fc87cf4867f802"
+      },
+      "runId": "mnist-dirichlet-2025-basil_acds-1d6da256baf5",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "gaussian",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.2375,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "223e999870d576cd0f46cc2548e357115172b9d2a856f34b938b283eaff46245",
+        "run.json": "929e9f11da32935b85de3afc587e91ef50825c29fb4ee02b9d3ea31fb89fbf1c"
+      },
+      "runId": "cifar10-dirichlet-2025-basil_attack_only-cdc1922edb79",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "hidden",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.24816000000000002,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "80e7a0ee36bec71d54c0c273fca4435a6ccec655dcfc5c0fc37d81681ee0e290",
+        "run.json": "94824024ba037d0dc154d35b2fa75ce83bfd39533e55cb9e246b8c19a608e0eb"
+      },
+      "runId": "cifar10-dirichlet-2025-basil_attack_only-825d8f059711",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "gaussian",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.9259099999999999,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "d5a6cef9a06d882c60473dfd024dc9e4cdce7e0a36446a8c7f3324727f2587cf",
+        "run.json": "aed9a4850f6982c0fc1b00c9486d2145e69b6110f9790f2993a55545621cee0c"
+      },
+      "runId": "mnist-dirichlet-2025-basil_attack_only-d0ab0386c7b7",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "hidden",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.9259099999999999,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "bc9e67175ef34463215f0b3ad545da7a3c21a009abfb9d86c5c504b6f078e123",
+        "run.json": "6f96d25bdf2207eda278626b1c1c256a8f113924bcc8f0ac68aa15836f5a0b0b"
+      },
+      "runId": "mnist-dirichlet-2025-basil_attack_only-6f6ebae4cca2",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "gaussian",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.42269,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "2cd75a34dd66e5b37faf9d106834dd14bc9d9b3015d2d5f144a1d84e94b14864",
+        "run.json": "60abb59d5739982409f60d1ba0e5d348d514bb530c0f84a52325e1d981414607"
+      },
+      "runId": "cifar10-iid-2025-basil_attack_only-5e423a7f97fb",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "hidden",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.42269,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "2cd75a34dd66e5b37faf9d106834dd14bc9d9b3015d2d5f144a1d84e94b14864",
+        "run.json": "65aef15563cf19d5f48eda6c6dcf0c5d0b59fb12197143895f41747c8e615dad"
+      },
+      "runId": "cifar10-iid-2025-basil_attack_only-9e366b4082f9",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "gaussian",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.9423499999999998,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "671083a2f270b0694b97f96ecd46367955af000472b5895d5f80a82e24443908",
+        "run.json": "350ead1202ea57835f70eee8ccb845a0c986f7e6946b673d57f910cd3ae10695"
+      },
+      "runId": "mnist-iid-2025-basil_attack_only-3e77f7996281",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "hidden",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.9423499999999998,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "671083a2f270b0694b97f96ecd46367955af000472b5895d5f80a82e24443908",
+        "run.json": "7bdec0fc7865d5e69ca59b2379fa37203608f473838a88442ee20565e50d3285"
+      },
+      "runId": "mnist-iid-2025-basil_attack_only-9a60c38babb4",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "hidden",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.25131000000000003,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "d1bef6ab11c09b6138d3b2397e1c8d6d672cf7363499b0aa2420e8ed2bff6c1c",
+        "run.json": "a5179f20cfbb842407ba9b4d597d8a452dd671afc6b820b81f8eae7fecf14544"
+      },
+      "runId": "cifar10-dirichlet-2025-basil_clean-5be969223bf2",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "hidden",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.92412,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "42cad4b35d44197180ffe316051c1920f0123c56ab30db231ab1ee5fb290644d",
+        "run.json": "b8a3f3a0e502e7724033ee00f3354323b437d1793cb5c3da3c936b53cf30a048"
+      },
+      "runId": "mnist-dirichlet-2025-basil_clean-71a01903dc00",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "hidden",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.93893,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "a753df06847f50b002d9a2280913f1f6346f578b49d5dc536d5569edeb09e740",
+        "run.json": "08706204bc9c5f3451757ad722676a34f8443859ac3a5d8162bdd73cd99a3de2"
+      },
+      "runId": "mnist-iid-2025-basil_clean-1b68da0f345d",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "gaussian",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.10016000000000001,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "603e9c82e326dc8251149ad392335692b731e143151d8613649edfb30922ada7",
+        "run.json": "5ebdf4b31b89253ace0bc2352ea1ba1279e6a1775c80b75d7d7cdb74594ec36d"
+      },
+      "runId": "cifar10-dirichlet-2025-basil_joint-ed7459e13a9c",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "hidden",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.12249,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "329b28e4524db40b06a74f238f6f7a4d1f97c272d72f1fdc3ecbccfb37581ec1",
+        "run.json": "cebdac75480bc15f74164583f2bf77ea11a890c4a956818afa4b301b987d751b"
+      },
+      "runId": "cifar10-dirichlet-2025-basil_joint-494158af6ffc",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "gaussian",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.70014,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "0b22608a263d2f1831d1c87646e06e7e6ab51337cd2af19594fbb49a873dfdfd",
+        "run.json": "8a1b07d557c44e40d7a481b506f4c5ce1b08fd8136a266acd7588ef67c08d487"
+      },
+      "runId": "mnist-dirichlet-2025-basil_joint-f2d847ebc796",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "gaussian",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.15234,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "953397ea02f3fc6494cf64c25d21127d40a02c7f963280189cc04116199afae4",
+        "run.json": "3b15042a2aa36264234312781b7e0a0df6e2aa50da3c71cfc15a3c7db440fbfc"
+      },
+      "runId": "cifar10-iid-2025-basil_joint-bb2ebc388b55",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "hidden",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.17720000000000005,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "5be75c36c71b88318e14a51e8b0a68270a3f3574d03b37734e4681e7a74ba313",
+        "run.json": "8495d7c218c7ddfcb381dc9edf7e7387c7e9f844f3883c8829183db0ed9a022c"
+      },
+      "runId": "cifar10-iid-2025-basil_joint-ed43ae2b6883",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "gaussian",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.7312299999999999,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "5a6babf3471ef33742e85571f07802e36c1bc313efa63d91f5ef001b0f5bd395",
+        "run.json": "a11b3c18e311c2731cbac09b6b10ab5bceb74c83b2224bfc26755f7a720b9f9b"
+      },
+      "runId": "mnist-iid-2025-basil_joint-d3e05c638aef",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "hidden",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.72843,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "16189c7e57b8ab5305eb1e2fc221591000671fe6b18e8399d567b01e184690ef",
+        "run.json": "bbc9b888d6877a46cafce6a7edd3dd75aaed6e02f6081afcd3c44c3cbd411768"
+      },
+      "runId": "mnist-iid-2025-basil_joint-82564c8ab558",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "hidden",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.7011600000000001,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "8b641f3e9e03f02f53102c357f4b97edabd1f1c4cabad5a7446b0af1e91e8780",
+        "run.json": "6214ca72ebbd1bafb3e0ba3079c62274ce3fef93109f3ea2b06fe897aa02febd"
+      },
+      "runId": "mnist-dirichlet-2025-basil_noise_only-78103a320365",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "gaussian",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.19021999999999994,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "743a3e1152189bda37f0f5054038802358e365e7ee763ded6e6c12a310b39b92",
+        "run.json": "9f87ff151c6b96167794a008b718091020ff6e272861dfba9cd1db70ccae3e47"
+      },
+      "runId": "cifar10-dirichlet-2025-sharp_attack_only-9bb2726dfeb3",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "hidden",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.19257999999999995,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "461a513b160c38ce65d558d176a49cea5c00405a489944e1f92ebebb2673e441",
+        "run.json": "f895bd35c898812cf5ef80a41a04610b4ad4c44bdaac86da829e5779f164e011"
+      },
+      "runId": "cifar10-dirichlet-2025-sharp_attack_only-3823a3f93373",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "hidden",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.90362,
+      "maximumValidationAccuracyDifference": 0.0010000000000000009,
+      "resultSha256": {
+        "metrics.npz": "fb19f98e6bf70cb752d3f5310fcf33893c02406679538bd752dae586d1ad35bb",
+        "run.json": "7236c9bd4773ba5350120ae411ad733a6f3c5d06e3e5f9c8e0c439b4bd845de8"
+      },
+      "runId": "mnist-dirichlet-2025-sharp_attack_only-b43327cb1792",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "gaussian",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.34983999999999993,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "c71514127233140865b9dbb89ef44790adf28854db9488760d63db9183384d12",
+        "run.json": "253480ea7a8449670abfb988d3d1a9b4941496788e1d1c1c86d25c1d341e9b30"
+      },
+      "runId": "cifar10-iid-2025-sharp_attack_only-0b40043fbf1f",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "hidden",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.34983999999999993,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "c71514127233140865b9dbb89ef44790adf28854db9488760d63db9183384d12",
+        "run.json": "3a0bcd66a4da4c692efe02e0bc1a9a55c133281e439166e9a7ebbc087fa9c1a9"
+      },
+      "runId": "cifar10-iid-2025-sharp_attack_only-a524f2f898b2",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "gaussian",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.92498,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "0edb81b4200bccb0b418a7a5b257abc2ef9113c10f0d66e7b339ed70e286d3a9",
+        "run.json": "23ba0221395724a328d3f0388308abaf4459a88ac84cf4ac942081e2b0d8dcbe"
+      },
+      "runId": "mnist-iid-2025-sharp_attack_only-fe7848005398",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "gaussian",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.29351999999999995,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "ae666b4a193db02cb42888dc1633b8eb5101431324bb0a4a09187a70495e7d04",
+        "run.json": "8f71d04a55cc3f7bde606919330c8e4eb987cf7ccbaaea1ea0d586036135e31f"
+      },
+      "runId": "cifar10-dirichlet-2025-sharp_cart-c7e2293c56c6",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "hidden",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.29351999999999995,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "ae666b4a193db02cb42888dc1633b8eb5101431324bb0a4a09187a70495e7d04",
+        "run.json": "50f537b7dc8516289d8b0c0d05c02eb34a4e6794e85d092c0270d6a5b856d6bc"
+      },
+      "runId": "cifar10-dirichlet-2025-sharp_cart-6aea2e473335",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "gaussian",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.8389599999999998,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "72e27b2c423b2749f70f97092608e2fca8dbaa32732073823c441e51125737ff",
+        "run.json": "e2be1ae1a449165de15055867400c5a86a786c7def60c1aaeda12a9c04459966"
+      },
+      "runId": "mnist-dirichlet-2025-sharp_cart-c2ebde895be4",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "hidden",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.8389599999999998,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "80447a97ac9e9532201bedee294905f63b38ecd9a1d195df007cc9fa21320b1a",
+        "run.json": "33a985d83723133ad78f751f3a4879deefb3e819b54cfc894c7d3c35f578995c"
+      },
+      "runId": "mnist-dirichlet-2025-sharp_cart-46236275f264",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "hidden",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.18777000000000002,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "bb69634c5b0a6389d1660b47338a0d5c5ccc1124ed56deeb8a0d9ad6c4994f94",
+        "run.json": "12aef71037d9f15f4cd3da9f326f16897df81703dd02a3cb74df5f9988208039"
+      },
+      "runId": "cifar10-dirichlet-2025-sharp_clean-60dd37a4e8c8",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "hidden",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.8959199999999999,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "477ab490567ee8120f5d86d99cd3b8de976c02577a60e69444ad9bec07ec5040",
+        "run.json": "daf912b4472159c70fb56391ea431206a9b86f03231ae5c3c77fa857135059c4"
+      },
+      "runId": "mnist-dirichlet-2025-sharp_clean-9bc51ee5b268",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "hidden",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.35752,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "900dd5141a1a27116d95234186da46312d40e4b651ecf2af7e079c882686fc7d",
+        "run.json": "2c167495754d565c551c2e83479b53300350387067188fbe6a32bc21f3d8a153"
+      },
+      "runId": "cifar10-iid-2025-sharp_clean-069e5c0e6515",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "hidden",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.9228300000000002,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "75f90cb946a57c24ced9d63fcf18e72d4743d039db1643827515dc0553a1264d",
+        "run.json": "9a6e079fdc4c8e6c29b82fead06eac19fc2087a322065be48e5b3769be4643a6"
+      },
+      "runId": "mnist-iid-2025-sharp_clean-56ece7fa71f7",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "hidden",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.14432999999999999,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "900c25708528cf51381a6677adfe96c08319b4ff9f46330541961d00d3b4919c",
+        "run.json": "d13177787c94a4ea12f807c89bb8a87b080a939178f2f22d46eba2126e30efc9"
+      },
+      "runId": "cifar10-dirichlet-2025-sharp_joint-ef8b6adcfc43",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "gaussian",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.8413300000000001,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "e3e6ffe5e616161ad8f41e3a8edcce015367dd84023153068d376d45bb17492b",
+        "run.json": "1506feb2e86289f7c7f9b84876ed20d1fc63943bfb3c619e19aa2f65881a2b32"
+      },
+      "runId": "mnist-dirichlet-2025-sharp_joint-437f943cc08c",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "hidden",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.8471299999999999,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "127884038752e2272c5dc6c99dba21c2ef1c5c72a2b8f415f244409dd3b445f1",
+        "run.json": "cd32fe8372cafb9113933ab793ac5f2177ec5fe5d94c928882b950448df75751"
+      },
+      "runId": "mnist-dirichlet-2025-sharp_joint-905dcf7b651b",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "gaussian",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.43609000000000003,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "f5b8c9ca808dd86cff56bd256938e95d28294016ba9dbd46a7a0415e323593db",
+        "run.json": "ef20c9c7937f86ce982c63d683ffc80176a2641353b5a9d6573cb95a456912e8"
+      },
+      "runId": "cifar10-iid-2025-sharp_joint-e657704d2975",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "hidden",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.43609000000000003,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "f5b8c9ca808dd86cff56bd256938e95d28294016ba9dbd46a7a0415e323593db",
+        "run.json": "31400cda602f2752ab2645b28d76e3592be9061ba6caf179bdf15802b7238257"
+      },
+      "runId": "cifar10-iid-2025-sharp_joint-83314cb1974f",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "gaussian",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.86921,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "7dd774c688de4823286b7123ce7f50bbe7fed3188b385fe55033c87304ba9eda",
+        "run.json": "b636b0148b5dd12d00bb5843a703baffd8acc0d7a12c60970d7348423d307aa3"
+      },
+      "runId": "mnist-iid-2025-sharp_joint-729dbb48f17a",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "hidden",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.86899,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "88a8b5b76f8b008fc545be2f39bc85a28117739d1329e270b1ca67dbd2631d17",
+        "run.json": "9f665de0fd2362e934c9e9d39b6293927498a1023a7022d39ecc477431a230d4"
+      },
+      "runId": "mnist-iid-2025-sharp_joint-7067629b3946",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "gaussian",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.13332,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "34baf7e60e48a0e1dc10ccefcc33a726e9b01491367085c0b6173c32b9475ad8",
+        "run.json": "751959348d19703b7b9e32e633f4890d76fb1a786a101f5cccdf9eaf67b6a839"
+      },
+      "runId": "cifar10-dirichlet-2026-basil_acds-41514f3d489e",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "gaussian",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.7324099999999997,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "8997ecfd59f844f908198fbba68eafc141282bcbb97cfc14f8d29a29db76192f",
+        "run.json": "f606338ba5dc1624ec6e4d07b8c0f61d553f4e0c0a559bba5d0d9daa394a21c5"
+      },
+      "runId": "mnist-dirichlet-2026-basil_acds-c6eacbf07ac0",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "hidden",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.7480900000000001,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "29c940acb36ac54a5abbc8ff7f98eb1ddb6678d604be8b257693b71a2bb11a00",
+        "run.json": "5d105b37ccfdb5f4cb49f95d5be2a89a6764220844245c06d76d5627e13bb199"
+      },
+      "runId": "mnist-dirichlet-2026-basil_acds-cc61de1048a5",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "gaussian",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.24881000000000003,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "72b4db4c407c3743a68d0c34224bd3fa4474e6ffc8185673af9f88f756982324",
+        "run.json": "4abcb8ea6e631e6c7f64b659de87b1a434bad1a1a4dc1f43ae5acaed39cb2278"
+      },
+      "runId": "cifar10-dirichlet-2026-basil_attack_only-add6f052f68f",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "hidden",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.24718,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "dd9ef601c5e61575e1d4d5c67c14d95970c8b1ceed385618188096d9ddc6531d",
+        "run.json": "52f3e705b0f5f2e95fb7c912f61b90b3790193f5b5a0f85ddae58d733b851868"
+      },
+      "runId": "cifar10-dirichlet-2026-basil_attack_only-7370a8d9ae93",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "gaussian",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.92438,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "0a6e9534a0d9ee06fe06b3d0d34e4b71b9bea6f9b4eb5d7026fe7cb14989d6c3",
+        "run.json": "e549b877bf911d8305d6b89e648f204f4687f1f55a938c436c46846dbdb71409"
+      },
+      "runId": "mnist-dirichlet-2026-basil_attack_only-ff9f08be368d",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "hidden",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.92438,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "647ee4f1df303d54a8a791ddddc05299ae4c205593f968a5141c1d0d310830be",
+        "run.json": "3ad89504fec29525f7ff8da86dd916d5e9117b5ef41c0f7af02aeef36cdf58f1"
+      },
+      "runId": "mnist-dirichlet-2026-basil_attack_only-00fc1bd5181c",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "gaussian",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.39997000000000016,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "f4b5cee3d224424150097ebbf214fcaed51930f52ecc5734a729238ce6ad9ed4",
+        "run.json": "70c53aa609b6e4943dfe6c76c24a0fe644dd7434f9c9426e14e89ad0da8337ca"
+      },
+      "runId": "cifar10-iid-2026-basil_attack_only-9fcf07708c6f",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "hidden",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.39997000000000016,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "f4b5cee3d224424150097ebbf214fcaed51930f52ecc5734a729238ce6ad9ed4",
+        "run.json": "06523df0ac3c1f750734f6c9664035fda1e85ef2f15362871d5080f049226fe7"
+      },
+      "runId": "cifar10-iid-2026-basil_attack_only-949177cd5bd9",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "gaussian",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.94098,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "e4ccbdb674400824d9fe6fff331d595a56659ad7a47ea577f30cf2c41dc61617",
+        "run.json": "2579b29956c48538318fa87f2b2b1d0611a3eacf9675a0cd087e1343139eaf73"
+      },
+      "runId": "mnist-iid-2026-basil_attack_only-96bf634251ae",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "hidden",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.94098,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "e4ccbdb674400824d9fe6fff331d595a56659ad7a47ea577f30cf2c41dc61617",
+        "run.json": "55d49f16e5cadb0cf9df3303b8cd504ca85b567b202a9a8d6dc16a7e290faeee"
+      },
+      "runId": "mnist-iid-2026-basil_attack_only-624ec192cb5b",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "hidden",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.24049000000000004,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "05be79aac9d9780a565bab3197875a76a7e82ebd025f8779bf87a05aa41fb157",
+        "run.json": "08e096837a6d14104300f98588b399069ed5464f05860b257ae106c2ec98dce8"
+      },
+      "runId": "cifar10-dirichlet-2026-basil_clean-c157910a3cee",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "hidden",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.9225000000000001,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "a46ee749df6ac2c192e0c8198cfc64834044ed4f566856f6ac39652aeb9db780",
+        "run.json": "195685f837c0e4719e04981b90669415bcc925480ef4dd903335551a71ec53d5"
+      },
+      "runId": "mnist-dirichlet-2026-basil_clean-b1a0b04ffaf7",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "hidden",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.9384899999999999,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "ac3379b52b1d8b6069eb7bc2f504da4e060e7385088a219615d485f3b80b0700",
+        "run.json": "370d15876744b3d54632011e0c601ab77e7348364b4a6e42abf8408e50c4e38b"
+      },
+      "runId": "mnist-iid-2026-basil_clean-74cd29604d4b",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "gaussian",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.14599,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "97299f396e3dffc545a7e775be66828aecafae38680315f8a24cbf9b75420d38",
+        "run.json": "06dda19cef1edc96bd9f95686a1b1dd9c1089dd8b3381696c97c7bce37fcda79"
+      },
+      "runId": "cifar10-dirichlet-2026-basil_joint-5abca61bb399",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "hidden",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.16025999999999999,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "7f866ca2bc1f2bbf2118b0cda32ba9ccdabe40050b45e831d7f656af4b427ecc",
+        "run.json": "63ac0b2390e53421204ae448ecb9ea8f7ed2fe406d8361514ea31e8a89aa87f9"
+      },
+      "runId": "cifar10-dirichlet-2026-basil_joint-4933bcaf248c",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "gaussian",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.6873700000000003,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "08a7c05ac59378e6c5017e5b44bd86ac091fceedbeabf4f7eba34552abc658e6",
+        "run.json": "04b3116ec16237e7ced3b009b4bc00ab6aa14b404e8706f48e5c34ed813d7621"
+      },
+      "runId": "mnist-dirichlet-2026-basil_joint-1c7d48b14b8e",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "gaussian",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.12816,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "533d38257b02590cf20ea0fcd3986555d8b414084549ebf47cc640f70d5481f1",
+        "run.json": "520b24c86393724ff4894c0d499fce5ae4030b121444d9f6ae0899c38d23a302"
+      },
+      "runId": "cifar10-iid-2026-basil_joint-06a59373b6fa",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "hidden",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.12816,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "533d38257b02590cf20ea0fcd3986555d8b414084549ebf47cc640f70d5481f1",
+        "run.json": "b7713a59e9f073fb85476cc697afecf83502b0822adac0084af5c3a70130e2ed"
+      },
+      "runId": "cifar10-iid-2026-basil_joint-586f983a5cc1",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "gaussian",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.72249,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "48423866ca967685f3b7bdcc60170bf4ae9fc531669c4edfcdebf792a6d531ba",
+        "run.json": "40ff2b097fab103a4165d216d6b7956085e3210c0d98e683c54ef8f4d65018af"
+      },
+      "runId": "mnist-iid-2026-basil_joint-fb4883ee8528",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "hidden",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.7284099999999999,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "072370a203898b19bc8f7573a0d65b1490620622ece458887f78cfd6ddcf1cf0",
+        "run.json": "b204125e0461802ddda4a9863d746d054ae49ca7229255cd9db089ed7af5c4a7"
+      },
+      "runId": "mnist-iid-2026-basil_joint-d50e51afeedd",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "hidden",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.7117,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "3687baa11eeff9b468ba080a0dfea2b7be163775caafbd8d2d43d42c87bcf427",
+        "run.json": "157e8c7801ec6d43b1e00095be89db992db20e18bbb90f20ea9b7f98d0bd19f4"
+      },
+      "runId": "mnist-dirichlet-2026-basil_noise_only-59bb2ee15a4e",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "gaussian",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.18070999999999998,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "98f5fba1e9f1260bb7efd3d8bcfeaf7afa9c326952968082725999b0614cbcf6",
+        "run.json": "cd73b14ef5a99364c9e350f71b428aac3819b51a3e561bb0f8087f0c8389934a"
+      },
+      "runId": "cifar10-dirichlet-2026-sharp_attack_only-bb6d96ebb52e",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "hidden",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.1779,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "d7487de58b553b123125c7d76cfeef18dd6f74d7456fcbf5c01c753ba7c50351",
+        "run.json": "b6021f6520578e42bc39ea63b2043a034dc6461b7e56aef978c3997c80860ca8"
+      },
+      "runId": "cifar10-dirichlet-2026-sharp_attack_only-17360344e1da",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "hidden",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.8956400000000001,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "6a7a99a2ee8c5a61c70b3fb06ad8ea3261baf80c378bdcb3c3afb431918941ac",
+        "run.json": "c03157401cc2e442a06eb53a9d24b8b4af81e6ffcbd46d8776d441f08055ed13"
+      },
+      "runId": "mnist-dirichlet-2026-sharp_attack_only-1b21926f396c",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "gaussian",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.3521299999999999,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "60eede0683458a809767fc72c187bc969d6c9610f2071d882b322de72d5ead44",
+        "run.json": "2936777d6426ac58c762892f25675bb159aa73505b290558186c65133b3458a6"
+      },
+      "runId": "cifar10-iid-2026-sharp_attack_only-13cf8b213724",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "hidden",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.3521299999999999,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "60eede0683458a809767fc72c187bc969d6c9610f2071d882b322de72d5ead44",
+        "run.json": "1541e9afbe5e83beb8c4933470cd6a12089a6017f0f6083b9b6429cc43cab57c"
+      },
+      "runId": "cifar10-iid-2026-sharp_attack_only-e6c676753413",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "gaussian",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.9233600000000003,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "91ca39eb50ace6f91a883ba8a977e61c88689debf0bcb73cb9e69a84c150abf8",
+        "run.json": "19628e6f4dd2c4d7b690d64e0a31c352e5e48737ab51af75c117613670a2b4d8"
+      },
+      "runId": "mnist-iid-2026-sharp_attack_only-3244fea34a17",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "gaussian",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.28359,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "68a59c810a811edbc5135766045287caa51348acaf9420e067620eb1f9121c9f",
+        "run.json": "025af0ec02f298c7cb5f8eaf757fee2093c27beb3c3d6f22fcc5fb5aef197b2a"
+      },
+      "runId": "cifar10-dirichlet-2026-sharp_cart-0e7065a49271",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "hidden",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.28359,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "68a59c810a811edbc5135766045287caa51348acaf9420e067620eb1f9121c9f",
+        "run.json": "420441f571d03df31f72a0e33d4fcde01aa51d155d3f60957f09b371dfde4636"
+      },
+      "runId": "cifar10-dirichlet-2026-sharp_cart-ac9462314989",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "gaussian",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.84324,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "5e1711c47e9698bf99e4c5f7e63cbc8adb028db4d3aa6bba9c7541e06b5c88f4",
+        "run.json": "ff119ae0e44eb51062f01553e700db2032e5828f82edfd3c3dc48c1c74a8a6f7"
+      },
+      "runId": "mnist-dirichlet-2026-sharp_cart-463f588e731a",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "hidden",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.84328,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "95ee57e39ef4723bde8df418b2c572469fa781f7155d09fe5a2283b24823ebd0",
+        "run.json": "e79531ba3deaa947b37a3e06e0838533a870e4ce1649766e352e29c1087dd0b7"
+      },
+      "runId": "mnist-dirichlet-2026-sharp_cart-3956705aa057",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "hidden",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.17352,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "5f77012fb024f19bb73ebdfe6ae213789a10f7a719055f7bac38b26da96ffb0b",
+        "run.json": "0d160254700b8f76f5a6aee4b203b4950207df4a1e4ce9a3dc8c0530bf12c849"
+      },
+      "runId": "cifar10-dirichlet-2026-sharp_clean-5be2df4d5a92",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "hidden",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.89884,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "e0a232551098a0aefa2a7a57c5120a37ca173225eba5ed298ff91f5dbc226e2c",
+        "run.json": "6a0535896e20520044a2f335df5131973cb3d4738f9b57de138164ef08dcda3b"
+      },
+      "runId": "mnist-dirichlet-2026-sharp_clean-f29d655db43d",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "hidden",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.35206,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "309da6a4a960ad4a85f0fe208dcd3dc458902128c32d2e9e7d88606e078d7dfc",
+        "run.json": "f5af83bcca6eff5448f9e794aeaf93fcccbfeb1f2f474c2eae21d87fe6b10851"
+      },
+      "runId": "cifar10-iid-2026-sharp_clean-75d68376fbe2",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "hidden",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.9239100000000002,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "1d2d1eb3481b7bbba5044e8b75da4f13dabe3ba58bcdacedfc621b519520db33",
+        "run.json": "75259a76fd1d5ef71c29f4ce49b50a11399907071c39b486d61e423fb99cb345"
+      },
+      "runId": "mnist-iid-2026-sharp_clean-b8b86b1acb54",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "hidden",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.15178,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "a891aa17914ae89ea166a51022653cefc6faf0b9cc91263627263ce6249cca8b",
+        "run.json": "d785182d747527b64f9bd71379759b459b2e990ccb140a2acefa05c379398ac8"
+      },
+      "runId": "cifar10-dirichlet-2026-sharp_joint-b78bd7d90771",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "gaussian",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.8507399999999999,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "bb4a7eeb1fb1e65f0098286c6905c6ba6892c8c1c055653761c071badfcfa998",
+        "run.json": "eabc5484fe15575ce0108ac0820ca1a550963166116aa421e688393d9fc0f5dc"
+      },
+      "runId": "mnist-dirichlet-2026-sharp_joint-6651e115c8aa",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "hidden",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.8500400000000002,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "cd259b925d9373a472408c2610a0dfe90239ac346641a081f4bef40a2a2d5deb",
+        "run.json": "f6a9678f312d9c211a6ab496925c61888b9610ad984f0b4301dd96b70beb435e"
+      },
+      "runId": "mnist-dirichlet-2026-sharp_joint-16887a33d4e5",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "gaussian",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.4474300000000001,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "ae768d9206be66d80928cf9291fa2f97639f0678e23febd82d23918ee8f1b1dc",
+        "run.json": "8c051f61efde6dd3a246bd02af15d39c701853e31a9a495e0b1e133641a1ac71"
+      },
+      "runId": "cifar10-iid-2026-sharp_joint-eea5e642f1f7",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "hidden",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.4474300000000001,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "ae768d9206be66d80928cf9291fa2f97639f0678e23febd82d23918ee8f1b1dc",
+        "run.json": "b138f2e297f68ad1c8387df51f28792b6795060a56c3bf7b4a3d133a8f85836f"
+      },
+      "runId": "cifar10-iid-2026-sharp_joint-fc105cb1d157",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "gaussian",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.8797900000000002,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "e2b7c367b3a55078d917ab855d6925400b86bbe3cd1fac61a94cbb5711a4fe59",
+        "run.json": "4f22399d266820d963c6e3a9a874572013719035ebd648a4bdc4ed0675dfe2ce"
+      },
+      "runId": "mnist-iid-2026-sharp_joint-dd4aa4dd8e0b",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "hidden",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.88082,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "29c0416981a3827f1b9d1127f98121d966afb8f6e2e7609a866d3598def7d0dd",
+        "run.json": "baa129226a85884ea359f42f400f91aa1904750264d304b2d11d5386f20cf450"
+      },
+      "runId": "mnist-iid-2026-sharp_joint-3bc5f082d187",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "gaussian",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.22104,
+      "maximumValidationAccuracyDifference": 0.0010000000000000009,
+      "resultSha256": {
+        "metrics.npz": "c761a5a598637a0aaf387e2099fb33a64e7a47d280881a632c4b120d08f2bd96",
+        "run.json": "de81e0030b68c0fed1acd10f7aeac087de9e05541b746b8026e32a3e980884d6"
+      },
+      "runId": "cifar10-dirichlet-2027-basil_acds-eba0e98d5416",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "gaussian",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.75331,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "032da149b298fc5cd08c2979a4c53cc10308311347d89be9bf9186893b9a9585",
+        "run.json": "c002c3b4bcf798417c8e65456ebb3f225b789ddc6d12250fdceb5d7b3745b5b2"
+      },
+      "runId": "mnist-dirichlet-2027-basil_acds-a178c78865ce",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "hidden",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.7465900000000001,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "8f915ac2818af3bf4eba81f3fb835749fbf5cec8d0d9754cfdb58bd464db7de6",
+        "run.json": "dc7d0efb1fffb399d9bfb47fe586822d9cf7cba5e6c147011f3d82011d8bb0d4"
+      },
+      "runId": "mnist-dirichlet-2027-basil_acds-bb52572cbacc",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "gaussian",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.25973,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "628ed15c4833ecfe6b515a8f556ad325c1a476e853b030dc211953eaf7ca2a3d",
+        "run.json": "751ca5ac5c0fb3c073a0fea376e0c4513216f3ecf70b7d42219e85eab76174f9"
+      },
+      "runId": "cifar10-dirichlet-2027-basil_attack_only-8c20383d2eab",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "hidden",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.26191000000000003,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "2c239778f2fdb21a41c94ffe1744f395cb72accf73b23e931798db33d52b7637",
+        "run.json": "92228d797d2b4e874dc471ca589d1b779fc1537d53d35fe7eb6bd8bbb29b3a90"
+      },
+      "runId": "cifar10-dirichlet-2027-basil_attack_only-1402438ab62e",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "gaussian",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.9285600000000003,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "78fff8a1f249f8b2b552f416a962948463d73d5ac7dcc2b3b11241ab18aa0df1",
+        "run.json": "081900e63c1b4c8b2446773d8b96f70a3b460f5970a96312a06f7d713cc26af6"
+      },
+      "runId": "mnist-dirichlet-2027-basil_attack_only-b02a0a349633",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "hidden",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.9275800000000003,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "46fb41d01a7ba49d2a55a86aa614c711888332123477b5ee24769cb4a9a00c2b",
+        "run.json": "73b049a736e9c47982b26f6925eb35c07008b9fb4bae45056a4f173734c96cae"
+      },
+      "runId": "mnist-dirichlet-2027-basil_attack_only-efc31974e42d",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "gaussian",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.42284,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "bd9a0f90d992de3dbe347990963b3e05761264ff464495c676c4cc09c9f879c3",
+        "run.json": "5bab36c5bfc67b5cca24d2b221cb19df0cc7f814fb0175904cbda428f17d5b42"
+      },
+      "runId": "cifar10-iid-2027-basil_attack_only-dba625bbc1f8",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "hidden",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.42284,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "bd9a0f90d992de3dbe347990963b3e05761264ff464495c676c4cc09c9f879c3",
+        "run.json": "daa6aa6edf662280534be461cbf8083d31515697744c300e785ec14988a69db5"
+      },
+      "runId": "cifar10-iid-2027-basil_attack_only-610427ef63d2",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "gaussian",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.9387500000000002,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "7e94b608b984644a1558a7b6c6661f46b7e85dbf1a9aded931bbfa6271511196",
+        "run.json": "7f48e09ed297abfd2af3e7a0be7831f2e19b5c82f2cafa0d43b9b18cdbe91695"
+      },
+      "runId": "mnist-iid-2027-basil_attack_only-2b9444d108d5",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "hidden",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.9387500000000002,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "7e94b608b984644a1558a7b6c6661f46b7e85dbf1a9aded931bbfa6271511196",
+        "run.json": "558881e9f9ca22b1d043d9d6f7a76b8b5998da9d045bec33cb3d833e8f60157f"
+      },
+      "runId": "mnist-iid-2027-basil_attack_only-2f2a426ff45a",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "hidden",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.25216,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "a0b4ffab42b4a8cb6db004dc9476528ad72b507bdc39f99196f5982b615a831a",
+        "run.json": "a871d342850cd309038b354c94c42ff2b9745a1d791ef23c2e69d978fc1fc04e"
+      },
+      "runId": "cifar10-dirichlet-2027-basil_clean-cf3a9f945f23",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "hidden",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.9243100000000001,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "ca7714627d11b846b064ee1e924bff01a601a9bdfe21c5ed17f286375a6c3e0a",
+        "run.json": "9d026e5b74125eaf111816145e79320f9aada60cf5c608841879333e77ac2271"
+      },
+      "runId": "mnist-dirichlet-2027-basil_clean-bbd297d4e4b3",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "hidden",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.9419,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "e71628089ec9d2d63f4b6c13c643385e2df1e375c680d06568b825a171bf830d",
+        "run.json": "dbb20a64d58bffce6ef4370d3bd4255de9a0ca7be1e356776ca9b7c98acab174"
+      },
+      "runId": "mnist-iid-2027-basil_clean-559cb7a7aa0c",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "gaussian",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.10053,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "35d30696fb3b20665329ff2a91fd988941615862e3419023dc9955573c9ce417",
+        "run.json": "f8daaf6949c99dd533f8cbe9a7ec332d781aed97b4992f74841451245cb4ba9d"
+      },
+      "runId": "cifar10-dirichlet-2027-basil_joint-9f70fb7d3268",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "hidden",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.16777,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "0659ac1860b14a5cf6951c4e420ec113c6c958bda69f00be65d7fd1d85f987fb",
+        "run.json": "f6b391090fd75fff30791cad4bded05caa323d212903d777c15d87fbab905a89"
+      },
+      "runId": "cifar10-dirichlet-2027-basil_joint-6698383ba3dc",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "gaussian",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.7252599999999998,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "35264fa2596129968f1895d433546f2fec43a4544555592e9c0269266d3b2809",
+        "run.json": "de03d0b5de6c18d8b4478f80b0ff5dd15923e9c6a5f26c568ee6b8d163215f13"
+      },
+      "runId": "mnist-dirichlet-2027-basil_joint-38e746f2d805",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "gaussian",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.18582,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "6576b02e08947de3eb8b21b61bbb717d9d7bb1c40094c784702c5a63959f4507",
+        "run.json": "11fee18d6ce002a6e37ec739c2acfe281f41c0702180ee14e4eb589fad7e1703"
+      },
+      "runId": "cifar10-iid-2027-basil_joint-87d279c4c54d",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "hidden",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.18475000000000003,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "15b9995418db4c8b2ea6acef3979ff4f737bf2f5837a6ba89330f432134b0f4d",
+        "run.json": "38c369060725eba1af1d744c8e445917611f2a1ec5dfbd801ee6b236eab2d0b2"
+      },
+      "runId": "cifar10-dirichlet-2027-sharp_clean-a216dc211e92",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "hidden",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.89614,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "a5729cd75a7cbdd92efae8ba380ffe39176bdf1c45ce96b0abd25be1c72cc511",
+        "run.json": "83c01caa6907172628eedf66904b447b783a75633e12c3ee0115e4427ef2786f"
+      },
+      "runId": "mnist-dirichlet-2027-sharp_clean-269f14ecbe38",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "hidden",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.35194999999999993,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "d331ae6d03a5d136b313355389d6c366926d3269b971f3e68dd095712a6eb2f4",
+        "run.json": "e61215c32aac97f63fa65f5a5dc129bef425e54c7baac44986b81d2cf1311563"
+      },
+      "runId": "cifar10-iid-2027-sharp_clean-451cce053559",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "hidden",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.9271600000000002,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "1f333d73454e0558f74f01586f2d923dbc8641c9f4fec890eaaa778dea3c0738",
+        "run.json": "17a1037fe43d3cc89e489be2cb3d448c9b449215e15371217d669cdab28cc682"
+      },
+      "runId": "mnist-iid-2027-sharp_clean-f1ffc719c6d7",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "hidden",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.14134,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "91948e88d1a0fb00e326f1986429faa345a7de640cddbb23ce2328b6e308eefb",
+        "run.json": "dabc3f1e01afdd68e46126c828443855db535e0efc90fb1ca84dbf1f1c5dd544"
+      },
+      "runId": "cifar10-dirichlet-2027-sharp_joint-6c403f2aec67",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "gaussian",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.8590700000000001,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "e720bf4ccf053a5d002f16c94c02fccdb2abf4f778f86fae1381970f8a2830fb",
+        "run.json": "0c3e49b7f0be3a368bee07c386e893621ad78a2aafa68266a5c39683b2b02ec1"
+      },
+      "runId": "mnist-dirichlet-2027-sharp_joint-3c9fc9feb477",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "hidden",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.8518999999999999,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "1368d01e700d50e53cf4e2086d030af446808e34575dd8ed4170573ba61a067f",
+        "run.json": "311616ce86447442ca73a342d680e9d9ecb8ba0ae470d4413ecd2e276472ae56"
+      },
+      "runId": "mnist-dirichlet-2027-sharp_joint-625879bcafe5",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "gaussian",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.46,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "ba36dcf7bc076219d880a720c5dd88f1e4b8d43f5d932c26b0b19ec0915f6899",
+        "run.json": "cdbb5ab68ac6a30a44edf3c42fb81c649457a1484fd9681bea4361c6fddc02db"
+      },
+      "runId": "cifar10-iid-2027-sharp_joint-30fb1232951b",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "hidden",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.46,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "ba36dcf7bc076219d880a720c5dd88f1e4b8d43f5d932c26b0b19ec0915f6899",
+        "run.json": "52d6706a56d7131dff88f9b13fea861f66e43fd5e31a10a7bce99c7dbe74806f"
+      },
+      "runId": "cifar10-iid-2027-sharp_joint-f02c4443e0a3",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "gaussian",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.8832599999999999,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "b0b4b533d0272130defd5f1bacabd7693dc2c085970d364c75a1a38d60402433",
+        "run.json": "5a7aa6df79a3d8b204ce1afaf82104d30b9b6c9210adb8a4b4d9394c22fa1f8f"
+      },
+      "runId": "mnist-iid-2027-sharp_joint-952fd178a24b",
+      "seededOutboundAttackVerified": true
+    },
+    {
+      "attackType": "hidden",
+      "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+      "finalValidationAccuracy": 0.87953,
+      "maximumValidationAccuracyDifference": 0.0,
+      "resultSha256": {
+        "metrics.npz": "37806390fdf9f32cbfd2de8ed1583f6f489302ce894469e0f4ab7b02a61d4b30",
+        "run.json": "603835bb2cd6bd951c8cd2cab61672d8f3d1ce11e1bacfe5bd3e4f8b53f98994"
+      },
+      "runId": "mnist-iid-2027-sharp_joint-44748a0b2f8d",
+      "seededOutboundAttackVerified": true
+    }
+  ],
+  "verifierSha256": "7fa28fe4132a4de1bf857960604e13669c82e3fea014c028827a58b9588f62b6"
+}

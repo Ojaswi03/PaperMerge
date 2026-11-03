@@ -1,0 +1,66 @@
+{
+  "features": [
+    "fixed_probes",
+    "cached_checkpoint_json",
+    "incremental_round_summaries"
+  ],
+  "firstRealZeroCoefficientCheck": {
+    "exact": true,
+    "extraProposalsCommitted": 0,
+    "fastPathRetained": true,
+    "node": 6,
+    "round": 178
+  },
+  "revision": "fedsharp_execution_v1",
+  "runtime": {
+    "device": "/GPU:0",
+    "host": "hal9k",
+    "numpy": "1.26.4",
+    "profile": {
+      "data_workers": 0,
+      "gpu": 1,
+      "gpu_uuid": "GPU-c69f1afe-c750-4477-c324-5278b3b2417e",
+      "headroom_mib": 8192,
+      "memory_mib": 3072,
+      "name": "hpc",
+      "output_root": "/var/tmp/papermerge-1718278706/hal9k_fedsharp-fleet-500r-724feac03d03",
+      "ram_mib": 8192,
+      "threads": 1
+    },
+    "tensorflow": "2.21.0",
+    "tf32": false
+  },
+  "source": {
+    "basil_core/fedsharp_runtime_optimization.py": "461174a4628552d9070316438d3b45faeccdd8c7967602b403d6e82d1eb16511",
+    "scripts/optimized_fedsharp_worker.py": "caad92838f221d4ca49613c16145928b6f5e26b88e3cc334cd0055390c6b0f6e"
+  },
+  "startedCursor": 17806,
+  "startedElapsedSeconds": 15139.623577777995,
+  "transitionId": "b7b3cc4b8c23418e840680f3424ae8b1",
+  "zeroCoefficientQualification": {
+    "checks": [
+      {
+        "coefficient": 0.0,
+        "exact": true,
+        "round": 120
+      },
+      {
+        "coefficient": 0.0,
+        "exact": true,
+        "round": 350
+      },
+      {
+        "coefficient": 0.003,
+        "exact": true,
+        "round": 120
+      },
+      {
+        "coefficient": 0.003,
+        "exact": true,
+        "round": 350
+      }
+    ],
+    "enabled": true,
+    "reason": "all device comparisons exact"
+  }
+}

@@ -1,0 +1,922 @@
+{
+  "cifar10-dirichlet-2025-basil_acds-c201b2e8ec9b": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "a723700ba445f1c45495210b34f4ce15130a9f89cc0d5365d2efb8cfa4cd91f1",
+    "sourceRunId": "cifar10-dirichlet-2025-basil_acds-1347291f5693",
+    "transferred": false
+  },
+  "cifar10-dirichlet-2025-basil_attack_only-825d8f059711": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "f70800bf81f7fb74272d24eca91e1827128648cc06188d2225e35c061a61faab",
+    "sourceRunId": "cifar10-dirichlet-2025-basil_attack_only-3833dec2e008",
+    "transferred": false
+  },
+  "cifar10-dirichlet-2025-basil_attack_only-cdc1922edb79": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "f4ff84a860e70367f19c7f7fca0ee3093ebdc4d580cd0bd307a22fdaf60522a0",
+    "sourceRunId": "cifar10-dirichlet-2025-basil_attack_only-ae633f0d5184",
+    "transferred": false
+  },
+  "cifar10-dirichlet-2025-basil_clean-5be969223bf2": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "cc665b228766d4b7456d6ec695857b0fc868d5f77e20d7803127c44e09e33e77",
+    "sourceRunId": "cifar10-dirichlet-2025-basil_clean-a38180c26b00",
+    "transferred": false
+  },
+  "cifar10-dirichlet-2025-basil_joint-494158af6ffc": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "d525e602e5c35b0cf27f4822acae8d42e409cb56d608f7c63277d4cd330bc242",
+    "sourceRunId": "cifar10-dirichlet-2025-basil_joint-186c8b6ba264",
+    "transferred": false
+  },
+  "cifar10-dirichlet-2025-basil_joint-ed7459e13a9c": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "be9a469d9ad30ddb8aebd8426d5beb021a16f34c6ac6db53b882f7829ad94868",
+    "sourceRunId": "cifar10-dirichlet-2025-basil_joint-f679f495065c",
+    "transferred": false
+  },
+  "cifar10-dirichlet-2025-sharp_attack_only-3823a3f93373": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "3ff24a2463dd5aeccd1fc683b7cfecf12aa55806e0a56d1400553f26a832453e",
+    "sourceRunId": "cifar10-dirichlet-2025-sharp_attack_only-a7f7cf8f2f20",
+    "transferred": false
+  },
+  "cifar10-dirichlet-2025-sharp_attack_only-9bb2726dfeb3": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "1713954a23b0674b3deafd3d333853ee815444b9d656398c225c1af974a9c0ef",
+    "sourceRunId": "cifar10-dirichlet-2025-sharp_attack_only-f7131a926551",
+    "transferred": false
+  },
+  "cifar10-dirichlet-2025-sharp_cart-6aea2e473335": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "ba327d1292cf614679bbf253bed5f4e1969f16ca5119e7da07af0615011ce09c",
+    "sourceRunId": "cifar10-dirichlet-2025-sharp_cart-9b0dc763c288",
+    "transferred": false
+  },
+  "cifar10-dirichlet-2025-sharp_cart-c7e2293c56c6": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "1a9449efbe45e9f40bc8c462038810498415b00905e5877b94c8262044584320",
+    "sourceRunId": "cifar10-dirichlet-2025-sharp_cart-9223978a3128",
+    "transferred": false
+  },
+  "cifar10-dirichlet-2025-sharp_clean-60dd37a4e8c8": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "4021e5b23fad683f643427bdcb3cbf94783fc0b5f2d5bcfc90c1b3d1353bc391",
+    "sourceRunId": "cifar10-dirichlet-2025-sharp_clean-6d38259b2e74",
+    "transferred": false
+  },
+  "cifar10-dirichlet-2025-sharp_joint-ef8b6adcfc43": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "965dd5d02b4fbfd132a58d2f764d853bda0be9450ad39d85f37acd4468491b3e",
+    "sourceRunId": "cifar10-dirichlet-2025-sharp_joint-8530d3a4f7e4",
+    "transferred": false
+  },
+  "cifar10-dirichlet-2026-basil_acds-41514f3d489e": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "135322e6e0c82740ada3869daac2c13023d3c2323624d032027bf9d3d20bef65",
+    "sourceRunId": "cifar10-dirichlet-2026-basil_acds-afb61727223e",
+    "transferred": false
+  },
+  "cifar10-dirichlet-2026-basil_attack_only-7370a8d9ae93": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "4686498c4be0fca025b3e1532574dfad0dd3c3f0eb5d010c1ac713d8c0636187",
+    "sourceRunId": "cifar10-dirichlet-2026-basil_attack_only-ebdf6c767a6b",
+    "transferred": false
+  },
+  "cifar10-dirichlet-2026-basil_attack_only-add6f052f68f": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "8b52a867693a3b7a5df4c09738a2ca40f4f50f7922660f770c0b8a9357171ee1",
+    "sourceRunId": "cifar10-dirichlet-2026-basil_attack_only-2d8ea0b91ebb",
+    "transferred": false
+  },
+  "cifar10-dirichlet-2026-basil_clean-c157910a3cee": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "18a9f582c6e9c439d3492802d084c656395f692a97af310945da5d73eb93316e",
+    "sourceRunId": "cifar10-dirichlet-2026-basil_clean-cdf934b24a27",
+    "transferred": false
+  },
+  "cifar10-dirichlet-2026-basil_joint-4933bcaf248c": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "d25be9887792013760a4e6a51df4efe91eaff9a30a956b226c0dbe8521b3e80a",
+    "sourceRunId": "cifar10-dirichlet-2026-basil_joint-e42afbf3d16e",
+    "transferred": false
+  },
+  "cifar10-dirichlet-2026-basil_joint-5abca61bb399": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "c2dd89a6ea34758227099db075a23ed1b7d646b4998619b94ba68cf93dd95c17",
+    "sourceRunId": "cifar10-dirichlet-2026-basil_joint-ff420fc51431",
+    "transferred": false
+  },
+  "cifar10-dirichlet-2026-sharp_attack_only-17360344e1da": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "21dc0c56c314be0f97b3e301131484f2634ab55900dd50f1fc39e972289c9753",
+    "sourceRunId": "cifar10-dirichlet-2026-sharp_attack_only-e29115455276",
+    "transferred": false
+  },
+  "cifar10-dirichlet-2026-sharp_attack_only-bb6d96ebb52e": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "eeb4c7962b6278096789e163f24af177ee230bea70941382c8486cdb5edd2163",
+    "sourceRunId": "cifar10-dirichlet-2026-sharp_attack_only-4fbd49c0073b",
+    "transferred": false
+  },
+  "cifar10-dirichlet-2026-sharp_cart-0e7065a49271": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "1a2adc1d88d165efc26f696ee72a80495813c4882bd304ccc82873088c38e614",
+    "sourceRunId": "cifar10-dirichlet-2026-sharp_cart-52a27221be27",
+    "transferred": false
+  },
+  "cifar10-dirichlet-2026-sharp_cart-ac9462314989": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "613f303caef12b95c738947ddf68d94d382f78d3cf5d9703722a5372ddf0f73c",
+    "sourceRunId": "cifar10-dirichlet-2026-sharp_cart-68cd84a3c48e",
+    "transferred": false
+  },
+  "cifar10-dirichlet-2026-sharp_clean-5be2df4d5a92": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "8390ee60347ff563e86106879bc0d193d7826d0a1393093d7bbd7760df2199f8",
+    "sourceRunId": "cifar10-dirichlet-2026-sharp_clean-03530b3f7fae",
+    "transferred": false
+  },
+  "cifar10-dirichlet-2026-sharp_joint-b78bd7d90771": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "6d1dd2223552d9799a64004fa2e1ee8d57b2e2f061350edca63105241bf807d5",
+    "sourceRunId": "cifar10-dirichlet-2026-sharp_joint-8aa27f121c07",
+    "transferred": false
+  },
+  "cifar10-dirichlet-2027-basil_acds-eba0e98d5416": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "dc6a1eee0dc6053a1303fb4dec52726117a53fc815ab8eb0ae095e2dde8b281d",
+    "sourceRunId": "cifar10-dirichlet-2027-basil_acds-c9cb50bf6448",
+    "transferred": false
+  },
+  "cifar10-dirichlet-2027-basil_attack_only-1402438ab62e": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "f0cf7b47024ec03b268b62f325e0261f4058b6465939ebbc2046696d171611d3",
+    "sourceRunId": "cifar10-dirichlet-2027-basil_attack_only-0633093c3bf7",
+    "transferred": false
+  },
+  "cifar10-dirichlet-2027-basil_attack_only-8c20383d2eab": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "7d5c0069594986899d4fadf45ff9e6679118306d3155b3cb7762c2ce9573d456",
+    "sourceRunId": "cifar10-dirichlet-2027-basil_attack_only-e799eeef4055",
+    "transferred": false
+  },
+  "cifar10-dirichlet-2027-basil_clean-cf3a9f945f23": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "5fd3fa790dcbaa9310a26b5ca1c69c68117a5bf60be67065e8c6f789c5337dc2",
+    "sourceRunId": "cifar10-dirichlet-2027-basil_clean-e7d6837204b7",
+    "transferred": false
+  },
+  "cifar10-dirichlet-2027-basil_joint-6698383ba3dc": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "14b24dd5930231fe7974229e6e73a37455ca787e5893b342a38c5d9559a7452e",
+    "sourceRunId": "cifar10-dirichlet-2027-basil_joint-aa17d4be1a69",
+    "transferred": false
+  },
+  "cifar10-dirichlet-2027-basil_joint-9f70fb7d3268": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "f584c9bc6de97b7978628abb916b4f3a5009ea8d77b2e43859141f28b7956fbd",
+    "sourceRunId": "cifar10-dirichlet-2027-basil_joint-73121a5a6fbd",
+    "transferred": false
+  },
+  "cifar10-dirichlet-2027-sharp_clean-a216dc211e92": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "45b5d45a7da952687c79f6109742f92fd29995f7ddb0723c44435fd3e504f8ac",
+    "sourceRunId": "cifar10-dirichlet-2027-sharp_clean-33ad3f376110",
+    "transferred": false
+  },
+  "cifar10-dirichlet-2027-sharp_joint-6c403f2aec67": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "c9128122e09f81e21d645e727edf46c1b425fdca6728648fd41ffcb71426e65e",
+    "sourceRunId": "cifar10-dirichlet-2027-sharp_joint-a25121e2964c",
+    "transferred": false
+  },
+  "cifar10-iid-2025-basil_attack_only-5e423a7f97fb": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "1e76f0bd0e244781bad7c3fdf4950607a4ae70884075e3309bc6beaa8f9ae55c",
+    "sourceRunId": "cifar10-iid-2025-basil_attack_only-28404a3a99ba",
+    "transferred": false
+  },
+  "cifar10-iid-2025-basil_attack_only-9e366b4082f9": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "9e9e6af1c872b740e6b70d8f1080242d6b5b785d22add291a090b4343cf3e8e7",
+    "sourceRunId": "cifar10-iid-2025-basil_attack_only-4fb4ef6d0147",
+    "transferred": false
+  },
+  "cifar10-iid-2025-basil_joint-bb2ebc388b55": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "8a87e44852a477d624c442942f3d91f1dfafed70f39ea17c621021a750f483fe",
+    "sourceRunId": "cifar10-iid-2025-basil_joint-646af2466c2c",
+    "transferred": false
+  },
+  "cifar10-iid-2025-basil_joint-ed43ae2b6883": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "bdf2ce85185a86625dce529093bd6cefd6d11c01cf21508fdce6365ee6a5af52",
+    "sourceRunId": "cifar10-iid-2025-basil_joint-d3acf78597c4",
+    "transferred": false
+  },
+  "cifar10-iid-2025-sharp_attack_only-0b40043fbf1f": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "e4b52aa1cac966bcd5cd9470520ebe6703f3e61ab3316610e98af6a89a5d9c37",
+    "sourceRunId": "cifar10-iid-2025-sharp_attack_only-63e9325f45b4",
+    "transferred": false
+  },
+  "cifar10-iid-2025-sharp_attack_only-a524f2f898b2": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "fbb352674bfe28a5d66e3b85a9d0c89c776c8d161670cb81399124241474ca6f",
+    "sourceRunId": "cifar10-iid-2025-sharp_attack_only-efe71921e9b7",
+    "transferred": false
+  },
+  "cifar10-iid-2025-sharp_clean-069e5c0e6515": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "7877acdd34f01edc9a7340dc10dd51cd2a068cf54b2cecc413f4d382088f9ddb",
+    "sourceRunId": "cifar10-iid-2025-sharp_clean-42a3124dcd3b",
+    "transferred": false
+  },
+  "cifar10-iid-2025-sharp_joint-83314cb1974f": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "cc89b66f98ff14fcd1e8cf05692169c354e388205a23c66fa56a2d84a1abd6c9",
+    "sourceRunId": "cifar10-iid-2025-sharp_joint-92e7687b7f98",
+    "transferred": false
+  },
+  "cifar10-iid-2025-sharp_joint-e657704d2975": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "b34d4b3e7e1e305dfa43ab61f3b103fc4e053d62b69f5a797ff2795eeee95d39",
+    "sourceRunId": "cifar10-iid-2025-sharp_joint-aafbd95b444c",
+    "transferred": false
+  },
+  "cifar10-iid-2026-basil_attack_only-949177cd5bd9": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "a2eae8affcffb17a6b61c6cadd66f5e62d75060220cc93f5d3601f78deaef78d",
+    "sourceRunId": "cifar10-iid-2026-basil_attack_only-6159e9d75d86",
+    "transferred": false
+  },
+  "cifar10-iid-2026-basil_attack_only-9fcf07708c6f": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "8e94f39dc0e87c6131fefb5e7473f3dafbc89bcb1493bbba809be9eaa97537e4",
+    "sourceRunId": "cifar10-iid-2026-basil_attack_only-15acdc270348",
+    "transferred": false
+  },
+  "cifar10-iid-2026-basil_joint-06a59373b6fa": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "8f51873765a92b6d9570e67265aad0ba5c2512e8861685667f6040e3f3019d08",
+    "sourceRunId": "cifar10-iid-2026-basil_joint-211633912d7a",
+    "transferred": false
+  },
+  "cifar10-iid-2026-basil_joint-586f983a5cc1": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "45f1415140b24ff091bb5cd51c4065cf48d5ffbc5dc08e5f4cb94c0285ba42c4",
+    "sourceRunId": "cifar10-iid-2026-basil_joint-4a8ec24e978d",
+    "transferred": false
+  },
+  "cifar10-iid-2026-sharp_attack_only-13cf8b213724": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "270d37708899bbb6d443209d330287ac11dd36716f7763d5fd851740deee6e5f",
+    "sourceRunId": "cifar10-iid-2026-sharp_attack_only-d718abc939bf",
+    "transferred": false
+  },
+  "cifar10-iid-2026-sharp_attack_only-e6c676753413": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "97a36c022e2124741efc9088c048071794ebe1d1b51defa7e1ec80b279a08361",
+    "sourceRunId": "cifar10-iid-2026-sharp_attack_only-8ac10a382c7c",
+    "transferred": false
+  },
+  "cifar10-iid-2026-sharp_clean-75d68376fbe2": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "51d7e90d238a5e20765c7b4cb240c4fe8a5caa249bffbb1b14c92c0d69388e1a",
+    "sourceRunId": "cifar10-iid-2026-sharp_clean-95361168b4ba",
+    "transferred": false
+  },
+  "cifar10-iid-2026-sharp_joint-eea5e642f1f7": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "05f820e3679b559127ceadecf26dbec6edd0e4fa0ee1689e7780424021663977",
+    "sourceRunId": "cifar10-iid-2026-sharp_joint-66f604e0d5ac",
+    "transferred": false
+  },
+  "cifar10-iid-2026-sharp_joint-fc105cb1d157": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "dca0613799d70c93e2b52ae1612ef8f6995cfbf0f1df6414c5879703a9232fa4",
+    "sourceRunId": "cifar10-iid-2026-sharp_joint-c2a5d4852cc2",
+    "transferred": false
+  },
+  "cifar10-iid-2027-basil_attack_only-610427ef63d2": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "c1843b023ce1613f7b97bc93bd48fcd2a62913161aead8dad3bd7c945916df91",
+    "sourceRunId": "cifar10-iid-2027-basil_attack_only-51d1edc11eac",
+    "transferred": false
+  },
+  "cifar10-iid-2027-basil_attack_only-dba625bbc1f8": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "c5d87e0226fe29d7bda0f4be89d69496cd9bac8313197cdc03b3f5178e44f3e9",
+    "sourceRunId": "cifar10-iid-2027-basil_attack_only-f847d987720d",
+    "transferred": false
+  },
+  "cifar10-iid-2027-basil_joint-87d279c4c54d": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "3b88b789a06246069fadd1d6d624a6fae57698eeccc1e944bd2ddad87935abf1",
+    "sourceRunId": "cifar10-iid-2027-basil_joint-99c56c2f5ab4",
+    "transferred": false
+  },
+  "cifar10-iid-2027-sharp_clean-451cce053559": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "69204450b2a2f592a63ca8ed22dd8c7c2a9bc7633b21312704d3fc9e4b1c691d",
+    "sourceRunId": "cifar10-iid-2027-sharp_clean-06cdbce7ddd8",
+    "transferred": false
+  },
+  "cifar10-iid-2027-sharp_joint-30fb1232951b": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "f26ccbaf5ceda85d921faaef05b37fc9c8d68f2559f1db2da41769f9fe767af6",
+    "sourceRunId": "cifar10-iid-2027-sharp_joint-82310213f42a",
+    "transferred": false
+  },
+  "cifar10-iid-2027-sharp_joint-f02c4443e0a3": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "4858e20679d563d0e3fe8db783f20385e8c25a3449a5b6806982f16ba45e4559",
+    "sourceRunId": "cifar10-iid-2027-sharp_joint-8338afc68563",
+    "transferred": false
+  },
+  "mnist-dirichlet-2025-basil_acds-0e30e6423b50": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "aae47010f06862dc7b48ecbce894e1f21e16bcaed8a576a1fedfcd62ffed52d8",
+    "sourceRunId": "mnist-dirichlet-2025-basil_acds-cbefb85bf770",
+    "transferred": false
+  },
+  "mnist-dirichlet-2025-basil_acds-1d6da256baf5": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "3e443a2152140717358a7fd5a9c18ce45f23e3ca56614fbea1e17876403a5a86",
+    "sourceRunId": "mnist-dirichlet-2025-basil_acds-6dc7decfa5b6",
+    "transferred": false
+  },
+  "mnist-dirichlet-2025-basil_attack_only-6f6ebae4cca2": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "3afd0cd8116740e5e62de0d0d566d8d2ffaf620fb2ca89d1344740a0c3909ed5",
+    "sourceRunId": "mnist-dirichlet-2025-basil_attack_only-7f0143cf81c0",
+    "transferred": false
+  },
+  "mnist-dirichlet-2025-basil_attack_only-d0ab0386c7b7": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "8bd021c0b59e35c3c5bee1b4a68f6b4ce6635edd490fe16212734e8255716977",
+    "sourceRunId": "mnist-dirichlet-2025-basil_attack_only-5b8486472b1d",
+    "transferred": false
+  },
+  "mnist-dirichlet-2025-basil_clean-71a01903dc00": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "3c96e699d5916bb125d47b4de6a970d6380de3e1c1731558d0105987e0d00c0b",
+    "sourceRunId": "mnist-dirichlet-2025-basil_clean-1c9acf839e5b",
+    "transferred": false
+  },
+  "mnist-dirichlet-2025-basil_joint-f2d847ebc796": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "d7da4b124743701610c37956144adac40b32ee28fbe5d3c4bba3fab39f6e854f",
+    "sourceRunId": "mnist-dirichlet-2025-basil_joint-4dd8d26ae3e2",
+    "transferred": false
+  },
+  "mnist-dirichlet-2025-basil_noise_only-78103a320365": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "6574c75a287c54901c908f55fdb18c59e568543b0409b3fe2e7e0dc900f2b14a",
+    "sourceRunId": "mnist-dirichlet-2025-basil_noise_only-af163e8f3cae",
+    "transferred": false
+  },
+  "mnist-dirichlet-2025-sharp_attack_only-b43327cb1792": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "ca95687e6577507cefa404967eb1c4b4ba2945da91735a34fe6efd10fa4f3cb2",
+    "sourceRunId": "mnist-dirichlet-2025-sharp_attack_only-5584339e79eb",
+    "transferred": false
+  },
+  "mnist-dirichlet-2025-sharp_cart-46236275f264": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "47520549232a0b6fca08e98de9f5435f1a652e99f8cea0f07b645a97d078f333",
+    "sourceRunId": "mnist-dirichlet-2025-sharp_cart-bd39bbb9abb6",
+    "transferred": false
+  },
+  "mnist-dirichlet-2025-sharp_cart-c2ebde895be4": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "410f6d3a0eb376b2854fe9617997598c4bb0d4a862bc283bb3f1e120beb0d8f4",
+    "sourceRunId": "mnist-dirichlet-2025-sharp_cart-38ca6faefcc7",
+    "transferred": false
+  },
+  "mnist-dirichlet-2025-sharp_clean-9bc51ee5b268": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "9673b05dafa47c42a247edcc582a95dd378e3ed4edc7b7ad1e532ea39bc66ad3",
+    "sourceRunId": "mnist-dirichlet-2025-sharp_clean-e581fe8e421f",
+    "transferred": false
+  },
+  "mnist-dirichlet-2025-sharp_joint-437f943cc08c": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "8c965d2e4d536982580f4e3381419a6ec177f19b74cce5831a94d43d870d93b7",
+    "sourceRunId": "mnist-dirichlet-2025-sharp_joint-e7fd79856ecb",
+    "transferred": false
+  },
+  "mnist-dirichlet-2025-sharp_joint-905dcf7b651b": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "5ecb85e38dbd51c554a619aafcec1c5cf91491c1bbba7045d68ce791129e9d5e",
+    "sourceRunId": "mnist-dirichlet-2025-sharp_joint-a37dcafe037e",
+    "transferred": false
+  },
+  "mnist-dirichlet-2026-basil_acds-c6eacbf07ac0": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "fa7a5f31aed396a850d5feff471f72e06c96ddd93d5846d420bcf3e548f4f5c5",
+    "sourceRunId": "mnist-dirichlet-2026-basil_acds-78a75a07d2a2",
+    "transferred": false
+  },
+  "mnist-dirichlet-2026-basil_acds-cc61de1048a5": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "f2924d487a5e5aeb06b599b7cd39d96a11ae1ee9cc5c21105af6046b31d119b7",
+    "sourceRunId": "mnist-dirichlet-2026-basil_acds-05feff907724",
+    "transferred": false
+  },
+  "mnist-dirichlet-2026-basil_attack_only-00fc1bd5181c": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "e41f2b006af93507a79071cc0660bb37815c3057f3b62ed02dbcb59e857dfae2",
+    "sourceRunId": "mnist-dirichlet-2026-basil_attack_only-af63c579c306",
+    "transferred": false
+  },
+  "mnist-dirichlet-2026-basil_attack_only-ff9f08be368d": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "eb9156cdc078e0f87cf22c12ff14fe71135056e52373b1a00ba8e31610601ccb",
+    "sourceRunId": "mnist-dirichlet-2026-basil_attack_only-19da9a8f3404",
+    "transferred": false
+  },
+  "mnist-dirichlet-2026-basil_clean-b1a0b04ffaf7": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "75243ef7dd43175259224d0e6f1cafff06cfe9883372b066dd821e8df055d678",
+    "sourceRunId": "mnist-dirichlet-2026-basil_clean-ea599c5eabce",
+    "transferred": false
+  },
+  "mnist-dirichlet-2026-basil_joint-1c7d48b14b8e": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "48b11d8f2984e2bcff56bf09aac77d2b98dfae35896ecb667c431a0f1a09fa8c",
+    "sourceRunId": "mnist-dirichlet-2026-basil_joint-0983c3b9e1e8",
+    "transferred": false
+  },
+  "mnist-dirichlet-2026-basil_noise_only-59bb2ee15a4e": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "85df0da03daac96abf7c58d1063d86ab27c44ff76a0c20f97618ca55a0d57921",
+    "sourceRunId": "mnist-dirichlet-2026-basil_noise_only-7cb0d86430d9",
+    "transferred": false
+  },
+  "mnist-dirichlet-2026-sharp_attack_only-1b21926f396c": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "02010cdb1699062be33c62c46843f9c4737b7925d9dbf7c45662624be65f28bb",
+    "sourceRunId": "mnist-dirichlet-2026-sharp_attack_only-3c02198a13c9",
+    "transferred": false
+  },
+  "mnist-dirichlet-2026-sharp_cart-3956705aa057": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "f6cc2be9a2171e7bec313f285850ef38a804c94ffc34b9b6bee05f5635f41f44",
+    "sourceRunId": "mnist-dirichlet-2026-sharp_cart-6131526f791e",
+    "transferred": false
+  },
+  "mnist-dirichlet-2026-sharp_cart-463f588e731a": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "78aa41cb6df20ffd4237d40dbfd4e5adf1224a645d0eea69dba69391d60c5b85",
+    "sourceRunId": "mnist-dirichlet-2026-sharp_cart-79679f8543cd",
+    "transferred": false
+  },
+  "mnist-dirichlet-2026-sharp_clean-f29d655db43d": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "54190764e9967be054aa72df4950a6ae12a944e9695c886976faeb42f04ee9e9",
+    "sourceRunId": "mnist-dirichlet-2026-sharp_clean-1ce25c894c87",
+    "transferred": false
+  },
+  "mnist-dirichlet-2026-sharp_joint-16887a33d4e5": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "af448d915171b6302f8d55105df718f2cb578ce75b5dab4daf48924b2c087611",
+    "sourceRunId": "mnist-dirichlet-2026-sharp_joint-61b648d99870",
+    "transferred": false
+  },
+  "mnist-dirichlet-2026-sharp_joint-6651e115c8aa": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "61b9c046bf022e8a1e1c8a416758901cd7cfc1030d78a097062bbe5ee1a243df",
+    "sourceRunId": "mnist-dirichlet-2026-sharp_joint-014ab1798307",
+    "transferred": false
+  },
+  "mnist-dirichlet-2027-basil_acds-a178c78865ce": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "bdcec6b1f6dc9e270a1411ac96cb4e6316494db744ac3df9aebd527f7bb2f367",
+    "sourceRunId": "mnist-dirichlet-2027-basil_acds-44bdb582ad81",
+    "transferred": false
+  },
+  "mnist-dirichlet-2027-basil_acds-bb52572cbacc": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "0611e54eb9c8b1fe4068b5a829724ff496585ea8679a553feb409c0ab4582613",
+    "sourceRunId": "mnist-dirichlet-2027-basil_acds-be981c6e50bd",
+    "transferred": false
+  },
+  "mnist-dirichlet-2027-basil_attack_only-b02a0a349633": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "0995cbeeec3619cdd705694e5c0d41b102f0968e80b78a3a724e7ceeff450c99",
+    "sourceRunId": "mnist-dirichlet-2027-basil_attack_only-d880ab082156",
+    "transferred": false
+  },
+  "mnist-dirichlet-2027-basil_attack_only-efc31974e42d": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "3f6508aba669120a3eda575a8dfeb87e923e81b6c508f93a4360d5eb1214bd71",
+    "sourceRunId": "mnist-dirichlet-2027-basil_attack_only-1b72b31bf25c",
+    "transferred": false
+  },
+  "mnist-dirichlet-2027-basil_clean-bbd297d4e4b3": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "03f476859f3fe0ac08b581044d9886e8f6e2e5d24bd5a12212789913fa9bd493",
+    "sourceRunId": "mnist-dirichlet-2027-basil_clean-05e9e22c712d",
+    "transferred": false
+  },
+  "mnist-dirichlet-2027-basil_joint-38e746f2d805": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "c0421f2b1c5e0c341de096ff2629e92ae235ec885fbee73b62c2d44dc220b8dc",
+    "sourceRunId": "mnist-dirichlet-2027-basil_joint-51d4d588525d",
+    "transferred": false
+  },
+  "mnist-dirichlet-2027-sharp_clean-269f14ecbe38": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "e564d622a0aacc1e6749e1cccfeb8147bcca2badb387537d9b2c7940b5c6c005",
+    "sourceRunId": "mnist-dirichlet-2027-sharp_clean-2119b704e982",
+    "transferred": false
+  },
+  "mnist-dirichlet-2027-sharp_joint-3c9fc9feb477": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "844fba58b0daa7f57984544cf89e86ba1b212e030c66d061ebba2091058dc701",
+    "sourceRunId": "mnist-dirichlet-2027-sharp_joint-e36cae77e47a",
+    "transferred": false
+  },
+  "mnist-dirichlet-2027-sharp_joint-625879bcafe5": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "c0da49439b358f9082a980740b0fb9ebe5a531b24d2595b6efa1b0fd1f4a425f",
+    "sourceRunId": "mnist-dirichlet-2027-sharp_joint-fd3ba6e48d4d",
+    "transferred": false
+  },
+  "mnist-iid-2025-basil_attack_only-3e77f7996281": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "cc1b80fe3644de332a6c7da1672e5e5946f536d9f29eac9470552894df67d985",
+    "sourceRunId": "mnist-iid-2025-basil_attack_only-26fa59ddbf2c",
+    "transferred": false
+  },
+  "mnist-iid-2025-basil_attack_only-9a60c38babb4": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "1b039a0c91040c6c967aeb92c9da33b254087835da915eb84ff3c592ae323354",
+    "sourceRunId": "mnist-iid-2025-basil_attack_only-6321dd42b9b7",
+    "transferred": false
+  },
+  "mnist-iid-2025-basil_clean-1b68da0f345d": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "f5428f89f251b97ec242fab2bf3e43332eab5b0e6acd78f46a4659841b155be5",
+    "sourceRunId": "mnist-iid-2025-basil_clean-7d3ef7dfe997",
+    "transferred": false
+  },
+  "mnist-iid-2025-basil_joint-82564c8ab558": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "f4d6ca156914a39ba00f646ad3dffd9f731378e3e3c61e7cf97122bf07d01c5d",
+    "sourceRunId": "mnist-iid-2025-basil_joint-29d1e5a6fcd4",
+    "transferred": false
+  },
+  "mnist-iid-2025-basil_joint-d3e05c638aef": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "25c50454cdb253917cde02ef28e72143984a77abe1f6c39ce0b04512c6056641",
+    "sourceRunId": "mnist-iid-2025-basil_joint-f1d2356747f2",
+    "transferred": false
+  },
+  "mnist-iid-2025-sharp_attack_only-fe7848005398": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "5d3a00ce2dc6a29748d0075d22f346d47e0636d892b7b94007fd4ff9193d7422",
+    "sourceRunId": "mnist-iid-2025-sharp_attack_only-da7c271d894e",
+    "transferred": false
+  },
+  "mnist-iid-2025-sharp_clean-56ece7fa71f7": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "9dfdc90100edd570eea7a680e98a944659b2304b0c87852e12575f80573ee6bc",
+    "sourceRunId": "mnist-iid-2025-sharp_clean-6e6551e6f373",
+    "transferred": false
+  },
+  "mnist-iid-2025-sharp_joint-7067629b3946": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "6045e56c9d6fa1b24a9853ff49c8abaa225fe7a0575ab74a4cf2ffcebe225924",
+    "sourceRunId": "mnist-iid-2025-sharp_joint-3570b9d946b5",
+    "transferred": false
+  },
+  "mnist-iid-2025-sharp_joint-729dbb48f17a": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "0b48971a8c02b1ba618e76721688fe31eb87837912cef236230ab79c012b1a33",
+    "sourceRunId": "mnist-iid-2025-sharp_joint-79dd16c8edea",
+    "transferred": false
+  },
+  "mnist-iid-2026-basil_attack_only-624ec192cb5b": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "3ed1a0e688ecb12d9944657b146e3fcdba67e8e1f9e75b242d0e0d3bf483d792",
+    "sourceRunId": "mnist-iid-2026-basil_attack_only-50218942c1df",
+    "transferred": false
+  },
+  "mnist-iid-2026-basil_attack_only-96bf634251ae": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "2834a4123d824d942ed3b286892061226867e9af4234eb7fb0e206287e96f332",
+    "sourceRunId": "mnist-iid-2026-basil_attack_only-603336a208ff",
+    "transferred": false
+  },
+  "mnist-iid-2026-basil_clean-74cd29604d4b": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "988cebfb54268515374182edd7005e9ca7b9e6534a8cabe695a93bd1b7d01777",
+    "sourceRunId": "mnist-iid-2026-basil_clean-30ac0ad3a4fe",
+    "transferred": false
+  },
+  "mnist-iid-2026-basil_joint-d50e51afeedd": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "ad4b3e624ad33132b2210779b797269e260983828a4bbccb9ba37439b71442d8",
+    "sourceRunId": "mnist-iid-2026-basil_joint-e63c50e7b95a",
+    "transferred": false
+  },
+  "mnist-iid-2026-basil_joint-fb4883ee8528": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "a3cd256bc224cf270079ccff477e658b830dea3cf4b494d5e31dde5520d9bfb5",
+    "sourceRunId": "mnist-iid-2026-basil_joint-d9b092e6373c",
+    "transferred": false
+  },
+  "mnist-iid-2026-sharp_attack_only-3244fea34a17": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "d1c708eff0e6472be48fdba3c79d720e95a477c3a399786ae27942053c871497",
+    "sourceRunId": "mnist-iid-2026-sharp_attack_only-bd5d357ed1bd",
+    "transferred": false
+  },
+  "mnist-iid-2026-sharp_clean-b8b86b1acb54": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "d4c3e86f8f5c4071223e86a08092705c46b2d0c3266e5177356559ab8b5a29d3",
+    "sourceRunId": "mnist-iid-2026-sharp_clean-060976a21938",
+    "transferred": false
+  },
+  "mnist-iid-2026-sharp_joint-3bc5f082d187": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "5fa5ce1513ac7d32d898c1cd22ec2014712d93acbf1faa0e5aadbbf1a0057682",
+    "sourceRunId": "mnist-iid-2026-sharp_joint-2ff893537470",
+    "transferred": false
+  },
+  "mnist-iid-2026-sharp_joint-dd4aa4dd8e0b": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "0b070f5c36144b5274655d96e054031009dea7546e6ced8f274fd22d9b8bf36c",
+    "sourceRunId": "mnist-iid-2026-sharp_joint-1e5c871f8a11",
+    "transferred": false
+  },
+  "mnist-iid-2027-basil_attack_only-2b9444d108d5": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "5dad9f906a6601f29d996b863910d9ed7758ce3cc99f7c6fd361c0ff8b1ac4e0",
+    "sourceRunId": "mnist-iid-2027-basil_attack_only-4f86756d634b",
+    "transferred": false
+  },
+  "mnist-iid-2027-basil_attack_only-2f2a426ff45a": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "f97fb7214bb483448ace18f9bff624ac37013008d991199c19be0358252a0c08",
+    "sourceRunId": "mnist-iid-2027-basil_attack_only-685f16f3a136",
+    "transferred": false
+  },
+  "mnist-iid-2027-basil_clean-559cb7a7aa0c": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "0a6ae7e73f4db1fc63ea5696e0ba76a78da1247a5498dd3987fa74a2a9041818",
+    "sourceRunId": "mnist-iid-2027-basil_clean-14b11e2ce3d3",
+    "transferred": false
+  },
+  "mnist-iid-2027-sharp_clean-f1ffc719c6d7": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "6523ee96cf473ada81eac2fcde08e2c94a3c11c1839f5106ecddf19ef2038585",
+    "sourceRunId": "mnist-iid-2027-sharp_clean-b73134a19759",
+    "transferred": false
+  },
+  "mnist-iid-2027-sharp_joint-44748a0b2f8d": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "2b9eca76b2c1dceb2924ee8d5de88241e567700bd0e42ba101cdad1d8ba3d391",
+    "sourceRunId": "mnist-iid-2027-sharp_joint-cfcaddb772c2",
+    "transferred": false
+  },
+  "mnist-iid-2027-sharp_joint-952fd178a24b": {
+    "executionPlanSha256": "03bdb21911cce8ceb0d22d4071d6419f64b8b591559cabec77e8219f2ae73de4",
+    "host": "themachine",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "f58787b294698a357e0435804298c231fd55f7994d87f706e122ef8eb64052f6",
+    "sourceRunId": "mnist-iid-2027-sharp_joint-6a164e6c73ef",
+    "transferred": false
+  }
+}

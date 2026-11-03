@@ -1,0 +1,530 @@
+{
+  "cifar10-dirichlet-2025-basil_acds-03863eb17a93": {
+    "executionPlanSha256": "550d7d208770b7ead73c1d181135f8dde00b06878bc133e95c4f7fdb3909d672",
+    "host": "hal9k",
+    "originalAssignedHost": "hal9k",
+    "sourceCheckpointSha256": "51eaad96cb44363424a27833995a79ddff1872f8c08f18307bcba2d4b4752656",
+    "sourceRunId": "cifar10-dirichlet-2025-basil_acds-e313aaaa751b",
+    "transferred": false
+  },
+  "cifar10-dirichlet-2025-sharp_joint-62246b854ecc": {
+    "executionPlanSha256": "550d7d208770b7ead73c1d181135f8dde00b06878bc133e95c4f7fdb3909d672",
+    "host": "hal9k",
+    "originalAssignedHost": "hal9k",
+    "sourceCheckpointSha256": "3a4743b5efdd2fa7772e18f463f21ab12f73ffab13e3bdcc4b378ca3bfc3b49d",
+    "sourceRunId": "cifar10-dirichlet-2025-sharp_joint-d01369cd05c5",
+    "transferred": false
+  },
+  "cifar10-dirichlet-2026-basil_acds-fba99c36cab0": {
+    "executionPlanSha256": "550d7d208770b7ead73c1d181135f8dde00b06878bc133e95c4f7fdb3909d672",
+    "host": "hal9k",
+    "originalAssignedHost": "hal9k",
+    "sourceCheckpointSha256": "bcce5e5e1d2e73e3eb98d418145021ce681d6e30164c2317bbb82cadc0843d1d",
+    "sourceRunId": "cifar10-dirichlet-2026-basil_acds-ac886871194b",
+    "transferred": false
+  },
+  "cifar10-dirichlet-2026-sharp_joint-01111976c0cc": {
+    "executionPlanSha256": "550d7d208770b7ead73c1d181135f8dde00b06878bc133e95c4f7fdb3909d672",
+    "host": "hal9k",
+    "originalAssignedHost": "hal9k",
+    "sourceCheckpointSha256": "430cb160063e6d856655d43b014a6f0bb769218c7a8ccececc4933cf0e69d4a1",
+    "sourceRunId": "cifar10-dirichlet-2026-sharp_joint-52de8d2e785e",
+    "transferred": false
+  },
+  "cifar10-dirichlet-2027-basil_acds-a194fa471509": {
+    "executionPlanSha256": "550d7d208770b7ead73c1d181135f8dde00b06878bc133e95c4f7fdb3909d672",
+    "host": "hal9k",
+    "originalAssignedHost": "hal9k",
+    "sourceCheckpointSha256": "03ce98dab92db203f4a39a7d1204b8ca8b4d65f30e0d469df195bf2851dab787",
+    "sourceRunId": "cifar10-dirichlet-2027-basil_acds-57f98cc2b490",
+    "transferred": false
+  },
+  "cifar10-dirichlet-2027-sharp_attack_only-47d64264fad7": {
+    "executionOptimization": {
+      "features": [
+        "fixed_probes",
+        "cached_checkpoint_json",
+        "incremental_round_summaries"
+      ],
+      "revision": "fedsharp_execution_v1",
+      "source": {
+        "basil_core/fedsharp_runtime_optimization.py": "461174a4628552d9070316438d3b45faeccdd8c7967602b403d6e82d1eb16511",
+        "scripts/optimized_fedsharp_worker.py": "caad92838f221d4ca49613c16145928b6f5e26b88e3cc334cd0055390c6b0f6e"
+      },
+      "zeroCoefficientQualification": {
+        "enabled": false,
+        "reason": "not a prior-adjusted worker"
+      }
+    },
+    "executionPlanSha256": "724aa546dada03e5fcd773ff2a33bbce3c7ab7853cb15130b812f0ada52b9f35",
+    "host": "hal9k",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "aebf7006c67d7e3236d90e74c7ac91fac335f6276158d04b4b776a9b05c20803",
+    "sourceRunId": "cifar10-dirichlet-2027-sharp_attack_only-62f146101b2d",
+    "transferred": true
+  },
+  "cifar10-dirichlet-2027-sharp_attack_only-4cb46c167778": {
+    "executionOptimization": {
+      "features": [
+        "fixed_probes",
+        "cached_checkpoint_json",
+        "incremental_round_summaries"
+      ],
+      "revision": "fedsharp_execution_v1",
+      "source": {
+        "basil_core/fedsharp_runtime_optimization.py": "461174a4628552d9070316438d3b45faeccdd8c7967602b403d6e82d1eb16511",
+        "scripts/optimized_fedsharp_worker.py": "caad92838f221d4ca49613c16145928b6f5e26b88e3cc334cd0055390c6b0f6e"
+      },
+      "zeroCoefficientQualification": {
+        "enabled": false,
+        "reason": "not a prior-adjusted worker"
+      }
+    },
+    "executionPlanSha256": "724aa546dada03e5fcd773ff2a33bbce3c7ab7853cb15130b812f0ada52b9f35",
+    "host": "hal9k",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "2e418814ccfd6015f9a97b3d2365360336dfba2e5d5c760a6c3e39c14e7cf3d0",
+    "sourceRunId": "cifar10-dirichlet-2027-sharp_attack_only-3b0d93fe45af",
+    "transferred": true
+  },
+  "cifar10-dirichlet-2027-sharp_cart-190f7e67755e": {
+    "executionOptimization": {
+      "features": [
+        "fixed_probes",
+        "cached_checkpoint_json",
+        "incremental_round_summaries"
+      ],
+      "revision": "fedsharp_execution_v1",
+      "source": {
+        "basil_core/fedsharp_runtime_optimization.py": "461174a4628552d9070316438d3b45faeccdd8c7967602b403d6e82d1eb16511",
+        "scripts/optimized_fedsharp_worker.py": "caad92838f221d4ca49613c16145928b6f5e26b88e3cc334cd0055390c6b0f6e"
+      },
+      "zeroCoefficientQualification": {
+        "checks": [
+          {
+            "coefficient": 0.0,
+            "exact": true,
+            "round": 120
+          },
+          {
+            "coefficient": 0.0,
+            "exact": true,
+            "round": 350
+          },
+          {
+            "coefficient": 0.003,
+            "exact": true,
+            "round": 120
+          },
+          {
+            "coefficient": 0.003,
+            "exact": true,
+            "round": 350
+          }
+        ],
+        "enabled": true,
+        "reason": "all device comparisons exact"
+      }
+    },
+    "executionPlanSha256": "724aa546dada03e5fcd773ff2a33bbce3c7ab7853cb15130b812f0ada52b9f35",
+    "host": "hal9k",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "95a4a9181ce58a89390bf27cf1caeedd44410590662120fd034ce340bd142ec7",
+    "sourceRunId": "cifar10-dirichlet-2027-sharp_cart-37a1953f50e4",
+    "transferred": true
+  },
+  "cifar10-dirichlet-2027-sharp_cart-d6fd385aa051": {
+    "executionOptimization": {
+      "features": [
+        "fixed_probes",
+        "cached_checkpoint_json",
+        "incremental_round_summaries"
+      ],
+      "revision": "fedsharp_execution_v1",
+      "source": {
+        "basil_core/fedsharp_runtime_optimization.py": "461174a4628552d9070316438d3b45faeccdd8c7967602b403d6e82d1eb16511",
+        "scripts/optimized_fedsharp_worker.py": "caad92838f221d4ca49613c16145928b6f5e26b88e3cc334cd0055390c6b0f6e"
+      },
+      "zeroCoefficientQualification": {
+        "checks": [
+          {
+            "coefficient": 0.0,
+            "exact": true,
+            "round": 120
+          },
+          {
+            "coefficient": 0.0,
+            "exact": true,
+            "round": 350
+          },
+          {
+            "coefficient": 0.003,
+            "exact": true,
+            "round": 120
+          },
+          {
+            "coefficient": 0.003,
+            "exact": true,
+            "round": 350
+          }
+        ],
+        "enabled": true,
+        "reason": "all device comparisons exact"
+      }
+    },
+    "executionPlanSha256": "724aa546dada03e5fcd773ff2a33bbce3c7ab7853cb15130b812f0ada52b9f35",
+    "host": "hal9k",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "4f78348b1c79374f5dfad20171ca91aa6669e8fba1d1181d122184108fa1d6e6",
+    "sourceRunId": "cifar10-dirichlet-2027-sharp_cart-878e2b123376",
+    "transferred": true
+  },
+  "cifar10-dirichlet-2027-sharp_joint-ca6fc78b497f": {
+    "executionPlanSha256": "550d7d208770b7ead73c1d181135f8dde00b06878bc133e95c4f7fdb3909d672",
+    "host": "hal9k",
+    "originalAssignedHost": "hal9k",
+    "sourceCheckpointSha256": "19541e966f072000f13066a70f8d97207cac95b85a5361279f4ad7a5f46a2b69",
+    "sourceRunId": "cifar10-dirichlet-2027-sharp_joint-513eb7fb930d",
+    "transferred": false
+  },
+  "cifar10-iid-2025-basil_clean-85a36e465378": {
+    "executionPlanSha256": "550d7d208770b7ead73c1d181135f8dde00b06878bc133e95c4f7fdb3909d672",
+    "host": "hal9k",
+    "originalAssignedHost": "hal9k",
+    "sourceCheckpointSha256": "7f9480f863cb0352b254dcfccc156cfc659a477ca60ef396d67a5dda3558d51d",
+    "sourceRunId": "cifar10-iid-2025-basil_clean-b7b2b9add489",
+    "transferred": false
+  },
+  "cifar10-iid-2026-basil_clean-bdfd945beafa": {
+    "executionPlanSha256": "550d7d208770b7ead73c1d181135f8dde00b06878bc133e95c4f7fdb3909d672",
+    "host": "hal9k",
+    "originalAssignedHost": "hal9k",
+    "sourceCheckpointSha256": "8a89bac131444afb35da2918e28037f59f25377a77031880eacdae189589d5c2",
+    "sourceRunId": "cifar10-iid-2026-basil_clean-b53786c0ee02",
+    "transferred": false
+  },
+  "cifar10-iid-2027-basil_clean-43107d082b1f": {
+    "executionPlanSha256": "550d7d208770b7ead73c1d181135f8dde00b06878bc133e95c4f7fdb3909d672",
+    "host": "hal9k",
+    "originalAssignedHost": "hal9k",
+    "sourceCheckpointSha256": "16bf5b7d795c72c240ee6f6539b64a1aa2045b1821e30a18d8a1ba057f44acb8",
+    "sourceRunId": "cifar10-iid-2027-basil_clean-d9b540a02004",
+    "transferred": false
+  },
+  "cifar10-iid-2027-basil_joint-37d30d3ffa6e": {
+    "executionPlanSha256": "724aa546dada03e5fcd773ff2a33bbce3c7ab7853cb15130b812f0ada52b9f35",
+    "host": "hal9k",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "568f93677a71b37fe0696e7c3e5379e9bfefc5b3a2dfc6cc084e02fe6432854d",
+    "sourceRunId": "cifar10-iid-2027-basil_joint-6a722dde61eb",
+    "transferred": true
+  },
+  "cifar10-iid-2027-sharp_attack_only-123694f80d87": {
+    "executionOptimization": {
+      "features": [
+        "fixed_probes",
+        "cached_checkpoint_json",
+        "incremental_round_summaries"
+      ],
+      "revision": "fedsharp_execution_v1",
+      "source": {
+        "basil_core/fedsharp_runtime_optimization.py": "461174a4628552d9070316438d3b45faeccdd8c7967602b403d6e82d1eb16511",
+        "scripts/optimized_fedsharp_worker.py": "caad92838f221d4ca49613c16145928b6f5e26b88e3cc334cd0055390c6b0f6e"
+      },
+      "zeroCoefficientQualification": {
+        "enabled": false,
+        "reason": "not a prior-adjusted worker"
+      }
+    },
+    "executionPlanSha256": "724aa546dada03e5fcd773ff2a33bbce3c7ab7853cb15130b812f0ada52b9f35",
+    "host": "hal9k",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "05118da060ab39163d66ca81eb398650e8a8b43de959c2c6f3a86af32351bead",
+    "sourceRunId": "cifar10-iid-2027-sharp_attack_only-8faa73d7b8ca",
+    "transferred": true
+  },
+  "cifar10-iid-2027-sharp_attack_only-86a1177a4432": {
+    "executionOptimization": {
+      "features": [
+        "fixed_probes",
+        "cached_checkpoint_json",
+        "incremental_round_summaries"
+      ],
+      "revision": "fedsharp_execution_v1",
+      "source": {
+        "basil_core/fedsharp_runtime_optimization.py": "461174a4628552d9070316438d3b45faeccdd8c7967602b403d6e82d1eb16511",
+        "scripts/optimized_fedsharp_worker.py": "caad92838f221d4ca49613c16145928b6f5e26b88e3cc334cd0055390c6b0f6e"
+      },
+      "zeroCoefficientQualification": {
+        "enabled": false,
+        "reason": "not a prior-adjusted worker"
+      }
+    },
+    "executionPlanSha256": "724aa546dada03e5fcd773ff2a33bbce3c7ab7853cb15130b812f0ada52b9f35",
+    "host": "hal9k",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "a006399ae586b3dba4359076e9873c67d5207b4fb4b742c0f51ea08729538b60",
+    "sourceRunId": "cifar10-iid-2027-sharp_attack_only-0409fd3e52a4",
+    "transferred": true
+  },
+  "mnist-dirichlet-2025-basil_joint-249d7c7aa4cd": {
+    "executionPlanSha256": "550d7d208770b7ead73c1d181135f8dde00b06878bc133e95c4f7fdb3909d672",
+    "host": "hal9k",
+    "originalAssignedHost": "hal9k",
+    "sourceCheckpointSha256": "8a4534c034cd57cecaee836f160c28da4439494c9b87d966dd1bc855879224eb",
+    "sourceRunId": "mnist-dirichlet-2025-basil_joint-26f2b93273cb",
+    "transferred": false
+  },
+  "mnist-dirichlet-2025-sharp_attack_only-ef8471df62ab": {
+    "executionPlanSha256": "550d7d208770b7ead73c1d181135f8dde00b06878bc133e95c4f7fdb3909d672",
+    "host": "hal9k",
+    "originalAssignedHost": "hal9k",
+    "sourceCheckpointSha256": "5a9cbd35b6f956e7a8b573ab4a9c68adcf220ff635e1e32dbc2dfbc8f0921d36",
+    "sourceRunId": "mnist-dirichlet-2025-sharp_attack_only-27cdda8bf14d",
+    "transferred": false
+  },
+  "mnist-dirichlet-2026-basil_joint-acdd0828d04e": {
+    "executionPlanSha256": "550d7d208770b7ead73c1d181135f8dde00b06878bc133e95c4f7fdb3909d672",
+    "host": "hal9k",
+    "originalAssignedHost": "hal9k",
+    "sourceCheckpointSha256": "a66cc9ce9f242681025b37a129f56df2bd2bee019f247919833bb75506118ccf",
+    "sourceRunId": "mnist-dirichlet-2026-basil_joint-1c5549993a1a",
+    "transferred": false
+  },
+  "mnist-dirichlet-2026-sharp_attack_only-5ab74c6469c3": {
+    "executionPlanSha256": "550d7d208770b7ead73c1d181135f8dde00b06878bc133e95c4f7fdb3909d672",
+    "host": "hal9k",
+    "originalAssignedHost": "hal9k",
+    "sourceCheckpointSha256": "a25496955cc22add84b342c542c0a09cef2eeb4f86834bf3cdc634653d8b3506",
+    "sourceRunId": "mnist-dirichlet-2026-sharp_attack_only-386cb7f26cb7",
+    "transferred": false
+  },
+  "mnist-dirichlet-2027-basil_joint-9e00afbd8071": {
+    "executionPlanSha256": "550d7d208770b7ead73c1d181135f8dde00b06878bc133e95c4f7fdb3909d672",
+    "host": "hal9k",
+    "originalAssignedHost": "hal9k",
+    "sourceCheckpointSha256": "0523304a907df8c3b83a4039dc604cbe767d1f3a92804d10b1384dc1b89f6cf6",
+    "sourceRunId": "mnist-dirichlet-2027-basil_joint-4476db62ad1e",
+    "transferred": false
+  },
+  "mnist-dirichlet-2027-basil_noise_only-70cac9d5626b": {
+    "executionPlanSha256": "724aa546dada03e5fcd773ff2a33bbce3c7ab7853cb15130b812f0ada52b9f35",
+    "host": "hal9k",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "32fd29cc32b4046b02ba3ffc790f2aa04ab4a26d5eeec4f100db869060b5ee77",
+    "sourceRunId": "mnist-dirichlet-2027-basil_noise_only-d81124d90712",
+    "transferred": true
+  },
+  "mnist-dirichlet-2027-sharp_attack_only-1c7253dd9fda": {
+    "executionPlanSha256": "550d7d208770b7ead73c1d181135f8dde00b06878bc133e95c4f7fdb3909d672",
+    "host": "hal9k",
+    "originalAssignedHost": "hal9k",
+    "sourceCheckpointSha256": "882fe38a42e615e32a4406d75b2c851c8dd4a8197812f548898d0c6ff19b21fa",
+    "sourceRunId": "mnist-dirichlet-2027-sharp_attack_only-acaa2d03ca89",
+    "transferred": false
+  },
+  "mnist-dirichlet-2027-sharp_attack_only-befb3ee45aee": {
+    "executionOptimization": {
+      "features": [
+        "fixed_probes",
+        "cached_checkpoint_json",
+        "incremental_round_summaries"
+      ],
+      "revision": "fedsharp_execution_v1",
+      "source": {
+        "basil_core/fedsharp_runtime_optimization.py": "461174a4628552d9070316438d3b45faeccdd8c7967602b403d6e82d1eb16511",
+        "scripts/optimized_fedsharp_worker.py": "caad92838f221d4ca49613c16145928b6f5e26b88e3cc334cd0055390c6b0f6e"
+      },
+      "zeroCoefficientQualification": {
+        "enabled": false,
+        "reason": "not a prior-adjusted worker"
+      }
+    },
+    "executionPlanSha256": "724aa546dada03e5fcd773ff2a33bbce3c7ab7853cb15130b812f0ada52b9f35",
+    "host": "hal9k",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "c0bad47139bc3961ae90fc371471f774db7d3bda2e59b10af5ced30907b9de67",
+    "sourceRunId": "mnist-dirichlet-2027-sharp_attack_only-a4d09acdb763",
+    "transferred": true
+  },
+  "mnist-dirichlet-2027-sharp_cart-d6b3a68e8db8": {
+    "executionOptimization": {
+      "features": [
+        "fixed_probes",
+        "cached_checkpoint_json",
+        "incremental_round_summaries"
+      ],
+      "revision": "fedsharp_execution_v1",
+      "source": {
+        "basil_core/fedsharp_runtime_optimization.py": "461174a4628552d9070316438d3b45faeccdd8c7967602b403d6e82d1eb16511",
+        "scripts/optimized_fedsharp_worker.py": "caad92838f221d4ca49613c16145928b6f5e26b88e3cc334cd0055390c6b0f6e"
+      },
+      "zeroCoefficientQualification": {
+        "checks": [
+          {
+            "coefficient": 0.0,
+            "exact": true,
+            "round": 120
+          },
+          {
+            "coefficient": 0.0,
+            "exact": true,
+            "round": 350
+          },
+          {
+            "coefficient": 0.003,
+            "exact": true,
+            "round": 120
+          },
+          {
+            "coefficient": 0.003,
+            "exact": true,
+            "round": 350
+          }
+        ],
+        "enabled": true,
+        "reason": "all device comparisons exact"
+      }
+    },
+    "executionPlanSha256": "724aa546dada03e5fcd773ff2a33bbce3c7ab7853cb15130b812f0ada52b9f35",
+    "host": "hal9k",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "7e2aa32e71b57d0e8742d3def4236a97a523abf1b600acb770d08c434409cda8",
+    "sourceRunId": "mnist-dirichlet-2027-sharp_cart-00f47e185f5e",
+    "transferred": true
+  },
+  "mnist-dirichlet-2027-sharp_cart-e7978c9fd75f": {
+    "executionOptimization": {
+      "features": [
+        "fixed_probes",
+        "cached_checkpoint_json",
+        "incremental_round_summaries"
+      ],
+      "revision": "fedsharp_execution_v1",
+      "source": {
+        "basil_core/fedsharp_runtime_optimization.py": "461174a4628552d9070316438d3b45faeccdd8c7967602b403d6e82d1eb16511",
+        "scripts/optimized_fedsharp_worker.py": "caad92838f221d4ca49613c16145928b6f5e26b88e3cc334cd0055390c6b0f6e"
+      },
+      "zeroCoefficientQualification": {
+        "checks": [
+          {
+            "coefficient": 0.0,
+            "exact": true,
+            "round": 120
+          },
+          {
+            "coefficient": 0.0,
+            "exact": true,
+            "round": 350
+          },
+          {
+            "coefficient": 0.003,
+            "exact": true,
+            "round": 120
+          },
+          {
+            "coefficient": 0.003,
+            "exact": true,
+            "round": 350
+          }
+        ],
+        "enabled": true,
+        "reason": "all device comparisons exact"
+      }
+    },
+    "executionPlanSha256": "724aa546dada03e5fcd773ff2a33bbce3c7ab7853cb15130b812f0ada52b9f35",
+    "host": "hal9k",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "7fa92b1831141f7d76bb47715510715a39490e707b559c3563c1fb3135d9c128",
+    "sourceRunId": "mnist-dirichlet-2027-sharp_cart-18802f91e33b",
+    "transferred": true
+  },
+  "mnist-iid-2025-basil_noise_only-45f64b3d6f5a": {
+    "executionPlanSha256": "550d7d208770b7ead73c1d181135f8dde00b06878bc133e95c4f7fdb3909d672",
+    "host": "hal9k",
+    "originalAssignedHost": "hal9k",
+    "sourceCheckpointSha256": "ffb999ad0ed00bac322dab555071a96234808c36f475cd3e02589c594f556850",
+    "sourceRunId": "mnist-iid-2025-basil_noise_only-38718d0b7139",
+    "transferred": false
+  },
+  "mnist-iid-2025-sharp_attack_only-6730e58d13c6": {
+    "executionPlanSha256": "550d7d208770b7ead73c1d181135f8dde00b06878bc133e95c4f7fdb3909d672",
+    "host": "hal9k",
+    "originalAssignedHost": "hal9k",
+    "sourceCheckpointSha256": "41ae9ba6a549f73e024409fade739e5c68668b4e565216917b03ef3a11568235",
+    "sourceRunId": "mnist-iid-2025-sharp_attack_only-f1745c740082",
+    "transferred": false
+  },
+  "mnist-iid-2026-basil_noise_only-b51a75104faf": {
+    "executionPlanSha256": "550d7d208770b7ead73c1d181135f8dde00b06878bc133e95c4f7fdb3909d672",
+    "host": "hal9k",
+    "originalAssignedHost": "hal9k",
+    "sourceCheckpointSha256": "5a76c44ef61843f0d34e266b6371e02d1be054b1c7fb7eaec2c5a6190825d89a",
+    "sourceRunId": "mnist-iid-2026-basil_noise_only-e66e229529ed",
+    "transferred": false
+  },
+  "mnist-iid-2026-sharp_attack_only-b3011cd0e0b7": {
+    "executionPlanSha256": "550d7d208770b7ead73c1d181135f8dde00b06878bc133e95c4f7fdb3909d672",
+    "host": "hal9k",
+    "originalAssignedHost": "hal9k",
+    "sourceCheckpointSha256": "c9846e72b55760ea6330d4e7c01188d41bc56b91531e108644dd3ce794d6da56",
+    "sourceRunId": "mnist-iid-2026-sharp_attack_only-cb3605001748",
+    "transferred": false
+  },
+  "mnist-iid-2027-basil_joint-a63aaea6b6cc": {
+    "executionPlanSha256": "724aa546dada03e5fcd773ff2a33bbce3c7ab7853cb15130b812f0ada52b9f35",
+    "host": "hal9k",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "8bf3dbf5d158aff88574d620564a7a1bf86abe76b29b2e9fe9a04a6e45640dba",
+    "sourceRunId": "mnist-iid-2027-basil_joint-829be306f36e",
+    "transferred": true
+  },
+  "mnist-iid-2027-basil_joint-bf494206aac0": {
+    "executionPlanSha256": "724aa546dada03e5fcd773ff2a33bbce3c7ab7853cb15130b812f0ada52b9f35",
+    "host": "hal9k",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "807254646c22101d229df857aef1ddc3ea7880325509f2f62b23723071d052a5",
+    "sourceRunId": "mnist-iid-2027-basil_joint-94e424c74f82",
+    "transferred": true
+  },
+  "mnist-iid-2027-basil_noise_only-1d74d8b314ef": {
+    "executionPlanSha256": "550d7d208770b7ead73c1d181135f8dde00b06878bc133e95c4f7fdb3909d672",
+    "host": "hal9k",
+    "originalAssignedHost": "hal9k",
+    "sourceCheckpointSha256": "74c4ce0f9743c0904079c1a2fd1016e5b0dca394a1437272f73b0f00c43b8d72",
+    "sourceRunId": "mnist-iid-2027-basil_noise_only-0a5f7f0434ce",
+    "transferred": false
+  },
+  "mnist-iid-2027-sharp_attack_only-0ae28af69dbd": {
+    "executionPlanSha256": "550d7d208770b7ead73c1d181135f8dde00b06878bc133e95c4f7fdb3909d672",
+    "host": "hal9k",
+    "originalAssignedHost": "hal9k",
+    "sourceCheckpointSha256": "0aac5ec93e4030d355b07bff3953437d0c26c1e6cb0efa1f2a0dcf2c06be73c9",
+    "sourceRunId": "mnist-iid-2027-sharp_attack_only-caeed9475e64",
+    "transferred": false
+  },
+  "mnist-iid-2027-sharp_attack_only-49ec08c28623": {
+    "executionOptimization": {
+      "features": [
+        "fixed_probes",
+        "cached_checkpoint_json",
+        "incremental_round_summaries"
+      ],
+      "revision": "fedsharp_execution_v1",
+      "source": {
+        "basil_core/fedsharp_runtime_optimization.py": "461174a4628552d9070316438d3b45faeccdd8c7967602b403d6e82d1eb16511",
+        "scripts/optimized_fedsharp_worker.py": "caad92838f221d4ca49613c16145928b6f5e26b88e3cc334cd0055390c6b0f6e"
+      },
+      "zeroCoefficientQualification": {
+        "enabled": false,
+        "reason": "not a prior-adjusted worker"
+      }
+    },
+    "executionPlanSha256": "724aa546dada03e5fcd773ff2a33bbce3c7ab7853cb15130b812f0ada52b9f35",
+    "host": "hal9k",
+    "originalAssignedHost": "themachine",
+    "sourceCheckpointSha256": "174f9f519bea76361a3fb68520c4df60fd4baaded3fe42c0f2a86ad67401059c",
+    "sourceRunId": "mnist-iid-2027-sharp_attack_only-bcaf17a87959",
+    "transferred": true
+  }
+}

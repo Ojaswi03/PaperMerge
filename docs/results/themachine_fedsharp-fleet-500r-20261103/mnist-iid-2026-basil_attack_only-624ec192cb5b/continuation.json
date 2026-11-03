@@ -1,0 +1,51 @@
+{
+  "maximumBoundaryInferenceDifference": 0.0,
+  "prefixMetricsExactlyPreserved": true,
+  "retainedModelsOutgoingVersionsReferencesAndTelemetryPreserved": true,
+  "sourceArchive": "docs/results/hal9k_basil-sharp-thesis-100r-20261030",
+  "sourceCheckpointSha256": "3ed1a0e688ecb12d9944657b146e3fcdba67e8e1f9e75b242d0e0d3bf483d792",
+  "sourceCheckpointUnmodified": true,
+  "sourceContractSha256": "8f3b13e60fb5a2c0a89c81e58542a5bcf4c36aa6cbfccf4d9a651ea21fde5264",
+  "sourceCursor": 10000,
+  "sourceElapsedSeconds": 821.7016402309528,
+  "sourceRounds": 100,
+  "sourceRunId": "mnist-iid-2026-basil_attack_only-50218942c1df",
+  "sourceRuntime": {
+    "device": "/GPU:0",
+    "host": "hal9k",
+    "numpy": "1.26.4",
+    "profile": {
+      "data_workers": 0,
+      "gpu": 0,
+      "gpu_uuid": "GPU-34e241f3-58c7-388c-b072-1dc03852d48b",
+      "headroom_mib": 8192,
+      "memory_mib": 3072,
+      "name": "hpc",
+      "output_root": "/var/tmp/papermerge-os675524/basil-sharp-thesis-direct-checked-100r-20261030",
+      "ram_mib": 8192,
+      "threads": 1
+    },
+    "tensorflow": "2.21.0",
+    "tf32": false
+  },
+  "targetRounds": 500,
+  "targetRunId": "mnist-iid-2026-basil_attack_only-624ec192cb5b",
+  "targetRuntime": {
+    "device": "/GPU:0",
+    "host": "themachine",
+    "numpy": "1.26.4",
+    "profile": {
+      "data_workers": 0,
+      "gpu": 0,
+      "gpu_uuid": "GPU-5493333b-d6c6-d7b0-c0bd-2e71532b19ab",
+      "headroom_mib": 8192,
+      "memory_mib": 3072,
+      "name": "hpc",
+      "output_root": "/var/tmp/papermerge-1718278706/themachine_fedsharp-all-500r-724feac03d03",
+      "ram_mib": 8192,
+      "threads": 1
+    },
+    "tensorflow": "2.21.0",
+    "tf32": false
+  }
+}

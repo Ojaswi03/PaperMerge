@@ -1,0 +1,51 @@
+{
+  "maximumBoundaryInferenceDifference": 0.0,
+  "prefixMetricsExactlyPreserved": true,
+  "retainedModelsOutgoingVersionsReferencesAndTelemetryPreserved": true,
+  "sourceArchive": "docs/results/hal9k_mnist-basil-noise-only-100r-20261102",
+  "sourceCheckpointSha256": "32fd29cc32b4046b02ba3ffc790f2aa04ab4a26d5eeec4f100db869060b5ee77",
+  "sourceCheckpointUnmodified": true,
+  "sourceContractSha256": "4df0ec9e8b2408c5c21b65ec2269fa1edf1dfe8acaf2629d0ded0a23ed3a737c",
+  "sourceCursor": 10000,
+  "sourceElapsedSeconds": 907.9793590898626,
+  "sourceRounds": 100,
+  "sourceRunId": "mnist-dirichlet-2027-basil_noise_only-d81124d90712",
+  "sourceRuntime": {
+    "device": "/GPU:0",
+    "host": "hal9k",
+    "numpy": "1.26.4",
+    "profile": {
+      "data_workers": 0,
+      "gpu": 1,
+      "gpu_uuid": "GPU-c69f1afe-c750-4477-c324-5278b3b2417e",
+      "headroom_mib": 8192,
+      "memory_mib": 3072,
+      "name": "hpc",
+      "output_root": "/var/tmp/papermerge-1718278706/hal9k_mnist-basil-noise-only-100r-20261101-233247",
+      "ram_mib": 8192,
+      "threads": 1
+    },
+    "tensorflow": "2.21.0",
+    "tf32": false
+  },
+  "targetRounds": 500,
+  "targetRunId": "mnist-dirichlet-2027-basil_noise_only-70cac9d5626b",
+  "targetRuntime": {
+    "device": "/GPU:0",
+    "host": "hal9k",
+    "numpy": "1.26.4",
+    "profile": {
+      "data_workers": 0,
+      "gpu": 1,
+      "gpu_uuid": "GPU-c69f1afe-c750-4477-c324-5278b3b2417e",
+      "headroom_mib": 8192,
+      "memory_mib": 3072,
+      "name": "hpc",
+      "output_root": "/var/tmp/papermerge-1718278706/hal9k_fedsharp-fleet-500r-724feac03d03",
+      "ram_mib": 8192,
+      "threads": 1
+    },
+    "tensorflow": "2.21.0",
+    "tf32": false
+  }
+}
