@@ -139,6 +139,17 @@ test('blocked configurations do not hide speed and runnable-work ETA',()=>{
   assert.match(elements.get('finish').textContent,/EDT|EST/);
 });
 
+test('overall ETA explains throughput and slow running-job forecasts',()=>{
+  const {context,elements}=browser();const snapshot=sample();
+  snapshot.etaMode='throughput_and_running_jobs';snapshot.etaSeconds=14400;
+  context.render({snapshot,receivedAt:snapshot.generatedAt});
+  assert.equal(elements.get('eta').textContent,'04:00:00');
+  assert.match(elements.get('eta-note').textContent,/slowest running-job forecast/);
+  snapshot.etaMode='throughput_and_running_jobs_excludes_blocked';snapshot.untimedJobs=2;
+  context.render({snapshot,receivedAt:snapshot.generatedAt});
+  assert.match(elements.get('eta-note').textContent,/2 failed\/stopped excluded/);
+});
+
 test('continuation table shows server ownership and waiting/taken state without changing the public API',async()=>{
   const {context,elements}=browser();const snapshot=sample();
   snapshot.runs=[{...snapshot.runs[0],phase:'shared:hal9k:TAKEN:TRAINING:hidden'},

@@ -133,3 +133,40 @@ unique transferred output locations, compact export provenance, and real-model
 CPU continuation from an unchanged parent into a receiving namespace. Actual
 NFS operation and destination GPU compatibility are checked during rollout;
 local tests do not establish their live state.
+
+## Diagnose performance while training continues
+
+The following tools do not signal, attach a debugger to, restart or reconfigure
+training processes. Run on each server so its own kernel lease holders and CPU
+counters can be verified locally:
+
+```bash
+cd ~/Masters_Research/PaperMerge
+git pull --ff-only
+source .venv-hpc/bin/activate
+shared_run="$HOME/Masters_Research/PaperMerge/.papermerge/continuations-500r-20261102"
+python scripts/diagnose_fedsharp_activity.py --queue "$shared_run" --seconds 10
+nice -n 10 python scripts/benchmark_fedsharp_cpu.py --dataset cifar10 --iterations 3
+```
+
+The activity report reads both agents' shared blocking reasons, progress and
+job ETAs. For the local host it checks process identities and kernel `fdinfo`
+against the actual GPU-lease inode, and samples CPU time and disk-I/O counters.
+Remote lease ownership is explicitly unverified until the tool runs there.
+Status updates are batched, so a short activation-rate sample may be uneven.
+
+The separate synthetic benchmark runs the unchanged link-noise reconstruction
+and screening functions at the actual model-vector dimensions using one CPU
+thread, with lower process priority. It does not import TensorFlow, initialize
+GPU contexts, train a model, read datasets/checkpoints or write experiment
+files. Its timings cover those CPU components only; they do not establish a
+complete activation bottleneck. Candidate scoring, training and validation
+still require a separately validated representative benchmark before changing
+their implementation.
+
+The browser and terminal ETA also account for the longest currently running
+job forecast, rather than assuming aggregate throughput alone determines the
+finish. These remain forecasts: startup and changing contention can move the
+estimates. A monitor-only update needs a new terminal monitor process or a
+browser-publisher refresh as described above; fleet agents and training workers
+keep running unchanged.

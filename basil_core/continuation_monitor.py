@@ -1,6 +1,7 @@
 """Operational continuation timing, outside the frozen numerical producer."""
 from collections import Counter
 from datetime import datetime,timedelta
+import math
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -25,9 +26,16 @@ def snapshot(queue):
     remaining=sum(max(0,r['totalActivations']-r['completedActivations']) for r in state['runs']
         if r['status'] in ('PENDING','RUNNING','STARTING'))
     eta=remaining/speed if speed and state['status'] in ('RUNNING','WAITING_FOR_RESOURCES') else None
+    job_etas=[r.get('etaSeconds') for r in state['runs'] if r['status'] in ('RUNNING','STARTING')
+        and isinstance(r.get('etaSeconds'),(int,float)) and math.isfinite(r['etaSeconds']) and r['etaSeconds']>=0]
+    mode='activation_throughput'
+    if eta is not None and job_etas:
+        # Aggregate throughput alone can promise completion before a slow
+        # already-running job. Both inputs remain workload-sensitive forecasts.
+        eta=max(eta,max(job_etas));mode='throughput_and_running_jobs'
     if state['completed']==state['total']:eta=0.
     state.update(activationsPerSecond=speed,etaSeconds=eta,etaLowSeconds=eta,etaHighSeconds=eta,
-        untimedJobs=len(blocked),etaMode='activation_throughput_excludes_blocked' if blocked else 'activation_throughput')
+        untimedJobs=len(blocked),etaMode=mode+'_excludes_blocked' if blocked else mode)
     return state
 
 
@@ -44,6 +52,8 @@ def render(queue):
         'GPU workers: '+(' | '.join(f'{key}: {count}' for key,count in sorted(Counter(
             r['phase'].split(':')[1]+' GPU '+str(r['gpu']) for r in active).items())) or 'none')]
     if state['untimedJobs']:lines.append(f"ETA covers running and queued work; {state['untimedJobs']} failed/stopped configurations excluded until requeued.")
+    if state['etaMode'].startswith('throughput_and_running_jobs'):
+        lines.append('ETA uses the slower of overall-throughput and running-job forecasts; startup and changing contention can move it.')
     lines.append('SERVER      GPU CLAIM           STATUS          DATA/SPLIT       SEED CONDITION                         ROUND    ACTIVATIONS    ELAPSED  ETA')
     for row in state['runs']:
         _,host,claim,_,attack=row['phase'].split(':',4)

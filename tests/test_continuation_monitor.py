@@ -37,6 +37,29 @@ def test_zero_elapsed_cannot_create_infinite_rate(tmp_path,monkeypatch):
     assert result['activationsPerSecond'] is None and result['etaSeconds'] is None
 
 
+def test_overall_eta_accounts_for_slow_running_job(tmp_path,monkeypatch):
+    state=setup(tmp_path,monkeypatch)
+    state['runs'][0]['etaSeconds']=10000
+    result=monitor.snapshot(tmp_path)
+    assert result['activationsPerSecond']==500 and result['etaSeconds']==10000
+    assert result['etaMode']=='throughput_and_running_jobs_excludes_blocked'
+
+
+def test_failed_job_estimate_does_not_extend_runnable_eta(tmp_path,monkeypatch):
+    state=setup(tmp_path,monkeypatch)
+    state['runs'][0]['etaSeconds']=10
+    state['runs'][1]['etaSeconds']=999999
+    result=monitor.snapshot(tmp_path)
+    assert result['etaSeconds']==140
+
+
+def test_invalid_job_etas_never_leak_nonfinite_numbers(tmp_path,monkeypatch):
+    state=setup(tmp_path,monkeypatch)
+    state['runs'][0]['etaSeconds']=float('nan')
+    result=monitor.snapshot(tmp_path)
+    assert result['etaSeconds']==140
+
+
 def test_completed_elapsed_stops_at_last_host_report(tmp_path,monkeypatch):
     state=setup(tmp_path,monkeypatch,status='COMPLETED',elapsed=99999)
     state.update(completed=4,completedActivations=200000)
