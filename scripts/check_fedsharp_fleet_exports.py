@@ -22,7 +22,10 @@ def check(queue,exports):
             path=root/name
             if path.is_symlink() or not path.resolve().is_relative_to(root.resolve()) or sha(path)!=digest:
                 raise ValueError('Export path/checksum mismatch: '+name)
-            if path.name.startswith('checkpoint') or path.suffix=='.log':raise ValueError('Export contains runtime data.')
+            checkpoint_file=(path.name.startswith('checkpoint') and path.name!='checkpoint_recovery.json')
+            checkpoint_archive=('checkpoint' in path.name and path.suffix in ('.npz','.npy','.ckpt'))
+            if checkpoint_file or checkpoint_archive or path.suffix=='.log':
+                raise ValueError('Export contains runtime data: '+name)
         plan=read_json(root/'plan.json');receipt=read_json(root/'independent_validation.json')
         host=plan['host'].split('.')[0];configs={c['runId']:c for c in plan['configs']}
         verified={r['runId']:r for r in receipt['verified']}

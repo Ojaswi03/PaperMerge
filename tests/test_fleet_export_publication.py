@@ -42,3 +42,20 @@ def test_extra_runtime_files_refused(fragments):
     queue,exports=fragments
     (exports[0]/'run0/checkpoint.npz').write_bytes(b'checkpoint')
     with pytest.raises(ValueError,match='coverage'):check(queue,exports)
+
+
+def test_recovery_json_is_public_evidence_not_a_checkpoint_archive(fragments):
+    queue,exports=fragments;root=exports[0]
+    atomic(root/'run0/checkpoint_recovery.json',dict(status='RECOVERED',runId='run0',optimizerUpdatesAdded=0))
+    from basil_core.cart_campaign_io import read_json
+    manifest=read_json(root/'SHA256.json');manifest['run0/checkpoint_recovery.json']=sha(root/'run0/checkpoint_recovery.json')
+    atomic(root/'SHA256.json',manifest)
+    assert check(queue,exports)['total']==150
+
+
+@pytest.mark.parametrize('name',['checkpoint.npz','checkpoint.tmp.npz','original-checkpoint.npz','checkpoint.npy','worker.log'])
+def test_runtime_files_are_rejected_even_when_present_in_manifest(fragments,name):
+    queue,exports=fragments;root=exports[0];path=root/'run0'/name;path.write_bytes(b'runtime')
+    from basil_core.cart_campaign_io import read_json
+    manifest=read_json(root/'SHA256.json');manifest['run0/'+name]=sha(path);atomic(root/'SHA256.json',manifest)
+    with pytest.raises(ValueError,match='runtime data'):check(queue,exports)
