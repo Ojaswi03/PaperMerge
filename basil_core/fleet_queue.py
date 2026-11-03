@@ -164,6 +164,12 @@ def public_row(item,row,status=None,gpu=None):
     elapsed=row.get('elapsedSeconds')
     if elapsed is not None:elapsed=max(0,elapsed-adapter.get('startedElapsedSeconds',item['sourceElapsedSeconds']))
     new=max(0,cursor-item['sourceCursor']);speed=new/elapsed if elapsed and new else None
+    optimized=adapter.get('executionOptimization',{})
+    optimized_elapsed=(row['elapsedSeconds']-optimized.get('startedElapsedSeconds',row['elapsedSeconds'])
+        if row.get('elapsedSeconds') is not None else 0)
+    optimized_steps=cursor-optimized.get('startedCursor',cursor)
+    optimized_rate=optimized_steps/optimized_elapsed if optimized_steps>0 and optimized_elapsed>0 else None
+    if optimized_rate:speed=optimized_rate
     status=status or row.get('status','PENDING')
     env=dict(clean='clean',joint='attack+noise',attack_only='attack only',noise_only='noise only')
     return dict(gpu=row.get('physicalGpuId',gpu),status=status,dataset=cfg['dataset'],partition=cfg['partition'],
@@ -172,7 +178,7 @@ def public_row(item,row,status=None,gpu=None):
         completedRounds=row.get('completedRounds',item['sourceRounds']),completedActivations=cursor,totalActivations=total,
         accuracy=row.get('meanAccuracy',item['initialAccuracy']),elapsedSeconds=elapsed,
         etaSeconds=0. if status=='COMPLETED' else (total-cursor)/speed if speed and status=='RUNNING' else None,
-        etaSource='measured' if speed else None,phase=row.get('phase','CONTINUATION_PENDING'))
+        etaSource='optimized_session' if optimized_rate else ('measured' if speed else None),phase=row.get('phase','CONTINUATION_PENDING'))
 
 
 def public_snapshot(queue):

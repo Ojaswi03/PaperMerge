@@ -12,7 +12,8 @@ from scripts import export_fedsharp_fleet as exporter
 from tests.test_fleet_queue import setup_queue,join
 
 
-def test_final_export_collects_local_original_and_transferred_results_without_checkpoints(tmp_path,monkeypatch):
+@pytest.mark.parametrize('optimized',[False,True])
+def test_final_export_collects_local_original_and_transferred_results_without_checkpoints(tmp_path,monkeypatch,optimized):
     from reporting import round_continuation
     queue,master=setup_queue(tmp_path,count=2)
     master['revision']='revision'
@@ -26,6 +27,14 @@ def test_final_export_collects_local_original_and_transferred_results_without_ch
     for _ in range(2):
         claim=fleet.claim(queue,'hal9k',0);run=claim['runId'];root=Path(claim['location']['output'])
         atomic(root/run/'run.json',dict(status='COMPLETED',runtime=dict(profile=dict(gpu=0))))
+        if optimized:
+            import hashlib
+            payload=b'optimization source fixture';digest=hashlib.sha256(payload).hexdigest();name='scripts/optimized_fedsharp_worker.py'
+            source=root/'optimization_snapshots'/digest/name;source.parent.mkdir(parents=True,exist_ok=True);source.write_bytes(payload)
+            adapter=dict(revision='fixture',source={name:digest},features=['cached_checkpoint_json'],
+                zeroCoefficientQualification=dict(enabled=False),runtime=dict(profile=dict(output_root=str(root))))
+            row=read_json(root/run/'run.json');row['runtimeAdapter']=dict(executionOptimization=adapter)
+            atomic(root/run/'run.json',row);atomic(root/run/'optimization.json',adapter)
         for name in ('metrics.npz','mechanisms.json','continuation.json','checkpoint.npz'):
             (root/run/name).write_bytes(name.encode())
         fleet.update(queue,run,'hal9k',claim['claim'],'DONE')
@@ -41,6 +50,9 @@ def test_final_export_collects_local_original_and_transferred_results_without_ch
     destination=tmp_path/'export'
     assert exporter.export(queue,destination)==2
     assert checked and not list(destination.rglob('checkpoint.npz'))
+    if optimized:
+        assert list((destination/'optimization_snapshots').rglob('optimized_fedsharp_worker.py'))
+        assert (destination/'run0/optimization.json').exists()
     provenance=read_json(destination/'execution_provenance.json')
     assert not provenance['run0']['transferred'] and provenance['run1']['transferred']
     assert 'pid' not in json.dumps(provenance) and 'output' not in json.dumps(provenance)

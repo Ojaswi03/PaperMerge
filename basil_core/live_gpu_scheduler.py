@@ -24,6 +24,7 @@ from basil_core.supervisor_memory_guard import residents_of
 
 ROOT = Path(__file__).resolve().parents[1]
 WORKER = ROOT / 'scripts/basil_sharp_thesis_worker.py'
+OPTIMIZED_WORKER = ROOT / 'scripts/optimized_fedsharp_worker.py'
 OWNERS = {'run_basil_sharp_thesis.py', 'resume_basil_sharp_resilient.py',
           'rebalance_basil_sharp_live.py', 'run_fedsharp_500r.py', 'retry_fedsharp_500r.py'}
 
@@ -120,7 +121,7 @@ def discover(root, config_count):
             continue
         try:
             item = identity(int(proc.name)); script, arguments = script_command(item)
-            if script != WORKER:
+            if script not in (WORKER,OPTIMIZED_WORKER):
                 continue
             if not output_matches(arguments,item,root):
                 continue

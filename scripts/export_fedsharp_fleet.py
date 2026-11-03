@@ -40,6 +40,18 @@ def export(queue,destination):
             parent=source_record(item);dataset=item['config']['dataset']
             data[dataset]=parent['data'];partitions[run]=parent['partition']
             record=read_json(root/run/'run.json');profiles.append(record['runtime']['profile'])
+            optimized=record.get('runtimeAdapter',{}).get('executionOptimization')
+            if optimized:
+                for name,digest in optimized['source'].items():
+                    if Path(name).is_absolute() or '..' in Path(name).parts or len(digest)!=64 or any(c not in '0123456789abcdef' for c in digest):
+                        raise ValueError('Unsafe optimization snapshot identity.')
+                    source=root/'optimization_snapshots'/digest/name
+                    if source.is_symlink() or not source.resolve().is_relative_to((root/'optimization_snapshots').resolve()) or sha(source)!=digest:
+                        raise ValueError('Optimization source snapshot differs.')
+                    target=temporary/'optimization_snapshots'/digest/name;target.parent.mkdir(parents=True,exist_ok=True)
+                    if not target.exists():shutil.copyfile(source,target)
+                sidecar=read_json(root/run/'optimization.json')
+                if sidecar!=optimized:raise ValueError('Optimization receipt differs from its run record.')
             for name in ('run.json','metrics.npz','mechanisms.json','continuation.json'):
                 source=root/run/name;target=temporary/run/name;target.parent.mkdir(exist_ok=True)
                 if source.is_symlink():raise ValueError('Symlink result exports are refused.')
@@ -47,6 +59,9 @@ def export(queue,destination):
             provenance[run]=dict(host=host,executionPlanSha256=plan_sha,
                 originalAssignedHost=entry['originHost'],transferred=entry['originHost']!=host,
                 sourceRunId=item['sourceRunId'],sourceCheckpointSha256=item['seedSha256'])
+            if optimized:
+                shutil.copyfile(root/run/'optimization.json',temporary/run/'optimization.json')
+                provenance[run]['executionOptimization']={key:optimized[key] for key in ('revision','source','features','zeroCoefficientQualification')}
         fragment=dict(revision=master['revision'],host=socket.gethostname(),source=master['source'],
             configs=[item['config'] for item in items],continuations={item['config']['runId']:item for item in items},
             data=data,partitions=partitions,profiles=profiles,continuationQueueId=master['queueId'],fleetFragment=True)

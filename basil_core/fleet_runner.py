@@ -145,6 +145,12 @@ def run(queue,retry_request=None,ntfy_topic='papermerge-ojaswi',inherited_leases
     from scripts.run_cart_v2_study import worker_environment
     from scripts.run_cart_v2_scaled import available_ram_mib
     queue=Path(queue).resolve();original,output,legacy,plan,master=prepare(queue);host=host_name()
+    policy_path=output/'optimization_policy.json';optimization=None
+    if policy_path.exists():
+        from basil_core import fedsharp_runtime_optimization
+        optimization=read_json(policy_path);fedsharp_runtime_optimization.validate(optimization)
+        if host!='hal9k' or optimization.get('host')!=host or optimization.get('state')!='ACTIVE':
+            raise ValueError('Optimization policy is not active for this host.')
     active={};assigned={};leases={};stopped=False;blocked={}
     if inherited_leases:
         from basil_core.fleet_lease_transfer import inherited_handles
@@ -230,6 +236,7 @@ def run(queue,retry_request=None,ntfy_topic='papermerge-ojaswi',inherited_leases
             try:
                 while not stopped:
                     study.check_source(plan['source'])
+                    if optimization:fedsharp_runtime_optimization.validate(optimization)
                     if sha(queue/'continuation_plan.json')!=plan['continuationPlanSha256']:
                         raise ValueError('Immutable global continuation catalog changed.')
                     for key,job in list(active.items()):
@@ -311,8 +318,9 @@ def run(queue,retry_request=None,ntfy_topic='papermerge-ojaswi',inherited_leases
                                 print(f'GPU {gpu}: verifying destination for transferred work.',flush=True)
                                 continue
                             log=(root/(run+'.log')).open('a')
-                            command=[os.sys.executable,str(live.WORKER),'--output',str(root),'--worker',str(location['index']),
+                            command=[os.sys.executable,str(live.OPTIMIZED_WORKER if optimization else live.WORKER),'--output',str(root),'--worker',str(location['index']),
                                 '--lease-fd',str(leases[gpu].fileno())]
+                            if optimization:command.extend(['--optimization-manifest',str(policy_path)])
                             try:
                                 process=subprocess.Popen(command,cwd=ROOT,env=worker_environment(selected),
                                     pass_fds=(leases[gpu].fileno(),),stdout=log,stderr=subprocess.STDOUT)
