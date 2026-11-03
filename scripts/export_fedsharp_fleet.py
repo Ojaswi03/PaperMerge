@@ -2,10 +2,13 @@
 """Export this host's completed fleet fragment, preserving original run bytes."""
 import argparse
 import json
+import os
 from pathlib import Path
 import shutil
 import socket
 import sys
+import subprocess
+import tempfile
 import uuid
 
 ROOT=Path(__file__).resolve().parents[1];sys.path.insert(0,str(ROOT))
@@ -15,7 +18,47 @@ from basil_core.continuation_campaign import atomic,host_name
 from basil_core.round_continuation import sha,source_record
 
 
-def export(queue,destination):
+def verify_owned(current,items,destination,host):
+    """Use the existing fresh CPU verifier on only this host's completed runs."""
+    groups={};verified=[];sources=None
+    for item in items:
+        run=item['config']['runId'];root=Path(current['runs'][run]['location']['output'])
+        groups.setdefault(root,[]).append(run)
+    for root,runs in groups.items():
+        plan=read_json(root/'plan.json')
+        if sources is not None and sources!=plan['source']:raise ValueError('Verification source differs across roots.')
+        sources=plan['source']
+        with tempfile.TemporaryDirectory(prefix='papermerge-final-verification-',dir=root.parent) as name:
+            view=Path(name);selected=set(runs)
+            subset=dict(plan,configs=[cfg for cfg in plan['configs'] if cfg['runId'] in selected])
+            if {cfg['runId'] for cfg in subset['configs']}!=selected:raise ValueError('Verification plan coverage differs.')
+            atomic(view/'plan.json',subset)
+            (view/'source_snapshots').symlink_to(root/'source_snapshots',target_is_directory=True)
+            before={}
+            for run in runs:
+                (view/run).symlink_to(root/run,target_is_directory=True)
+                stat=(root/run/'checkpoint.npz').stat();before[run]=(stat.st_ino,stat.st_size,stat.st_mtime_ns)
+            subprocess.run([sys.executable,str(ROOT/'scripts/verify_basil_sharp_thesis_results.py'),
+                '--output',str(view)],cwd=ROOT,check=True,
+                env={**os.environ,'CUDA_VISIBLE_DEVICES':'-1','OPENBLAS_NUM_THREADS':'1','OMP_NUM_THREADS':'1'})
+            receipt=read_json(view/'independent_validation.json')
+            if (receipt.get('status')!='ALL_COMPARISON_MODELS_VERIFIED' or receipt.get('officialTestUsed') is not False
+                    or receipt.get('source')!=sources or len(receipt['verified'])!=len(runs)
+                    or {v['runId'] for v in receipt['verified']}!=selected):
+                raise ValueError('Fresh verification receipt is incomplete or mismatched.')
+            for row in receipt['verified']:
+                run=row['runId'];stat=(root/run/'checkpoint.npz').stat()
+                if (stat.st_ino,stat.st_size,stat.st_mtime_ns)!=before[run]:raise ValueError('Checkpoint changed during verification.')
+                hashes={file:sha(destination/run/file) for file in ('run.json','metrics.npz')}
+                if any(sha(root/run/file)!=digest for file,digest in hashes.items()):raise ValueError('Exported result changed during verification.')
+                verified.append(dict(row,resultSha256=hashes,executionPlanSha256=sha(root/'plan.json')))
+    atomic(destination/'independent_validation.json',dict(status='ALL_COMPARISON_MODELS_VERIFIED',
+        host=host,fleetFragment=True,source=sources,officialTestUsed=False,verified=verified,
+        verifierSha256=sha(ROOT/'scripts/verify_cart_comparison_results.py'),fleetExporterSha256=sha(Path(__file__)),
+        interpretation='Fresh CPU inference of every final client model in this host fragment; original TRAIN holdout, no official TEST data.'))
+
+
+def export(queue,destination,verify=False):
     queue,destination=Path(queue).resolve(),Path(destination).resolve()
     if destination.exists():raise FileExistsError('Use a fresh export directory.')
     current=fleet_queue.state(queue);master=read_json(queue/'continuation_plan.json');host=host_name()
@@ -73,6 +116,7 @@ def export(queue,destination):
             target.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(source,target)
         from reporting.round_continuation import generate
         generate(temporary,temporary/'thesis_figures')
+        if verify:verify_owned(current,items,temporary,host)
         names=[path for path in temporary.rglob('*') if path.is_file()]
         atomic(temporary/'SHA256.json',{str(path.relative_to(temporary)):sha(path) for path in names})
         temporary.rename(destination)
@@ -84,7 +128,8 @@ def export(queue,destination):
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--queue',type=Path,required=True);parser.add_argument('--destination',type=Path,required=True)
-    args=parser.parse_args();print(f'Exported {export(args.queue,args.destination)} completed configurations from this server.')
+    parser.add_argument('--verify',action='store_true',help='Run fresh final-model CPU inference before completing the export.')
+    args=parser.parse_args();print(f'Exported {export(args.queue,args.destination,args.verify)} completed configurations from this server.')
 
 
 if __name__=='__main__':main()

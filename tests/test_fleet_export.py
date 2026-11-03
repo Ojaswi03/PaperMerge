@@ -13,7 +13,8 @@ from tests.test_fleet_queue import setup_queue,join
 
 
 @pytest.mark.parametrize('optimized',[False,True])
-def test_final_export_collects_local_original_and_transferred_results_without_checkpoints(tmp_path,monkeypatch,optimized):
+@pytest.mark.parametrize('verify',[False,True])
+def test_final_export_collects_local_original_and_transferred_results_without_checkpoints(tmp_path,monkeypatch,optimized,verify):
     from reporting import round_continuation
     queue,master=setup_queue(tmp_path,count=2)
     master['revision']='revision'
@@ -47,8 +48,20 @@ def test_final_export_collects_local_original_and_transferred_results_without_ch
         assert (root/'run0/run.json').read_bytes()==(original/'run0/run.json').read_bytes()
         assert (root/'run1/run.json').read_bytes()==(output/'run1/run.json').read_bytes()
     monkeypatch.setattr(round_continuation,'generate',generate)
+    verified_roots=[]
+    def inference(command,**kwargs):
+        view=Path(command[-1]);subset=read_json(view/'plan.json')
+        assert kwargs['env']['CUDA_VISIBLE_DEVICES']=='-1'
+        for cfg in subset['configs']:
+            assert (view/cfg['runId']).is_symlink()
+            assert (view/cfg['runId']/'checkpoint.npz').read_bytes()==b'checkpoint.npz'
+        verified_roots.append(subset)
+        atomic(view/'independent_validation.json',dict(status='ALL_COMPARISON_MODELS_VERIFIED',
+            officialTestUsed=False,source=subset['source'],verified=[dict(runId=cfg['runId'],
+                maximumValidationAccuracyDifference=0.,seededOutboundAttackVerified=True) for cfg in subset['configs']]))
+    monkeypatch.setattr(exporter.subprocess,'run',inference)
     destination=tmp_path/'export'
-    assert exporter.export(queue,destination)==2
+    assert exporter.export(queue,destination,verify)==2
     assert checked and not list(destination.rglob('checkpoint.npz'))
     if optimized:
         assert list((destination/'optimization_snapshots').rglob('optimized_fedsharp_worker.py'))
@@ -57,6 +70,12 @@ def test_final_export_collects_local_original_and_transferred_results_without_ch
     assert not provenance['run0']['transferred'] and provenance['run1']['transferred']
     assert 'pid' not in json.dumps(provenance) and 'output' not in json.dumps(provenance)
     assert all(sha(destination/name)==digest for name,digest in read_json(destination/'SHA256.json').items())
+    if verify:
+        receipt=read_json(destination/'independent_validation.json')
+        assert len(verified_roots)==2 and len(receipt['verified'])==2
+        assert {r['runId'] for r in receipt['verified']}=={'run0','run1'}
+        assert all(set(r['resultSha256'])=={'metrics.npz','run.json'} for r in receipt['verified'])
+    else:assert not verified_roots and not (destination/'independent_validation.json').exists()
 
 
 def test_unfinished_fleet_cannot_be_exported_as_completed(tmp_path):

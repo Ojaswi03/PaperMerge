@@ -113,9 +113,9 @@ server**, choosing a fresh destination for each:
 cd ~/Masters_Research/PaperMerge
 source .venv-hpc/bin/activate
 shared_run="$HOME/Masters_Research/PaperMerge/.papermerge/continuations-500r-20261102"
-export_root="docs/results/$(hostname -s)_fedsharp-fleet-500r-$(date +%Y%m%d-%H%M%S)"
+export_root="docs/results/$(hostname -s)_fedsharp-fleet-500r-20261103"
 python scripts/export_fedsharp_fleet.py --queue "$shared_run" \
-  --destination "$export_root"
+  --destination "$export_root" --verify
 ```
 
 This validates saved metrics and preserved prefixes, copies the actual local
@@ -123,9 +123,38 @@ run records, includes immutable execution plans and sanitized transfer
 provenance, and writes a checksum manifest. It excludes full checkpoints,
 live claims, queue state and process identities. Full checkpoints remain at
 their recorded host-local execution locations. Fresh independent final-model
-verification is a separate required review before publication. Combine disjoint
+verification is required before publication; `--verify` performs it during export. Combine disjoint
 host fragments before three-seed comparisons. New exports require explicit
 review/allowlisting before Git publication.
+
+The two `20261103` fragment destinations are allowlisted for this completed
+campaign. `--verify` uses the existing final-model verifier in temporary views
+containing only the current host's owned runs. It evaluates every final client
+model on the original TRAIN holdout on CPU, checks the attack/data/checkpoint
+contracts, and saves a combined source-linked receipt in the export. Temporary
+views link to local checkpoints; no checkpoint is copied into the shared export.
+Failed verification leaves no completed export destination.
+
+The home checkout is shared, so after exporting once on each server, run the
+following once on either server. Do not commit or push concurrently from both.
+
+```bash
+python scripts/check_fedsharp_fleet_exports.py --queue "$shared_run" --exports \
+  docs/results/hal9k_fedsharp-fleet-500r-20261103 \
+  docs/results/themachine_fedsharp-fleet-500r-20261103 &&
+git add docs/results/hal9k_fedsharp-fleet-500r-20261103 \
+  docs/results/themachine_fedsharp-fleet-500r-20261103 &&
+python scripts/check_publication_policy.py &&
+git diff --cached --stat &&
+git commit -m "Add verified 150-run FedSharp 500-round results" &&
+git push origin main
+```
+
+Initialize `shared_run` again if this is a new shell. The combined checker
+requires exactly the original 150 disjoint configs, their current host ownership,
+complete checksum manifests and fresh inference receipts linked to exported run
+records/metrics. The original HPC checkpoints, runtime queues and agent notes
+remain outside Git. Preserve those checkpoints until post-push review completes.
 
 Local validation covers concurrent-process claims, interrupted claim commits,
 legacy dispatcher fencing, active/partial-run pinning, live-worker preservation,
