@@ -94,3 +94,21 @@ comparisons therefore run again inside each actual worker. No HPC speedup is
 claimed before the rollout's activity measurements. This first version does
 not implement stateless parallel candidate inference or an incremental
 checkpoint file format. Those larger changes need separate qualification.
+
+## One retry after a native segmentation fault
+
+`Fleet worker exited -11` reports SIGSEGV; it does not identify its root cause.
+For an advanced failed run, use `scripts/retry_fedsharp_checkpoint.py` with
+`--queue`, `--run-id` and `--execute`. It validates the complete saved state
+with the original strict loader, latest stored model hashes, ordered SGD
+history and the original validation-metric prefix. It preserves an immutable
+checkpoint link and failed row, then requeues only that host's dead failed
+claim on its existing GPU with its existing token. Healthy workers and the
+dispatcher receive no signals. The active dispatcher picks it up under normal
+resource admission. Omit `--execute` for validation without requeueing.
+
+The receipt reports the saved cursor and any work to replay since that
+checkpoint. This does not reset the run to the round-100 seed. It is restricted
+to the reported SIGSEGV failure and one audited attempt per run; a repeat
+failure requires investigation rather than an automatic retry loop. If no
+dispatcher is running, requeueing alone does not launch a worker.
