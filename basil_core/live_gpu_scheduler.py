@@ -125,7 +125,12 @@ def discover(root, config_count):
                 continue
             if not output_matches(arguments,item,root):
                 continue
-            index = int(argv_value(arguments, '--worker'))
+            worker_index = argv_value(arguments, '--worker')
+            # Some campaigns use one entrypoint for drivers, gates and workers.
+            # Only an explicit worker index identifies a training process.
+            if worker_index is None:
+                continue
+            index = int(worker_index)
             if not 0 <= index < config_count or index in workers:
                 raise RuntimeError('Duplicate or invalid worker index; handover refused.')
             raw = proc.joinpath('environ').read_bytes().split(b'\0')

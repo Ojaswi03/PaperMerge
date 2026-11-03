@@ -158,6 +158,34 @@ def test_shared_server_discovery_skips_foreign_uid_before_reading_command(tmp_pa
     assert list(found)==[0] and found[0]['pid']==222222
 
 
+def test_shared_entrypoint_discovery_ignores_driver_gate_and_monitor(tmp_path,monkeypatch):
+    entry=tmp_path/'shared_entry.py'
+    entry.write_text('import time\nprint("ready",flush=True)\ntime.sleep(60)\n')
+    monkeypatch.setattr(live,'WORKER',entry)
+    children=[]
+    try:
+        for arguments in (['--execute'],['--role','gate','--gpu','0'],
+                          ['--monitor'],['--worker','0']):
+            env=os.environ.copy()
+            env.pop('PAPERMERGE_EXECUTION_PROFILE',None)
+            if '--worker' in arguments:
+                env['PAPERMERGE_EXECUTION_PROFILE']=json.dumps(asdict(profile(tmp_path,0)))
+            child=subprocess.Popen([sys.executable,'-u',str(entry),'--output',str(tmp_path),
+                *arguments],env=env,stdout=subprocess.PIPE,text=True)
+            children.append(child)
+            assert select.select([child.stdout],[],[],5)[0]
+            assert child.stdout.readline().strip()=='ready'
+        found=live.discover(tmp_path,1)
+        assert list(found)==[0] and found[0]['pid']==children[-1].pid
+        assert found[0]['profile']==asdict(profile(tmp_path,0))
+        assert all(child.poll() is None for child in children)
+    finally:
+        for child in children:
+            if child.poll() is None:child.terminate()
+            child.wait(timeout=5)
+            child.stdout.close()
+
+
 def test_targeted_identity_still_refuses_a_foreign_process(monkeypatch):
     monkeypatch.setattr(Path,'stat',lambda *a,**kw:SimpleNamespace(st_uid=os.getuid()+1))
     with pytest.raises(PermissionError,match='different user'):
