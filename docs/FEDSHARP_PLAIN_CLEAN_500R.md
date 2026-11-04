@@ -90,3 +90,29 @@ python scripts/run_fedsharp_plain_clean.py --role verify --output "$plain_run"
 
 Do not add the host-local output directory or checkpoints to Git. Exporting
 and comparing these results must retain the distinct plain-ring identity.
+
+## Verify and export completed runs
+
+Restore the existing campaign path, then run this command on themachine:
+
+```bash
+python scripts/export_fedsharp_plain_clean.py --output "$plain_run" \
+  --destination docs/results/themachine_fedsharp-plain-clean-500r-20261104
+```
+
+The exporter audits every recorded activation for the direct predecessor
+model-hash chain, no selection defenses and five ordinary cross-entropy SGD
+steps. It then runs fresh final-model CPU inference on the original development
+holdout, checks stable inputs, and exports the measurements, mechanisms,
+source snapshots and both verification receipts with SHA256 hashes.
+Checkpoints and logs remain in the original server output directory.
+
+After it reports twelve configurations, freshInferenceVerified=true and
+plainRingRoutingVerified=true, publish the compact export:
+
+```bash
+git add docs/results/themachine_fedsharp-plain-clean-500r-20261104
+python scripts/check_publication_policy.py &&
+git commit -m "Add verified 500-round plain clean FedSharp ring controls" &&
+git push origin main
+```

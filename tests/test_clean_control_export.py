@@ -11,10 +11,14 @@ from tests.test_fedsharp_clean_controls import opts
 
 
 @pytest.fixture
-def completed(tmp_path,monkeypatch):
+def completed(tmp_path,monkeypatch,request):
     root=tmp_path/'run';root.mkdir()
-    views=study.selected(opts());source=study.source()
-    plan=dict(revision=study.REVISION,configs=views,source=source,
+    adapter=study;verifier='run_fedsharp_clean_controls.py'
+    if getattr(request,'param',None)=='plain':
+        from basil_core import fedsharp_plain_clean as adapter
+        verifier='run_fedsharp_plain_clean.py'
+    views=adapter.selected(opts());source=adapter.source()
+    plan=dict(revision=adapter.REVISION,configs=views,source=source,
               families=['sharp'],environments=['clean'],data={'mnist':{},'cifar10':{}},
               partitions={v['runId']:{} for v in views})
     (root/'plan.json').write_text(json.dumps(plan))
@@ -24,7 +28,7 @@ def completed(tmp_path,monkeypatch):
         path.write_bytes((exporter.ROOT/name).read_bytes())
     for view in views:
         folder=root/view['runId'];folder.mkdir()
-        row=dict(status='COMPLETED',config=view,source=source,methodRevision=study.REVISION,
+        row=dict(status='COMPLETED',config=view,source=source,methodRevision=adapter.REVISION,
                  completedActivations=50000,optimizerSteps=250000,data={},partition={})
         (folder/'run.json').write_text(json.dumps(row))
         np.savez_compressed(folder/'metrics.npz',roundNodeAccuracy=np.zeros((500,100)))
@@ -32,7 +36,7 @@ def completed(tmp_path,monkeypatch):
         (folder/'checkpoint.npz').write_bytes(b'private checkpoint fixture')
         (root/(view['runId']+'.log')).write_text('private log fixture')
     def verify(command,**kwargs):
-        assert command[1:4]==[str(exporter.ROOT/'scripts/run_fedsharp_clean_controls.py'),
+        assert command[1:4]==[str(exporter.ROOT/'scripts'/verifier),
                               '--role','verify']
         assert kwargs['check'] is True
         receipt=dict(status='ALL_COMPARISON_MODELS_VERIFIED',source=source,officialTestUsed=False,
