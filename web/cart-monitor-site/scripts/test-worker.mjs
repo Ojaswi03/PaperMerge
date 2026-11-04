@@ -127,6 +127,15 @@ test('clean FedSharp control feed uses its method name without changing legacy f
   assert.equal(elements.get('experiment-title').textContent,'CART mechanism comparison');
 });
 
+test('plain ring clean feed has a distinct experiment heading',()=>{
+  const {context,elements}=browser();const snapshot=sample();
+  snapshot.runs=snapshot.runs.map(row=>({...row,condition:'FedSharp plain ring / clean',sigma:0}));
+  context.render({snapshot,receivedAt:new Date().toISOString()});
+  assert.equal(elements.get('experiment-title').textContent,'FedSharp plain clean ring');
+  const cells=elements.get('runs').children[0].children.map(c=>c.textContent);
+  assert.equal(cells[5],'clean');assert.equal(cells[6],'FedSharp plain ring');
+});
+
 test('browser respects the delivered overall ETA and shows finish time',()=>{
   const {context,elements}=browser();const snapshot=sample();snapshot.etaSeconds=10000;
   snapshot.runs=[{...snapshot.runs[0],etaSeconds:1000},{...snapshot.runs[0],etaSeconds:2000}];

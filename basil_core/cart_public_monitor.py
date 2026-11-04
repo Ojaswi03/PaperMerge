@@ -32,5 +32,6 @@ def public_snapshot(directory):
             etaSource=row.get('etaSource'),phase=row.get('phase')))
         label=comparison_label(cfg,include_environment=True)
         if cfg.get('cleanControl') and cfg.get('comparisonCase',{}).get('arm')=='sharp_clean':label='FedSharp / clean'
+        if cfg.get('plainCleanControl') and cfg.get('comparisonCase',{}).get('arm')=='sharp_clean':label='FedSharp plain ring / clean'
         if label:public['runs'][-1]['condition']=label
     return public
