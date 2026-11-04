@@ -1,0 +1,86 @@
+{
+  "activeRunIds": [],
+  "activeSlots": [],
+  "completed": 12,
+  "elapsedSeconds": 3641.8686594497412,
+  "failed": 0,
+  "failures": [],
+  "host": "themachine",
+  "ownerPid": 2927913,
+  "pending": 0,
+  "pendingRunIds": [],
+  "profile": "hpc",
+  "runtimeAdapter": "basil_plain_clean_ring_20261104_v1",
+  "scheduler": {
+    "activePerGpu": {},
+    "blocked": {
+      "0": {
+        "admit": true,
+        "gpuFreeMiB": 68334,
+        "gpuRequiredMiB": 12288,
+        "ramAvailableMiB": 1517556,
+        "ramRequiredMiB": 24576,
+        "reason": "fits"
+      },
+      "1": {
+        "admit": true,
+        "gpuFreeMiB": 81447,
+        "gpuRequiredMiB": 12288,
+        "ramAvailableMiB": 1517556,
+        "ramRequiredMiB": 24576,
+        "reason": "fits"
+      },
+      "2": {
+        "admit": true,
+        "gpuFreeMiB": 97233,
+        "gpuRequiredMiB": 12288,
+        "ramAvailableMiB": 1517556,
+        "ramRequiredMiB": 24576,
+        "reason": "fits"
+      },
+      "3": {
+        "admit": true,
+        "gpuFreeMiB": 90153,
+        "gpuRequiredMiB": 12288,
+        "ramAvailableMiB": 1517556,
+        "ramRequiredMiB": 24576,
+        "reason": "fits"
+      }
+    },
+    "dispatch": "shared_queue_verified_gpus",
+    "gpuByRunId": {
+      "cifar10-dirichlet-2025-basil-plain-clean-cdb6a973c27d": 3,
+      "cifar10-dirichlet-2026-basil-plain-clean-8344b051aa27": 1,
+      "cifar10-dirichlet-2027-basil-plain-clean-c4af1a254791": 0,
+      "cifar10-iid-2025-basil-plain-clean-3536df6132de": 1,
+      "cifar10-iid-2026-basil-plain-clean-e89a1ca4919a": 0,
+      "cifar10-iid-2027-basil-plain-clean-d0872a506e5f": 2,
+      "mnist-dirichlet-2025-basil-plain-clean-e688c03a3c0c": 0,
+      "mnist-dirichlet-2026-basil-plain-clean-f8aa0924c255": 2,
+      "mnist-dirichlet-2027-basil-plain-clean-575f068884d8": 3,
+      "mnist-iid-2025-basil-plain-clean-5dfd67d4d361": 2,
+      "mnist-iid-2026-basil-plain-clean-7bf396ec98ec": 3,
+      "mnist-iid-2027-basil-plain-clean-01bc6a998b40": 1
+    },
+    "lanesByRunId": {
+      "cifar10-dirichlet-2025-basil-plain-clean-cdb6a973c27d": "3/live9",
+      "cifar10-dirichlet-2026-basil-plain-clean-8344b051aa27": "1/live10",
+      "cifar10-dirichlet-2027-basil-plain-clean-c4af1a254791": "0/live11",
+      "cifar10-iid-2025-basil-plain-clean-3536df6132de": "1/live6",
+      "cifar10-iid-2026-basil-plain-clean-e89a1ca4919a": "0/live7",
+      "cifar10-iid-2027-basil-plain-clean-d0872a506e5f": "2/live8",
+      "mnist-dirichlet-2025-basil-plain-clean-e688c03a3c0c": "0/live3",
+      "mnist-dirichlet-2026-basil-plain-clean-f8aa0924c255": "2/live4",
+      "mnist-dirichlet-2027-basil-plain-clean-575f068884d8": "3/live5",
+      "mnist-iid-2025-basil-plain-clean-5dfd67d4d361": "2/live0",
+      "mnist-iid-2026-basil-plain-clean-7bf396ec98ec": "3/live1",
+      "mnist-iid-2027-basil-plain-clean-01bc6a998b40": "1/live2"
+    },
+    "maximumPerGpu": 24,
+    "mode": "adaptive",
+    "quarantined": {}
+  },
+  "status": "COMPLETED",
+  "total": 12,
+  "workerFailurePolicy": "continue"
+}
