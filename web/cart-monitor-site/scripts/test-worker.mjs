@@ -136,6 +136,15 @@ test('plain ring clean feed has a distinct experiment heading',()=>{
   assert.equal(cells[5],'clean');assert.equal(cells[6],'FedSharp plain ring');
 });
 
+test('BASIL clean controls use a distinct heading and preserve the clean environment',()=>{
+  const {context,elements}=browser();const snapshot=sample();
+  snapshot.runs=snapshot.runs.map(row=>({...row,condition:'BASIL / clean',sigma:0}));
+  context.render({snapshot,receivedAt:new Date().toISOString()});
+  assert.equal(elements.get('experiment-title').textContent,'BASIL clean controls');
+  const cells=elements.get('runs').children[0].children.map(c=>c.textContent);
+  assert.equal(cells[5],'clean');assert.equal(cells[6],'BASIL');
+});
+
 test('browser respects the delivered overall ETA and shows finish time',()=>{
   const {context,elements}=browser();const snapshot=sample();snapshot.etaSeconds=10000;
   snapshot.runs=[{...snapshot.runs[0],etaSeconds:1000},{...snapshot.runs[0],etaSeconds:2000}];

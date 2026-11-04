@@ -17,9 +17,14 @@ def completed(tmp_path,monkeypatch,request):
     if getattr(request,'param',None)=='plain':
         from basil_core import fedsharp_plain_clean as adapter
         verifier='run_fedsharp_plain_clean.py'
-    views=adapter.selected(opts());source=adapter.source()
+    elif getattr(request,'param',None)=='basil':
+        from basil_core import basil_plain_clean as adapter
+        verifier='run_basil_plain_clean.py'
+    args=opts()
+    if getattr(request,'param',None)=='basil':args.families=['basil']
+    views=adapter.selected(args);source=adapter.source()
     plan=dict(revision=adapter.REVISION,configs=views,source=source,
-              families=['sharp'],environments=['clean'],data={'mnist':{},'cifar10':{}},
+              families=list(args.families),environments=['clean'],data={'mnist':{},'cifar10':{}},
               partitions={v['runId']:{} for v in views})
     (root/'plan.json').write_text(json.dumps(plan))
     (root/'campaign.json').write_text(json.dumps(dict(status='COMPLETED')))

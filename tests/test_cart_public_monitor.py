@@ -55,6 +55,16 @@ def test_plain_clean_control_has_distinct_public_label(tmp_path):
     assert public_snapshot(tmp_path)['runs'][0]['condition']=='FedSharp plain ring / clean'
 
 
+def test_basil_plain_clean_control_has_matching_method_label(tmp_path):
+    from basil_core.cart_public_monitor import public_snapshot
+    setup(tmp_path,[(2025,'clean','mnist',running(20,40))])
+    path=tmp_path/'plan.json';plan=json.loads(path.read_text())
+    plan['configs'][0]['plainCleanControl']=dict(selection='immediate_predecessor',proximalMu=0)
+    plan['configs'][0]['comparisonCase']=dict(arm='basil_clean',environment='clean')
+    path.write_text(json.dumps(plan))
+    assert public_snapshot(tmp_path)['runs'][0]['condition']=='BASIL / clean'
+
+
 @pytest.mark.parametrize('status',['FAILED','INTERRUPTED'])
 def test_stopped_supervisor_does_not_leave_stale_running_rows(tmp_path,status):
     from basil_core.cart_public_monitor import public_snapshot

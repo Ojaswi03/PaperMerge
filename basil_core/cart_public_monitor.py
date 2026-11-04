@@ -33,5 +33,6 @@ def public_snapshot(directory):
         label=comparison_label(cfg,include_environment=True)
         if cfg.get('cleanControl') and cfg.get('comparisonCase',{}).get('arm')=='sharp_clean':label='FedSharp / clean'
         if cfg.get('plainCleanControl') and cfg.get('comparisonCase',{}).get('arm')=='sharp_clean':label='FedSharp plain ring / clean'
+        if cfg.get('plainCleanControl') and cfg.get('comparisonCase',{}).get('arm')=='basil_clean':label='BASIL / clean'
         if label:public['runs'][-1]['condition']=label
     return public

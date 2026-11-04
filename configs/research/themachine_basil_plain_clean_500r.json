@@ -1,0 +1,23 @@
+{
+  "schema": 1,
+  "description": "12 fresh BASIL clean ring controls on themachine, four GPUs: direct predecessor and ordinary SGD, mu=0 for IID/nonIID, matched to the completed FedSharp plain clean controls. No candidate selection, averaging, noise, attackers or ACDS.",
+  "settings": {
+    "datasets": ["mnist", "cifar10"],
+    "partitions": ["IID", "nonIID"],
+    "seeds": [2025, 2026, 2027],
+    "families": ["basil"],
+    "environments": ["clean"],
+    "nodes": 100,
+    "rounds": 500,
+    "local_steps": 5,
+    "sigma": 0.01,
+    "alpha": 0.5,
+    "gpu_count": 4,
+    "gpu_memory_mib": 3072,
+    "ram_mib_per_worker": 8192,
+    "ram_headroom_mib": 16384,
+    "max_workers_per_gpu": 24,
+    "scheduler": "shared",
+    "poll_seconds": 3
+  }
+}

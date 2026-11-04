@@ -12,9 +12,10 @@ from scripts import export_fedsharp_clean_controls as common
 from scripts.export_cart_campaign import write_matching
 
 
-def check_routing(root,view,source):
+def check_routing(root,view,source,*,study_adapter=None):
     import numpy as np
-    cfg=study.effective_config(view);folder=root/view['runId']
+    adapter=study if study_adapter is None else study_adapter
+    cfg=adapter.effective_config(view);folder=root/view['runId']
     row=json.loads((folder/'run.json').read_text())
     if row['status']!='COMPLETED' or row['config']!=view or row['source']!=source:
         raise ValueError('Incomplete/mismatched plain ring run: '+view['runId'])
