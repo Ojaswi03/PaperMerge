@@ -82,6 +82,25 @@ the same scoped study adapter:
 python scripts/run_fedsharp_clean_controls.py --role verify --output "$clean_run"
 ```
 
+To verify and export all twelve completed configurations in one command:
+
+```bash
+python scripts/export_fedsharp_clean_controls.py --output "$clean_run" \
+  --destination docs/results/hal9k_fedsharp-clean-500r-20261104
+```
+
+This runs fresh CPU inference before exporting measurements, mechanisms,
+the frozen plan, source snapshots and the inference receipt with SHA256 hashes.
+Checkpoints and logs stay in the original hal9k output. Existing conflicting
+export files are refused. After the command reports twelve verified exports:
+
+```bash
+git add docs/results/hal9k_fedsharp-clean-500r-20261104
+python scripts/check_publication_policy.py &&
+git commit -m "Add verified FedSharp clean controls with partition-specific mu" &&
+git push origin main
+```
+
 After a stopped campaign has been inspected, resume its exact frozen plan with
 `--output "$clean_run" --resume --execute --background --wait-for-resources`.
 Do not repeat the initial launch with a different timestamp or new settings.

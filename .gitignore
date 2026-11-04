@@ -327,6 +327,7 @@ experiments/results4/campaign4/performance_profile.json
 !/docs/results/hal9k_mnist-basil-noise-only-100r-20261102/
 !/docs/results/hal9k_fedsharp-fleet-500r-20261103/
 !/docs/results/themachine_fedsharp-fleet-500r-20261103/
+!/docs/results/hal9k_fedsharp-clean-500r-20261104/
 /docs/thesis-figures/*
 !/docs/thesis-figures/fedsharp-hal9k-20261030/
 /docs/thesis-figures/fedsharp-hal9k-20261030/*.pdf
