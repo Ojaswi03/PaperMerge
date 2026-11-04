@@ -1,0 +1,70 @@
+{
+  "activeRunIds": [],
+  "activeSlots": [],
+  "completed": 12,
+  "elapsedSeconds": 31732.029279094888,
+  "failed": 0,
+  "failures": [],
+  "host": "hal9k",
+  "ownerPid": 1349783,
+  "pending": 0,
+  "pendingRunIds": [],
+  "profile": "hpc",
+  "runtimeAdapter": "fedsharp_clean_mu_by_partition_20261103_v1",
+  "scheduler": {
+    "activePerGpu": {},
+    "blocked": {
+      "0": {
+        "admit": true,
+        "gpuFreeMiB": 97244,
+        "gpuRequiredMiB": 12288,
+        "ramAvailableMiB": 88044,
+        "ramRequiredMiB": 24576,
+        "reason": "fits"
+      },
+      "1": {
+        "admit": true,
+        "gpuFreeMiB": 97229,
+        "gpuRequiredMiB": 12288,
+        "ramAvailableMiB": 88044,
+        "ramRequiredMiB": 24576,
+        "reason": "fits"
+      }
+    },
+    "dispatch": "shared_queue_verified_gpus",
+    "gpuByRunId": {
+      "cifar10-dirichlet-2025-fedsharp-clean-mu1-2312f4bd73e5": 1,
+      "cifar10-dirichlet-2026-fedsharp-clean-mu1-9a23d1ad7435": 1,
+      "cifar10-dirichlet-2027-fedsharp-clean-mu1-2e6f755ca4f8": 1,
+      "cifar10-iid-2025-fedsharp-clean-mu0-f71169373628": 0,
+      "cifar10-iid-2026-fedsharp-clean-mu0-5095374b1427": 1,
+      "cifar10-iid-2027-fedsharp-clean-mu0-7a49bddbadf0": 0,
+      "mnist-dirichlet-2025-fedsharp-clean-mu1-05a6d52e8d51": 1,
+      "mnist-dirichlet-2026-fedsharp-clean-mu1-76b0f82052b6": 0,
+      "mnist-dirichlet-2027-fedsharp-clean-mu1-b09d164dd507": 1,
+      "mnist-iid-2025-fedsharp-clean-mu0-4ccbaf4f3e53": 0,
+      "mnist-iid-2026-fedsharp-clean-mu0-b59aa63f6bb4": 1,
+      "mnist-iid-2027-fedsharp-clean-mu0-1e309a46416d": 0
+    },
+    "lanesByRunId": {
+      "cifar10-dirichlet-2025-fedsharp-clean-mu1-2312f4bd73e5": "1/live9",
+      "cifar10-dirichlet-2026-fedsharp-clean-mu1-9a23d1ad7435": "1/live10",
+      "cifar10-dirichlet-2027-fedsharp-clean-mu1-2e6f755ca4f8": "1/live11",
+      "cifar10-iid-2025-fedsharp-clean-mu0-f71169373628": "0/live6",
+      "cifar10-iid-2026-fedsharp-clean-mu0-5095374b1427": "1/live7",
+      "cifar10-iid-2027-fedsharp-clean-mu0-7a49bddbadf0": "0/live8",
+      "mnist-dirichlet-2025-fedsharp-clean-mu1-05a6d52e8d51": "1/live3",
+      "mnist-dirichlet-2026-fedsharp-clean-mu1-76b0f82052b6": "0/live4",
+      "mnist-dirichlet-2027-fedsharp-clean-mu1-b09d164dd507": "1/live5",
+      "mnist-iid-2025-fedsharp-clean-mu0-4ccbaf4f3e53": "0/live0",
+      "mnist-iid-2026-fedsharp-clean-mu0-b59aa63f6bb4": "1/live1",
+      "mnist-iid-2027-fedsharp-clean-mu0-1e309a46416d": "0/live2"
+    },
+    "maximumPerGpu": 24,
+    "mode": "adaptive",
+    "quarantined": {}
+  },
+  "status": "COMPLETED",
+  "total": 12,
+  "workerFailurePolicy": "continue"
+}
