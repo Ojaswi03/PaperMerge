@@ -1,0 +1,51 @@
+{
+  "purpose": "full official test evaluation, frozen models, no tuning",
+  "createdAt": "2026-11-11T00:28:49.515335+00:00",
+  "datasetOrder": [
+    "mnist",
+    "cifar10"
+  ],
+  "datasetSamples": 10000,
+  "classes": 10,
+  "seed": 2025,
+  "partition": "dirichlet",
+  "attackType": "hidden",
+  "sigma": 0.01,
+  "rounds": 500,
+  "clientModelsPerCase": 100,
+  "totalCases": 4,
+  "totalClientImagePredictions": 4000000,
+  "batchSize": 256,
+  "threads": 4,
+  "previouslyDemonstratedTestIndices": [
+    0
+  ],
+  "cases": [
+    {
+      "method": "BASIL",
+      "runId": "mnist-dirichlet-2025-basil_joint-249d7c7aa4cd",
+      "checkpoint": "/home/ojaswi/PaperMerge/.papermerge/models/final-500r/mnist-dirichlet-2025-basil_joint-249d7c7aa4cd/model.npz",
+      "checkpointSha256": "15e4eb8c9be4b7620bcbb4efe29b53bc10f6e2083b2f020ba2d021f7a351a689"
+    },
+    {
+      "method": "BASIL + ACDS",
+      "runId": "mnist-dirichlet-2025-basil_acds-1d6da256baf5",
+      "checkpoint": "/home/ojaswi/PaperMerge/.papermerge/models/final-500r/mnist-dirichlet-2025-basil_acds-1d6da256baf5/model.npz",
+      "checkpointSha256": "a2c3e1687f2e08242bc6cffd96a4c90fde8fd61bf536ea6052238e5f438178ab"
+    },
+    {
+      "method": "BASIL",
+      "runId": "cifar10-dirichlet-2025-basil_joint-494158af6ffc",
+      "checkpoint": "/home/ojaswi/PaperMerge/.papermerge/models/final-500r/cifar10-dirichlet-2025-basil_joint-494158af6ffc/model.npz",
+      "checkpointSha256": "4673239f5cc8244ebd6d0688c092f1d6567f621203598d1ac05dbef827a3e8bc"
+    },
+    {
+      "method": "BASIL + ACDS",
+      "runId": "cifar10-dirichlet-2025-basil_acds-03863eb17a93",
+      "checkpoint": "/home/ojaswi/PaperMerge/.papermerge/models/final-500r/cifar10-dirichlet-2025-basil_acds-03863eb17a93/model.npz",
+      "checkpointSha256": "c91a625cecf956474ca4c38027a8c526ef78aab664f1011e825facc31fe9d0ca"
+    }
+  ],
+  "evaluationProgramSha256": "90ad46bfe19bfdd46b2de995c5bd2c88051abd9488a3aa94704aa65a5dee8636",
+  "helperSha256": "a6185959e768258c39b10bca211555ded1d0ca76dc5a08eae3ae5fe64f370d53"
+}

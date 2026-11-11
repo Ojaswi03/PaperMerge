@@ -1,0 +1,13 @@
+REVIEW CHECKS
+
+30 visible slides; slide 2 has the requested four quadrants.
+All 150 current metric archive hashes checked.
+48 displayed curve groups compared with archived metrics.
+All 12 clean accuracy pairs match exactly.
+No em dash, curly quotation mark or zero-width character found in the inspected slide text and notes.
+No AI vendor markers, macros, embedded attachments, comments, external relationships or off-canvas objects found in the inspected PPTX.
+The wording scan had zero hard findings. Technical uses of robust and reference titles were preserved.
+Intentional speaker notes contain explanations and sources.
+This inspection does not establish authorship or guarantee a detector result.
+The PDF is rendered from shared layout data, not exported from PowerPoint. Verify the PPTX in your presentation software before defense.
+No thesis equations, original plots or experiment code were edited.

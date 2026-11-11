@@ -1,0 +1,100 @@
+{
+  "dataset": "EuroSAT RGB",
+  "source": "https://zenodo.org/records/7711810",
+  "archiveSha256": "b4f5b234ecb7d7ff9c6cddb046543b4717c53fd6e9815be6c0e80cc614f51b90",
+  "sampleSeed": 2025,
+  "samplesPerLandCoverClass": 200,
+  "images": 2000,
+  "preprocessing": "RGB box resize from 64x64 to 32x32, float32 pixels / 255",
+  "trainingSeed": 2025,
+  "trainingRounds": 500,
+  "trainingPartition": "non-IID",
+  "trainingAttack": "Hidden attack + noise",
+  "clientModelsPerMethod": 100,
+  "totalEuroSATPredictions": 800000,
+  "reference": "Saved official CIFAR-10 test predictions for the same client parameters",
+  "tensorflow": "2.18.0",
+  "numpy": "1.26.4",
+  "results": [
+    {
+      "method": "BASIL",
+      "runId": "cifar10-dirichlet-2025-basil_joint-494158af6ffc",
+      "cifar10MeanConfidence": 0.30909954643552723,
+      "eurosatMeanConfidence": 0.24069179757267542,
+      "eurosatConfidenceAtLeast90": 5e-06,
+      "meanConfidenceAUROC": 0.7855303235,
+      "cifar10LabelCounts": {
+        "airplane": 23115,
+        "automobile": 17330,
+        "bird": 8148,
+        "cat": 16690,
+        "deer": 20260,
+        "dog": 25237,
+        "frog": 11459,
+        "horse": 45952,
+        "ship": 16605,
+        "truck": 15204
+      }
+    },
+    {
+      "method": "BASIL + ACDS",
+      "runId": "cifar10-dirichlet-2025-basil_acds-03863eb17a93",
+      "cifar10MeanConfidence": 0.34039626629640907,
+      "eurosatMeanConfidence": 0.2926560959850587,
+      "eurosatConfidenceAtLeast90": 0.01039,
+      "meanConfidenceAUROC": 0.5677248930000001,
+      "cifar10LabelCounts": {
+        "airplane": 4483,
+        "automobile": 2918,
+        "bird": 9710,
+        "cat": 34454,
+        "deer": 60059,
+        "dog": 9513,
+        "frog": 28235,
+        "horse": 16462,
+        "ship": 26545,
+        "truck": 7621
+      }
+    },
+    {
+      "method": "FedSharp",
+      "runId": "cifar10-dirichlet-2025-sharp_joint-ef8b6adcfc43",
+      "cifar10MeanConfidence": 0.3791722409427083,
+      "eurosatMeanConfidence": 0.3302990704365559,
+      "eurosatConfidenceAtLeast90": 3e-05,
+      "meanConfidenceAUROC": 0.6283748465,
+      "cifar10LabelCounts": {
+        "airplane": 18352,
+        "automobile": 4424,
+        "bird": 22261,
+        "cat": 17699,
+        "deer": 30282,
+        "dog": 19298,
+        "frog": 47491,
+        "horse": 10096,
+        "ship": 16329,
+        "truck": 13768
+      }
+    },
+    {
+      "method": "FedSharp+",
+      "runId": "cifar10-dirichlet-2025-sharp_cart-6aea2e473335",
+      "cifar10MeanConfidence": 0.3503494250078905,
+      "eurosatMeanConfidence": 0.2742954856208188,
+      "eurosatConfidenceAtLeast90": 1e-05,
+      "meanConfidenceAUROC": 0.6846903275000001,
+      "cifar10LabelCounts": {
+        "airplane": 8478,
+        "automobile": 7724,
+        "bird": 29204,
+        "cat": 14242,
+        "deer": 58563,
+        "dog": 5114,
+        "frog": 7608,
+        "horse": 619,
+        "ship": 64696,
+        "truck": 3752
+      }
+    }
+  ]
+}

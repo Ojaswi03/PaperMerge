@@ -1,0 +1,11 @@
+SINGLE-IMAGE DEMONSTRATION; NOT TEST-SET ACCURACY
+
+DATASET  METHOD     TRUE LABEL  CORRECT CLIENTS  FRACTION CORRECT  MEAN CE LOSS
+mnist    FedSharp   7           100/100          100.00%         0.023299
+mnist    FedSharp+  7           100/100          100.00%         0.006764
+cifar10  FedSharp   cat           9/100            9.00%         2.508228
+cifar10  FedSharp+  cat          27/100           27.00%         1.772472
+
+Each image is evaluated using every final client model separately. No model averaging or ensemble voting.
+Loss is cross entropy on this image. Correct/incorrect for one model corresponds to 100%/0% on that single example.
+Training and checkpoints were not changed. See per_client.csv for individual predictions, confidence and loss.

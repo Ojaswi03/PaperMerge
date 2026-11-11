@@ -1,0 +1,8 @@
+{
+  "mnist_test_image.png": "4765a6a3323bab81763ab13ad5f0370ddc653ba00dc3f817f1e7f7a0ae8f2d9d",
+  "results.json": "6bc1d113dea4e2a681a35b61accc834fb16334d1bbdb6d0727498601b2e2bea9",
+  "cifar10_test_image.png": "0d4964922e2463ad0e2b1cd298e03d5627ff7dad1ab1cdd173ce35e9974e204f",
+  "report.md": "72a57a1a15ebf3771e1699aabbe4e3a78d2ab44d397a9f89ad0757d5ca6774c7",
+  "per_client.csv": "33f5cf7bffda18cb312a6cc648acac664a832f46f4df675b7154fd464b03214a",
+  "summary.txt": "22b7d80cfbfd55535b862aefedcc508a3d89ba304681e12163700a3ef78be6fb"
+}

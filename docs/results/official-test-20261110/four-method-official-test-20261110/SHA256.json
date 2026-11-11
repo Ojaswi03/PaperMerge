@@ -1,0 +1,14 @@
+{
+  "cifar10_test_accuracy_and_loss.png": "473fa651f58e5a5ac95ba3cc381018cc1083f1f0ea363aa83f5904eba814545a",
+  "cifar10_test_accuracy_and_loss.svg": "cf3c9129e2365cf4fd458056f077e0da1bc422f788771ca6860f4b523c6000c3",
+  "cifar10_test_class_recall.png": "593951a2d4b31c0f42799c7fe2929edb67c85bc3e7c2c827909657eb288e291b",
+  "cifar10_test_class_recall.svg": "b3eaf03af5244d4be950342c4022a4332e366cf0a10af281e8c3eee4aa57f694",
+  "mnist_test_accuracy_and_loss.png": "4acead8d28401d1f99f38df0a4d29a2a3720657830c0b4ebd2800bd61befd8cb",
+  "mnist_test_accuracy_and_loss.svg": "987b299809f6e3d6b12b15d4afabdfbc014ed2caec126ef1f4515dd16885e0d0",
+  "mnist_test_class_recall.png": "25c1698c3a4f1034487a5dd2d53fd0390def06f82c688bd9aefb86cb8674aaf5",
+  "mnist_test_class_recall.svg": "541b2dc12b80778841a72ea9c30b12596659321808a8bc208b031fc9a4d61fae",
+  "per_client.csv": "cbc5e862e0d1eeeb46f73a2123ad5a7229b1c297f0f8d3e1275f1d4bdf207129",
+  "report.md": "f8ae40fa6391e0d73f436f2f13c637fe22a5c1d0602ed879270bb29d5ca7b00f",
+  "test_accuracy_and_loss.png": "437ec8160d1a70601d256017750b3cced894267b6fc8c96f7629a87336f8d33b",
+  "test_accuracy_and_loss.svg": "8253edeecb6488db5b1551a80163b9739b3f7ec99961ee6c8e90ec010267ef1c"
+}

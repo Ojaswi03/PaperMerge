@@ -1,0 +1,10 @@
+{
+  "cifar10-dirichlet-2025-basil_acds-03863eb17a93.npz": "5873266e332682069d2e0aa5cedf407be4079e05aab4f47fed0eaff19fd14e14",
+  "results.json": "dc31776b14ff08e6fb943dda3e025e52fc622ac37fbc7efb2e34608bd4241ab4",
+  "cifar10-dirichlet-2025-sharp_cart-6aea2e473335.npz": "047213cdb0c46e0b0fc064b08e7a055daaffa14411eafafebe1c6b96d7fa669e",
+  "report.md": "d705d5a8a37d4d93349efee319e882276cc535ed38b04cbba04a1a8bb6838d56",
+  "cifar10-dirichlet-2025-sharp_joint-ef8b6adcfc43.npz": "7a774bbe98181ea1a1051b65dfbab3795b2429b995318ec4d0f7b552c5155ac3",
+  "sample.json": "2d3c575ad1a68f6f3e47834379e64af9c2e15d6a8a647cc22aadde8a11e7a9a9",
+  "per_client.csv": "d7c9723cae3eff68a3e3e9aba29a0141bd6d287516ada71f5f71ae9cfc195d11",
+  "cifar10-dirichlet-2025-basil_joint-494158af6ffc.npz": "6390f67bebe99f9bc0aeb1f2750c2d8bc8c4cd5f0ef8bcc7c1e69cc385135824"
+}

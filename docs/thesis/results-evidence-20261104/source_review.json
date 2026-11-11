@@ -1,0 +1,36 @@
+{
+  "thesis.tex": {
+    "path": "/mnt/c/Users/ojasw/Downloads/thesis.tex",
+    "bytes": 164471,
+    "sha256": "53d338e768d7e05f83371e6228e1a8fd9ffd9feee5192146756508d094efb293"
+  },
+  "references.bib": {
+    "path": "/mnt/c/Users/ojasw/Downloads/references.bib",
+    "bytes": 31006,
+    "sha256": "b937e4bf8cb626f4fc5adf5ff599051d54fa40e1df1ec67214eaa680afdeef59"
+  },
+  "thesis.pdf": {
+    "path": "/mnt/c/Users/ojasw/Desktop/THESIS/OSinha_MSCS_Thesis_Robust_DFL_2026.pdf",
+    "bytes": 7065514,
+    "sha256": "8008f6eb18ed4cd4bd941b08947fc728a5743c34573a31d6887db361a0a6b701"
+  },
+  "activeLabelCount": 110,
+  "unresolvedActiveReferences": [
+    "alg:fedsharpplus",
+    "ch:method",
+    "eq:cart_utility",
+    "eq:channel",
+    "eq:gradient",
+    "eq:hidden",
+    "eq:lambda",
+    "eq:prior_ce",
+    "eq:qselected",
+    "eq:stationary",
+    "fig:cart",
+    "sec:basil_baseline",
+    "sec:noise_analysis",
+    "sec:sharp"
+  ],
+  "missingCitationKeys": [],
+  "commentedAlgorithm2": true
+}

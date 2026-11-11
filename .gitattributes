@@ -5,3 +5,13 @@
 *.csv whitespace=cr-at-eol
 # Matplotlib emits insignificant trailing spaces inside SVG path attributes.
 docs/thesis-figures/**/*.svg -whitespace
+# Published evidence manifests hash exact bytes, including CSV line endings.
+docs/results/official-test-20261110/** -text
+docs/presentation/defense-draft-20261104/** -text
+docs/figures/** -text
+docs/thesis/** -text
+docs/results/official-test-20261110/**/*.svg -whitespace
+docs/presentation/defense-draft-20261104/**/*.svg -whitespace
+docs/figures/**/*.svg -whitespace
+# Preserve the existing signed report's final blank line.
+docs/results/official-test-20261110/four-method-official-test-20261110/report.md whitespace=-blank-at-eof

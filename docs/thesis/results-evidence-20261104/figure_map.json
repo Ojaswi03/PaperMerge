@@ -1,0 +1,50 @@
+[
+  {
+    "stem": "mnist_iid_gaussian_accuracy",
+    "label": "fig:mnist-iid-gaussian-500r",
+    "section": "sec:mnist_iid_results",
+    "oldLabel": "fig:mnist_iid_accuracy"
+  },
+  {
+    "stem": "mnist_iid_hidden_accuracy",
+    "label": "fig:mnist-iid-hidden-500r",
+    "section": "sec:mnist_iid_results",
+    "oldLabel": "fig:mnist_iid_accuracy"
+  },
+  {
+    "stem": "mnist_non_iid_gaussian_accuracy",
+    "label": "fig:mnist-non-iid-gaussian-500r",
+    "section": "sec:mnist_non_iid_results",
+    "oldLabel": "fig:mnist_non_iid_accuracy"
+  },
+  {
+    "stem": "mnist_non_iid_hidden_accuracy",
+    "label": "fig:mnist-non-iid-hidden-500r",
+    "section": "sec:mnist_non_iid_results",
+    "oldLabel": "fig:mnist_non_iid_accuracy"
+  },
+  {
+    "stem": "cifar10_iid_gaussian_accuracy",
+    "label": "fig:cifar10-iid-gaussian-500r",
+    "section": "sec:cifar_iid_results",
+    "oldLabel": "fig:cifar_iid_accuracy"
+  },
+  {
+    "stem": "cifar10_iid_hidden_accuracy",
+    "label": "fig:cifar10-iid-hidden-500r",
+    "section": "sec:cifar_iid_results",
+    "oldLabel": "fig:cifar_iid_accuracy"
+  },
+  {
+    "stem": "cifar10_non_iid_gaussian_accuracy",
+    "label": "fig:cifar10-non-iid-gaussian-500r",
+    "section": "sec:cifar_non_iid_results",
+    "oldLabel": "fig:cifar_non_iid_accuracy"
+  },
+  {
+    "stem": "cifar10_non_iid_hidden_accuracy",
+    "label": "fig:cifar10-non-iid-hidden-500r",
+    "section": "sec:cifar_non_iid_results",
+    "oldLabel": "fig:cifar_non_iid_accuracy"
+  }
+]

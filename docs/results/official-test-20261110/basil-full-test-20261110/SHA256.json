@@ -1,0 +1,19 @@
+{
+  "results.json": "fb5626bb31aa7415e1a71f469996b6b1833a895571ed9d94ef56ea0d72a3bbf6",
+  "evaluation_plan.json": "29dac154ddb96e5a20ba49c9f2c12490f036ce49c2124c017f808358fa8c1d47",
+  "report.md": "de04642cbbc8cbb01d21c1a2e5b7564fe953a1a7b634918573d61ab5e6547423",
+  "per_client.csv": "fecd0d738ffd4f5ed60a838d33334d641e8de035529f0011819f6ba9f03ab9e2",
+  "progress.json": "8f0aa8a87d0f7ab6261ae02abdf025c327f6861b1c25e59592fbe0904343859f",
+  "mnist-dirichlet-2025-basil_acds-1d6da256baf5/predictions.npz": "6406cce00f83a64bf240dd2321c4ce5881f8ce7f81bdac47274c407140331693",
+  "mnist-dirichlet-2025-basil_acds-1d6da256baf5/result.json": "711c5b61370ff4389e0b9d052811689b21716c9e202a2b21a69ce9d46db802a8",
+  "mnist-dirichlet-2025-basil_acds-1d6da256baf5/client_metrics.json": "0802dc57ed4f37a190846645496f9bd43a997dd0c618005a98920bbd81d6de92",
+  "cifar10-dirichlet-2025-basil_joint-494158af6ffc/predictions.npz": "912cc38eb17dbe1850d27804b0b633d55c04067dd029612bd9d348224f521f42",
+  "cifar10-dirichlet-2025-basil_joint-494158af6ffc/result.json": "84fdfac0d24724d9bfcb7a53ffba2c14b18ec3f168f8328ccdf8a0ad68e946c9",
+  "cifar10-dirichlet-2025-basil_joint-494158af6ffc/client_metrics.json": "51fd8293a97c9268c1f4c1014be71e8afda8f95d202ce49a38e87d5d7c0cfc99",
+  "mnist-dirichlet-2025-basil_joint-249d7c7aa4cd/predictions.npz": "072923e07b063e4a8f3ae8521b9a9b5f44921d0aa145efcb0dad12ca28b8b191",
+  "mnist-dirichlet-2025-basil_joint-249d7c7aa4cd/result.json": "31bf0fb4bbf3ff7529b5bbc40dffdf95f0840250810ddf949ce7982df933b152",
+  "mnist-dirichlet-2025-basil_joint-249d7c7aa4cd/client_metrics.json": "b90c4d6415abc3370de31178b843fff2c010cc40d3f5cad5ba56aecf164048be",
+  "cifar10-dirichlet-2025-basil_acds-03863eb17a93/predictions.npz": "1e306a52785120e33c164e6e93e3cf61dabd12a5e3c4edf4a5beaa3578382114",
+  "cifar10-dirichlet-2025-basil_acds-03863eb17a93/result.json": "6b7ca7662bfdf1e44da146c85aa0b559ff6ab38dea90996ea211b3ceed085802",
+  "cifar10-dirichlet-2025-basil_acds-03863eb17a93/client_metrics.json": "051ddb33eed00d9e3aca01af3e0a36daa9324defab861c878c0df1666b427080"
+}
