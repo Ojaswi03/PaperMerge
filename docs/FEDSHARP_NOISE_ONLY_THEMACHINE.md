@@ -104,6 +104,9 @@ The scheduler adopts recognized active workers without restarting them.
 Checkpoint recovery retains the original GPU and runtime contract. Failed
 training runs are set aside for diagnosis rather than silently restarted.
 
+The [timeout recovery guide](FEDSHARP_NOISE_ONLY_TIMEOUT_RECOVERY.md) covers the
+reported isolated CUDA launch timeout with seventeen other completed runs.
+
 ## Verify and export after all runs complete
 
 ```bash

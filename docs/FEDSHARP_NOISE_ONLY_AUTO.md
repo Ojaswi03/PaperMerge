@@ -63,6 +63,11 @@ python scripts/run_fedsharp_noise_only_auto.py \
 Automatic hostname selection is not checkpoint migration between servers.
 Each concrete launcher preserves its own frozen source and runtime checks.
 
+For the isolated themachine `CUDA_ERROR_LAUNCH_TIMEOUT` failure, use the
+[audited checkpoint recovery](FEDSHARP_NOISE_ONLY_TIMEOUT_RECOVERY.md).
+Normal resume intentionally keeps failed runs set aside; do not create a fresh
+campaign to replace seventeen already completed results.
+
 ## Export completed results
 
 The same entrypoint selects the matching CPU verifier:

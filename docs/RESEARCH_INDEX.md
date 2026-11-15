@@ -94,6 +94,9 @@ runs. ACDS has extra fitting-data access and must be described accordingly.
 
 The [automatic launcher](FEDSHARP_NOISE_ONLY_AUTO.md) selects the matching
 hal9k or themachine configuration from the actual hostname.
+The [isolated CUDA-timeout recovery](FEDSHARP_NOISE_ONLY_TIMEOUT_RECOVERY.md)
+validates the checkpoint and original GPU before requeueing one failed run,
+while preserving seventeen completed results and the original producer files.
 
 [FedSharp/FedSharp+ noise-only controls](FEDSHARP_NOISE_ONLY_500R.md) defines
 18 fresh runs for hal9k, two GPUs: 12 FedSharp cases and six non-IID FedSharp+
