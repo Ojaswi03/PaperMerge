@@ -90,6 +90,19 @@ stages. Do not substitute an older prototype. FedSharp+ is available only for
 non-IID joint attack + noise in this study. There are no FedSharp+ clean or IID
 runs. ACDS has extra fitting-data access and must be described accordingly.
 
+## Prepared committee controls and runtime evidence
+
+[FedSharp/FedSharp+ noise-only controls](FEDSHARP_NOISE_ONLY_500R.md) defines
+18 fresh runs for hal9k, two GPUs: 12 FedSharp cases and six non-IID FedSharp+
+cases. These are configurations awaiting execution, not completed results.
+The restriction to joint attack + noise above describes the completed study.
+There are still no FedSharp+ clean or IID runs.
+
+[Recorded runtimes](runtime-timings/20261114/report.md) separates historical
+training-loop durations from local official-test evaluation timings, with
+per-run CSVs and input checksums. The mixed hosts and worker loads do not
+support a controlled algorithm-speed comparison.
+
 ## Figures and presentation
 
 The [eight thesis panels](figures/Thesis_Plots/) include FedSharp+ in four

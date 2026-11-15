@@ -34,5 +34,7 @@ def public_snapshot(directory):
         if cfg.get('cleanControl') and cfg.get('comparisonCase',{}).get('arm')=='sharp_clean':label='FedSharp / clean'
         if cfg.get('plainCleanControl') and cfg.get('comparisonCase',{}).get('arm')=='sharp_clean':label='FedSharp plain ring / clean'
         if cfg.get('plainCleanControl') and cfg.get('comparisonCase',{}).get('arm')=='basil_clean':label='BASIL / clean'
+        if cfg.get('noiseOnlyControl'):
+            label=('FedSharp+' if cfg['comparisonCase']['addon']=='cart' else 'FedSharp')+' / noise only'
         if label:public['runs'][-1]['condition']=label
     return public

@@ -145,6 +145,17 @@ test('BASIL clean controls use a distinct heading and preserve the clean environ
   assert.equal(cells[5],'clean');assert.equal(cells[6],'BASIL');
 });
 
+test('noise-only controls retain both method labels and show the noise environment',()=>{
+  const {context,elements}=browser();const snapshot=sample();
+  snapshot.runs=[{...snapshot.runs[0],condition:'FedSharp / noise only'},
+    {...snapshot.runs[0],condition:'FedSharp+ / noise only'}];
+  context.render({snapshot,receivedAt:new Date().toISOString()});
+  assert.equal(elements.get('experiment-title').textContent,'FedSharp noise-only controls');
+  const rows=elements.get('runs').children.map(r=>r.children.map(c=>c.textContent));
+  assert.deepEqual(rows.map(r=>r[5]),['noise only','noise only']);
+  assert.deepEqual(rows.map(r=>r[6]),['FedSharp','FedSharp+']);
+});
+
 test('browser respects the delivered overall ETA and shows finish time',()=>{
   const {context,elements}=browser();const snapshot=sample();snapshot.etaSeconds=10000;
   snapshot.runs=[{...snapshot.runs[0],etaSeconds:1000},{...snapshot.runs[0],etaSeconds:2000}];

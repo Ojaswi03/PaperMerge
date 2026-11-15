@@ -21,6 +21,14 @@ sample SD bands. These are development-holdout results, not official test
 results. See [validation evidence](docs/thesis/results-evidence-20261104/) and
 [the eight individual plots](docs/figures/Thesis_Plots/).
 
+## Prepared noise-only controls
+
+[18 fresh FedSharp/FedSharp+ noise-only runs](docs/FEDSHARP_NOISE_ONLY_500R.md)
+are configured for hal9k's two GPUs. They have not been executed yet and are
+separate from the completed results above. See the
+[historical training and CPU evaluation timings](docs/runtime-timings/20261114/report.md)
+for recorded per-round averages and 500-round totals with their limitations.
+
 ## Official test evaluation
 
 Eight frozen final round-500 runs were evaluated locally: four methods across
