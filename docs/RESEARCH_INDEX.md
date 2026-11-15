@@ -92,6 +92,9 @@ runs. ACDS has extra fitting-data access and must be described accordingly.
 
 ## Prepared committee controls and runtime evidence
 
+The [automatic launcher](FEDSHARP_NOISE_ONLY_AUTO.md) selects the matching
+hal9k or themachine configuration from the actual hostname.
+
 [FedSharp/FedSharp+ noise-only controls](FEDSHARP_NOISE_ONLY_500R.md) defines
 18 fresh runs for hal9k, two GPUs: 12 FedSharp cases and six non-IID FedSharp+
 cases. These are configurations awaiting execution, not completed results.

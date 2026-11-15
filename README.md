@@ -23,6 +23,9 @@ results. See [validation evidence](docs/thesis/results-evidence-20261104/) and
 
 ## Prepared noise-only controls
 
+Use the [automatic server launcher](docs/FEDSHARP_NOISE_ONLY_AUTO.md) for the
+same command on hal9k or themachine. It selects the matching preset by hostname.
+
 [18 fresh FedSharp/FedSharp+ noise-only runs](docs/FEDSHARP_NOISE_ONLY_500R.md)
 were configured for hal9k's two GPUs. An alternative
 [themachine launcher](docs/FEDSHARP_NOISE_ONLY_THEMACHINE.md) prioritizes GPUs

@@ -75,6 +75,24 @@ def test_failed_run_refused_before_inference(completed, monkeypatch):
     assert not dest.exists()
 
 
+def test_completed_training_with_automatic_report_failure_still_requires_fresh_verification(completed):
+    root, dest = completed
+    (root / 'campaign.json').write_text(json.dumps(dict(status='COMPLETED_REPORT_FAILED')))
+    assert exporter.export(root, dest)['freshInferenceVerified']
+
+
+def test_report_failure_does_not_excuse_incomplete_training(completed):
+    root, dest = completed
+    (root / 'campaign.json').write_text(json.dumps(dict(status='COMPLETED_REPORT_FAILED')))
+    path = next(root.glob('*/run.json'))
+    row = json.loads(path.read_text())
+    row['completedActivations'] = 49999
+    path.write_text(json.dumps(row))
+    with pytest.raises(ValueError, match='Incomplete'):
+        exporter.export(root, dest)
+    assert not dest.exists()
+
+
 def test_inference_failure_cannot_publish(completed, monkeypatch):
     root, dest = completed
     def fail(command, **kwargs):

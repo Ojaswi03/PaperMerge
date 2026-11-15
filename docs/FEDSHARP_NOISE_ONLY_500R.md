@@ -1,5 +1,8 @@
 # FedSharp and FedSharp+ noise-only controls
 
+The [automatic server launcher](FEDSHARP_NOISE_ONLY_AUTO.md) provides one
+command for either supported server and selects this preset on hal9k.
+
 For execution on themachine instead, use the
 [themachine launcher and commands](FEDSHARP_NOISE_ONLY_THEMACHINE.md).
 It prioritizes GPUs 1 and 3 and can admit GPUs 0 and 2 later. Do not launch both

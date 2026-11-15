@@ -1,5 +1,8 @@
 # Noise-only controls on themachine
 
+The [automatic server launcher](FEDSHARP_NOISE_ONLY_AUTO.md) selects this
+configuration when the actual hostname is themachine.
+
 Use this launcher when running the eighteen prepared noise-only experiments on
 themachine. It prioritizes GPUs 1 and 3. GPUs 0 and 2 can join later for pending
 configurations. Hal9k does not need to be reachable for this campaign to run.

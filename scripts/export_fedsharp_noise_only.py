@@ -54,7 +54,10 @@ def export(output, destination, *, verifier_script=None):
     if plan['configs'] != study.selected(args) or plan.get('executionOptimization') != study.runtime_policy():
         raise ValueError('Export requires the exact eighteen-case 500-round matrix.')
     names = ['plan.json', 'campaign.json']
-    if json.loads((root / 'campaign.json').read_text())['status'] != 'COMPLETED':
+    # The historical automatic plotter does not understand the new plus/noise-
+    # only matrix. Its report failure is separate from training completion.
+    # All eighteen rows, checkpoints and fresh inference are still mandatory.
+    if json.loads((root / 'campaign.json').read_text())['status'] not in ('COMPLETED', 'COMPLETED_REPORT_FAILED'):
         raise ValueError('Wait for the campaign to complete.')
     checkpoints = {}
     for view in plan['configs']:
