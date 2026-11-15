@@ -38,7 +38,7 @@ def audit_no_attacks(root, plan):
         verifierSha256=sha(Path(__file__)), scope='Recorded full activation chain; not a replay of every SGD update.')
 
 
-def export(output, destination):
+def export(output, destination, *, verifier_script=None):
     import numpy as np
     root, dest = Path(output).resolve(), Path(destination).resolve()
     if root == dest or root in dest.parents or dest in root.parents:
@@ -82,7 +82,8 @@ def export(output, destination):
         names.append('source_snapshots/' + name)
     before = {name: sha(root / name) for name in names}
     write_matching(root / 'noise_only_verification.json', audit_no_attacks(root, plan))
-    subprocess.run([sys.executable, str(ROOT / 'scripts/run_fedsharp_noise_only.py'),
+    verifier_script = verifier_script or ROOT / 'scripts/run_fedsharp_noise_only.py'
+    subprocess.run([sys.executable, str(verifier_script),
                     '--role', 'verify', '--output', str(root)], cwd=ROOT, check=True)
     receipt = json.loads((root / 'independent_validation.json').read_text())
     if (receipt['status'] != 'ALL_COMPARISON_MODELS_VERIFIED' or receipt['source'] != plan['source']

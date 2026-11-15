@@ -1,5 +1,10 @@
 # FedSharp and FedSharp+ noise-only controls
 
+For execution on themachine instead, use the
+[themachine launcher and commands](FEDSHARP_NOISE_ONLY_THEMACHINE.md).
+It prioritizes GPUs 1 and 3 and can admit GPUs 0 and 2 later. Do not launch both
+server campaigns independently as if they were different configurations.
+
 Prepared for hal9k, GPUs 0 and 1. These are new experiments awaiting execution,
 not additional completed results. Their purpose is to measure channel noise
 without Byzantine attacks, using the existing impaired-environment algorithms.

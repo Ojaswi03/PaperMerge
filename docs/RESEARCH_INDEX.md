@@ -95,6 +95,9 @@ runs. ACDS has extra fitting-data access and must be described accordingly.
 [FedSharp/FedSharp+ noise-only controls](FEDSHARP_NOISE_ONLY_500R.md) defines
 18 fresh runs for hal9k, two GPUs: 12 FedSharp cases and six non-IID FedSharp+
 cases. These are configurations awaiting execution, not completed results.
+The [themachine alternative](FEDSHARP_NOISE_ONLY_THEMACHINE.md) runs the same
+matrix with preferred GPUs 1 and 3 and optional GPUs 0 and 2, without depending
+on hal9k. Use one server campaign; the two launchers are not a shared fleet.
 The restriction to joint attack + noise above describes the completed study.
 There are still no FedSharp+ clean or IID runs.
 

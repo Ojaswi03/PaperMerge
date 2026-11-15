@@ -24,7 +24,9 @@ results. See [validation evidence](docs/thesis/results-evidence-20261104/) and
 ## Prepared noise-only controls
 
 [18 fresh FedSharp/FedSharp+ noise-only runs](docs/FEDSHARP_NOISE_ONLY_500R.md)
-are configured for hal9k's two GPUs. They have not been executed yet and are
+were configured for hal9k's two GPUs. An alternative
+[themachine launcher](docs/FEDSHARP_NOISE_ONLY_THEMACHINE.md) prioritizes GPUs
+1 and 3 and admits GPUs 0 and 2 when they become usable. These configurations are
 separate from the completed results above. See the
 [historical training and CPU evaluation timings](docs/runtime-timings/20261114/report.md)
 for recorded per-round averages and 500-round totals with their limitations.
