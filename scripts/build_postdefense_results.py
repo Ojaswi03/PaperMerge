@@ -134,7 +134,7 @@ def figure(curves, dataset, split, attack, metric, destination):
         and c['attack']==('none' if c['environment'] in ('clean','noise_only') else attack)]
     env_order = ['clean','attack_only','noise_only','joint']
     available.sort(key=lambda c:(env_order.index(c['environment']),METHODS.index(c['method'])))
-    fig, axes = plt.subplots(1,2,figsize=(12.2,7.3),gridspec_kw={'width_ratios':[2.25,1.]})
+    fig, ax = plt.subplots(figsize=(9.2,7.3))
     metric_key = 'accuracy' if metric=='accuracy' else 'trainingCE'
     x = np.arange(1,501)
     all_bounds = []
@@ -146,36 +146,26 @@ def figure(curves, dataset, split, attack, metric, destination):
         all_bounds.append((lower,upper))
         label = curve['method']+': '+{'clean':'clean','attack_only':'attack only','joint':'attack + noise','noise_only':'noise only'}[curve['environment']]
         appearance = style(curve)
-        for ax in axes:
-            ax.fill_between(x,lower,upper,color=appearance['color'],alpha=.10,linewidth=0)
-            ax.plot(x,mean,label=label,markersize=4.5,markevery=(index*4,60),**appearance)
-            np.testing.assert_array_equal(ax.lines[-1].get_ydata(),mean)
-    for ax in axes:
-        ax.set_xlabel('Communication round',fontsize=12)
-        ax.spines[['top','right']].set_visible(False)
-        ax.grid(axis='y',color='#DFE3E8',linewidth=.55)
-        ax.tick_params(labelsize=10.5)
-    axes[0].set_xlim(1,500)
-    axes[0].set_xticks([1,100,200,300,400,500])
-    axes[0].axvline(21,color='#777777',linestyle=(0,(2,3)),linewidth=.85)
-    axes[0].set_ylabel('Mean client validation accuracy (%)' if metric=='accuracy' else 'Mean local training CE',fontsize=12.5)
-    axes[1].set_xlim(401,500)
-    axes[1].set_xticks([401,450,500])
-    axes[1].set_title('Rounds 401 to 500',fontsize=12.5,pad=12)
+        ax.fill_between(x,lower,upper,color=appearance['color'],alpha=.10,linewidth=0)
+        ax.plot(x,mean,label=label,markersize=4.5,markevery=(index*4,60),**appearance)
+        np.testing.assert_array_equal(ax.lines[-1].get_ydata(),mean)
+    ax.set_xlabel('Communication round',fontsize=12)
+    ax.spines[['top','right']].set_visible(False)
+    ax.grid(axis='y',color='#DFE3E8',linewidth=.55)
+    ax.tick_params(labelsize=10.5)
+    ax.set_xlim(1,500)
+    ax.set_xticks([1,100,200,300,400,500])
+    ax.axvline(21,color='#777777',linestyle=(0,(2,3)),linewidth=.85)
+    ax.set_ylabel('Mean client validation accuracy (%)' if metric=='accuracy' else 'Mean local training CE',fontsize=12.5)
     if metric=='accuracy':
-        axes[0].set_ylim(0,100)
-        lower = min(v[0][400:].min() for v in all_bounds)
-        upper = max(v[1][400:].max() for v in all_bounds)
-        axes[1].set_ylim(max(0,5*np.floor((lower-1)/5)),min(100,5*np.ceil((upper+1)/5)))
+        ax.set_ylim(0,100)
     else:
         upper = max(v[1].max() for v in all_bounds)
-        tail = max(v[1][400:].max() for v in all_bounds)
-        axes[0].set_ylim(0,max(.1,upper*1.06))
-        axes[1].set_ylim(0,max(.1,tail*1.06))
+        ax.set_ylim(0,max(.1,upper*1.06))
     title = display(dataset,split)+' | '+attack.capitalize()+' attack comparison'
     fig.suptitle(title,fontsize=15,y=.97)
-    handles,names = axes[0].get_legend_handles_labels()
-    columns = 3
+    handles,names = ax.get_legend_handles_labels()
+    columns = 2
     nrows = int(np.ceil(len(handles)/columns))
     order = [r*columns+c for c in range(columns) for r in range(nrows) if r*columns+c<len(handles)]
     legend = fig.legend([handles[i] for i in order],[names[i] for i in order],ncol=columns,
@@ -184,23 +174,23 @@ def figure(curves, dataset, split, attack, metric, destination):
     fig.canvas.draw()
     legend_height = legend.get_window_extent(fig.canvas.get_renderer()).height/fig.dpi
     total_height = 4.4+1.55+legend_height
-    fig.set_size_inches(12.2,total_height,forward=True)
+    fig.set_size_inches(9.2,total_height,forward=True)
     fig._suptitle.set_y(1-.15/total_height)
     bottom = (legend_height+.65)/total_height
-    fig.subplots_adjust(left=.075,right=.985,bottom=bottom,top=1-.9/total_height,wspace=.24)
+    fig.subplots_adjust(left=.11,right=.985,bottom=bottom,top=1-.9/total_height)
     legend.set_bbox_to_anchor((.5,(legend_height+.15)/total_height),transform=fig.transFigure)
     fig.canvas.draw()
     renderer = fig.canvas.get_renderer()
     box = legend.get_window_extent(renderer)
     if not (box.x0>0 and box.x1<fig.bbox.x1 and box.y0>0):
         raise ValueError('Legend extends beyond the figure.')
-    if any(box.padded(3).overlaps(ax.get_tightbbox(renderer)) for ax in axes):
+    if box.padded(3).overlaps(ax.get_tightbbox(renderer)):
         raise ValueError('Legend overlaps an axis label.')
     title_box = fig._suptitle.get_window_extent(renderer)
     if not (title_box.x0>=0 and title_box.x1<=fig.bbox.x1 and title_box.y1<=fig.bbox.y1):
         raise ValueError('Figure title extends beyond the canvas.')
-    if title_box.overlaps(axes[1].title.get_window_extent(renderer)):
-        raise ValueError('Figure title overlaps the detail-panel title.')
+    if len(fig.axes)!=1:
+        raise ValueError('One plot per image is required.')
     stem = f"{dataset}_{'iid' if split=='iid' else 'non_iid'}_{attack}_{metric}"
     for suffix in ('png','svg'):
         path = destination/(stem+'.'+suffix)
@@ -212,7 +202,7 @@ def figure(curves, dataset, split, attack, metric, destination):
             path.write_text('\n'.join(line.rstrip() for line in path.read_text().splitlines())+'\n')
     plt.close(fig)
     return dict(stem=stem,curves=len(available),legendFontPoints=13,legendPosition='below',
-        detailPanel='right, rounds 401 to 500',curvesChecked=True,legendClearanceChecked=True,
+        axesPerFigure=1,detailPanel=None,curvesChecked=True,legendClearanceChecked=True,
         runIds=[run for curve in available for run in curve['runIds']],pngDpi=600)
 
 
@@ -220,16 +210,23 @@ def comparison_tables(summary):
     lookup = {(r['dataset'],r['partition'],r['method'],r['environment'],r['attack']):r for r in summary}
     lines = []
     for dataset,split in SPLITS:
-        lines += ['### '+display(dataset,split),'', '| Condition | '+' | '.join(METHODS)+' |',
-            '| --- | ---: | ---: | ---: | ---: |']
-        for env,attack,label in CONDITIONS:
-            cells = [label]
-            for method in METHODS:
-                r = lookup.get((dataset,split,method,env,attack))
-                cells.append('Not run' if r is None else
-                    f"{r['accuracyMeanPercent']:.3f} +/- {r['accuracySampleSdPercent']:.3f}%<br>CE {r['trainingCEMean']:.4f} +/- {r['trainingCESampleSd']:.4f}")
-            lines.append('| '+' | '.join(cells)+' |')
-        lines.append('')
+        lines += ['### '+display(dataset,split),'']
+        for metric,sd,title,precision in [('accuracyMeanPercent','accuracySampleSdPercent','Validation accuracy (%)',3),
+                                          ('trainingCEMean','trainingCESampleSd','Local training CE',4)]:
+            lines += ['**'+title+'**','', '| Condition | '+' | '.join(METHODS)+' |',
+                '| --- | ---: | ---: | ---: | ---: |']
+            for env,attack,label in CONDITIONS:
+                cells = [label]
+                available = [lookup[dataset,split,m,env,attack] for m in METHODS if (dataset,split,m,env,attack) in lookup]
+                best = max((r[metric] for r in available),default=0)
+                for method in METHODS:
+                    r = lookup.get((dataset,split,method,env,attack))
+                    value = '--' if r is None else f"{r[metric]:.{precision}f} ± {r[sd]:.{precision}f}"
+                    if r and metric=='accuracyMeanPercent' and len(available)>1 and abs(r[metric]-best)<1e-12:
+                        value = '**'+value+'**'
+                    cells.append(value)
+                lines.append('| '+' | '.join(cells)+' |')
+            lines.append('')
     return lines
 
 
@@ -256,7 +253,7 @@ def update_readme(summary):
         'The current study contains **168 runs in 56 three-seed groups**: MNIST and CIFAR-10, IID and non-IID, '
         'with seeds 2025, 2026 and 2027. The latest 18 noise-only runs are complete and independently verified on the producing server. '
         'The dataset includes 24 clean, 48 attack-only, 72 attack-and-noise and 24 noise-only runs.','',
-        '**Each table cell reports validation accuracy (%) and local-training cross-entropy (CE), both as mean +/- sample SD across three seeds.** '
+        '**Accuracy and local-training cross-entropy (CE) are shown in separate tables as mean ± sample SD across three seeds.** '
         'Each seed endpoint averages rounds 491 to 500 and all 100 clients. These are development-holdout accuracies, not official test results.','',
         '**Loss scope:** the exports do not contain validation loss for every run. CE below is the saved local-training loss '
         '(`mechanisms.json`, `meanLocalTrainCE`), averaged over five SGD steps per activation, then clients and rounds. '
@@ -269,7 +266,8 @@ def update_readme(summary):
         '[All 168 per-run values](docs/figures/postdefense_results/per_run.csv) | '
         '[All 56 group summaries](docs/figures/postdefense_results/group_summary.csv) | '
         '[Source and figure checks](docs/figures/postdefense_results/audit.json)','',*comparison_tables(summary),
-        '`Not run` means no matching case in the current matrix, not zero accuracy. BASIL + ACDS has only non-IID attack-and-noise cases. '
+        '`--` means no matching case in the current matrix, not zero accuracy. Bold indicates the highest observed accuracy mean in a row, '
+        'not statistical significance. Training CE is not ranked. BASIL + ACDS has only non-IID attack-and-noise cases. '
         'BASIL noise-only covers MNIST only. FedSharp+ has non-IID attack-and-noise and noise-only cases; there is no FedSharp+ clean or IID case.','',
         'BASIL performs better in the measured attack-only cases. FedSharp generally performs better when attack and noise occur together; '
         'CIFAR-10 non-IID Hidden is the near-equal exception for the base methods. FedSharp+ performs best on CIFAR-10 non-IID '
@@ -281,8 +279,9 @@ def update_readme(summary):
         'Timing values in the per-run CSV exclude recovery downtime. Historical timing comparisons reflect different shared-server loads. '
         'Use the [automatic launcher](docs/FEDSHARP_NOISE_ONLY_AUTO.md) for reproduction.','',
         '## Updated postdefense plots','',
-        'All curves show the three-seed mean and sample SD, with all 500 unsmoothed rounds. Legends are below each plot; '
-        'the right panel shows rounds 401 to 500 without covering the full trajectory. '
+        'Each image contains one plot covering all 500 unsmoothed rounds, with three-seed means and sample SD bands. '
+        'Legends are below the plot. Accuracy and training-CE previews are shown side by side and wrap below each other on narrow screens. '
+        'Click a preview to open the full-resolution PNG. '
         'Clean and noise-only references appear in both attack contexts. The context label applies only to the attacked curves. '
         'Training-CE figures use the loss definition above. PNG is 600 DPI and SVG is native vector.','']
     base = 'docs/figures/postdefense_results/'
@@ -290,8 +289,10 @@ def update_readme(summary):
         for attack in ('gaussian','hidden'):
             stem = f"{dataset}_{'iid' if split=='iid' else 'non_iid'}_{attack}"
             title = display(dataset,split)+' | '+attack.capitalize()+' attack conditions'
-            lines += ['### '+title,'',f'![{title}: validation accuracy]({base}{stem}_accuracy.png)','',
-                f'![{title}: local training CE]({base}{stem}_training_loss.png)','',
+            lines += ['### '+title,'','<p>',
+                f'  <a href="{base}{stem}_accuracy.png"><img src="{base}{stem}_accuracy.png" width="420" alt="{title}: validation accuracy"></a>',
+                f'  <a href="{base}{stem}_training_loss.png"><img src="{base}{stem}_training_loss.png" width="420" alt="{title}: local training CE"></a>',
+                '</p>','',
                 f'[Accuracy SVG]({base}{stem}_accuracy.svg) | [Training CE SVG]({base}{stem}_training_loss.svg)','']
     new = prefix+'\n'.join(lines)+'\n## Official test evaluation'+test+tail
     if '- [Postdefense figures and tables]' not in new:
@@ -326,7 +327,7 @@ def main():
         'Loss is local training CE, not held-out validation/test CE or the full regularized objective. '
         'FedSharp+ training CE uses prior-adjusted logits. Endpoints average rounds 491 to 500.','',
         'Each context has separate validation-accuracy and training-CE figures in 600-DPI PNG and native-vector SVG. '
-        'The right panel expands rounds 401 to 500. All legends are below. '
+        'Each image contains one full-range plot, without a zoom panel. All legends are below. '
         'Clean and noise-only references are repeated across the two attack contexts.','',
         '`group_summary.csv` contains all 56 group summaries; `per_run.csv` contains all 168 individual values and timings. '
         '`plot_data.json` records the exact plotted means/SDs and run identities. '

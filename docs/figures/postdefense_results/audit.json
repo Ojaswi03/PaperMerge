@@ -14,14 +14,15 @@
   "lossScope": "Mean local SGD cross-entropy; not held-out validation/test loss or the full regularized objective.",
   "plusLossScope": "FedSharp+ training CE uses prior-adjusted training logits.",
   "originalMeasurementsModified": false,
-  "rendererSha256": "a803a5055cc2bfa2ac37294f4b07c730bbf309b897837df105f4f7c506e295e6",
+  "rendererSha256": "b55f145be48203ca4038b21aec42dcd2e3601fe080afa6f1401d02ad49ddb889",
   "figures": {
     "mnist_iid_gaussian_accuracy": {
       "stem": "mnist_iid_gaussian_accuracy",
       "curves": 8,
       "legendFontPoints": 13,
       "legendPosition": "below",
-      "detailPanel": "right, rounds 401 to 500",
+      "axesPerFigure": 1,
+      "detailPanel": null,
       "curvesChecked": true,
       "legendClearanceChecked": true,
       "runIds": [
@@ -57,7 +58,8 @@
       "curves": 8,
       "legendFontPoints": 13,
       "legendPosition": "below",
-      "detailPanel": "right, rounds 401 to 500",
+      "axesPerFigure": 1,
+      "detailPanel": null,
       "curvesChecked": true,
       "legendClearanceChecked": true,
       "runIds": [
@@ -93,7 +95,8 @@
       "curves": 8,
       "legendFontPoints": 13,
       "legendPosition": "below",
-      "detailPanel": "right, rounds 401 to 500",
+      "axesPerFigure": 1,
+      "detailPanel": null,
       "curvesChecked": true,
       "legendClearanceChecked": true,
       "runIds": [
@@ -129,7 +132,8 @@
       "curves": 8,
       "legendFontPoints": 13,
       "legendPosition": "below",
-      "detailPanel": "right, rounds 401 to 500",
+      "axesPerFigure": 1,
+      "detailPanel": null,
       "curvesChecked": true,
       "legendClearanceChecked": true,
       "runIds": [
@@ -165,7 +169,8 @@
       "curves": 11,
       "legendFontPoints": 13,
       "legendPosition": "below",
-      "detailPanel": "right, rounds 401 to 500",
+      "axesPerFigure": 1,
+      "detailPanel": null,
       "curvesChecked": true,
       "legendClearanceChecked": true,
       "runIds": [
@@ -210,7 +215,8 @@
       "curves": 11,
       "legendFontPoints": 13,
       "legendPosition": "below",
-      "detailPanel": "right, rounds 401 to 500",
+      "axesPerFigure": 1,
+      "detailPanel": null,
       "curvesChecked": true,
       "legendClearanceChecked": true,
       "runIds": [
@@ -255,7 +261,8 @@
       "curves": 11,
       "legendFontPoints": 13,
       "legendPosition": "below",
-      "detailPanel": "right, rounds 401 to 500",
+      "axesPerFigure": 1,
+      "detailPanel": null,
       "curvesChecked": true,
       "legendClearanceChecked": true,
       "runIds": [
@@ -300,7 +307,8 @@
       "curves": 11,
       "legendFontPoints": 13,
       "legendPosition": "below",
-      "detailPanel": "right, rounds 401 to 500",
+      "axesPerFigure": 1,
+      "detailPanel": null,
       "curvesChecked": true,
       "legendClearanceChecked": true,
       "runIds": [
@@ -345,7 +353,8 @@
       "curves": 7,
       "legendFontPoints": 13,
       "legendPosition": "below",
-      "detailPanel": "right, rounds 401 to 500",
+      "axesPerFigure": 1,
+      "detailPanel": null,
       "curvesChecked": true,
       "legendClearanceChecked": true,
       "runIds": [
@@ -378,7 +387,8 @@
       "curves": 7,
       "legendFontPoints": 13,
       "legendPosition": "below",
-      "detailPanel": "right, rounds 401 to 500",
+      "axesPerFigure": 1,
+      "detailPanel": null,
       "curvesChecked": true,
       "legendClearanceChecked": true,
       "runIds": [
@@ -411,7 +421,8 @@
       "curves": 7,
       "legendFontPoints": 13,
       "legendPosition": "below",
-      "detailPanel": "right, rounds 401 to 500",
+      "axesPerFigure": 1,
+      "detailPanel": null,
       "curvesChecked": true,
       "legendClearanceChecked": true,
       "runIds": [
@@ -444,7 +455,8 @@
       "curves": 7,
       "legendFontPoints": 13,
       "legendPosition": "below",
-      "detailPanel": "right, rounds 401 to 500",
+      "axesPerFigure": 1,
+      "detailPanel": null,
       "curvesChecked": true,
       "legendClearanceChecked": true,
       "runIds": [
@@ -477,7 +489,8 @@
       "curves": 10,
       "legendFontPoints": 13,
       "legendPosition": "below",
-      "detailPanel": "right, rounds 401 to 500",
+      "axesPerFigure": 1,
+      "detailPanel": null,
       "curvesChecked": true,
       "legendClearanceChecked": true,
       "runIds": [
@@ -519,7 +532,8 @@
       "curves": 10,
       "legendFontPoints": 13,
       "legendPosition": "below",
-      "detailPanel": "right, rounds 401 to 500",
+      "axesPerFigure": 1,
+      "detailPanel": null,
       "curvesChecked": true,
       "legendClearanceChecked": true,
       "runIds": [
@@ -561,7 +575,8 @@
       "curves": 10,
       "legendFontPoints": 13,
       "legendPosition": "below",
-      "detailPanel": "right, rounds 401 to 500",
+      "axesPerFigure": 1,
+      "detailPanel": null,
       "curvesChecked": true,
       "legendClearanceChecked": true,
       "runIds": [
@@ -603,7 +618,8 @@
       "curves": 10,
       "legendFontPoints": 13,
       "legendPosition": "below",
-      "detailPanel": "right, rounds 401 to 500",
+      "axesPerFigure": 1,
+      "detailPanel": null,
       "curvesChecked": true,
       "legendClearanceChecked": true,
       "runIds": [
