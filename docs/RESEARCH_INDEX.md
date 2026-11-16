@@ -1,7 +1,8 @@
 # Research index for thesis review
 
 Start here when reading this repository with Claude or another reviewer.
-Prepared on 11 November 2026. Record the current `main` commit SHA before
+Updated on 16 November 2026 with the completed noise-only controls and postdefense plots.
+Record the current `main` commit SHA before
 proposing thesis changes.
 
 ## Reading order and editing rules
@@ -24,7 +25,12 @@ LaTeX, the reason and supporting evidence. Wait for approval before applying
 the mathematical change. Independent prose and figure work can continue.
 Do not change experiment data or run experiments as part of thesis editing.
 
-## Current validation study: 150 runs
+## Current validation study: 168 runs
+
+The 150 selected cases below plus the [18 completed noise-only cases](results/themachine_fedsharp-noise-only-500r-20261114/)
+form 168 current runs and 56 three-seed groups. The README includes the full
+accuracy and local-training CE table. Updated [postdefense figures and CSVs](figures/postdefense_results/)
+cover all current cases; the older figures and thesis brief predate the added controls.
 
 | Evidence | Location | Role |
 | --- | --- | --- |
@@ -32,6 +38,7 @@ Do not change experiment data or run experiments as part of thesis editing.
 | Current FedSharp clean | [12 runs](results/themachine_fedsharp-plain-clean-500r-20261104/) | Matched defense-disabled controls. |
 | Current BASIL clean | [12 runs](results/themachine_basil-plain-clean-500r-20261104/) | Matched defense-disabled controls. |
 | Selected run IDs | [current_runs.csv](thesis/results-evidence-20261104/current_runs.csv) | Exactly 150 cases; three seeds per curve. |
+| All current runs | [postdefense per_run.csv](figures/postdefense_results/per_run.csv) | All 168 current cases, accuracy, local-training CE and timings. |
 | Historical controls | [superseded_runs.csv](thesis/results-evidence-20261104/superseded_runs.csv) | Never pool repeated seeds. |
 
 Runs use 100 clients, 500 ring rounds and five SGD steps per activation.
@@ -87,10 +94,11 @@ mapping. CIFAR-10.1 was downloaded but not evaluated; there is no such result.
 For FedSharp+, follow the evaluated frozen `cart` implementation and installed
 adapters. The thesis brief explains probe, admission, prior, repair and commit
 stages. Do not substitute an older prototype. FedSharp+ is available only for
-non-IID joint attack + noise in this study. There are no FedSharp+ clean or IID
+non-IID joint attack + noise in the original study, with non-IID noise-only
+cases now completed as well. There are no FedSharp+ clean or IID
 runs. ACDS has extra fitting-data access and must be described accordingly.
 
-## Prepared committee controls and runtime evidence
+## Completed committee controls and runtime evidence
 
 The [automatic launcher](FEDSHARP_NOISE_ONLY_AUTO.md) selects the matching
 hal9k or themachine configuration from the actual hostname.
@@ -99,8 +107,8 @@ validates the checkpoint and original GPU before requeueing one failed run,
 while preserving seventeen completed results and the original producer files.
 
 [FedSharp/FedSharp+ noise-only controls](FEDSHARP_NOISE_ONLY_500R.md) defines
-18 fresh runs for hal9k, two GPUs: 12 FedSharp cases and six non-IID FedSharp+
-cases. These are configurations awaiting execution, not completed results.
+18 fresh runs: 12 FedSharp cases and six non-IID FedSharp+ cases.
+All eighteen completed on themachine and passed saved fresh CPU inference checks.
 The [themachine alternative](FEDSHARP_NOISE_ONLY_THEMACHINE.md) runs the same
 matrix with preferred GPUs 1 and 3 and optional GPUs 0 and 2, without depending
 on hal9k. Use one server campaign; the two launchers are not a shared fleet.

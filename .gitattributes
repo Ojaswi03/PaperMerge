@@ -11,6 +11,7 @@ docs/presentation/defense-draft-20261104/** -text
 docs/figures/** -text
 docs/thesis/** -text
 docs/runtime-timings/** -text
+docs/figures/postdefense_results/**/*.svg -whitespace
 docs/results/official-test-20261110/**/*.svg -whitespace
 docs/presentation/defense-draft-20261104/**/*.svg -whitespace
 docs/figures/**/*.svg -whitespace
