@@ -1,0 +1,84 @@
+{
+  "activeRunIds": [],
+  "activeSlots": [],
+  "completed": 18,
+  "elapsedSeconds": 52213.29011248611,
+  "failed": 0,
+  "failures": [],
+  "host": "themachine",
+  "ownerPid": 2435261,
+  "pending": 0,
+  "pendingRunIds": [],
+  "profile": "hpc",
+  "runtimeAdapter": "fedsharp_noise_only_500r_20261114_v1",
+  "scheduler": {
+    "activePerGpu": {},
+    "blocked": {
+      "0": {
+        "admit": false,
+        "reason": "waiting for low GPU utilization",
+        "utilization": 100
+      },
+      "1": {
+        "admit": false,
+        "gpuFreeMiB": 4838,
+        "gpuRequiredMiB": 12288,
+        "ramAvailableMiB": 1474671,
+        "ramRequiredMiB": 24576,
+        "reason": "waiting for memory"
+      },
+      "2": {
+        "admit": false,
+        "reason": "waiting for low GPU utilization",
+        "utilization": 92
+      }
+    },
+    "dispatch": "shared_queue_verified_gpus",
+    "gpuByRunId": {
+      "cifar10-dirichlet-2025-sharp_cart-3e2daad0801f": 3,
+      "cifar10-dirichlet-2025-sharp_noise_only-a9ed606c6c59": 0,
+      "cifar10-dirichlet-2026-sharp_cart-d63bec6bcbf2": 2,
+      "cifar10-dirichlet-2026-sharp_noise_only-d7b4b8859ce7": 1,
+      "cifar10-dirichlet-2027-sharp_cart-3f20b1227df2": 0,
+      "cifar10-dirichlet-2027-sharp_noise_only-73ad1c908520": 2,
+      "cifar10-iid-2025-sharp_noise_only-933a9460f113": 0,
+      "cifar10-iid-2026-sharp_noise_only-7cb6074f7fa0": 2,
+      "cifar10-iid-2027-sharp_noise_only-89f871222beb": 3,
+      "mnist-dirichlet-2025-sharp_cart-62b58c6e4fc1": 0,
+      "mnist-dirichlet-2025-sharp_noise_only-1bbaf1f1dfca": 3,
+      "mnist-dirichlet-2026-sharp_cart-670899970b48": 2,
+      "mnist-dirichlet-2026-sharp_noise_only-1f59c341425c": 1,
+      "mnist-dirichlet-2027-sharp_cart-0ec0497e6ae8": 1,
+      "mnist-dirichlet-2027-sharp_noise_only-3c66d06741db": 3,
+      "mnist-iid-2025-sharp_noise_only-3e9592a46a3c": 0,
+      "mnist-iid-2026-sharp_noise_only-8a8bcb9bb069": 1,
+      "mnist-iid-2027-sharp_noise_only-a46487231138": 2
+    },
+    "lanesByRunId": {
+      "cifar10-dirichlet-2025-sharp_cart-3e2daad0801f": "3/live13",
+      "cifar10-dirichlet-2025-sharp_noise_only-a9ed606c6c59": "0/live12",
+      "cifar10-dirichlet-2026-sharp_cart-d63bec6bcbf2": "2/live15",
+      "cifar10-dirichlet-2026-sharp_noise_only-d7b4b8859ce7": "1/live14",
+      "cifar10-dirichlet-2027-sharp_cart-3f20b1227df2": "0/live17",
+      "cifar10-dirichlet-2027-sharp_noise_only-73ad1c908520": "2/live16",
+      "cifar10-iid-2025-sharp_noise_only-933a9460f113": "0/live9",
+      "cifar10-iid-2026-sharp_noise_only-7cb6074f7fa0": "2/live10",
+      "cifar10-iid-2027-sharp_noise_only-89f871222beb": "3/live11",
+      "mnist-dirichlet-2025-sharp_cart-62b58c6e4fc1": "0/live4",
+      "mnist-dirichlet-2025-sharp_noise_only-1bbaf1f1dfca": "3/live3",
+      "mnist-dirichlet-2026-sharp_cart-670899970b48": "2/live6",
+      "mnist-dirichlet-2026-sharp_noise_only-1f59c341425c": "1/live5",
+      "mnist-dirichlet-2027-sharp_cart-0ec0497e6ae8": "1/live8",
+      "mnist-dirichlet-2027-sharp_noise_only-3c66d06741db": "3/live7",
+      "mnist-iid-2025-sharp_noise_only-3e9592a46a3c": "0/live0",
+      "mnist-iid-2026-sharp_noise_only-8a8bcb9bb069": "1/live1",
+      "mnist-iid-2027-sharp_noise_only-a46487231138": "2/live2"
+    },
+    "maximumPerGpu": 24,
+    "mode": "adaptive",
+    "quarantined": {}
+  },
+  "status": "COMPLETED",
+  "total": 18,
+  "workerFailurePolicy": "continue"
+}
