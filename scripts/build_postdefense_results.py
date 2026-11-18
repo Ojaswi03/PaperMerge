@@ -119,14 +119,26 @@ def display(dataset, split):
 
 def style(curve):
     method,env = curve['method'],curve['environment']
-    color = {'clean':'#0072B2','attack_only':'#D55E00','joint':'#7B3294','noise_only':'#198754'}[env]
-    marker = {'clean':'o','attack_only':'s','joint':'^','noise_only':'v'}[env]
-    if method=='BASIL + ACDS':
-        color,marker = '#008B8B','D'
-    if method=='FedSharp+':
-        color,marker = ('#B34B8C','P') if env=='joint' else ('#7B4F22','X')
-    return dict(color=color,marker=marker,linestyle=(0,(1.1,2.1)) if method.startswith('BASIL') else '-',
-                markerfacecolor='white',markeredgewidth=.9,linewidth=1.8)
+    # Distinguish method AND condition in color and glyph, including exact ties.
+    # The thinner dashed FedSharp clean trace leaves the coincident BASIL line
+    # visible. Marker locations are staggered; measured coordinates never move.
+    styles = {
+        ('BASIL','clean'): ('#0072B2','o','-'),
+        ('FedSharp','clean'): ('#222222','X',(0,(5,3))),
+        ('BASIL','attack_only'): ('#D55E00','s',(0,(1.1,2.1))),
+        ('FedSharp','attack_only'): ('#C18A00','D','-'),
+        ('BASIL','noise_only'): ('#007A4D','v',(0,(1.1,2.1))),
+        ('FedSharp','noise_only'): ('#2E9EC1','^','-'),
+        ('FedSharp+','noise_only'): ('#8C564B','h','-'),
+        ('BASIL','joint'): ('#CC79A7','<',(0,(1.1,2.1))),
+        ('BASIL + ACDS','joint'): ('#008B8B','P',(0,(4,2,1,2))),
+        ('FedSharp','joint'): ('#7B3294','>','-'),
+        ('FedSharp+','joint'): ('#332288','*','-'),
+    }
+    color,marker,linestyle = styles[method,env]
+    width = 2.3 if (method,env)==('BASIL','clean') else 1.4 if env=='clean' else 1.8
+    return dict(color=color,marker=marker,linestyle=linestyle,
+                markerfacecolor='white',markeredgewidth=1.0,linewidth=width)
 
 
 def figure(curves, dataset, split, attack, metric, destination):
@@ -134,6 +146,9 @@ def figure(curves, dataset, split, attack, metric, destination):
         and c['attack']==('none' if c['environment'] in ('clean','noise_only') else attack)]
     env_order = ['clean','attack_only','noise_only','joint']
     available.sort(key=lambda c:(env_order.index(c['environment']),METHODS.index(c['method'])))
+    appearances = [style(c) for c in available]
+    if len({a['color'] for a in appearances})!=len(available) or len({a['marker'] for a in appearances})!=len(available):
+        raise ValueError('Every curve in a figure needs a distinct color and marker.')
     fig, ax = plt.subplots(figsize=(9.2,7.3))
     metric_key = 'accuracy' if metric=='accuracy' else 'trainingCE'
     x = np.arange(1,501)
@@ -147,7 +162,7 @@ def figure(curves, dataset, split, attack, metric, destination):
         label = curve['method']+': '+{'clean':'clean','attack_only':'attack only','joint':'attack + noise','noise_only':'noise only'}[curve['environment']]
         appearance = style(curve)
         ax.fill_between(x,lower,upper,color=appearance['color'],alpha=.10,linewidth=0)
-        ax.plot(x,mean,label=label,markersize=4.5,markevery=(index*4,60),**appearance)
+        ax.plot(x,mean,label=label,markersize=5.2,markevery=(index*5,60),**appearance)
         np.testing.assert_array_equal(ax.lines[-1].get_ydata(),mean)
     ax.set_xlabel('Communication round',fontsize=12)
     ax.spines[['top','right']].set_visible(False)
@@ -203,6 +218,10 @@ def figure(curves, dataset, split, attack, metric, destination):
     plt.close(fig)
     return dict(stem=stem,curves=len(available),legendFontPoints=13,legendPosition='below',
         axesPerFigure=1,detailPanel=None,curvesChecked=True,legendClearanceChecked=True,
+        distinctColorsAndMarkers=True,measuredCoordinatesUnchanged=True,
+        curveStyles=[dict(method=c['method'],environment=c['environment'],
+            color=style(c)['color'],marker=style(c)['marker'],markerStart=index*5,markerSpacing=60)
+            for index,c in enumerate(available)],
         runIds=[run for curve in available for run in curve['runIds']],pngDpi=600)
 
 
@@ -281,6 +300,7 @@ def update_readme(summary):
         '## Updated postdefense plots','',
         'Each image contains one plot covering all 500 unsmoothed rounds, with three-seed means and sample SD bands. '
         'Legends are below the plot. Accuracy and training-CE previews are shown side by side and wrap below each other on narrow screens. '
+        'Every curve has a distinct color and marker. The two clean controls coincide exactly; staggered markers and different line styles show both without shifting their values. '
         'Click a preview to open the full-resolution PNG. '
         'Clean and noise-only references appear in both attack contexts. The context label applies only to the attacked curves. '
         'Training-CE figures use the loss definition above. PNG is 600 DPI and SVG is native vector.','']
@@ -328,6 +348,7 @@ def main():
         'FedSharp+ training CE uses prior-adjusted logits. Endpoints average rounds 491 to 500.','',
         'Each context has separate validation-accuracy and training-CE figures in 600-DPI PNG and native-vector SVG. '
         'Each image contains one full-range plot, without a zoom panel. All legends are below. '
+        'Every curve has a distinct color and marker. Coincident clean controls retain their measured values, with staggered markers and different line styles. '
         'Clean and noise-only references are repeated across the two attack contexts.','',
         '`group_summary.csv` contains all 56 group summaries; `per_run.csv` contains all 168 individual values and timings. '
         '`plot_data.json` records the exact plotted means/SDs and run identities. '

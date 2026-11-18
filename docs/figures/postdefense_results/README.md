@@ -2,7 +2,7 @@
 
 Current 168 runs, 56 three-seed groups, 500 rounds. Accuracy is development-holdout accuracy. Loss is local training CE, not held-out validation/test CE or the full regularized objective. FedSharp+ training CE uses prior-adjusted logits. Endpoints average rounds 491 to 500.
 
-Each context has separate validation-accuracy and training-CE figures in 600-DPI PNG and native-vector SVG. Each image contains one full-range plot, without a zoom panel. All legends are below. Clean and noise-only references are repeated across the two attack contexts.
+Each context has separate validation-accuracy and training-CE figures in 600-DPI PNG and native-vector SVG. Each image contains one full-range plot, without a zoom panel. All legends are below. Every curve has a distinct color and marker. Coincident clean controls retain their measured values, with staggered markers and different line styles. Clean and noise-only references are repeated across the two attack contexts.
 
 `group_summary.csv` contains all 56 group summaries; `per_run.csv` contains all 168 individual values and timings. `plot_data.json` records the exact plotted means/SDs and run identities. `audit.json` links the five source manifests and records figure checks.
 

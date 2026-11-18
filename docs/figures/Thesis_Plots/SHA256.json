@@ -1,0 +1,19 @@
+{
+  "README.md": "ed21010ef24dbeb80f674697ff6b658476a55dc1d2e2d829603d9f0be15a9e39",
+  "cifar10_iid_gaussian_accuracy.png": "d3c816b3a5528f4e5d9746f27073c714e786be4ec6c5bff8a48995bdcfe86d45",
+  "cifar10_iid_gaussian_accuracy.svg": "22648a1855380a964e6645ce840d0c1e00428979d4b1a55b428ac382a334cf35",
+  "cifar10_iid_hidden_accuracy.png": "1b343304f2646db45d652ebed20e587f84bb94d084cee9268f7f5a107cc74071",
+  "cifar10_iid_hidden_accuracy.svg": "ae11b5c46ed2bf47b1675ef1122358b12cd24911c130242f45c2302de710805b",
+  "cifar10_non_iid_gaussian_accuracy.png": "667d2ebbc5581702f2f7d169452b1830c276cb853076de1e154f0419a14bea33",
+  "cifar10_non_iid_gaussian_accuracy.svg": "ed9a70fbc159264d8a691287776b193993cd5ac072b825eef1626b67ea3dab82",
+  "cifar10_non_iid_hidden_accuracy.png": "6e3ed9b5e9970c5111d4afcbcbea09dbd2da2df4a6029d1948081e0f58531efa",
+  "cifar10_non_iid_hidden_accuracy.svg": "3ed1a6ce61311d370398fa62f65dac5fb8de912d9b722c9509073c3b415c404b",
+  "mnist_iid_gaussian_accuracy.png": "fcbf94294a2e2dc413cb2789738359eaa33fccc2290e52c9e87dd4e83edf9f42",
+  "mnist_iid_gaussian_accuracy.svg": "aa602bea02d09a69393ec5dbeac0ffd65b85743bebee84cdb881d6f09eb61c61",
+  "mnist_iid_hidden_accuracy.png": "f63915fa720d5f328368ee76a436ac89e5a167c68ff20b0c3c30e59b56efc81a",
+  "mnist_iid_hidden_accuracy.svg": "2c8dcbbdd5c3af164c76a1b17cfedfdd53da6c985339b09aa3d5ff12988a9af5",
+  "mnist_non_iid_gaussian_accuracy.png": "49749018e1ef91fbb1cc9db42858868c446440d4cefdc24da6540d3b6b2413a9",
+  "mnist_non_iid_gaussian_accuracy.svg": "b26242966affa5f6de9cda63ff6cefe0874522b06d6b4d99382583afaac98f46",
+  "mnist_non_iid_hidden_accuracy.png": "99ea637651838f6fe756ad766b2016d556d5dadaf41d0636e86188f3fb30ddb9",
+  "mnist_non_iid_hidden_accuracy.svg": "fceb2864f06200a6e87dee9a1ce9926dbb7e751ddee839f6aa398cd6ccddb648"
+}

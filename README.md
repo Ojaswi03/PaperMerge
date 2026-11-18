@@ -124,7 +124,7 @@ The latest noise-only export is [here](docs/results/themachine_fedsharp-noise-on
 
 ## Updated postdefense plots
 
-Each image contains one plot covering all 500 unsmoothed rounds, with three-seed means and sample SD bands. Legends are below the plot. Accuracy and training-CE previews are shown side by side and wrap below each other on narrow screens. Click a preview to open the full-resolution PNG. Clean and noise-only references appear in both attack contexts. The context label applies only to the attacked curves. Training-CE figures use the loss definition above. PNG is 600 DPI and SVG is native vector.
+Each image contains one plot covering all 500 unsmoothed rounds, with three-seed means and sample SD bands. Legends are below the plot. Accuracy and training-CE previews are shown side by side and wrap below each other on narrow screens. Every curve has a distinct color and marker. The two clean controls coincide exactly; staggered markers and different line styles show both without shifting their values. Click a preview to open the full-resolution PNG. Clean and noise-only references appear in both attack contexts. The context label applies only to the attacked curves. Training-CE figures use the loss definition above. PNG is 600 DPI and SVG is native vector.
 
 ### MNIST IID | Gaussian attack conditions
 

@@ -1,7 +1,7 @@
 # Research index for thesis review
 
 Start here when reading this repository with Claude or another reviewer.
-Updated on 16 November 2026 with the completed noise-only controls and postdefense plots.
+Updated on 18 November 2026 with committee-revision figures and completed noise-only controls.
 Record the current `main` commit SHA before
 proposing thesis changes.
 
@@ -30,7 +30,8 @@ Do not change experiment data or run experiments as part of thesis editing.
 The 150 selected cases below plus the [18 completed noise-only cases](results/themachine_fedsharp-noise-only-500r-20261114/)
 form 168 current runs and 56 three-seed groups. The README includes the full
 accuracy and local-training CE table. Updated [postdefense figures and CSVs](figures/postdefense_results/)
-cover all current cases; the older figures and thesis brief predate the added controls.
+cover all current cases. The thesis figure copies also include the new noise-only
+curves; the November 4 thesis brief predates those controls.
 
 | Evidence | Location | Role |
 | --- | --- | --- |
@@ -122,8 +123,11 @@ support a controlled algorithm-speed comparison.
 
 ## Figures and presentation
 
-The [eight thesis panels](figures/Thesis_Plots/) include FedSharp+ in four
-non-IID panels. The [two research-paper strips](figures/Research_Paper_Plots/)
+The [eight thesis panels and Overleaf guide](figures/Thesis_Plots/) include the
+completed noise-only controls, distinct colors and markers for every curve,
+and FedSharp+ in four non-IID panels. Each image contains one main plot without
+a zoom panel, and the exact clean-control overlap is preserved. The
+[two research-paper strips](figures/Research_Paper_Plots/)
 exclude FedSharp+ for the conference version. Both have PNG/SVG copies, legends
 below and matched clean controls. Use matching names under `Images/` in
 Overleaf. The [figure map](thesis/results-evidence-20261104/figure_map.json) and

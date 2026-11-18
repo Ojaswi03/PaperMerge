@@ -14,7 +14,7 @@
   "lossScope": "Mean local SGD cross-entropy; not held-out validation/test loss or the full regularized objective.",
   "plusLossScope": "FedSharp+ training CE uses prior-adjusted training logits.",
   "originalMeasurementsModified": false,
-  "rendererSha256": "b55f145be48203ca4038b21aec42dcd2e3601fe080afa6f1401d02ad49ddb889",
+  "rendererSha256": "4956536053f3f098cfac58ef9520852ac1727cae874abbec89d855fc4df7e955",
   "figures": {
     "mnist_iid_gaussian_accuracy": {
       "stem": "mnist_iid_gaussian_accuracy",
@@ -25,6 +25,74 @@
       "detailPanel": null,
       "curvesChecked": true,
       "legendClearanceChecked": true,
+      "distinctColorsAndMarkers": true,
+      "measuredCoordinatesUnchanged": true,
+      "curveStyles": [
+        {
+          "method": "BASIL",
+          "environment": "clean",
+          "color": "#0072B2",
+          "marker": "o",
+          "markerStart": 0,
+          "markerSpacing": 60
+        },
+        {
+          "method": "FedSharp",
+          "environment": "clean",
+          "color": "#222222",
+          "marker": "X",
+          "markerStart": 5,
+          "markerSpacing": 60
+        },
+        {
+          "method": "BASIL",
+          "environment": "attack_only",
+          "color": "#D55E00",
+          "marker": "s",
+          "markerStart": 10,
+          "markerSpacing": 60
+        },
+        {
+          "method": "FedSharp",
+          "environment": "attack_only",
+          "color": "#C18A00",
+          "marker": "D",
+          "markerStart": 15,
+          "markerSpacing": 60
+        },
+        {
+          "method": "BASIL",
+          "environment": "noise_only",
+          "color": "#007A4D",
+          "marker": "v",
+          "markerStart": 20,
+          "markerSpacing": 60
+        },
+        {
+          "method": "FedSharp",
+          "environment": "noise_only",
+          "color": "#2E9EC1",
+          "marker": "^",
+          "markerStart": 25,
+          "markerSpacing": 60
+        },
+        {
+          "method": "BASIL",
+          "environment": "joint",
+          "color": "#CC79A7",
+          "marker": "<",
+          "markerStart": 30,
+          "markerSpacing": 60
+        },
+        {
+          "method": "FedSharp",
+          "environment": "joint",
+          "color": "#7B3294",
+          "marker": ">",
+          "markerStart": 35,
+          "markerSpacing": 60
+        }
+      ],
       "runIds": [
         "mnist-iid-2025-basil-plain-clean-5dfd67d4d361",
         "mnist-iid-2026-basil-plain-clean-7bf396ec98ec",
@@ -62,6 +130,74 @@
       "detailPanel": null,
       "curvesChecked": true,
       "legendClearanceChecked": true,
+      "distinctColorsAndMarkers": true,
+      "measuredCoordinatesUnchanged": true,
+      "curveStyles": [
+        {
+          "method": "BASIL",
+          "environment": "clean",
+          "color": "#0072B2",
+          "marker": "o",
+          "markerStart": 0,
+          "markerSpacing": 60
+        },
+        {
+          "method": "FedSharp",
+          "environment": "clean",
+          "color": "#222222",
+          "marker": "X",
+          "markerStart": 5,
+          "markerSpacing": 60
+        },
+        {
+          "method": "BASIL",
+          "environment": "attack_only",
+          "color": "#D55E00",
+          "marker": "s",
+          "markerStart": 10,
+          "markerSpacing": 60
+        },
+        {
+          "method": "FedSharp",
+          "environment": "attack_only",
+          "color": "#C18A00",
+          "marker": "D",
+          "markerStart": 15,
+          "markerSpacing": 60
+        },
+        {
+          "method": "BASIL",
+          "environment": "noise_only",
+          "color": "#007A4D",
+          "marker": "v",
+          "markerStart": 20,
+          "markerSpacing": 60
+        },
+        {
+          "method": "FedSharp",
+          "environment": "noise_only",
+          "color": "#2E9EC1",
+          "marker": "^",
+          "markerStart": 25,
+          "markerSpacing": 60
+        },
+        {
+          "method": "BASIL",
+          "environment": "joint",
+          "color": "#CC79A7",
+          "marker": "<",
+          "markerStart": 30,
+          "markerSpacing": 60
+        },
+        {
+          "method": "FedSharp",
+          "environment": "joint",
+          "color": "#7B3294",
+          "marker": ">",
+          "markerStart": 35,
+          "markerSpacing": 60
+        }
+      ],
       "runIds": [
         "mnist-iid-2025-basil-plain-clean-5dfd67d4d361",
         "mnist-iid-2026-basil-plain-clean-7bf396ec98ec",
@@ -99,6 +235,74 @@
       "detailPanel": null,
       "curvesChecked": true,
       "legendClearanceChecked": true,
+      "distinctColorsAndMarkers": true,
+      "measuredCoordinatesUnchanged": true,
+      "curveStyles": [
+        {
+          "method": "BASIL",
+          "environment": "clean",
+          "color": "#0072B2",
+          "marker": "o",
+          "markerStart": 0,
+          "markerSpacing": 60
+        },
+        {
+          "method": "FedSharp",
+          "environment": "clean",
+          "color": "#222222",
+          "marker": "X",
+          "markerStart": 5,
+          "markerSpacing": 60
+        },
+        {
+          "method": "BASIL",
+          "environment": "attack_only",
+          "color": "#D55E00",
+          "marker": "s",
+          "markerStart": 10,
+          "markerSpacing": 60
+        },
+        {
+          "method": "FedSharp",
+          "environment": "attack_only",
+          "color": "#C18A00",
+          "marker": "D",
+          "markerStart": 15,
+          "markerSpacing": 60
+        },
+        {
+          "method": "BASIL",
+          "environment": "noise_only",
+          "color": "#007A4D",
+          "marker": "v",
+          "markerStart": 20,
+          "markerSpacing": 60
+        },
+        {
+          "method": "FedSharp",
+          "environment": "noise_only",
+          "color": "#2E9EC1",
+          "marker": "^",
+          "markerStart": 25,
+          "markerSpacing": 60
+        },
+        {
+          "method": "BASIL",
+          "environment": "joint",
+          "color": "#CC79A7",
+          "marker": "<",
+          "markerStart": 30,
+          "markerSpacing": 60
+        },
+        {
+          "method": "FedSharp",
+          "environment": "joint",
+          "color": "#7B3294",
+          "marker": ">",
+          "markerStart": 35,
+          "markerSpacing": 60
+        }
+      ],
       "runIds": [
         "mnist-iid-2025-basil-plain-clean-5dfd67d4d361",
         "mnist-iid-2026-basil-plain-clean-7bf396ec98ec",
@@ -136,6 +340,74 @@
       "detailPanel": null,
       "curvesChecked": true,
       "legendClearanceChecked": true,
+      "distinctColorsAndMarkers": true,
+      "measuredCoordinatesUnchanged": true,
+      "curveStyles": [
+        {
+          "method": "BASIL",
+          "environment": "clean",
+          "color": "#0072B2",
+          "marker": "o",
+          "markerStart": 0,
+          "markerSpacing": 60
+        },
+        {
+          "method": "FedSharp",
+          "environment": "clean",
+          "color": "#222222",
+          "marker": "X",
+          "markerStart": 5,
+          "markerSpacing": 60
+        },
+        {
+          "method": "BASIL",
+          "environment": "attack_only",
+          "color": "#D55E00",
+          "marker": "s",
+          "markerStart": 10,
+          "markerSpacing": 60
+        },
+        {
+          "method": "FedSharp",
+          "environment": "attack_only",
+          "color": "#C18A00",
+          "marker": "D",
+          "markerStart": 15,
+          "markerSpacing": 60
+        },
+        {
+          "method": "BASIL",
+          "environment": "noise_only",
+          "color": "#007A4D",
+          "marker": "v",
+          "markerStart": 20,
+          "markerSpacing": 60
+        },
+        {
+          "method": "FedSharp",
+          "environment": "noise_only",
+          "color": "#2E9EC1",
+          "marker": "^",
+          "markerStart": 25,
+          "markerSpacing": 60
+        },
+        {
+          "method": "BASIL",
+          "environment": "joint",
+          "color": "#CC79A7",
+          "marker": "<",
+          "markerStart": 30,
+          "markerSpacing": 60
+        },
+        {
+          "method": "FedSharp",
+          "environment": "joint",
+          "color": "#7B3294",
+          "marker": ">",
+          "markerStart": 35,
+          "markerSpacing": 60
+        }
+      ],
       "runIds": [
         "mnist-iid-2025-basil-plain-clean-5dfd67d4d361",
         "mnist-iid-2026-basil-plain-clean-7bf396ec98ec",
@@ -173,6 +445,98 @@
       "detailPanel": null,
       "curvesChecked": true,
       "legendClearanceChecked": true,
+      "distinctColorsAndMarkers": true,
+      "measuredCoordinatesUnchanged": true,
+      "curveStyles": [
+        {
+          "method": "BASIL",
+          "environment": "clean",
+          "color": "#0072B2",
+          "marker": "o",
+          "markerStart": 0,
+          "markerSpacing": 60
+        },
+        {
+          "method": "FedSharp",
+          "environment": "clean",
+          "color": "#222222",
+          "marker": "X",
+          "markerStart": 5,
+          "markerSpacing": 60
+        },
+        {
+          "method": "BASIL",
+          "environment": "attack_only",
+          "color": "#D55E00",
+          "marker": "s",
+          "markerStart": 10,
+          "markerSpacing": 60
+        },
+        {
+          "method": "FedSharp",
+          "environment": "attack_only",
+          "color": "#C18A00",
+          "marker": "D",
+          "markerStart": 15,
+          "markerSpacing": 60
+        },
+        {
+          "method": "BASIL",
+          "environment": "noise_only",
+          "color": "#007A4D",
+          "marker": "v",
+          "markerStart": 20,
+          "markerSpacing": 60
+        },
+        {
+          "method": "FedSharp",
+          "environment": "noise_only",
+          "color": "#2E9EC1",
+          "marker": "^",
+          "markerStart": 25,
+          "markerSpacing": 60
+        },
+        {
+          "method": "FedSharp+",
+          "environment": "noise_only",
+          "color": "#8C564B",
+          "marker": "h",
+          "markerStart": 30,
+          "markerSpacing": 60
+        },
+        {
+          "method": "BASIL",
+          "environment": "joint",
+          "color": "#CC79A7",
+          "marker": "<",
+          "markerStart": 35,
+          "markerSpacing": 60
+        },
+        {
+          "method": "BASIL + ACDS",
+          "environment": "joint",
+          "color": "#008B8B",
+          "marker": "P",
+          "markerStart": 40,
+          "markerSpacing": 60
+        },
+        {
+          "method": "FedSharp",
+          "environment": "joint",
+          "color": "#7B3294",
+          "marker": ">",
+          "markerStart": 45,
+          "markerSpacing": 60
+        },
+        {
+          "method": "FedSharp+",
+          "environment": "joint",
+          "color": "#332288",
+          "marker": "*",
+          "markerStart": 50,
+          "markerSpacing": 60
+        }
+      ],
       "runIds": [
         "mnist-dirichlet-2025-basil-plain-clean-e688c03a3c0c",
         "mnist-dirichlet-2026-basil-plain-clean-f8aa0924c255",
@@ -219,6 +583,98 @@
       "detailPanel": null,
       "curvesChecked": true,
       "legendClearanceChecked": true,
+      "distinctColorsAndMarkers": true,
+      "measuredCoordinatesUnchanged": true,
+      "curveStyles": [
+        {
+          "method": "BASIL",
+          "environment": "clean",
+          "color": "#0072B2",
+          "marker": "o",
+          "markerStart": 0,
+          "markerSpacing": 60
+        },
+        {
+          "method": "FedSharp",
+          "environment": "clean",
+          "color": "#222222",
+          "marker": "X",
+          "markerStart": 5,
+          "markerSpacing": 60
+        },
+        {
+          "method": "BASIL",
+          "environment": "attack_only",
+          "color": "#D55E00",
+          "marker": "s",
+          "markerStart": 10,
+          "markerSpacing": 60
+        },
+        {
+          "method": "FedSharp",
+          "environment": "attack_only",
+          "color": "#C18A00",
+          "marker": "D",
+          "markerStart": 15,
+          "markerSpacing": 60
+        },
+        {
+          "method": "BASIL",
+          "environment": "noise_only",
+          "color": "#007A4D",
+          "marker": "v",
+          "markerStart": 20,
+          "markerSpacing": 60
+        },
+        {
+          "method": "FedSharp",
+          "environment": "noise_only",
+          "color": "#2E9EC1",
+          "marker": "^",
+          "markerStart": 25,
+          "markerSpacing": 60
+        },
+        {
+          "method": "FedSharp+",
+          "environment": "noise_only",
+          "color": "#8C564B",
+          "marker": "h",
+          "markerStart": 30,
+          "markerSpacing": 60
+        },
+        {
+          "method": "BASIL",
+          "environment": "joint",
+          "color": "#CC79A7",
+          "marker": "<",
+          "markerStart": 35,
+          "markerSpacing": 60
+        },
+        {
+          "method": "BASIL + ACDS",
+          "environment": "joint",
+          "color": "#008B8B",
+          "marker": "P",
+          "markerStart": 40,
+          "markerSpacing": 60
+        },
+        {
+          "method": "FedSharp",
+          "environment": "joint",
+          "color": "#7B3294",
+          "marker": ">",
+          "markerStart": 45,
+          "markerSpacing": 60
+        },
+        {
+          "method": "FedSharp+",
+          "environment": "joint",
+          "color": "#332288",
+          "marker": "*",
+          "markerStart": 50,
+          "markerSpacing": 60
+        }
+      ],
       "runIds": [
         "mnist-dirichlet-2025-basil-plain-clean-e688c03a3c0c",
         "mnist-dirichlet-2026-basil-plain-clean-f8aa0924c255",
@@ -265,6 +721,98 @@
       "detailPanel": null,
       "curvesChecked": true,
       "legendClearanceChecked": true,
+      "distinctColorsAndMarkers": true,
+      "measuredCoordinatesUnchanged": true,
+      "curveStyles": [
+        {
+          "method": "BASIL",
+          "environment": "clean",
+          "color": "#0072B2",
+          "marker": "o",
+          "markerStart": 0,
+          "markerSpacing": 60
+        },
+        {
+          "method": "FedSharp",
+          "environment": "clean",
+          "color": "#222222",
+          "marker": "X",
+          "markerStart": 5,
+          "markerSpacing": 60
+        },
+        {
+          "method": "BASIL",
+          "environment": "attack_only",
+          "color": "#D55E00",
+          "marker": "s",
+          "markerStart": 10,
+          "markerSpacing": 60
+        },
+        {
+          "method": "FedSharp",
+          "environment": "attack_only",
+          "color": "#C18A00",
+          "marker": "D",
+          "markerStart": 15,
+          "markerSpacing": 60
+        },
+        {
+          "method": "BASIL",
+          "environment": "noise_only",
+          "color": "#007A4D",
+          "marker": "v",
+          "markerStart": 20,
+          "markerSpacing": 60
+        },
+        {
+          "method": "FedSharp",
+          "environment": "noise_only",
+          "color": "#2E9EC1",
+          "marker": "^",
+          "markerStart": 25,
+          "markerSpacing": 60
+        },
+        {
+          "method": "FedSharp+",
+          "environment": "noise_only",
+          "color": "#8C564B",
+          "marker": "h",
+          "markerStart": 30,
+          "markerSpacing": 60
+        },
+        {
+          "method": "BASIL",
+          "environment": "joint",
+          "color": "#CC79A7",
+          "marker": "<",
+          "markerStart": 35,
+          "markerSpacing": 60
+        },
+        {
+          "method": "BASIL + ACDS",
+          "environment": "joint",
+          "color": "#008B8B",
+          "marker": "P",
+          "markerStart": 40,
+          "markerSpacing": 60
+        },
+        {
+          "method": "FedSharp",
+          "environment": "joint",
+          "color": "#7B3294",
+          "marker": ">",
+          "markerStart": 45,
+          "markerSpacing": 60
+        },
+        {
+          "method": "FedSharp+",
+          "environment": "joint",
+          "color": "#332288",
+          "marker": "*",
+          "markerStart": 50,
+          "markerSpacing": 60
+        }
+      ],
       "runIds": [
         "mnist-dirichlet-2025-basil-plain-clean-e688c03a3c0c",
         "mnist-dirichlet-2026-basil-plain-clean-f8aa0924c255",
@@ -311,6 +859,98 @@
       "detailPanel": null,
       "curvesChecked": true,
       "legendClearanceChecked": true,
+      "distinctColorsAndMarkers": true,
+      "measuredCoordinatesUnchanged": true,
+      "curveStyles": [
+        {
+          "method": "BASIL",
+          "environment": "clean",
+          "color": "#0072B2",
+          "marker": "o",
+          "markerStart": 0,
+          "markerSpacing": 60
+        },
+        {
+          "method": "FedSharp",
+          "environment": "clean",
+          "color": "#222222",
+          "marker": "X",
+          "markerStart": 5,
+          "markerSpacing": 60
+        },
+        {
+          "method": "BASIL",
+          "environment": "attack_only",
+          "color": "#D55E00",
+          "marker": "s",
+          "markerStart": 10,
+          "markerSpacing": 60
+        },
+        {
+          "method": "FedSharp",
+          "environment": "attack_only",
+          "color": "#C18A00",
+          "marker": "D",
+          "markerStart": 15,
+          "markerSpacing": 60
+        },
+        {
+          "method": "BASIL",
+          "environment": "noise_only",
+          "color": "#007A4D",
+          "marker": "v",
+          "markerStart": 20,
+          "markerSpacing": 60
+        },
+        {
+          "method": "FedSharp",
+          "environment": "noise_only",
+          "color": "#2E9EC1",
+          "marker": "^",
+          "markerStart": 25,
+          "markerSpacing": 60
+        },
+        {
+          "method": "FedSharp+",
+          "environment": "noise_only",
+          "color": "#8C564B",
+          "marker": "h",
+          "markerStart": 30,
+          "markerSpacing": 60
+        },
+        {
+          "method": "BASIL",
+          "environment": "joint",
+          "color": "#CC79A7",
+          "marker": "<",
+          "markerStart": 35,
+          "markerSpacing": 60
+        },
+        {
+          "method": "BASIL + ACDS",
+          "environment": "joint",
+          "color": "#008B8B",
+          "marker": "P",
+          "markerStart": 40,
+          "markerSpacing": 60
+        },
+        {
+          "method": "FedSharp",
+          "environment": "joint",
+          "color": "#7B3294",
+          "marker": ">",
+          "markerStart": 45,
+          "markerSpacing": 60
+        },
+        {
+          "method": "FedSharp+",
+          "environment": "joint",
+          "color": "#332288",
+          "marker": "*",
+          "markerStart": 50,
+          "markerSpacing": 60
+        }
+      ],
       "runIds": [
         "mnist-dirichlet-2025-basil-plain-clean-e688c03a3c0c",
         "mnist-dirichlet-2026-basil-plain-clean-f8aa0924c255",
@@ -357,6 +997,66 @@
       "detailPanel": null,
       "curvesChecked": true,
       "legendClearanceChecked": true,
+      "distinctColorsAndMarkers": true,
+      "measuredCoordinatesUnchanged": true,
+      "curveStyles": [
+        {
+          "method": "BASIL",
+          "environment": "clean",
+          "color": "#0072B2",
+          "marker": "o",
+          "markerStart": 0,
+          "markerSpacing": 60
+        },
+        {
+          "method": "FedSharp",
+          "environment": "clean",
+          "color": "#222222",
+          "marker": "X",
+          "markerStart": 5,
+          "markerSpacing": 60
+        },
+        {
+          "method": "BASIL",
+          "environment": "attack_only",
+          "color": "#D55E00",
+          "marker": "s",
+          "markerStart": 10,
+          "markerSpacing": 60
+        },
+        {
+          "method": "FedSharp",
+          "environment": "attack_only",
+          "color": "#C18A00",
+          "marker": "D",
+          "markerStart": 15,
+          "markerSpacing": 60
+        },
+        {
+          "method": "FedSharp",
+          "environment": "noise_only",
+          "color": "#2E9EC1",
+          "marker": "^",
+          "markerStart": 20,
+          "markerSpacing": 60
+        },
+        {
+          "method": "BASIL",
+          "environment": "joint",
+          "color": "#CC79A7",
+          "marker": "<",
+          "markerStart": 25,
+          "markerSpacing": 60
+        },
+        {
+          "method": "FedSharp",
+          "environment": "joint",
+          "color": "#7B3294",
+          "marker": ">",
+          "markerStart": 30,
+          "markerSpacing": 60
+        }
+      ],
       "runIds": [
         "cifar10-iid-2025-basil-plain-clean-3536df6132de",
         "cifar10-iid-2026-basil-plain-clean-e89a1ca4919a",
@@ -391,6 +1091,66 @@
       "detailPanel": null,
       "curvesChecked": true,
       "legendClearanceChecked": true,
+      "distinctColorsAndMarkers": true,
+      "measuredCoordinatesUnchanged": true,
+      "curveStyles": [
+        {
+          "method": "BASIL",
+          "environment": "clean",
+          "color": "#0072B2",
+          "marker": "o",
+          "markerStart": 0,
+          "markerSpacing": 60
+        },
+        {
+          "method": "FedSharp",
+          "environment": "clean",
+          "color": "#222222",
+          "marker": "X",
+          "markerStart": 5,
+          "markerSpacing": 60
+        },
+        {
+          "method": "BASIL",
+          "environment": "attack_only",
+          "color": "#D55E00",
+          "marker": "s",
+          "markerStart": 10,
+          "markerSpacing": 60
+        },
+        {
+          "method": "FedSharp",
+          "environment": "attack_only",
+          "color": "#C18A00",
+          "marker": "D",
+          "markerStart": 15,
+          "markerSpacing": 60
+        },
+        {
+          "method": "FedSharp",
+          "environment": "noise_only",
+          "color": "#2E9EC1",
+          "marker": "^",
+          "markerStart": 20,
+          "markerSpacing": 60
+        },
+        {
+          "method": "BASIL",
+          "environment": "joint",
+          "color": "#CC79A7",
+          "marker": "<",
+          "markerStart": 25,
+          "markerSpacing": 60
+        },
+        {
+          "method": "FedSharp",
+          "environment": "joint",
+          "color": "#7B3294",
+          "marker": ">",
+          "markerStart": 30,
+          "markerSpacing": 60
+        }
+      ],
       "runIds": [
         "cifar10-iid-2025-basil-plain-clean-3536df6132de",
         "cifar10-iid-2026-basil-plain-clean-e89a1ca4919a",
@@ -425,6 +1185,66 @@
       "detailPanel": null,
       "curvesChecked": true,
       "legendClearanceChecked": true,
+      "distinctColorsAndMarkers": true,
+      "measuredCoordinatesUnchanged": true,
+      "curveStyles": [
+        {
+          "method": "BASIL",
+          "environment": "clean",
+          "color": "#0072B2",
+          "marker": "o",
+          "markerStart": 0,
+          "markerSpacing": 60
+        },
+        {
+          "method": "FedSharp",
+          "environment": "clean",
+          "color": "#222222",
+          "marker": "X",
+          "markerStart": 5,
+          "markerSpacing": 60
+        },
+        {
+          "method": "BASIL",
+          "environment": "attack_only",
+          "color": "#D55E00",
+          "marker": "s",
+          "markerStart": 10,
+          "markerSpacing": 60
+        },
+        {
+          "method": "FedSharp",
+          "environment": "attack_only",
+          "color": "#C18A00",
+          "marker": "D",
+          "markerStart": 15,
+          "markerSpacing": 60
+        },
+        {
+          "method": "FedSharp",
+          "environment": "noise_only",
+          "color": "#2E9EC1",
+          "marker": "^",
+          "markerStart": 20,
+          "markerSpacing": 60
+        },
+        {
+          "method": "BASIL",
+          "environment": "joint",
+          "color": "#CC79A7",
+          "marker": "<",
+          "markerStart": 25,
+          "markerSpacing": 60
+        },
+        {
+          "method": "FedSharp",
+          "environment": "joint",
+          "color": "#7B3294",
+          "marker": ">",
+          "markerStart": 30,
+          "markerSpacing": 60
+        }
+      ],
       "runIds": [
         "cifar10-iid-2025-basil-plain-clean-3536df6132de",
         "cifar10-iid-2026-basil-plain-clean-e89a1ca4919a",
@@ -459,6 +1279,66 @@
       "detailPanel": null,
       "curvesChecked": true,
       "legendClearanceChecked": true,
+      "distinctColorsAndMarkers": true,
+      "measuredCoordinatesUnchanged": true,
+      "curveStyles": [
+        {
+          "method": "BASIL",
+          "environment": "clean",
+          "color": "#0072B2",
+          "marker": "o",
+          "markerStart": 0,
+          "markerSpacing": 60
+        },
+        {
+          "method": "FedSharp",
+          "environment": "clean",
+          "color": "#222222",
+          "marker": "X",
+          "markerStart": 5,
+          "markerSpacing": 60
+        },
+        {
+          "method": "BASIL",
+          "environment": "attack_only",
+          "color": "#D55E00",
+          "marker": "s",
+          "markerStart": 10,
+          "markerSpacing": 60
+        },
+        {
+          "method": "FedSharp",
+          "environment": "attack_only",
+          "color": "#C18A00",
+          "marker": "D",
+          "markerStart": 15,
+          "markerSpacing": 60
+        },
+        {
+          "method": "FedSharp",
+          "environment": "noise_only",
+          "color": "#2E9EC1",
+          "marker": "^",
+          "markerStart": 20,
+          "markerSpacing": 60
+        },
+        {
+          "method": "BASIL",
+          "environment": "joint",
+          "color": "#CC79A7",
+          "marker": "<",
+          "markerStart": 25,
+          "markerSpacing": 60
+        },
+        {
+          "method": "FedSharp",
+          "environment": "joint",
+          "color": "#7B3294",
+          "marker": ">",
+          "markerStart": 30,
+          "markerSpacing": 60
+        }
+      ],
       "runIds": [
         "cifar10-iid-2025-basil-plain-clean-3536df6132de",
         "cifar10-iid-2026-basil-plain-clean-e89a1ca4919a",
@@ -493,6 +1373,90 @@
       "detailPanel": null,
       "curvesChecked": true,
       "legendClearanceChecked": true,
+      "distinctColorsAndMarkers": true,
+      "measuredCoordinatesUnchanged": true,
+      "curveStyles": [
+        {
+          "method": "BASIL",
+          "environment": "clean",
+          "color": "#0072B2",
+          "marker": "o",
+          "markerStart": 0,
+          "markerSpacing": 60
+        },
+        {
+          "method": "FedSharp",
+          "environment": "clean",
+          "color": "#222222",
+          "marker": "X",
+          "markerStart": 5,
+          "markerSpacing": 60
+        },
+        {
+          "method": "BASIL",
+          "environment": "attack_only",
+          "color": "#D55E00",
+          "marker": "s",
+          "markerStart": 10,
+          "markerSpacing": 60
+        },
+        {
+          "method": "FedSharp",
+          "environment": "attack_only",
+          "color": "#C18A00",
+          "marker": "D",
+          "markerStart": 15,
+          "markerSpacing": 60
+        },
+        {
+          "method": "FedSharp",
+          "environment": "noise_only",
+          "color": "#2E9EC1",
+          "marker": "^",
+          "markerStart": 20,
+          "markerSpacing": 60
+        },
+        {
+          "method": "FedSharp+",
+          "environment": "noise_only",
+          "color": "#8C564B",
+          "marker": "h",
+          "markerStart": 25,
+          "markerSpacing": 60
+        },
+        {
+          "method": "BASIL",
+          "environment": "joint",
+          "color": "#CC79A7",
+          "marker": "<",
+          "markerStart": 30,
+          "markerSpacing": 60
+        },
+        {
+          "method": "BASIL + ACDS",
+          "environment": "joint",
+          "color": "#008B8B",
+          "marker": "P",
+          "markerStart": 35,
+          "markerSpacing": 60
+        },
+        {
+          "method": "FedSharp",
+          "environment": "joint",
+          "color": "#7B3294",
+          "marker": ">",
+          "markerStart": 40,
+          "markerSpacing": 60
+        },
+        {
+          "method": "FedSharp+",
+          "environment": "joint",
+          "color": "#332288",
+          "marker": "*",
+          "markerStart": 45,
+          "markerSpacing": 60
+        }
+      ],
       "runIds": [
         "cifar10-dirichlet-2025-basil-plain-clean-cdb6a973c27d",
         "cifar10-dirichlet-2026-basil-plain-clean-8344b051aa27",
@@ -536,6 +1500,90 @@
       "detailPanel": null,
       "curvesChecked": true,
       "legendClearanceChecked": true,
+      "distinctColorsAndMarkers": true,
+      "measuredCoordinatesUnchanged": true,
+      "curveStyles": [
+        {
+          "method": "BASIL",
+          "environment": "clean",
+          "color": "#0072B2",
+          "marker": "o",
+          "markerStart": 0,
+          "markerSpacing": 60
+        },
+        {
+          "method": "FedSharp",
+          "environment": "clean",
+          "color": "#222222",
+          "marker": "X",
+          "markerStart": 5,
+          "markerSpacing": 60
+        },
+        {
+          "method": "BASIL",
+          "environment": "attack_only",
+          "color": "#D55E00",
+          "marker": "s",
+          "markerStart": 10,
+          "markerSpacing": 60
+        },
+        {
+          "method": "FedSharp",
+          "environment": "attack_only",
+          "color": "#C18A00",
+          "marker": "D",
+          "markerStart": 15,
+          "markerSpacing": 60
+        },
+        {
+          "method": "FedSharp",
+          "environment": "noise_only",
+          "color": "#2E9EC1",
+          "marker": "^",
+          "markerStart": 20,
+          "markerSpacing": 60
+        },
+        {
+          "method": "FedSharp+",
+          "environment": "noise_only",
+          "color": "#8C564B",
+          "marker": "h",
+          "markerStart": 25,
+          "markerSpacing": 60
+        },
+        {
+          "method": "BASIL",
+          "environment": "joint",
+          "color": "#CC79A7",
+          "marker": "<",
+          "markerStart": 30,
+          "markerSpacing": 60
+        },
+        {
+          "method": "BASIL + ACDS",
+          "environment": "joint",
+          "color": "#008B8B",
+          "marker": "P",
+          "markerStart": 35,
+          "markerSpacing": 60
+        },
+        {
+          "method": "FedSharp",
+          "environment": "joint",
+          "color": "#7B3294",
+          "marker": ">",
+          "markerStart": 40,
+          "markerSpacing": 60
+        },
+        {
+          "method": "FedSharp+",
+          "environment": "joint",
+          "color": "#332288",
+          "marker": "*",
+          "markerStart": 45,
+          "markerSpacing": 60
+        }
+      ],
       "runIds": [
         "cifar10-dirichlet-2025-basil-plain-clean-cdb6a973c27d",
         "cifar10-dirichlet-2026-basil-plain-clean-8344b051aa27",
@@ -579,6 +1627,90 @@
       "detailPanel": null,
       "curvesChecked": true,
       "legendClearanceChecked": true,
+      "distinctColorsAndMarkers": true,
+      "measuredCoordinatesUnchanged": true,
+      "curveStyles": [
+        {
+          "method": "BASIL",
+          "environment": "clean",
+          "color": "#0072B2",
+          "marker": "o",
+          "markerStart": 0,
+          "markerSpacing": 60
+        },
+        {
+          "method": "FedSharp",
+          "environment": "clean",
+          "color": "#222222",
+          "marker": "X",
+          "markerStart": 5,
+          "markerSpacing": 60
+        },
+        {
+          "method": "BASIL",
+          "environment": "attack_only",
+          "color": "#D55E00",
+          "marker": "s",
+          "markerStart": 10,
+          "markerSpacing": 60
+        },
+        {
+          "method": "FedSharp",
+          "environment": "attack_only",
+          "color": "#C18A00",
+          "marker": "D",
+          "markerStart": 15,
+          "markerSpacing": 60
+        },
+        {
+          "method": "FedSharp",
+          "environment": "noise_only",
+          "color": "#2E9EC1",
+          "marker": "^",
+          "markerStart": 20,
+          "markerSpacing": 60
+        },
+        {
+          "method": "FedSharp+",
+          "environment": "noise_only",
+          "color": "#8C564B",
+          "marker": "h",
+          "markerStart": 25,
+          "markerSpacing": 60
+        },
+        {
+          "method": "BASIL",
+          "environment": "joint",
+          "color": "#CC79A7",
+          "marker": "<",
+          "markerStart": 30,
+          "markerSpacing": 60
+        },
+        {
+          "method": "BASIL + ACDS",
+          "environment": "joint",
+          "color": "#008B8B",
+          "marker": "P",
+          "markerStart": 35,
+          "markerSpacing": 60
+        },
+        {
+          "method": "FedSharp",
+          "environment": "joint",
+          "color": "#7B3294",
+          "marker": ">",
+          "markerStart": 40,
+          "markerSpacing": 60
+        },
+        {
+          "method": "FedSharp+",
+          "environment": "joint",
+          "color": "#332288",
+          "marker": "*",
+          "markerStart": 45,
+          "markerSpacing": 60
+        }
+      ],
       "runIds": [
         "cifar10-dirichlet-2025-basil-plain-clean-cdb6a973c27d",
         "cifar10-dirichlet-2026-basil-plain-clean-8344b051aa27",
@@ -622,6 +1754,90 @@
       "detailPanel": null,
       "curvesChecked": true,
       "legendClearanceChecked": true,
+      "distinctColorsAndMarkers": true,
+      "measuredCoordinatesUnchanged": true,
+      "curveStyles": [
+        {
+          "method": "BASIL",
+          "environment": "clean",
+          "color": "#0072B2",
+          "marker": "o",
+          "markerStart": 0,
+          "markerSpacing": 60
+        },
+        {
+          "method": "FedSharp",
+          "environment": "clean",
+          "color": "#222222",
+          "marker": "X",
+          "markerStart": 5,
+          "markerSpacing": 60
+        },
+        {
+          "method": "BASIL",
+          "environment": "attack_only",
+          "color": "#D55E00",
+          "marker": "s",
+          "markerStart": 10,
+          "markerSpacing": 60
+        },
+        {
+          "method": "FedSharp",
+          "environment": "attack_only",
+          "color": "#C18A00",
+          "marker": "D",
+          "markerStart": 15,
+          "markerSpacing": 60
+        },
+        {
+          "method": "FedSharp",
+          "environment": "noise_only",
+          "color": "#2E9EC1",
+          "marker": "^",
+          "markerStart": 20,
+          "markerSpacing": 60
+        },
+        {
+          "method": "FedSharp+",
+          "environment": "noise_only",
+          "color": "#8C564B",
+          "marker": "h",
+          "markerStart": 25,
+          "markerSpacing": 60
+        },
+        {
+          "method": "BASIL",
+          "environment": "joint",
+          "color": "#CC79A7",
+          "marker": "<",
+          "markerStart": 30,
+          "markerSpacing": 60
+        },
+        {
+          "method": "BASIL + ACDS",
+          "environment": "joint",
+          "color": "#008B8B",
+          "marker": "P",
+          "markerStart": 35,
+          "markerSpacing": 60
+        },
+        {
+          "method": "FedSharp",
+          "environment": "joint",
+          "color": "#7B3294",
+          "marker": ">",
+          "markerStart": 40,
+          "markerSpacing": 60
+        },
+        {
+          "method": "FedSharp+",
+          "environment": "joint",
+          "color": "#332288",
+          "marker": "*",
+          "markerStart": 45,
+          "markerSpacing": 60
+        }
+      ],
       "runIds": [
         "cifar10-dirichlet-2025-basil-plain-clean-cdb6a973c27d",
         "cifar10-dirichlet-2026-basil-plain-clean-8344b051aa27",
